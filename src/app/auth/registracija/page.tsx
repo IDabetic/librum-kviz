@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -8,7 +10,6 @@ import { LibrumIcon } from '@/components/Header'
 
 export default function RegistracijaPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   const [form, setForm] = useState({ ime: '', prezime: '', email: '', telefon: '', password: '', password2: '' })
   const [error, setError] = useState('')
@@ -32,6 +33,7 @@ export default function RegistracijaPage() {
     }
 
     setLoading(true)
+    const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
