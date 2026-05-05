@@ -14,6 +14,7 @@ export default function RegistracijaPage() {
   const [form, setForm] = useState({ ime: '', prezime: '', email: '', telefon: '', password: '', password2: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -49,10 +50,40 @@ export default function RegistracijaPage() {
     if (error) {
       setError(error.message === 'User already registered' ? 'Ovaj email je već registrovan.' : error.message)
     } else {
-      router.push('/kvizovi')
-      router.refresh()
+      setSuccess(true)
     }
     setLoading(false)
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
+        <div className="w-full max-w-md animate-pop-in">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: '#E8F8F0' }}>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <path d="M6 8h20M6 8v16a2 2 0 002 2h12a2 2 0 002-2V8M6 8l2-3h16l2 3M13 14l2 2 4-4" stroke="#5DBF94" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: '#2C2D81' }}>Proverite email!</h2>
+            <p className="text-gray-500 mb-2">
+              Poslali smo vam link za potvrdu na:
+            </p>
+            <p className="font-semibold text-gray-700 mb-6">{form.email}</p>
+            <p className="text-sm text-gray-400 mb-6">
+              Kliknite na link u emailu da aktivirate nalog. Proverite i spam folder.
+            </p>
+            <Link
+              href="/auth/prijava"
+              className="inline-flex items-center justify-center w-full py-3.5 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
+            >
+              Idite na prijavu
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
