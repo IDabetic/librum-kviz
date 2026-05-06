@@ -54,7 +54,7 @@ function ConfirmPopup({ title, message, onConfirm, onCancel }: {
             className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-semibold text-gray-600">Ne</button>
           <button onClick={onConfirm}
             className="flex-1 py-3 rounded-xl font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>Da</button>
+            style={{ background: '#609DED' }}>Da</button>
         </div>
       </div>
     </div>
@@ -393,7 +393,7 @@ export default function MultiplayerGamePage() {
     const amGuest = myId === room.guest_id
     return (
       <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
         <div className="text-white text-center px-6">
           {amGuest ? (
             <>
@@ -401,7 +401,7 @@ export default function MultiplayerGamePage() {
               <h2 className="text-2xl font-bold mb-2">Ušao/la si u sobu!</h2>
               <p className="text-white/70 mb-4">Čekamo da domaćin počne meč...</p>
               <div className="flex items-center gap-2 justify-center">
-                <div className="w-2 h-2 rounded-full bg-[#5DBF94] animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-[#4CAF50] animate-pulse" />
                 <span className="text-white/50 text-sm">Format: {formatLabel(room.game_format)}</span>
               </div>
             </>
@@ -422,7 +422,7 @@ export default function MultiplayerGamePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
         <div className="text-white text-center">
           <Image src="/chars-neutral.png" alt="" width={160} height={160} className="mx-auto mb-4 animate-bounce" />
           <p className="text-xl font-semibold">Pripremamo meč...</p>
@@ -439,12 +439,12 @@ export default function MultiplayerGamePage() {
     const draw = isTimed ? myFinalScore === opponentScore : myWins === opponentWins
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
-        style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
         <Image src={draw ? '/chars-neutral.png' : iWon ? '/chars-winner.png' : '/chars-loser.png'}
           alt="" width={200} height={200} className="mb-4" />
         <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="p-6 text-center"
-            style={{ background: draw ? '#FFF8EC' : iWon ? '#E8F8F0' : '#FEF2F2' }}>
+            style={{ background: draw ? '#FFECBC' : iWon ? '#E8F8F0' : '#FEE2E2' }}>
             <h2 className="text-2xl font-black" style={{ color: draw ? '#92400e' : iWon ? '#065f46' : '#b91c1c' }}>
               {draw ? 'Nerešeno!' : iWon ? 'Pobedio/la si!' : 'Izgubio/la si!'}
             </h2>
@@ -454,12 +454,12 @@ export default function MultiplayerGamePage() {
           </div>
           <div className="p-6">
             <div className="flex gap-4 mb-6">
-              <div className="flex-1 bg-[#EEF0FF] rounded-2xl p-4 text-center">
+              <div className="flex-1 bg-[#BCD9FF] rounded-2xl p-4 text-center">
                 <p className="text-xs text-gray-500 mb-1">Ti</p>
-                <p className="text-3xl font-black" style={{ color: '#2C2D81' }}>{myFinalScore}</p>
+                <p className="text-3xl font-black" style={{ color: '#343434' }}>{myFinalScore}</p>
                 <p className="text-xs text-gray-400">bodova</p>
               </div>
-              <div className="flex-1 bg-[#FAF4EC] rounded-2xl p-4 text-center">
+              <div className="flex-1 bg-[#FAFAFA] rounded-2xl p-4 text-center">
                 <p className="text-xs text-gray-500 mb-1">{opponentName}</p>
                 <p className="text-3xl font-black text-gray-700">{opponentScore}</p>
                 <p className="text-xs text-gray-400">bodova</p>
@@ -472,7 +472,7 @@ export default function MultiplayerGamePage() {
               </button>
               <button onClick={() => router.push('/kvizovi')}
                 className="flex-1 py-3 rounded-xl font-semibold text-sm text-white"
-                style={{ background: '#2C2D81' }}>
+                style={{ background: '#343434' }}>
                 Kvizovi
               </button>
             </div>
@@ -486,7 +486,7 @@ export default function MultiplayerGamePage() {
   if (finished && !opponentFinished) {
     return (
       <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
         <div className="text-white text-center px-6 max-w-sm">
           <div className="text-6xl mb-4 animate-bounce">⏰</div>
           <h2 className="text-2xl font-bold mb-2">Završio/la si!</h2>
@@ -513,7 +513,7 @@ export default function MultiplayerGamePage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #2C2D81 0%, #3766B0 60%, #F5F6FA 100%)' }}>
+      style={{ background: 'linear-gradient(160deg, #2a2a2a 0%, #343434 50%, #FAFAFA 100%)' }}>
 
       {/* ── Side panels (desktop only) ── */}
       <div className="hidden xl:block fixed z-10" style={{ left: 16, top: '50%', transform: 'translateY(-50%)' }}>
@@ -521,7 +521,7 @@ export default function MultiplayerGamePage() {
           name={myName}
           score={totalScore}
           wins={myDuetWins}
-          color="#5DBF94"
+          color="#4CAF50"
           label="Ti"
         />
       </div>
@@ -530,14 +530,14 @@ export default function MultiplayerGamePage() {
           name={opponentName}
           score={opponentScore}
           wins={opDuetWins}
-          color="#FDC361"
+          color="#FFCB46"
           label="Protivnik"
         />
       </div>
 
       {/* ── Top control bar ── */}
       <div className="sticky top-0 z-20 px-4 py-2"
-        style={{ background: 'rgba(44,45,129,0.92)', backdropFilter: 'blur(8px)' }}>
+        style={{ background: 'rgba(52,52,52,0.92)', backdropFilter: 'blur(8px)' }}>
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <button onClick={() => setShowResetConfirm(true)}
             className="text-white/80 hover:text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-white/10">
@@ -568,11 +568,11 @@ export default function MultiplayerGamePage() {
         <div className="flex gap-2">
           <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${((questionInLevel + 1) / QUESTIONS_PER_LEVEL) * 100}%`, background: '#5DBF94' }} />
+              style={{ width: `${((questionInLevel + 1) / QUESTIONS_PER_LEVEL) * 100}%`, background: '#4CAF50' }} />
           </div>
           <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${opponentProgress}%`, background: '#FDC361' }} />
+              style={{ width: `${opponentProgress}%`, background: '#FFCB46' }} />
           </div>
         </div>
       </div>
@@ -593,8 +593,8 @@ export default function MultiplayerGamePage() {
                 const isSelected = idx === selected
                 let style: React.CSSProperties = { borderColor: '#e5e7eb', background: 'white', color: '#374151' }
                 if (revealed) {
-                  if (isCorrect) style = { borderColor: '#5DBF94', background: '#E8F8F0', color: '#0A4C35' }
-                  else if (isSelected) style = { borderColor: '#e05252', background: '#FEF2F2', color: '#b91c1c' }
+                  if (isCorrect) style = { borderColor: '#4CAF50', background: '#E8F8F0', color: '#15803d' }
+                  else if (isSelected) style = { borderColor: '#E55353', background: '#FEE2E2', color: '#b91c1c' }
                   else style = { borderColor: '#e5e7eb', background: '#fafafa', color: '#9ca3af' }
                 }
                 return (
@@ -602,7 +602,7 @@ export default function MultiplayerGamePage() {
                     className="flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl border-2 text-left transition-all hover:scale-[1.01] disabled:cursor-default font-medium"
                     style={style}>
                     <span className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-bold"
-                      style={{ background: revealed && isCorrect ? '#5DBF94' : revealed && isSelected ? '#e05252' : '#F5F6FA', color: revealed && (isCorrect || isSelected) ? 'white' : '#6b7280' }}>
+                      style={{ background: revealed && isCorrect ? '#4CAF50' : revealed && isSelected ? '#E55353' : '#F5F6FA', color: revealed && (isCorrect || isSelected) ? 'white' : '#6b7280' }}>
                       {revealed && isCorrect ? '✓' : revealed && isSelected && !isCorrect ? '✗' : OPTION_LABELS[idx]}
                     </span>
                     <span className="flex-1 text-sm">{option}</span>
@@ -617,25 +617,25 @@ export default function MultiplayerGamePage() {
       {/* ── Level end overlay ── */}
       {showLevelEnd && (
         <div className="fixed inset-0 z-40 flex flex-col items-center justify-center px-6"
-          style={{ background: 'linear-gradient(160deg, #2C2D81 0%, #3766B0 100%)' }}>
+          style={{ background: 'linear-gradient(160deg, #343434 0%, #609DED 100%)' }}>
           <Image src="/chars-correct.png" alt="" width={180} height={180} className="mb-2" />
           <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4"
-              style={{ background: '#EEF0FF', color: '#2C2D81' }}>⚔️ Nivo {currentLevel} završen!</div>
+              style={{ background: '#BCD9FF', color: '#343434' }}>⚔️ Nivo {currentLevel} završen!</div>
             <div className="flex gap-4 mb-4">
-              <div className="flex-1 bg-[#FAF4EC] rounded-2xl p-4">
-                <div className="text-2xl font-black" style={{ color: levelScore >= 0 ? '#5DBF94' : '#e05252' }}>
+              <div className="flex-1 bg-[#FAFAFA] rounded-2xl p-4">
+                <div className="text-2xl font-black" style={{ color: levelScore >= 0 ? '#4CAF50' : '#E55353' }}>
                   {levelScore > 0 ? '+' : ''}{levelScore}
                 </div>
                 <div className="text-xs text-gray-400 mt-1">Ovaj nivo</div>
               </div>
-              <div className="flex-1 bg-[#EEF0FF] rounded-2xl p-4">
-                <div className="text-2xl font-black" style={{ color: '#2C2D81' }}>{totalScore}</div>
+              <div className="flex-1 bg-[#BCD9FF] rounded-2xl p-4">
+                <div className="text-2xl font-black" style={{ color: '#343434' }}>{totalScore}</div>
                 <div className="text-xs text-gray-400 mt-1">Ukupno</div>
               </div>
             </div>
             {!isTimed && (
-              <p className="text-sm font-bold mb-4" style={{ color: '#2C2D81' }}>
+              <p className="text-sm font-bold mb-4" style={{ color: '#343434' }}>
                 Pobede: Ti {myWins} – {opponentWins} {opponentName}
               </p>
             )}
@@ -646,7 +646,7 @@ export default function MultiplayerGamePage() {
               </button>
               <button onClick={handleContinueLevel}
                 className="flex-1 py-3 rounded-xl font-semibold text-white text-sm"
-                style={{ background: 'linear-gradient(135deg, #5DBF94, #45a87c)' }}>
+                style={{ background: '#4CAF50' }}>
                 Nivo {currentLevel + 1} →
               </button>
             </div>

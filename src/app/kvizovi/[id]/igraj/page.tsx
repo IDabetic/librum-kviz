@@ -22,9 +22,9 @@ function getPointsPerCorrect(difficulty: string | undefined): number {
 }
 
 function getDifficultyMeta(difficulty: string | undefined) {
-  if (difficulty === 'lako')    return { label: 'Lako',    color: '#5DBF94', bg: '#E8F8F0', textDark: '#0A4C35' }
-  if (difficulty === 'srednje') return { label: 'Srednje', color: '#FDC361', bg: '#FFF9EC', textDark: '#7a4e00' }
-  return                               { label: 'Teško',   color: '#e05252', bg: '#FEF2F2', textDark: '#b91c1c' }
+  if (difficulty === 'lako')    return { label: 'Lako',    color: '#4CAF50', bg: '#E8F8F0', textDark: '#15803d' }
+  if (difficulty === 'srednje') return { label: 'Srednje', color: '#FFCB46', bg: '#FFF9EC', textDark: '#7a4e00' }
+  return                               { label: 'Teško',   color: '#E55353', bg: '#FEE2E2', textDark: '#b91c1c' }
 }
 
 function getCharacter(revealed: boolean, selected: number | null, correctAnswer: number, timeLeft: number): string {
@@ -40,7 +40,7 @@ function CircularTimer({ timeLeft, total }: { timeLeft: number; total: number })
   const circ = 2 * Math.PI * r
   const progress = timeLeft / total
   const offset = circ * (1 - progress)
-  const color = progress > 0.5 ? '#5DBF94' : progress > 0.25 ? '#FDC361' : '#e05252'
+  const color = progress > 0.5 ? '#4CAF50' : progress > 0.25 ? '#FFCB46' : '#E55353'
   return (
     <div className="relative flex items-center justify-center" style={{ width: 56, height: 56 }}>
       <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
@@ -72,7 +72,7 @@ function ConfirmPopup({ title, message, confirmLabel = 'Da', cancelLabel = 'Ne',
           </button>
           <button onClick={disabled ? undefined : onConfirm} disabled={disabled}
             className="flex-1 py-3 rounded-xl font-semibold text-white disabled:opacity-50"
-            style={{ background: disabled ? '#ccc' : 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>
+            style={{ background: disabled ? '#ccc' : '#609DED' }}>
             {confirmLabel}
           </button>
         </div>
@@ -89,33 +89,33 @@ function LevelEndScreen({ level, levelScore, totalScore, pointsPerCorrect, onCon
 }) {
   return (
     <div className="fixed inset-0 z-40 flex flex-col items-center justify-center px-6"
-      style={{ background: 'linear-gradient(160deg, #1A1C4E 0%, #2C2D81 50%, #3766B0 100%)' }}>
+      style={{ background: 'linear-gradient(160deg, #2a2a2a 0%, #343434 50%, #404040 100%)' }}>
       <Image src="/chars-correct.png" alt="" width={220} height={220} className="mb-2" priority />
       <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-6"
-          style={{ background: '#EEF0FF', color: '#2C2D81' }}>
+          style={{ background: '#BCD9FF', color: '#343434' }}>
           ✅ Nivo {level} završen!
         </div>
         <div className="flex gap-4 mb-6">
-          <div className="flex-1 rounded-2xl p-4" style={{ background: levelScore >= 0 ? '#E8F8F0' : '#FEF2F2' }}>
-            <div className="text-3xl font-black" style={{ color: levelScore >= 0 ? '#5DBF94' : '#e05252' }}>
+          <div className="flex-1 rounded-2xl p-4" style={{ background: levelScore >= 0 ? '#E8F8F0' : '#FEE2E2' }}>
+            <div className="text-3xl font-black" style={{ color: levelScore >= 0 ? '#4CAF50' : '#E55353' }}>
               {levelScore > 0 ? '+' : ''}{levelScore}
             </div>
             <div className="text-xs text-gray-400 mt-1">Ovaj nivo</div>
           </div>
-          <div className="flex-1 rounded-2xl p-4" style={{ background: '#EEF0FF' }}>
-            <div className="text-3xl font-black" style={{ color: '#2C2D81' }}>{totalScore}</div>
+          <div className="flex-1 rounded-2xl p-4" style={{ background: '#BCD9FF' }}>
+            <div className="text-3xl font-black" style={{ color: '#343434' }}>{totalScore}</div>
             <div className="text-xs text-gray-400 mt-1">Ukupno</div>
           </div>
         </div>
         <div className="flex gap-3 text-xs text-gray-400 justify-center mb-6">
           <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs" style={{ background: '#5DBF94' }}>✓</span>
+            <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs" style={{ background: '#4CAF50' }}>✓</span>
             +{pointsPerCorrect} bod
           </span>
           <span className="text-gray-300">·</span>
           <span className="flex items-center gap-1">
-            <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs" style={{ background: '#e05252' }}>✗</span>
+            <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs" style={{ background: '#E55353' }}>✗</span>
             -{WRONG_PENALTY} bod
           </span>
         </div>
@@ -124,7 +124,7 @@ function LevelEndScreen({ level, levelScore, totalScore, pointsPerCorrect, onCon
             Završi igru
           </button>
           <button onClick={onContinue} className="flex-1 py-3 rounded-xl font-bold text-white text-sm"
-            style={{ background: 'linear-gradient(135deg, #5DBF94, #45a87c)' }}>
+            style={{ background: '#609DED' }}>
             Nivo {level + 1} →
           </button>
         </div>
@@ -285,7 +285,7 @@ export default function IgrajPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #1A1C4E 0%, #2C2D81 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #343434 100%)' }}>
         <div className="text-white text-center">
           <Image src="/chars-neutral.png" alt="" width={180} height={180} className="mx-auto mb-4 animate-bounce" />
           <p className="text-xl font-semibold">Učitavanje pitanja...</p>
@@ -296,7 +296,7 @@ export default function IgrajPage() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF4EC]">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
         <p className="text-xl font-semibold text-gray-600">Ovaj kviz nema pitanja.</p>
       </div>
     )
@@ -309,14 +309,14 @@ export default function IgrajPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #1A1C4E 0%, #2C2D81 55%, #3766B0 100%)' }}>
+      style={{ background: 'linear-gradient(160deg, #2a2a2a 0%, #343434 55%, #404040 100%)' }}>
 
       <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse at 70% 10%, rgba(253,195,97,0.07) 0%, transparent 50%), radial-gradient(ellipse at 20% 90%, rgba(93,191,148,0.06) 0%, transparent 50%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 70% 10%, rgba(255,203,70,0.08) 0%, transparent 50%), radial-gradient(ellipse at 20% 90%, rgba(96,157,237,0.07) 0%, transparent 50%)' }} />
 
       {/* ── Top control bar ── */}
       <div className="sticky top-0 z-20 px-4 py-2.5 relative"
-        style={{ background: 'rgba(26,28,78,0.88)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(253,195,97,0.15)' }}>
+        style={{ background: 'rgba(52,52,52,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,203,70,0.18)' }}>
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <button onClick={() => setShowResetConfirm(true)}
             className="flex items-center gap-1.5 text-sm font-medium transition-all px-3 py-1.5 rounded-xl"
@@ -327,7 +327,7 @@ export default function IgrajPage() {
           <div className="flex items-center gap-3">
             <div className="text-center">
               <div className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Nivo</div>
-              <div className="text-2xl font-black leading-none" style={{ color: '#FDC361' }}>{currentLevel}</div>
+              <div className="text-2xl font-black leading-none" style={{ color: '#FFCB46' }}>{currentLevel}</div>
             </div>
             <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.12)' }} />
             <div className="text-center relative">
@@ -335,7 +335,7 @@ export default function IgrajPage() {
               <div className="text-2xl font-black leading-none text-white">{totalScore}</div>
               {scoreChange && (
                 <span key={scoreChange.id} className="absolute -top-5 left-1/2 text-sm font-black"
-                  style={{ color: scoreChange.delta > 0 ? '#5DBF94' : '#e05252', transform: 'translateX(-50%)', animation: 'floatUp 0.9s ease-out forwards' }}>
+                  style={{ color: scoreChange.delta > 0 ? '#4CAF50' : '#E55353', transform: 'translateX(-50%)', animation: 'floatUp 0.9s ease-out forwards' }}>
                   {scoreChange.delta > 0 ? `+${scoreChange.delta}` : scoreChange.delta}
                 </span>
               )}
@@ -356,14 +356,14 @@ export default function IgrajPage() {
           <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Pitanje {questionInLevel + 1} od {QUESTIONS_PER_LEVEL}
           </span>
-          <span className="text-xs font-semibold" style={{ color: levelScore >= 0 ? '#5DBF94' : '#e05252' }}>
+          <span className="text-xs font-semibold" style={{ color: levelScore >= 0 ? '#4CAF50' : '#E55353' }}>
             {levelScore > 0 ? '+' : ''}{levelScore} ovaj nivo
           </span>
         </div>
         <div className="flex gap-1.5">
           {Array.from({ length: QUESTIONS_PER_LEVEL }).map((_, i) => (
             <div key={i} className="flex-1 h-1.5 rounded-full transition-all duration-300"
-              style={{ background: i < questionInLevel ? '#5DBF94' : i === questionInLevel ? '#FDC361' : 'rgba(255,255,255,0.15)' }} />
+              style={{ background: i < questionInLevel ? '#4CAF50' : i === questionInLevel ? '#FFCB46' : 'rgba(255,255,255,0.15)' }} />
           ))}
         </div>
       </div>
@@ -381,18 +381,18 @@ export default function IgrajPage() {
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold">
               <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
-                style={{ background: 'rgba(93,191,148,0.15)', color: '#5DBF94', border: '1px solid rgba(93,191,148,0.25)' }}>
+                style={{ background: 'rgba(93,191,148,0.15)', color: '#4CAF50', border: '1px solid rgba(93,191,148,0.25)' }}>
                 ✓ +{pointsPerCorrect}
               </span>
               <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg"
-                style={{ background: 'rgba(224,82,82,0.15)', color: '#e05252', border: '1px solid rgba(224,82,82,0.25)' }}>
+                style={{ background: 'rgba(224,82,82,0.15)', color: '#E55353', border: '1px solid rgba(224,82,82,0.25)' }}>
                 ✗ -{WRONG_PENALTY}
               </span>
             </div>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden"
-            style={{ boxShadow: '0 25px 60px rgba(26,28,78,0.35)' }}>
+            style={{ boxShadow: '0 25px 60px rgba(52,52,52,0.20)' }}>
 
             {/* Question header */}
             <div className="px-6 pt-6 pb-4"
@@ -405,7 +405,7 @@ export default function IgrajPage() {
                     className="w-8 h-8 rounded-lg flex items-center justify-center transition-all mt-1"
                     style={{
                       background: isReported ? 'rgba(93,191,148,0.1)' : 'transparent',
-                      color: isReported ? '#5DBF94' : 'rgba(156,163,175,0.5)',
+                      color: isReported ? '#4CAF50' : 'rgba(156,163,175,0.5)',
                     }}>
                     {isReported ? (
                       <span className="text-xs font-bold">✓</span>
@@ -430,13 +430,13 @@ export default function IgrajPage() {
                 let labelText: string = OPTION_LABELS[idx]
                 let scale = ''
                 if (revealed) {
-                  if (isCorrect)       { bg = '#E8F8F0'; borderColor = '#5DBF94'; textColor = '#0A4C35'; labelBg = '#5DBF94'; labelColor = 'white'; labelText = '✓'; scale = 'scale-[1.01]' }
-                  else if (isSelected) { bg = '#FEF2F2'; borderColor = '#e05252'; textColor = '#b91c1c'; labelBg = '#e05252'; labelColor = 'white'; labelText = '✗' }
+                  if (isCorrect)       { bg = '#E8F8F0'; borderColor = '#4CAF50'; textColor = '#15803d'; labelBg = '#4CAF50'; labelColor = 'white'; labelText = '✓'; scale = 'scale-[1.01]' }
+                  else if (isSelected) { bg = '#FEE2E2'; borderColor = '#E55353'; textColor = '#b91c1c'; labelBg = '#E55353'; labelColor = 'white'; labelText = '✗' }
                   else                 { bg = '#fafafa'; borderColor = '#f0f0f0'; textColor = '#c4c4c4'; labelBg = '#f0f0f0'; labelColor = '#c4c4c4' }
                 }
                 return (
                   <button key={idx} onClick={() => handleSelect(idx)} disabled={revealed}
-                    className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-200 ${!revealed ? 'hover:border-[#2C2D81] hover:bg-[#f5f6ff] hover:scale-[1.01]' : scale} disabled:cursor-default`}
+                    className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl border-2 text-left transition-all duration-200 ${!revealed ? 'hover:border-[#343434] hover:bg-[#f5f6ff] hover:scale-[1.01]' : scale} disabled:cursor-default`}
                     style={{ background: bg, borderColor, color: textColor }}>
                     <span className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-bold transition-all duration-200"
                       style={{ background: labelBg, color: labelColor }}>
@@ -451,7 +451,7 @@ export default function IgrajPage() {
             {/* Explanation */}
             {revealed && q.explanation && (
               <div className="mx-5 mb-4 rounded-2xl px-4 py-3 text-sm"
-                style={{ background: '#EEF0FF', color: '#2C2D81', border: '1px solid #d4d8f8' }}>
+                style={{ background: '#BCD9FF', color: '#343434', border: '1px solid #d4d8f8' }}>
                 <span className="font-bold">💡 </span>{q.explanation}
               </div>
             )}
@@ -461,7 +461,7 @@ export default function IgrajPage() {
               <div className="px-5 pb-4">
                 <button onClick={() => goNext()}
                   className="w-full py-3.5 rounded-2xl font-bold text-white text-base transition-all hover:scale-[1.01] active:scale-[0.99]"
-                  style={{ background: 'linear-gradient(135deg, #5DBF94, #45a87c)' }}>
+                  style={{ background: '#609DED' }}>
                   Nastavi →
                 </button>
               </div>
@@ -473,12 +473,12 @@ export default function IgrajPage() {
                 <button onClick={() => handleReport(q.id)}
                   className="text-xs transition-colors"
                   style={{ color: 'rgba(156,163,175,0.6)' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#e05252')}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#E55353')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'rgba(156,163,175,0.6)')}>
                   🚩 Prijavi grešku u pitanju
                 </button>
               ) : (
-                <span className="text-xs font-medium" style={{ color: '#5DBF94' }}>✓ Prijava zabeležena — hvala!</span>
+                <span className="text-xs font-medium" style={{ color: '#4CAF50' }}>✓ Prijava zabeležena — hvala!</span>
               )}
             </div>
           </div>
