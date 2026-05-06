@@ -8,6 +8,13 @@ type SoloEntry = { name: string; userId: string; totalPoints: number; bestLevel:
 type DuetEntry = { name: string; userId: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }
 
 const MEDALS = ['🥇', '🥈', '🥉']
+const VIEW_OPTIONS = [
+  { label: 'Top 10',  value: 10 },
+  { label: 'Top 50',  value: 50 },
+  { label: 'Top 100', value: 100 },
+  { label: 'Svi',     value: 0 },
+] as const
+type ViewOption = typeof VIEW_OPTIONS[number]['value']
 
 const DEMO_DUET: DuetEntry[] = [
   { name: 'Marko Petrović',   userId: '', wins: 12, losses: 3,  draws: 1, plays: 16, avatar: 'avatar_03.jpg' },
@@ -56,15 +63,60 @@ export default function LeaderboardTabs({
   )
 }
 
+function ViewTabs({ view, onChange, total, accentColor }: { view: ViewOption; onChange: (v: ViewOption) => void; total: number; accentColor: string }) {
+  return (
+    <div className="flex items-center gap-1.5 px-4 py-3 border-b border-gray-50 overflow-x-auto">
+      {VIEW_OPTIONS.map(opt => {
+        const count = opt.value === 0 ? total : Math.min(opt.value, total)
+        const active = view === opt.value
+        return (
+          <button key={opt.value} onClick={() => onChange(opt.value)}
+            className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+            style={active
+              ? { background: accentColor, color: 'white' }
+              : { background: '#f3f4f6', color: '#6b7280' }}>
+            {opt.label}
+            <span className="ml-1 opacity-60">({count})</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function PlayerRow({ p, i, gradient }: { p: SoloEntry | DuetEntry; i: number; gradient: string }) {
+  const content = (
+    <>
+      <span className="w-8 text-center text-lg flex-shrink-0">
+        {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
+      </span>
+      <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+        {p.avatar
+          ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
+          : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: gradient }}>{p.name[0]}</div>
+        }
+      </div>
+    </>
+  )
+  return content
+}
+
 function SoloBoard({ data, isDemo, user }: { data: SoloEntry[]; isDemo: boolean; user: boolean }) {
+  const [view, setView] = useState<ViewOption>(10)
+
   if (data.length === 0) {
     return (
       <EmptyState emoji="🎯" title="Solo rang lista je prazna" subtitle="Budite prvi koji će igrati!"
         href={user ? '/kvizovi' : '/auth/registracija'} label={user ? 'Idi na kvizove' : 'Registruj se'} />
     )
   }
+
+  const displayed = view === 0 ? data : data.slice(0, view)
+  const isScroll = view === 0 && data.length > 10
+
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      {/* Podium — always top 3 */}
       {data.length >= 3 && (
         <div className="p-6 border-b border-gray-50"
           style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
@@ -87,16 +139,20 @@ function SoloBoard({ data, isDemo, user }: { data: SoloEntry[]; isDemo: boolean;
           </div>
         </div>
       )}
+
       {isDemo && (
         <div className="mx-4 mt-3 px-3 py-2 rounded-xl text-xs text-center font-medium" style={{ background: '#FFF8E8', color: '#92681a' }}>
           Primer kako izgleda rang lista — stvarni podaci se pojavljuju posle prvih igara
         </div>
       )}
-      <div className={`divide-y divide-gray-50 ${data.length > 5 ? 'max-h-[420px] overflow-y-auto' : ''}`}>
-        {data.map((p, i) => {
+
+      <ViewTabs view={view} onChange={setView} total={data.length} accentColor="#2C2D81" />
+
+      <div className={isScroll ? 'max-h-[520px] overflow-y-auto' : ''}>
+        {displayed.map((p, i) => {
           const row = (
             <>
-              <span className="w-8 text-center text-lg">
+              <span className="w-8 text-center text-lg flex-shrink-0">
                 {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
               </span>
               <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
@@ -107,20 +163,20 @@ function SoloBoard({ data, isDemo, user }: { data: SoloEntry[]; isDemo: boolean;
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-gray-800">{p.name}</p>
-                <p className="text-xs text-gray-400">Nivo {p.bestLevel} · {p.plays} {p.plays === 1 ? 'igra' : 'igara'}</p>
+                <p className="text-xs text-gray-400">Nivo {(p as SoloEntry).bestLevel} · {p.plays} {p.plays === 1 ? 'igra' : 'igara'}</p>
               </div>
               <div className="text-right">
                 <div className="font-bold text-lg"
                   style={{ color: i === 0 ? '#FDC361' : i === 1 ? '#3766B0' : i === 2 ? '#c08a4a' : '#5DBF94' }}>
-                  {p.totalPoints}
+                  {(p as SoloEntry).totalPoints}
                 </div>
                 <div className="text-xs text-gray-400">bodova</div>
               </div>
             </>
           )
           return p.userId
-            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">{row}</Link>
-            : <div key={i} className="flex items-center gap-4 px-6 py-4">{row}</div>
+            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">{row}</Link>
+            : <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0">{row}</div>
         })}
       </div>
     </div>
@@ -128,14 +184,21 @@ function SoloBoard({ data, isDemo, user }: { data: SoloEntry[]; isDemo: boolean;
 }
 
 function DuetBoard({ data, isDemo, user }: { data: DuetEntry[]; isDemo: boolean; user: boolean }) {
+  const [view, setView] = useState<ViewOption>(10)
+
   if (data.length === 0) {
     return (
       <EmptyState emoji="⚔️" title="Nema duel rezultata" subtitle="Izazovi prijatelja i budi prvi na listi!"
         href={user ? '/igraj-zajedno' : '/auth/registracija'} label={user ? 'Igraj zajedno' : 'Registruj se'} />
     )
   }
+
+  const displayed = view === 0 ? data : data.slice(0, view)
+  const isScroll = view === 0 && data.length > 10
+
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      {/* Podium */}
       {data.length >= 3 && (
         <div className="p-6 border-b border-gray-50"
           style={{ background: 'linear-gradient(135deg, #3766B0 0%, #5DBF94 100%)' }}>
@@ -158,16 +221,20 @@ function DuetBoard({ data, isDemo, user }: { data: DuetEntry[]; isDemo: boolean;
           </div>
         </div>
       )}
+
       {isDemo && (
         <div className="mx-4 mt-3 px-3 py-2 rounded-xl text-xs text-center font-medium" style={{ background: '#FFF8E8', color: '#92681a' }}>
           Primer kako izgleda rang lista — stvarni podaci se pojavljuju posle prvih duela
         </div>
       )}
-      <div className={`divide-y divide-gray-50 ${data.length > 5 ? 'max-h-[420px] overflow-y-auto' : ''}`}>
-        {data.map((p, i) => {
+
+      <ViewTabs view={view} onChange={setView} total={data.length} accentColor="#3766B0" />
+
+      <div className={isScroll ? 'max-h-[520px] overflow-y-auto' : ''}>
+        {displayed.map((p, i) => {
           const row = (
             <>
-              <span className="w-8 text-center text-lg">
+              <span className="w-8 text-center text-lg flex-shrink-0">
                 {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
               </span>
               <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
@@ -188,8 +255,8 @@ function DuetBoard({ data, isDemo, user }: { data: DuetEntry[]; isDemo: boolean;
             </>
           )
           return p.userId
-            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">{row}</Link>
-            : <div key={i} className="flex items-center gap-4 px-6 py-4">{row}</div>
+            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">{row}</Link>
+            : <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0">{row}</div>
         })}
       </div>
     </div>

@@ -13,7 +13,7 @@ export default async function LeaderboardPage() {
     .select('user_id, score_points, level_reached, profiles(first_name, last_name, avatar)')
     .gt('level_reached', 0)  // only count games where at least 1 level was completed
     .order('score_points', { ascending: false })
-    .limit(200)
+    .limit(2000)
 
   const soloMap: Record<string, { name: string; userId: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }> = {}
   ;(results || []).forEach(r => {
@@ -28,7 +28,7 @@ export default async function LeaderboardPage() {
 
   const soloAggregated = Object.values(soloMap)
     .sort((a, b) => b.totalPoints - a.totalPoints || b.bestLevel - a.bestLevel)
-    .slice(0, 20)
+    .slice(0, 200)
 
   // Duet: fetch any game where at least one player submitted results.
   // status='finished' may never be set if one player leaves before the other finishes
@@ -38,7 +38,7 @@ export default async function LeaderboardPage() {
     .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, host_level_scores, guest_level_scores, game_format')
     .or('status.eq.finished,host_finished.eq.true,guest_finished.eq.true')
     .not('guest_id', 'is', null)
-    .limit(300)
+    .limit(1000)
 
   const userIds = [...new Set(
     (duetGames || []).flatMap(g => [g.host_id, g.guest_id]).filter(Boolean)
@@ -102,7 +102,7 @@ export default async function LeaderboardPage() {
 
   const duetAggregated = Object.values(duetMap)
     .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
-    .slice(0, 20)
+    .slice(0, 200)
 
   return (
     <div className="min-h-screen bg-[#FAF4EC]">
