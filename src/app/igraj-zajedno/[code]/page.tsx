@@ -2,162 +2,129 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Question } from '@/types/database'
 import Image from 'next/image'
+import { IconClose, IconCheck, IconWrong } from '@/components/icons'
 
-const QUESTIONS_PER_LEVEL = 10
-const WRONG_PENALTY = 5
-const OPTION_LABELS = ['A', 'B', 'C', 'D']
+const TIME_PER_QUESTION = 15
+const POINTS_CORRECT = 10
+const POINTS_WRONG = 5
 
 type GameRoom = {
-  id: string; room_code: string; quiz_id: string
-  host_id: string; guest_id: string | null
+  id: string
+  room_code: string
+  host_id: string
+  guest_id: string | null
   status: 'waiting' | 'playing' | 'finished'
   question_ids: string[]
-  host_answers: (number | null)[]; guest_answers: (number | null)[]
-  host_score: number; guest_score: number
-  host_finished: boolean; guest_finished: boolean
-  host_level_scores: number[]; guest_level_scores: number[]
+  host_answers: (number | null)[]
+  guest_answers: (number | null)[]
+  host_score: number
+  guest_score: number
   total_questions: number
-  game_format: string; target_wins: number | null; time_limit_seconds: number | null
+  game_format: string
   game_start_time: string | null
 }
 
-function getPointsPerCorrect(difficulty: string | undefined): number {
-  if (difficulty === 'lako') return 5
-  if (difficulty === 'srednje') return 10
-  return 25
+type Question = {
+  id: string
+  question_text: string
+  options: string[]
+  correct_answer: number
+  info: string | null
 }
 
-function formatLabel(fmt: string): string {
-  const map: Record<string, string> = {
-    best_of_3: '3 pobede', best_of_5: '5 pobeda', best_of_11: '11 pobeda',
-    time_5: '5 minuta', time_15: '15 minuta', time_30: '30 minuta',
+type DisplayQuestion = Question & {
+  shuffled: string[]
+  shuffleMap: number[]   // shuffled[i] = options[shuffleMap[i]]
+  correctIdx: number     // index in shuffled where correct lives
+}
+
+// Shuffle answers — but use a deterministic seed based on question.id so both players see same order
+function seededShuffle(q: Question): DisplayQuestion {
+  const seed = q.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  const indices = [0, 1, 2, 3]
+  // Fisher-Yates with seeded RNG
+  let s = seed
+  function rand() { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff }
+  for (let i = 3; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]]
   }
-  return map[fmt] ?? fmt
+  const shuffled = indices.map(i => q.options[i])
+  const correctIdx = indices.indexOf(q.correct_answer)
+  return { ...q, shuffled, shuffleMap: indices, correctIdx }
 }
 
-function ConfirmPopup({ title, message, onConfirm, onCancel }: {
-  title: string; message: string; onConfirm: () => void; onCancel: () => void
-}) {
+function fmtTime(s: number): string {
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+}
+
+// ── Circular timer ────────────────────────────────────────────────────────
+function Timer({ left, total }: { left: number; total: number }) {
+  const r = 22
+  const circ = 2 * Math.PI * r
+  const progress = Math.max(0, left / total)
+  const offset = circ * (1 - progress)
+  const color = progress > 0.4 ? '#4CAF50' : progress > 0.2 ? '#FFCB46' : '#E55353'
+  const pulse = left <= 5 ? 'animate-pulse' : ''
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center">
-        <div className="text-4xl mb-3">❓</div>
-        <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-        <p className="text-gray-500 text-sm mb-8">{message}</p>
-        <div className="flex gap-3">
-          <button onClick={onCancel}
-            className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-semibold text-gray-600">Ne</button>
-          <button onClick={onConfirm}
-            className="flex-1 py-3 rounded-xl font-semibold text-white"
-            style={{ background: '#609DED' }}>Da</button>
-        </div>
-      </div>
+    <div className={`relative flex items-center justify-center ${pulse}`} style={{ width: 56, height: 56 }}>
+      <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(52,52,52,0.10)" strokeWidth="3.5" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="3.5"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.95s linear, stroke 0.3s' }} />
+      </svg>
+      <span className="absolute font-black text-[15px]" style={{ color }}>{left}</span>
     </div>
   )
 }
 
-// Side panel shown during active play on large screens
-function PlayerCard({ name, score, wins, color, label }: {
-  name: string; score: number; wins: number; color: string; label: string
-}) {
-  return (
-    <div style={{
-      width: 148,
-      background: 'rgba(255,255,255,0.07)',
-      backdropFilter: 'blur(12px)',
-      border: `1.5px solid ${color}40`,
-      borderRadius: 20,
-      padding: '18px 12px',
-      textAlign: 'center',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 2,
-    }}>
-      <div style={{ fontSize: 26, marginBottom: 4 }}>{label === 'Ti' ? '👤' : '⚔️'}</div>
-      <div style={{
-        color: color, fontWeight: 800, fontSize: 12, letterSpacing: 1,
-        textTransform: 'uppercase', marginBottom: 4,
-      }}>{label}</div>
-      <div style={{
-        color: 'rgba(255,255,255,0.92)', fontWeight: 700, fontSize: 13,
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        maxWidth: '100%', marginBottom: 10,
-      }}>{name}</div>
-      <div style={{ color, fontSize: 42, fontWeight: 900, lineHeight: 1 }}>{score}</div>
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 10 }}>bodova</div>
-      <div style={{
-        width: '100%', background: 'rgba(255,255,255,0.07)',
-        borderRadius: 10, padding: '8px 4px',
-      }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.85)' }}>{wins}</div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>duet pobeda</div>
-      </div>
-    </div>
-  )
-}
-
-export default function MultiplayerGamePage() {
+export default function DuelGamePage() {
   const params = useParams()
   const router = useRouter()
   const code = params.code as string
 
   const [room, setRoom] = useState<GameRoom | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
-  const [quizDifficulty, setQuizDifficulty] = useState<string>('srednje')
+  const [profiles, setProfiles] = useState<Record<string, { name: string; avatar: string | null }>>({})
   const [myId, setMyId] = useState<string | null>(null)
-  const [profiles, setProfiles] = useState<Record<string, string>>({})
-  const [myDuetWins, setMyDuetWins] = useState(0)
-  const [opDuetWins, setOpDuetWins] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  // Game state
-  const [current, setCurrent] = useState(0)
-  const [selected, setSelected] = useState<number | null>(null)
+  // Per-question state
+  const [current, setCurrent] = useState(0)            // index into question_ids
+  const [selected, setSelected] = useState<number | null>(null)   // shuffled index
   const [revealed, setRevealed] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION)
+  const [questionStartedAt, setQuestionStartedAt] = useState<number>(Date.now())
+
+  // Local copies (mirror DB but updated optimistically)
+  const [myScore, setMyScore] = useState(0)
+  const [opScore, setOpScore] = useState(0)
   const [myAnswers, setMyAnswers] = useState<(number | null)[]>([])
-  const [totalScore, setTotalScore] = useState(0)
-  const [levelScore, setLevelScore] = useState(0)
-  const [myLevelScores, setMyLevelScores] = useState<number[]>([])
-  const [finished, setFinished] = useState(false)
-  const [showLevelEnd, setShowLevelEnd] = useState(false)
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
-  const [showFinishConfirm, setShowFinishConfirm] = useState(false)
+  const [opAnswers, setOpAnswers] = useState<(number | null)[]>([])
 
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
-  const savingRef = useRef(false)
+  // Tiebreaker
+  const [goldenRound, setGoldenRound] = useState(0)    // 0 = main game, 1+ = golden questions
+  const [duelEnded, setDuelEnded] = useState(false)
 
-  const isHost = myId && room ? myId === room.host_id : false
-  // After finish, use DB as authoritative source — local state may be stale on refresh
-  const isFinishedView = room?.status === 'finished'
-  const myDbLvlScores: number[] = isHost ? (room?.host_level_scores ?? []) : (room?.guest_level_scores ?? [])
-  const myDbScore: number = isHost ? (room?.host_score ?? 0) : (room?.guest_score ?? 0)
-  const myLvlScores = isFinishedView ? myDbLvlScores : myLevelScores
-  const myFinalScore = isFinishedView ? myDbScore : totalScore
-  const opponentLvlScores: number[] = isHost ? (room?.guest_level_scores ?? []) : (room?.host_level_scores ?? [])
-  const opponentScore: number = isHost ? (room?.guest_score ?? 0) : (room?.host_score ?? 0)
-  const opponentFinished = isHost ? room?.guest_finished : room?.host_finished
-  const opponentName = (() => {
-    if (!room) return 'Protivnik'
-    const opId = isHost ? room.guest_id : room.host_id
-    return opId ? (profiles[opId] ?? 'Igrač') : 'Čeka se...'
-  })()
-  const myName = myId ? (profiles[myId] ?? 'Ti') : 'Ti'
+  // Result page navigation
+  const [navigatingToEnd, setNavigatingToEnd] = useState(false)
 
-  const myWins = myLvlScores.filter((s, i) => s > (opponentLvlScores[i] ?? -Infinity)).length
-  const opponentWins = opponentLvlScores.filter((s, i) => s > (myLvlScores[i] ?? -Infinity)).length
-  const targetWins = room?.target_wins ?? 5
-  const isTimed = room?.game_format?.startsWith('time_') ?? false
+  const savedRef = useRef(false)
+  const startTimeRef = useRef<number>(Date.now())
 
-  const currentLevel = Math.floor(current / QUESTIONS_PER_LEVEL) + 1
-  const questionInLevel = current % QUESTIONS_PER_LEVEL
-  const pointsPerCorrect = getPointsPerCorrect(quizDifficulty)
+  const isHost = !!myId && !!room && myId === room.host_id
+  const totalMain = room?.total_questions ?? 0
+  const isGolden = current >= totalMain
+  const goldenIdx = isGolden ? current - totalMain + 1 : 0
 
+  // ── Load room & questions ────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
       try {
@@ -171,60 +138,39 @@ export default function MultiplayerGamePage() {
         if (!roomData) { router.push('/igraj-zajedno'); return }
         setRoom(roomData as GameRoom)
 
-        if (roomData.quiz_id) {
-          const { data: quizData } = await supabase
-            .from('quizzes').select('difficulty').eq('id', roomData.quiz_id).single()
-          if (quizData) setQuizDifficulty(quizData.difficulty)
-        }
-
-        // Fetch questions in chunks to avoid URL length limits
-        const qIds = roomData.question_ids as string[]
+        const ids = roomData.question_ids as string[]
         const chunkSize = 50
-        const allQData: Question[] = []
-        for (let i = 0; i < qIds.length; i += chunkSize) {
-          const { data: chunk } = await supabase
-            .from('questions').select('*').in('id', qIds.slice(i, i + chunkSize))
-          if (chunk) allQData.push(...(chunk as Question[]))
+        const all: Question[] = []
+        for (let i = 0; i < ids.length; i += chunkSize) {
+          const { data } = await supabase
+            .from('questions').select('id, question_text, options, correct_answer, info')
+            .in('id', ids.slice(i, i + chunkSize))
+          if (data) all.push(...(data as Question[]))
         }
-        const ordered = qIds
-          .map(id => allQData.find((q: Question) => q.id === id))
-          .filter(Boolean) as Question[]
+        const ordered = ids.map(id => all.find(q => q.id === id)).filter(Boolean) as Question[]
         setQuestions(ordered)
 
         const playerIds = [roomData.host_id, roomData.guest_id].filter(Boolean) as string[]
         if (playerIds.length > 0) {
           const { data: profData } = await supabase
-            .from('profiles').select('id, first_name').in('id', playerIds)
-          const map: Record<string, string> = {}
-          ;(profData || []).forEach((p: { id: string; first_name: string }) => { map[p.id] = p.first_name })
+            .from('profiles').select('id, first_name, nickname, avatar').in('id', playerIds)
+          const map: Record<string, { name: string; avatar: string | null }> = {}
+          ;(profData || []).forEach((p: { id: string; first_name: string; nickname: string; avatar: string }) => {
+            map[p.id] = { name: p.nickname || p.first_name || 'Igrač', avatar: p.avatar || null }
+          })
           setProfiles(map)
-
-          // Fetch duet wins with simple per-player queries (avoids OR+IN filter issues)
-          const opId = roomData.host_id === user.id ? roomData.guest_id : roomData.host_id
-          const [mh, mg, oh, og] = await Promise.all([
-            supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('host_id', user.id).limit(200),
-            supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('guest_id', user.id).limit(200),
-            opId ? supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('host_id', opId).limit(200) : Promise.resolve({ data: [] }),
-            opId ? supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('guest_id', opId).limit(200) : Promise.resolve({ data: [] }),
-          ])
-          const myW = [
-            ...((mh.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.host_score > g.guest_score),
-            ...((mg.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.guest_score > g.host_score),
-          ].length
-          const opW = [
-            ...((oh.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.host_score > g.guest_score),
-            ...((og.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.guest_score > g.host_score),
-          ].length
-          setMyDuetWins(myW)
-          setOpDuetWins(opW)
         }
 
-        // Initialize timer if time-based and already started
-        if (roomData.time_limit_seconds && roomData.game_start_time) {
-          const elapsed = Math.floor((Date.now() - new Date(roomData.game_start_time).getTime()) / 1000)
-          const remaining = Math.max(0, roomData.time_limit_seconds - elapsed)
-          setTimeRemaining(remaining)
-        }
+        // Sync from DB
+        setMyScore(roomData.host_id === user.id ? (roomData.host_score ?? 0) : (roomData.guest_score ?? 0))
+        setOpScore(roomData.host_id === user.id ? (roomData.guest_score ?? 0) : (roomData.host_score ?? 0))
+        setMyAnswers(roomData.host_id === user.id ? (roomData.host_answers ?? []) : (roomData.guest_answers ?? []))
+        setOpAnswers(roomData.host_id === user.id ? (roomData.guest_answers ?? []) : (roomData.host_answers ?? []))
+        // Resume to next unanswered question
+        const myA = roomData.host_id === user.id ? (roomData.host_answers ?? []) : (roomData.guest_answers ?? [])
+        setCurrent(myA.length)
+        setQuestionStartedAt(Date.now())
+        setTimeLeft(TIME_PER_QUESTION)
       } finally {
         setLoading(false)
       }
@@ -232,186 +178,188 @@ export default function MultiplayerGamePage() {
     load()
   }, [code, router])
 
-  // Real-time subscription — profiles deliberately excluded from deps to keep channel stable
-  const profilesRef = useRef(profiles)
-  useEffect(() => { profilesRef.current = profiles }, [profiles])
-
+  // ── Realtime sync ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!room?.id) return
+    if (!room?.id || !myId) return
     const supabase = createClient()
-    const channel = supabase.channel(`game-${room.id}`)
+    const channel = supabase.channel(`duel-${room.id}`)
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'game_rooms', filter: `id=eq.${room.id}`,
       }, (payload) => {
-        const updated = payload.new as GameRoom
-
-        // When game finishes, re-fetch authoritative data from DB
-        if (updated.status === 'finished') {
-          supabase.from('game_rooms').select('*').eq('id', updated.id).single().then(({ data }) => {
-            if (data) setRoom(data as GameRoom)
-          })
-          return
-        }
-
-        setRoom(prev => ({ ...prev, ...updated }))
-
-        // Guest was waiting for host to start — initialize timer now
-        if (updated.status === 'playing' && updated.game_start_time && updated.time_limit_seconds) {
-          const elapsed = Math.floor((Date.now() - new Date(updated.game_start_time).getTime()) / 1000)
-          const remaining = Math.max(0, updated.time_limit_seconds - elapsed)
-          setTimeRemaining(remaining)
-        }
-
-        if (updated.guest_id && !profilesRef.current[updated.guest_id]) {
-          supabase.from('profiles').select('id, first_name').eq('id', updated.guest_id).single().then(({ data }) => {
-            if (data) setProfiles(p => ({ ...p, [data.id]: data.first_name }))
-          })
-        }
-        if (updated.host_finished && updated.guest_finished) {
-          supabase.from('game_rooms').update({ status: 'finished' }).eq('id', updated.id)
-        }
-        if (updated.status === 'waiting') router.push('/igraj-zajedno')
+        const u = payload.new as GameRoom
+        setRoom(prev => ({ ...(prev as GameRoom), ...u }))
+        const opAns = isHost ? (u.guest_answers ?? []) : (u.host_answers ?? [])
+        const opSc = isHost ? (u.guest_score ?? 0) : (u.host_score ?? 0)
+        setOpAnswers(opAns)
+        setOpScore(opSc)
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [room?.id, router])
+  }, [room?.id, myId, isHost])
 
-  // Countdown timer for time-based games
+  // ── Per-question countdown ────────────────────────────────────────────────
   useEffect(() => {
-    if (!isTimed || timeRemaining === null || finished) return
-    if (timeRemaining <= 0) {
-      handleForceFinish()
+    if (loading || revealed || duelEnded || navigatingToEnd) return
+    if (!questions[current]) return
+    if (timeLeft <= 0) {
+      handleAnswer(null)
       return
     }
-    const t = setTimeout(() => setTimeRemaining(s => (s ?? 1) - 1), 1000)
+    const t = setTimeout(() => setTimeLeft(s => s - 1), 1000)
     return () => clearTimeout(t)
-  }, [timeRemaining, isTimed, finished])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, revealed, loading, current, duelEnded, navigatingToEnd, questions])
 
-  function handleForceFinish() {
-    if (savingRef.current) return
-    setFinished(true)
-    submitFinished(totalScore, myLevelScores, myAnswers)
-  }
-
-  async function submitFinished(score: number, levelScores: number[], answers: (number | null)[]) {
-    if (!room?.id || !myId || savingRef.current) return
-    savingRef.current = true
-    const supabase = createClient()
-    const update = isHost
-      ? { host_score: score, host_level_scores: levelScores, host_answers: answers, host_finished: true }
-      : { guest_score: score, guest_level_scores: levelScores, guest_answers: answers, guest_finished: true }
-    await supabase.from('game_rooms').update(update).eq('id', room.id)
-
-    // After saving own result, check if opponent already finished.
-    // The realtime handler also does this, but if the opponent left the page,
-    // nobody else will trigger the status update — so we do it ourselves here.
-    const { data: latest } = await supabase
-      .from('game_rooms').select('host_finished, guest_finished').eq('id', room.id).single()
-    if (latest?.host_finished && latest?.guest_finished) {
-      await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
+  // ── Detect both answered or timeout — reveal & advance ────────────────────
+  // Watch revealed: when both answers exist for current question OR timeout, show reveal
+  useEffect(() => {
+    if (loading || revealed || duelEnded || !room || !questions[current]) return
+    const myAnswered = myAnswers[current] !== undefined
+    const opAnswered = opAnswers[current] !== undefined
+    if (myAnswered && opAnswered) {
+      setRevealed(true)
     }
-  }
+  }, [myAnswers, opAnswers, current, revealed, loading, duelEnded, room, questions])
 
-  const goNext = useCallback((forcedAnswer?: number | null) => {
-    const ans = forcedAnswer !== undefined ? forcedAnswer : selected
-    const q = questions[current]
-    if (!q) return
+  // ── After reveal: pause 3s then advance ───────────────────────────────────
+  useEffect(() => {
+    if (!revealed || duelEnded) return
+    const t = setTimeout(() => advanceQuestion(), 3500)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealed, duelEnded])
 
-    let delta = 0
-    if (ans === q.correct_answer) delta = pointsPerCorrect
-    else if (ans !== null) delta = -WRONG_PENALTY
+  // ── Answer ───────────────────────────────────────────────────────────────
+  async function handleAnswer(shuffledIdx: number | null) {
+    if (revealed || !questions[current] || !room || !myId) return
+    if (myAnswers[current] !== undefined) return // already answered
 
-    const newTotalScore = totalScore + delta
-    const newLevelScore = levelScore + delta
-    const newAnswers = [...myAnswers, ans ?? null]
+    const q = seededShuffle(questions[current])
+    const isCorrect = shuffledIdx !== null && shuffledIdx === q.correctIdx
+    const delta = isCorrect ? POINTS_CORRECT : -POINTS_WRONG
+    const newScore = Math.max(0, myScore + delta)
+    const newAnswers = [...myAnswers]
+    newAnswers[current] = shuffledIdx
 
-    setTotalScore(newTotalScore)
-    setLevelScore(newLevelScore)
+    setSelected(shuffledIdx)
+    setMyScore(newScore)
     setMyAnswers(newAnswers)
 
-    const update = isHost ? { host_answers: newAnswers } : { guest_answers: newAnswers }
-    if (room?.id) createClient().from('game_rooms').update(update).eq('id', room.id)
+    const supabase = createClient()
+    const update = isHost
+      ? { host_answers: newAnswers, host_score: newScore }
+      : { guest_answers: newAnswers, guest_score: newScore }
+    await supabase.from('game_rooms').update(update).eq('id', room.id)
+  }
 
-    if (questionInLevel === QUESTIONS_PER_LEVEL - 1) {
-      const newLevelScores = [...myLevelScores, newLevelScore]
-      setMyLevelScores(newLevelScores)
+  // ── Advance to next question (or golden round, or end) ────────────────────
+  function advanceQuestion() {
+    if (!room || duelEnded) return
 
-      const newMyWins = newLevelScores.filter((s, i) => s > (opponentLvlScores[i] ?? -Infinity)).length
-      if (!isTimed && newMyWins >= targetWins) {
-        setFinished(true)
-        submitFinished(newTotalScore, newLevelScores, newAnswers)
+    const nextIdx = current + 1
+    const finishedMain = nextIdx >= totalMain
+
+    if (finishedMain) {
+      // Check tie
+      if (myScore === opScore && questions[nextIdx]) {
+        // Continue with golden question
+        setCurrent(nextIdx)
+        setSelected(null)
+        setRevealed(false)
+        setTimeLeft(TIME_PER_QUESTION)
+        setQuestionStartedAt(Date.now())
+        setGoldenRound(g => g + 1)
         return
       }
-
-      const levelUpdate = isHost
-        ? { host_level_scores: newLevelScores, host_score: newTotalScore }
-        : { guest_level_scores: newLevelScores, guest_score: newTotalScore }
-      if (room?.id) createClient().from('game_rooms').update(levelUpdate).eq('id', room.id)
-
-      setTimeout(() => { setLevelScore(newLevelScore); setShowLevelEnd(true) }, 50)
+      // Resolve and end
+      endDuel()
       return
     }
 
-    setCurrent(c => c + 1)
+    setCurrent(nextIdx)
     setSelected(null)
     setRevealed(false)
-  }, [selected, questions, current, totalScore, levelScore, myAnswers, myLevelScores, questionInLevel, pointsPerCorrect, isTimed, targetWins, opponentLvlScores, isHost, room?.id])
-
-  function handleSelect(idx: number) {
-    if (revealed || finished) return
-    setSelected(idx)
-    setRevealed(true)
-    setTimeout(() => goNext(idx), 1200)
+    setTimeLeft(TIME_PER_QUESTION)
+    setQuestionStartedAt(Date.now())
   }
 
-  function handleContinueLevel() {
-    setShowLevelEnd(false)
-    setLevelScore(0)
-    setCurrent(c => c + 1)
-    setSelected(null)
-    setRevealed(false)
+  async function endDuel() {
+    if (savedRef.current || duelEnded) return
+    savedRef.current = true
+    setDuelEnded(true)
+
+    if (room && myId) {
+      const supabase = createClient()
+      // Mark as finished
+      await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
+    }
+
+    // Persist result for end screen
+    const totalAnswered = myAnswers.length
+    const myCorrect: number = myAnswers.reduce<number>((acc, ans, i) => {
+      if (ans === null || ans === undefined || !questions[i]) return acc
+      return acc + (ans === seededShuffle(questions[i]).correctIdx ? 1 : 0)
+    }, 0)
+    const opCorrect: number = opAnswers.reduce<number>((acc, ans, i) => {
+      if (ans === null || ans === undefined || !questions[i]) return acc
+      return acc + (ans === seededShuffle(questions[i]).correctIdx ? 1 : 0)
+    }, 0)
+    const totalTime = Math.floor((Date.now() - startTimeRef.current) / 1000)
+    const opId = isHost ? room?.guest_id : room?.host_id
+
+    sessionStorage.setItem(`duel-result-${code}`, JSON.stringify({
+      myScore, opScore,
+      myCorrect, opCorrect,
+      myWrong: totalAnswered - myCorrect,
+      opWrong: totalAnswered - opCorrect,
+      totalAnswered,
+      totalTime,
+      totalQuestions: totalMain,
+      goldenRounds: goldenRound,
+      myName: myId ? profiles[myId]?.name : 'Ti',
+      opName: opId ? profiles[opId]?.name : 'Protivnik',
+      myAvatar: myId ? profiles[myId]?.avatar : null,
+      opAvatar: opId ? profiles[opId]?.avatar : null,
+      iWon: myScore > opScore,
+      isDraw: myScore === opScore,
+    }))
+
+    setNavigatingToEnd(true)
+    setTimeout(() => router.push(`/igraj-zajedno/${code}/kraj`), 1200)
   }
 
-  function handleManualFinish() {
-    setShowFinishConfirm(false)
-    const completedLevels = myLevelScores.length
-    if (completedLevels < 1) return
-    setFinished(true)
-    submitFinished(totalScore, myLevelScores, myAnswers)
+  // ── Confirm exit ──────────────────────────────────────────────────────────
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
+        <div className="w-8 h-8 rounded-full border-2 animate-spin"
+          style={{ borderColor: '#609DED', borderTopColor: 'transparent' }} />
+      </div>
+    )
   }
 
-  async function handleReset() {
-    if (!room?.id) return
-    await createClient().from('game_rooms').update({ status: 'waiting', guest_id: null }).eq('id', room.id)
-    router.push('/igraj-zajedno')
-  }
-
-  // ── Screens ────────────────────────────────────────────────────────────────
-
-  // Guest waiting for host to start (status = 'waiting' with guest_id set)
-  if (!loading && room?.status === 'waiting') {
+  // Guest waiting for host start
+  if (room?.status === 'waiting') {
     const amGuest = myId === room.guest_id
     return (
-      <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
-        <div className="text-white text-center px-6">
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#FAFAFA' }}>
+        <div className="card-soft p-9 max-w-sm text-center">
+          <div className="text-5xl mb-5">⏳</div>
           {amGuest ? (
             <>
-              <div className="text-6xl mb-6">⏳</div>
-              <h2 className="text-2xl font-bold mb-2">Ušao/la si u sobu!</h2>
-              <p className="text-white/70 mb-4">Čekamo da domaćin počne meč...</p>
-              <div className="flex items-center gap-2 justify-center">
-                <div className="w-2 h-2 rounded-full bg-[#4CAF50] animate-pulse" />
-                <span className="text-white/50 text-sm">Format: {formatLabel(room.game_format)}</span>
-              </div>
+              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#343434' }}>Ušao/la si u sobu!</h2>
+              <p className="text-[14px] mb-2" style={{ color: '#9C9C9C' }}>Čekamo da domaćin počne duel…</p>
             </>
           ) : (
             <>
-              <div className="text-6xl mb-6">⏳</div>
-              <h2 className="text-2xl font-bold mb-2">Čekamo protivnika...</h2>
-              <p className="text-white/70 mb-6">Format: <strong>{formatLabel(room.game_format)}</strong></p>
-              <div className="text-5xl font-black py-6 px-8 rounded-2xl mb-4 inline-block"
-                style={{ background: 'rgba(255,255,255,0.15)', letterSpacing: '0.25em' }}>{code}</div>
+              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#343434' }}>Čekamo protivnika…</h2>
+              <div className="font-black py-5 px-7 rounded-2xl my-4 inline-block"
+                style={{ background: '#BCD9FF', color: '#343434', letterSpacing: '0.25em', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+                {code}
+              </div>
             </>
           )}
         </div>
@@ -419,260 +367,207 @@ export default function MultiplayerGamePage() {
     )
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
-        <div className="text-white text-center">
-          <Image src="/chars-neutral.png" alt="" width={160} height={160} className="mx-auto mb-4 animate-bounce" />
-          <p className="text-xl font-semibold">Pripremamo meč...</p>
-        </div>
-      </div>
-    )
-  }
+  if (!questions[current]) return null
 
-  // Both finished — results
-  if (room?.status === 'finished') {
-    // Wins-based: whoever has more level wins; draws if equal.
-    // Timed: compare total scores from DB.
-    const iWon = isTimed ? myFinalScore > opponentScore : myWins > opponentWins
-    const draw = isTimed ? myFinalScore === opponentScore : myWins === opponentWins
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
-        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
-        <Image src={draw ? '/chars-neutral.png' : iWon ? '/chars-winner.png' : '/chars-loser.png'}
-          alt="" width={200} height={200} className="mb-4" />
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="p-6 text-center"
-            style={{ background: draw ? '#FFECBC' : iWon ? '#E8F8F0' : '#FEE2E2' }}>
-            <h2 className="text-2xl font-black" style={{ color: draw ? '#92400e' : iWon ? '#065f46' : '#b91c1c' }}>
-              {draw ? 'Nerešeno!' : iWon ? 'Pobedio/la si!' : 'Izgubio/la si!'}
-            </h2>
-            {!isTimed && <p className="text-sm mt-1" style={{ color: draw ? '#92400e' : iWon ? '#065f46' : '#b91c1c' }}>
-              {myWins} – {opponentWins} u nivoima
-            </p>}
-          </div>
-          <div className="p-6">
-            <div className="flex gap-4 mb-6">
-              <div className="flex-1 bg-[#BCD9FF] rounded-2xl p-4 text-center">
-                <p className="text-xs text-gray-500 mb-1">Ti</p>
-                <p className="text-3xl font-black" style={{ color: '#343434' }}>{myFinalScore}</p>
-                <p className="text-xs text-gray-400">bodova</p>
-              </div>
-              <div className="flex-1 bg-[#FAFAFA] rounded-2xl p-4 text-center">
-                <p className="text-xs text-gray-500 mb-1">{opponentName}</p>
-                <p className="text-3xl font-black text-gray-700">{opponentScore}</p>
-                <p className="text-xs text-gray-400">bodova</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => router.push('/igraj-zajedno')}
-                className="flex-1 py-3 rounded-xl border border-gray-200 font-semibold text-sm text-gray-600">
-                Nova igra
-              </button>
-              <button onClick={() => router.push('/kvizovi')}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm text-white"
-                style={{ background: '#343434' }}>
-                Kvizovi
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const q = seededShuffle(questions[current])
+  const myAns = myAnswers[current]
+  const opAns = opAnswers[current]
+  const opAnswered = opAns !== undefined && opAns !== null || (revealed && opAns === null)
+  const myAnswered = myAns !== undefined
 
-  // Waiting for opponent to finish
-  if (finished && !opponentFinished) {
-    return (
-      <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #2a2a2a 0%, #404040 100%)' }}>
-        <div className="text-white text-center px-6 max-w-sm">
-          <div className="text-6xl mb-4 animate-bounce">⏰</div>
-          <h2 className="text-2xl font-bold mb-2">Završio/la si!</h2>
-          <p className="text-white/70">Tvoj rezultat: <strong className="text-white">{totalScore} bodova</strong></p>
-          <p className="text-white/50 text-sm mt-4 mb-8">Čekamo da {opponentName} završi...</p>
-          <p className="text-white/30 text-xs mb-3">Ako protivnik ne završi, možeš otići — tvoj rezultat je sačuvan.</p>
-          <button
-            onClick={() => router.push('/igraj-zajedno')}
-            className="w-full py-3 rounded-xl font-semibold text-sm"
-            style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}>
-            Idi na lobi →
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (questions.length === 0) return null
-  const q = questions[current]
-
-  const opponentAnswers = isHost ? (room?.guest_answers ?? []) : (room?.host_answers ?? [])
-  const opponentProgress = Math.round((opponentAnswers.length / Math.max(questions.length, 1)) * 100)
-  const formatTimeRemaining = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const opId = isHost ? room?.guest_id : room?.host_id
+  const myProf = myId ? profiles[myId] : null
+  const opProf = opId ? profiles[opId] : null
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #2a2a2a 0%, #343434 50%, #FAFAFA 100%)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
 
-      {/* ── Side panels (desktop only) ── */}
-      <div className="hidden xl:block fixed z-10" style={{ left: 16, top: '50%', transform: 'translateY(-50%)' }}>
-        <PlayerCard
-          name={myName}
-          score={totalScore}
-          wins={myDuetWins}
-          color="#4CAF50"
-          label="Ti"
-        />
-      </div>
-      <div className="hidden xl:block fixed z-10" style={{ right: 16, top: '50%', transform: 'translateY(-50%)' }}>
-        <PlayerCard
-          name={opponentName}
-          score={opponentScore}
-          wins={opDuetWins}
-          color="#FFCB46"
-          label="Protivnik"
-        />
-      </div>
-
-      {/* ── Top control bar ── */}
-      <div className="sticky top-0 z-20 px-4 py-2"
-        style={{ background: 'rgba(52,52,52,0.92)', backdropFilter: 'blur(8px)' }}>
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <button onClick={() => setShowResetConfirm(true)}
-            className="text-white/80 hover:text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-white/10">
-            ↩ Resetuj
+      {/* HUD */}
+      <header className="sticky top-0 z-30 backdrop-blur-xl"
+        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+          <button onClick={() => setShowExitConfirm(true)}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2]"
+            style={{ color: '#9C9C9C' }} aria-label="Izađi">
+            <IconClose size={18} strokeWidth={2.2} />
           </button>
-          <div className="text-center">
-            <div className="text-white font-bold text-sm">
-              {isTimed
-                ? timeRemaining !== null ? formatTimeRemaining(timeRemaining) : '—'
-                : `${myWins} – ${opponentWins} (${formatLabel(room?.game_format ?? '')})`}
-            </div>
-            <div className="text-white/60 text-xs">Nivo {currentLevel}</div>
-          </div>
-          <button onClick={() => setShowFinishConfirm(true)}
-            className="text-white/80 hover:text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-white/10">
-            Završi ⏹
-          </button>
-        </div>
-      </div>
 
-      {/* ── Dual progress ── */}
-      <div className="px-4 pt-3 pb-1 max-w-2xl mx-auto w-full">
-        <div className="flex items-center justify-between text-xs text-white/60 mb-1">
-          <span>{myName} · {totalScore} bod.</span>
-          <span>Pit. {questionInLevel + 1}/10</span>
-          <span>{opponentName} · {opponentScore} bod.</span>
-        </div>
-        <div className="flex gap-2">
-          <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${((questionInLevel + 1) / QUESTIONS_PER_LEVEL) * 100}%`, background: '#4CAF50' }} />
-          </div>
-          <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${opponentProgress}%`, background: '#FFCB46' }} />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Question card ── */}
-      <div className="flex-1 flex items-start justify-center px-4 pb-32 pt-3">
-        <div className="w-full max-w-2xl" key={current}>
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-            <div className="p-6 pb-4">
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Nivo {currentLevel} · Pitanje {questionInLevel + 1}
-              </span>
-              <h2 className="text-xl font-bold text-gray-800 leading-snug mt-3">{q.question_text}</h2>
+          <div className="flex items-center gap-3 sm:gap-5 flex-1 justify-center">
+            <PlayerScore name={myProf?.name || 'Ti'} avatar={myProf?.avatar} score={myScore} accent="#609DED" you />
+            <div className="text-center">
+              {isGolden ? (
+                <>
+                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#FFCB46' }}>Zlatno</div>
+                  <div className="font-black text-[16px]" style={{ color: '#FFCB46' }}>{goldenIdx}</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>Pitanje</div>
+                  <div className="font-black text-[16px]" style={{ color: '#343434' }}>{current + 1}/{totalMain}</div>
+                </>
+              )}
             </div>
-            <div className="px-6 pb-6 grid grid-cols-1 gap-3">
-              {q.options.map((option: string, idx: number) => {
-                const isCorrect = idx === q.correct_answer
-                const isSelected = idx === selected
-                let style: React.CSSProperties = { borderColor: '#e5e7eb', background: 'white', color: '#374151' }
+            <PlayerScore name={opProf?.name || 'Protivnik'} avatar={opProf?.avatar} score={opScore} accent="#FFCB46" />
+          </div>
+
+          <Timer left={Math.max(0, timeLeft)} total={TIME_PER_QUESTION} />
+        </div>
+      </header>
+
+      {/* Game body */}
+      <main className="flex-1 px-4 sm:px-6 py-5">
+        <div className="max-w-2xl mx-auto" key={q.id}>
+
+          {isGolden && (
+            <div className="rounded-2xl px-4 py-3 mb-4 text-center font-bold text-[13px]"
+              style={{ background: '#FFCB46', color: '#343434' }}>
+              ⚡ Zlatno pitanje — odlučuje pobednika
+            </div>
+          )}
+
+          <div className="card-soft p-6 sm:p-8 mb-4">
+            <h2 className="font-bold tracking-tight leading-snug mb-7"
+              style={{ color: '#343434', fontSize: 'clamp(18px, 3vw, 22px)' }}>
+              {q.question_text}
+            </h2>
+
+            <div className="space-y-2.5">
+              {q.shuffled.map((opt, i) => {
+                const isCorrect = i === q.correctIdx
+                const myPicked = i === myAns
+                const opPicked = revealed && i === opAns
+                let bg = '#FCFCFC', border = 'rgba(52,52,52,0.10)', fg = '#343434'
+                let labelBg = '#F2F2F2', labelFg = '#9C9C9C'
+
                 if (revealed) {
-                  if (isCorrect) style = { borderColor: '#4CAF50', background: '#E8F8F0', color: '#15803d' }
-                  else if (isSelected) style = { borderColor: '#E55353', background: '#FEE2E2', color: '#b91c1c' }
-                  else style = { borderColor: '#e5e7eb', background: '#fafafa', color: '#9ca3af' }
+                  if (isCorrect) { bg = '#E8F8F0'; border = '#4CAF50'; fg = '#15803d'; labelBg = '#4CAF50'; labelFg = 'white' }
+                  else if (myPicked || opPicked) { bg = '#FEE2E2'; border = '#E55353'; fg = '#b91c1c'; labelBg = '#E55353'; labelFg = 'white' }
+                  else { bg = '#F2F2F2'; border = 'transparent'; fg = '#9C9C9C' }
+                } else if (myAnswered) {
+                  if (myPicked) { bg = '#BCD9FF'; border = '#609DED'; fg = '#1e5fa4'; labelBg = '#609DED'; labelFg = 'white' }
+                  else { bg = '#F2F2F2'; border = 'transparent'; fg = '#9C9C9C' }
                 }
+
                 return (
-                  <button key={idx} onClick={() => handleSelect(idx)} disabled={revealed}
-                    className="flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl border-2 text-left transition-all hover:scale-[1.01] disabled:cursor-default font-medium"
-                    style={style}>
-                    <span className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-bold"
-                      style={{ background: revealed && isCorrect ? '#4CAF50' : revealed && isSelected ? '#E55353' : '#F5F6FA', color: revealed && (isCorrect || isSelected) ? 'white' : '#6b7280' }}>
-                      {revealed && isCorrect ? '✓' : revealed && isSelected && !isCorrect ? '✗' : OPTION_LABELS[idx]}
+                  <button key={i} onClick={() => handleAnswer(i)}
+                    disabled={myAnswered || revealed}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all disabled:cursor-default relative"
+                    style={{ background: bg, border: `1.5px solid ${border}`, color: fg }}>
+                    <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[13px] font-black flex-shrink-0"
+                      style={{ background: labelBg, color: labelFg }}>
+                      {revealed && isCorrect ? <IconCheck size={14} className="text-white" />
+                        : revealed && (myPicked || opPicked) ? <IconWrong size={14} className="text-white" />
+                        : ['A', 'B', 'C', 'D'][i]}
                     </span>
-                    <span className="flex-1 text-sm">{option}</span>
+                    <span className="flex-1 text-[14px] sm:text-[15px] font-medium">{opt}</span>
+                    {/* Player markers when revealed */}
+                    {revealed && (myPicked || opPicked) && (
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {myPicked && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: '#609DED', color: 'white' }}>
+                            Ti
+                          </span>
+                        )}
+                        {opPicked && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: '#FFCB46', color: '#343434' }}>
+                            Protivnik
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </button>
                 )
               })}
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* ── Level end overlay ── */}
-      {showLevelEnd && (
-        <div className="fixed inset-0 z-40 flex flex-col items-center justify-center px-6"
-          style={{ background: 'linear-gradient(160deg, #343434 0%, #609DED 100%)' }}>
-          <Image src="/chars-correct.png" alt="" width={180} height={180} className="mb-2" />
-          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4"
-              style={{ background: '#BCD9FF', color: '#343434' }}>⚔️ Nivo {currentLevel} završen!</div>
-            <div className="flex gap-4 mb-4">
-              <div className="flex-1 bg-[#FAFAFA] rounded-2xl p-4">
-                <div className="text-2xl font-black" style={{ color: levelScore >= 0 ? '#4CAF50' : '#E55353' }}>
-                  {levelScore > 0 ? '+' : ''}{levelScore}
-                </div>
-                <div className="text-xs text-gray-400 mt-1">Ovaj nivo</div>
+            {/* Status / info */}
+            {!revealed && myAnswered && (
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium text-center" style={{ background: '#F2F2F2', color: '#9C9C9C' }}>
+                {opAnswered ? 'Otkrivamo odgovor…' : 'Odgovorio/la si — čekamo protivnika…'}
               </div>
-              <div className="flex-1 bg-[#BCD9FF] rounded-2xl p-4">
-                <div className="text-2xl font-black" style={{ color: '#343434' }}>{totalScore}</div>
-                <div className="text-xs text-gray-400 mt-1">Ukupno</div>
-              </div>
-            </div>
-            {!isTimed && (
-              <p className="text-sm font-bold mb-4" style={{ color: '#343434' }}>
-                Pobede: Ti {myWins} – {opponentWins} {opponentName}
-              </p>
             )}
+            {revealed && q.info && (
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#BCD9FF', color: '#1e5fa4' }}>
+                {q.info}
+              </div>
+            )}
+            {revealed && !q.info && (
+              <div className="mt-5 grid grid-cols-2 gap-2 text-[12px]">
+                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#F2F2F2' }}>
+                  <span className="font-bold" style={{ color: '#609DED' }}>Ti:</span>{' '}
+                  {myAns === null ? <span style={{ color: '#9c7a13' }}>Vreme isteklo</span>
+                    : myAns === q.correctIdx ? <span style={{ color: '#15803d' }}>tačno +10</span>
+                    : <span style={{ color: '#b91c1c' }}>pogrešno -5</span>}
+                </div>
+                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#F2F2F2' }}>
+                  <span className="font-bold" style={{ color: '#FFCB46' }}>Protivnik:</span>{' '}
+                  {opAns === null ? <span style={{ color: '#9c7a13' }}>Vreme isteklo</span>
+                    : opAns === q.correctIdx ? <span style={{ color: '#15803d' }}>tačno +10</span>
+                    : <span style={{ color: '#b91c1c' }}>pogrešno -5</span>}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* End overlay */}
+      {navigatingToEnd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
+          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
+            <div className="text-5xl mb-4">🏁</div>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#343434' }}>Kraj duela</h3>
+            <p className="text-[13px]" style={{ color: '#9C9C9C' }}>Računamo rezultat…</p>
+          </div>
+        </div>
+      )}
+
+      {/* Exit confirm */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
+          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          <div className="card-soft p-7 text-center max-w-sm w-full">
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#343434' }}>Izađi iz duela?</h3>
+            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se NEĆE upisati.</p>
             <div className="flex gap-3">
-              <button onClick={() => { setShowLevelEnd(false); setFinished(true); submitFinished(totalScore, myLevelScores, myAnswers) }}
-                className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-semibold text-gray-600 text-sm">
-                Završi
+              <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
+                Nastavi
               </button>
-              <button onClick={handleContinueLevel}
-                className="flex-1 py-3 rounded-xl font-semibold text-white text-sm"
-                style={{ background: '#4CAF50' }}>
-                Nivo {currentLevel + 1} →
+              <button onClick={() => router.push('/igraj-zajedno')} className="btn btn-md flex-1"
+                style={{ background: '#E55353', color: 'white' }}>
+                Izađi
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {showResetConfirm && (
-        <ConfirmPopup
-          title="Resetuj meč?"
-          message="Oba igrača se vraćaju u lobi. Svi bodovi se gube."
-          onConfirm={handleReset}
-          onCancel={() => setShowResetConfirm(false)}
-        />
-      )}
+      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: '#9C9C9C' }}>
+        ukupno: {fmtTime(Math.floor((Date.now() - startTimeRef.current) / 1000))}
+      </div>
+    </div>
+  )
+}
 
-      {showFinishConfirm && (
-        <ConfirmPopup
-          title={myLevelScores.length < 1 ? 'Previše rano!' : 'Završi meč?'}
-          message={myLevelScores.length < 1
-            ? 'Moraš završiti bar jedan nivo da bi rezultat bio sačuvan.'
-            : `Završiš sa ${totalScore} bodova. Rezultat se čuva.`}
-          onConfirm={myLevelScores.length >= 1 ? handleManualFinish : () => setShowFinishConfirm(false)}
-          onCancel={() => setShowFinishConfirm(false)}
-        />
-      )}
+function PlayerScore({ name, avatar, score, accent, you }: {
+  name: string; avatar: string | null | undefined; score: number; accent: string; you?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: '#F2F2F2', border: `2px solid ${accent}` }}>
+        {avatar
+          ? <Image src={`/avatars/${avatar}`} alt={name} width={36} height={36} className="w-full h-full object-cover" />
+          : <div className="w-full h-full flex items-center justify-center text-[12px] font-bold" style={{ background: accent, color: 'white' }}>{name[0]}</div>}
+      </div>
+      <div className="min-w-0">
+        <div className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: '#9C9C9C' }}>
+          {you ? 'Ti' : name.split(' ')[0]}
+        </div>
+        <div className="font-black text-[18px] tracking-tight" style={{ color: accent }}>{score}</div>
+      </div>
     </div>
   )
 }

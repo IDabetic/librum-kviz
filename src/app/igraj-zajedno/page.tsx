@@ -11,22 +11,17 @@ function generateCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
-const WIN_FORMATS = [
-  { id: 'best_of_3', label: '3 pobede', desc: 'Ko prvi osvoji 3 nivoa', wins: 3 },
-  { id: 'best_of_5', label: '5 pobeda', desc: 'Ko prvi osvoji 5 nivoa', wins: 5 },
-  { id: 'best_of_11', label: '11 pobeda', desc: 'Ko prvi osvoji 11 nivoa', wins: 11 },
-]
-const TIME_FORMATS = [
-  { id: 'time_5', label: '5 minuta', desc: 'Ko više bodova za 5 min', seconds: 300 },
-  { id: 'time_15', label: '15 minuta', desc: 'Ko više bodova za 15 min', seconds: 900 },
-  { id: 'time_30', label: '30 minuta', desc: 'Ko više bodova za 30 min', seconds: 1800 },
-]
+const DUEL_LENGTHS = [
+  { id: 'q10', label: '10 pitanja', desc: 'Brzi duel',       count: 10 },
+  { id: 'q25', label: '25 pitanja', desc: 'Standardni duel', count: 25 },
+  { id: 'q50', label: '50 pitanja', desc: 'Veliki duel',     count: 50 },
+] as const
 
 export default function IgrajZajednoPage() {
   const router = useRouter()
   const [tab, setTab] = useState<'create' | 'join'>('create')
 
-  const [selectedFormat, setSelectedFormat] = useState('best_of_5')
+  const [selectedFormat, setSelectedFormat] = useState<typeof DUEL_LENGTHS[number]['id']>('q25')
   const [creating, setCreating] = useState(false)
   const [createdCode, setCreatedCode] = useState('')
   const [waitingForGuest, setWaitingForGuest] = useState(false)
@@ -65,13 +60,13 @@ export default function IgrajZajednoPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth/prijava'); return }
 
-    // Single shared pool — pull random active questions
+    const fmt = DUEL_LENGTHS.find(f => f.id === selectedFormat)!
+    const targetCount = fmt.count
+
+    // Pull random active questions — fetch a bit more to allow for golden tiebreaker rounds
     const { data: all } = await supabase
       .from('questions').select('id').eq('is_active', true).limit(500)
-    const questionIds = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id).slice(0, 200)
-
-    const winFmt = WIN_FORMATS.find(f => f.id === selectedFormat)
-    const timeFmt = TIME_FORMATS.find(f => f.id === selectedFormat)
+    const ids = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id).slice(0, targetCount + 10)
 
     let code = generateCode()
     for (let i = 0; i < 5; i++) {
@@ -84,12 +79,12 @@ export default function IgrajZajednoPage() {
       room_code: code,
       quiz_id: null,
       host_id: user.id,
-      question_ids: questionIds,
-      total_questions: questionIds.length,
+      question_ids: ids,
+      total_questions: targetCount,
       status: 'waiting',
       game_format: selectedFormat,
-      target_wins: winFmt?.wins ?? null,
-      time_limit_seconds: timeFmt?.seconds ?? null,
+      target_wins: null,
+      time_limit_seconds: null,
     })
 
     setCreating(false)
@@ -98,7 +93,6 @@ export default function IgrajZajednoPage() {
     setWaitingForGuest(true)
   }
 
-  // Host explicitly starts the match
   async function handleStart() {
     if (!createdCode || starting) return
     setStarting(true)
@@ -128,14 +122,9 @@ export default function IgrajZajednoPage() {
     if (room.host_id === user.id) { setJoinError('Ne možeš da se pridružiš sopstvenoj sobi.'); setJoining(false); return }
     if (room.guest_id) { setJoinError('Neko je već zauzeo ovo mesto.'); setJoining(false); return }
 
-    // Atomic update: only succeeds if guest_id is still null (race-condition safe)
     const { data: updated } = await supabase
-      .from('game_rooms')
-      .update({ guest_id: user.id })
-      .eq('room_code', code)
-      .is('guest_id', null)
-      .select()
-      .maybeSingle()
+      .from('game_rooms').update({ guest_id: user.id })
+      .eq('room_code', code).is('guest_id', null).select().maybeSingle()
 
     if (!updated) { setJoinError('Neko je već zauzeo ovo mesto.'); setJoining(false); return }
 
@@ -143,8 +132,7 @@ export default function IgrajZajednoPage() {
     router.push(`/igraj-zajedno/${code}`)
   }
 
-  const allFormats = [...WIN_FORMATS, ...TIME_FORMATS]
-  const formatLabels: Record<string, string> = Object.fromEntries(allFormats.map(f => [f.id, f.label]))
+  const formatLabels: Record<string, string> = Object.fromEntries(DUEL_LENGTHS.map(f => [f.id, f.label]))
 
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
@@ -156,10 +144,10 @@ export default function IgrajZajednoPage() {
           </p>
           <h1 className="font-black tracking-tight leading-[1.1] mb-3"
             style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
-            Igraj zajedno
+            Duel
           </h1>
           <p className="text-[14px] sm:text-[15px]" style={{ color: '#9C9C9C' }}>
-            Izazovi prijatelja i vidi ko zna više.
+            Izazovi prijatelja jedan na jedan.
           </p>
         </div>
 
@@ -180,44 +168,38 @@ export default function IgrajZajednoPage() {
             {!createdCode ? (
               <>
                 <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
-                  Format igre
+                  Dužina duela
                 </label>
 
-                <div className="mb-3">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>Po pobedama</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {WIN_FORMATS.map(f => (
+                <div className="space-y-2 mb-5">
+                  {DUEL_LENGTHS.map(f => {
+                    const sel = selectedFormat === f.id
+                    return (
                       <button key={f.id} onClick={() => setSelectedFormat(f.id)}
-                        className="py-3 rounded-xl text-[13px] font-bold transition-all"
-                        style={selectedFormat === f.id
-                          ? { background: '#609DED', color: 'white' }
-                          : { background: '#F2F2F2', color: '#9C9C9C' }}>
-                        {f.label}
+                        className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-left transition-all"
+                        style={sel
+                          ? { background: '#BCD9FF', border: '1.5px solid #609DED' }
+                          : { background: '#F2F2F2', border: '1.5px solid transparent' }}>
+                        <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                          style={sel
+                            ? { borderColor: '#609DED', background: '#609DED' }
+                            : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                          {sel && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-[15px] tracking-tight" style={{ color: '#343434' }}>{f.label}</div>
+                          <div className="text-[12px]" style={{ color: '#9C9C9C' }}>{f.desc}</div>
+                        </div>
                       </button>
-                    ))}
-                  </div>
+                    )
+                  })}
                 </div>
 
-                <div className="mb-6">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>Po vremenu</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TIME_FORMATS.map(f => (
-                      <button key={f.id} onClick={() => setSelectedFormat(f.id)}
-                        className="py-3 rounded-xl text-[13px] font-bold transition-all"
-                        style={selectedFormat === f.id
-                          ? { background: '#FFCB46', color: '#343434' }
-                          : { background: '#F2F2F2', color: '#9C9C9C' }}>
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedFormat && (
-                  <p className="text-[12px] text-center mb-5" style={{ color: '#9C9C9C' }}>
-                    {allFormats.find(f => f.id === selectedFormat)?.desc}
+                <div className="rounded-2xl p-4 mb-5" style={{ background: '#FFECBC' }}>
+                  <p className="text-[12px] font-semibold leading-relaxed" style={{ color: '#9c7a13' }}>
+                    Oba igrača dobijaju <strong>ista pitanja</strong>. Tačan +10, pogrešan -5, vreme istekne -5. 15 sekundi po pitanju. Bez života, bez pomoći.
                   </p>
-                )}
+                </div>
 
                 <button onClick={handleCreate} disabled={creating}
                   className="btn btn-primary btn-lg w-full">
@@ -246,7 +228,7 @@ export default function IgrajZajednoPage() {
                     </div>
                     <button onClick={handleStart} disabled={starting}
                       className="btn btn-primary btn-lg w-full">
-                      {starting ? 'Pokretamo…' : 'Započni meč'}
+                      {starting ? 'Pokretamo…' : 'Započni duel'}
                     </button>
                   </div>
                 ) : (
