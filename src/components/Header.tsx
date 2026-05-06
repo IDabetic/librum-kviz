@@ -17,11 +17,11 @@ const NAV_LINKS = [
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
   const [userName, setUserName] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
+    const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase
@@ -41,7 +41,7 @@ export default function Header() {
   }, [pathname])
 
   async function handleLogout() {
-    await supabase.auth.signOut()
+    await createClient().auth.signOut()
     router.push('/')
     router.refresh()
   }
