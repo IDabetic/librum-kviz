@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/client'
-import type { Quiz } from '@/types/database'
 
 function generateCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
@@ -27,8 +26,6 @@ export default function IgrajZajednoPage() {
   const router = useRouter()
   const [tab, setTab] = useState<'create' | 'join'>('create')
 
-  const [quizzes, setQuizzes] = useState<Quiz[]>([])
-  const [selectedQuizzes, setSelectedQuizzes] = useState<string[]>(['mix'])
   const [selectedFormat, setSelectedFormat] = useState('best_of_5')
   const [creating, setCreating] = useState(false)
   const [createdCode, setCreatedCode] = useState('')
@@ -40,13 +37,6 @@ export default function IgrajZajednoPage() {
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.from('quizzes').select('id, title, difficulty').order('title').then(({ data }) => {
-      setQuizzes((data as Quiz[]) || [])
-    })
-  }, [])
 
   // Watch for guest joining — show Start button when they arrive
   useEffect(() => {
@@ -69,39 +59,16 @@ export default function IgrajZajednoPage() {
     return () => { supabase.removeChannel(channel) }
   }, [createdCode, waitingForGuest, guestJoined])
 
-  function toggleQuiz(id: string) {
-    if (id === 'mix') {
-      setSelectedQuizzes(['mix'])
-    } else {
-      setSelectedQuizzes(prev => {
-        const filtered = prev.filter(q => q !== 'mix')
-        if (filtered.includes(id)) {
-          const next = filtered.filter(q => q !== id)
-          return next.length === 0 ? ['mix'] : next
-        }
-        return [...filtered, id]
-      })
-    }
-  }
-
   async function handleCreate() {
     setCreating(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth/prijava'); return }
 
-    let questionIds: string[]
-    const isMix = selectedQuizzes.includes('mix') || selectedQuizzes.length === 0
-    if (isMix) {
-      const { data: all } = await supabase.from('questions').select('id')
-      questionIds = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id).slice(0, 200)
-    } else if (selectedQuizzes.length === 1) {
-      const { data: questions } = await supabase.from('questions').select('id').eq('quiz_id', selectedQuizzes[0])
-      questionIds = (questions || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id)
-    } else {
-      const { data: questions } = await supabase.from('questions').select('id').in('quiz_id', selectedQuizzes)
-      questionIds = (questions || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id)
-    }
+    // Single shared pool — pull random active questions
+    const { data: all } = await supabase
+      .from('questions').select('id').eq('is_active', true).limit(500)
+    const questionIds = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id).slice(0, 200)
 
     const winFmt = WIN_FORMATS.find(f => f.id === selectedFormat)
     const timeFmt = TIME_FORMATS.find(f => f.id === selectedFormat)
@@ -113,11 +80,9 @@ export default function IgrajZajednoPage() {
       code = generateCode()
     }
 
-    const singleQuizId = !isMix && selectedQuizzes.length === 1 ? selectedQuizzes[0] : null
-
     const { error } = await supabase.from('game_rooms').insert({
       room_code: code,
-      quiz_id: singleQuizId,
+      quiz_id: null,
       host_id: user.id,
       question_ids: questionIds,
       total_questions: questionIds.length,
@@ -215,62 +180,6 @@ export default function IgrajZajednoPage() {
             {!createdCode ? (
               <>
                 <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
-                  Tema kviza
-                </label>
-                <div className="mb-7">
-                  <button
-                    onClick={() => toggleQuiz('mix')}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all mb-3"
-                    style={selectedQuizzes.includes('mix')
-                      ? { background: '#BCD9FF', border: '1.5px solid #609DED' }
-                      : { background: '#FCFCFC', border: '1.5px solid rgba(52,52,52,0.10)' }}>
-                    <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all"
-                      style={selectedQuizzes.includes('mix')
-                        ? { borderColor: '#609DED', background: '#609DED' }
-                        : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
-                      {selectedQuizzes.includes('mix') && <span className="text-white font-black leading-none" style={{ fontSize: 11 }}>✓</span>}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>
-                        Mix — sve teme
-                      </div>
-                      <div className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>Pitanja iz svih kategorija pomešana</div>
-                    </div>
-                  </button>
-
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>
-                    ili odaberi teme:
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-0.5">
-                    {quizzes.map(q => {
-                      const selected = selectedQuizzes.includes(q.id)
-                      return (
-                        <button key={q.id} onClick={() => toggleQuiz(q.id)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
-                          style={selected
-                            ? { background: '#BCD9FF', border: '1.5px solid #609DED' }
-                            : { background: '#F2F2F2', border: '1.5px solid transparent' }}>
-                          <div className="w-4 h-4 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all"
-                            style={selected
-                              ? { borderColor: '#609DED', background: '#609DED' }
-                              : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
-                            {selected && <span className="text-white font-black leading-none" style={{ fontSize: 9 }}>✓</span>}
-                          </div>
-                          <span className="text-[13px] font-semibold truncate" style={{ color: '#343434' }}>
-                            {q.title}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {!selectedQuizzes.includes('mix') && selectedQuizzes.length > 1 && (
-                    <p className="text-[12px] text-center mt-3 font-medium" style={{ color: '#4CAF50' }}>
-                      ✓ Odabrano {selectedQuizzes.length} tema
-                    </p>
-                  )}
-                </div>
-
-                <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
                   Format igre
                 </label>
 
@@ -310,7 +219,7 @@ export default function IgrajZajednoPage() {
                   </p>
                 )}
 
-                <button onClick={handleCreate} disabled={creating || selectedQuizzes.length === 0}
+                <button onClick={handleCreate} disabled={creating}
                   className="btn btn-primary btn-lg w-full">
                   {creating ? 'Kreiranje…' : 'Kreiraj sobu'}
                 </button>
