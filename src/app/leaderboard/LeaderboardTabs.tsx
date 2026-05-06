@@ -18,7 +18,7 @@ const PERIOD_OPTIONS = [
   { id: 'today', label: 'Danas' },
   { id: 'week',  label: 'Nedelja' },
   { id: 'month', label: 'Mesec' },
-  { id: 'all',   label: 'Sva vremena' },
+  { id: 'all',   label: 'Sve vreme' },
 ] as const
 type PeriodId = typeof PERIOD_OPTIONS[number]['id']
 
@@ -35,7 +35,7 @@ const DEMO: SurvivorRow[] = [
 export default function LeaderboardTabs({ today, week, month, all, user }: {
   today: SurvivorRow[]; week: SurvivorRow[]; month: SurvivorRow[]; all: SurvivorRow[]; user: boolean
 }) {
-  const [period, setPeriod] = useState<PeriodId>('all')
+  const [period, setPeriod] = useState<PeriodId>('today')
   const dataMap: Record<PeriodId, SurvivorRow[]> = { today, week, month, all }
   const data = dataMap[period]
 
