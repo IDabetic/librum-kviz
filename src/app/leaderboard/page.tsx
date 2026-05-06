@@ -28,7 +28,7 @@ export default async function LeaderboardPage() {
 
   const soloAggregated = Object.values(soloMap)
     .sort((a, b) => b.totalPoints - a.totalPoints || b.bestLevel - a.bestLevel)
-    .slice(0, 10)
+    .slice(0, 20)
 
   // Duet: fetch any game where at least one player submitted results.
   // status='finished' may never be set if one player leaves before the other finishes
@@ -102,7 +102,7 @@ export default async function LeaderboardPage() {
 
   const duetAggregated = Object.values(duetMap)
     .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
-    .slice(0, 10)
+    .slice(0, 20)
 
   return (
     <div className="min-h-screen bg-[#FAF4EC]">

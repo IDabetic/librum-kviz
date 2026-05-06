@@ -9,6 +9,26 @@ type DuetEntry = { name: string; userId: string; wins: number; losses: number; d
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
+const DEMO_DUET: DuetEntry[] = [
+  { name: 'Marko Petrović',   userId: '', wins: 12, losses: 3,  draws: 1, plays: 16, avatar: 'avatar_03.jpg' },
+  { name: 'Jovana Nikolić',   userId: '', wins: 10, losses: 4,  draws: 2, plays: 16, avatar: 'avatar_07.jpg' },
+  { name: 'Stefan Đorđević',  userId: '', wins: 9,  losses: 5,  draws: 0, plays: 14, avatar: 'avatar_12.jpg' },
+  { name: 'Milica Stanković', userId: '', wins: 7,  losses: 6,  draws: 1, plays: 14, avatar: 'avatar_18.jpg' },
+  { name: 'Nikola Ilić',      userId: '', wins: 6,  losses: 7,  draws: 2, plays: 15, avatar: 'avatar_21.jpg' },
+  { name: 'Teodora Vasić',    userId: '', wins: 5,  losses: 8,  draws: 0, plays: 13, avatar: 'avatar_05.jpg' },
+  { name: 'Aleksa Marinović', userId: '', wins: 4,  losses: 9,  draws: 1, plays: 14, avatar: 'avatar_14.jpg' },
+]
+
+const DEMO_SOLO: SoloEntry[] = [
+  { name: 'Marko Petrović',   userId: '', totalPoints: 480, bestLevel: 9,  plays: 14, avatar: 'avatar_03.jpg' },
+  { name: 'Jovana Nikolić',   userId: '', totalPoints: 410, bestLevel: 8,  plays: 12, avatar: 'avatar_07.jpg' },
+  { name: 'Stefan Đorđević',  userId: '', totalPoints: 360, bestLevel: 7,  plays: 11, avatar: 'avatar_12.jpg' },
+  { name: 'Milica Stanković', userId: '', totalPoints: 290, bestLevel: 6,  plays: 9,  avatar: 'avatar_18.jpg' },
+  { name: 'Nikola Ilić',      userId: '', totalPoints: 240, bestLevel: 5,  plays: 8,  avatar: 'avatar_21.jpg' },
+  { name: 'Teodora Vasić',    userId: '', totalPoints: 190, bestLevel: 4,  plays: 7,  avatar: 'avatar_05.jpg' },
+  { name: 'Aleksa Marinović', userId: '', totalPoints: 140, bestLevel: 3,  plays: 6,  avatar: 'avatar_14.jpg' },
+]
+
 export default function LeaderboardTabs({
   soloData, duetData, user,
 }: {
@@ -30,13 +50,13 @@ export default function LeaderboardTabs({
         ))}
       </div>
 
-      {tab === 'solo' && <SoloBoard data={soloData} user={user} />}
-      {tab === 'duet' && <DuetBoard data={duetData} user={user} />}
+      {tab === 'solo' && <SoloBoard data={soloData.length >= 3 ? soloData : DEMO_SOLO} isDemo={soloData.length < 3} user={user} />}
+      {tab === 'duet' && <DuetBoard data={duetData.length >= 3 ? duetData : DEMO_DUET} isDemo={duetData.length < 3} user={user} />}
     </>
   )
 }
 
-function SoloBoard({ data, user }: { data: SoloEntry[]; user: boolean }) {
+function SoloBoard({ data, isDemo, user }: { data: SoloEntry[]; isDemo: boolean; user: boolean }) {
   if (data.length === 0) {
     return (
       <EmptyState emoji="🎯" title="Solo rang lista je prazna" subtitle="Budite prvi koji će igrati!"
@@ -67,37 +87,47 @@ function SoloBoard({ data, user }: { data: SoloEntry[]; user: boolean }) {
           </div>
         </div>
       )}
-      <div className="divide-y divide-gray-50">
-        {data.map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-            <span className="w-8 text-center text-lg">
-              {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
-            </span>
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
-              {p.avatar
-                ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{p.name[0]}</div>
-              }
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-gray-800">{p.name}</p>
-              <p className="text-xs text-gray-400">Nivo {p.bestLevel} · {p.plays} {p.plays === 1 ? 'igra' : 'igara'}</p>
-            </div>
-            <div className="text-right">
-              <div className="font-bold text-lg"
-                style={{ color: i === 0 ? '#FDC361' : i === 1 ? '#3766B0' : i === 2 ? '#c08a4a' : '#5DBF94' }}>
-                {p.totalPoints}
+      {isDemo && (
+        <div className="mx-4 mt-3 px-3 py-2 rounded-xl text-xs text-center font-medium" style={{ background: '#FFF8E8', color: '#92681a' }}>
+          Primer kako izgleda rang lista — stvarni podaci se pojavljuju posle prvih igara
+        </div>
+      )}
+      <div className={`divide-y divide-gray-50 ${data.length > 5 ? 'max-h-[420px] overflow-y-auto' : ''}`}>
+        {data.map((p, i) => {
+          const row = (
+            <>
+              <span className="w-8 text-center text-lg">
+                {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
+              </span>
+              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+                {p.avatar
+                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{p.name[0]}</div>
+                }
               </div>
-              <div className="text-xs text-gray-400">bodova</div>
-            </div>
-          </Link>
-        ))}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-gray-800">{p.name}</p>
+                <p className="text-xs text-gray-400">Nivo {p.bestLevel} · {p.plays} {p.plays === 1 ? 'igra' : 'igara'}</p>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-lg"
+                  style={{ color: i === 0 ? '#FDC361' : i === 1 ? '#3766B0' : i === 2 ? '#c08a4a' : '#5DBF94' }}>
+                  {p.totalPoints}
+                </div>
+                <div className="text-xs text-gray-400">bodova</div>
+              </div>
+            </>
+          )
+          return p.userId
+            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">{row}</Link>
+            : <div key={i} className="flex items-center gap-4 px-6 py-4">{row}</div>
+        })}
       </div>
     </div>
   )
 }
 
-function DuetBoard({ data, user }: { data: DuetEntry[]; user: boolean }) {
+function DuetBoard({ data, isDemo, user }: { data: DuetEntry[]; isDemo: boolean; user: boolean }) {
   if (data.length === 0) {
     return (
       <EmptyState emoji="⚔️" title="Nema duel rezultata" subtitle="Izazovi prijatelja i budi prvi na listi!"
@@ -128,29 +158,39 @@ function DuetBoard({ data, user }: { data: DuetEntry[]; user: boolean }) {
           </div>
         </div>
       )}
-      <div className="divide-y divide-gray-50">
-        {data.map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-            <span className="w-8 text-center text-lg">
-              {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
-            </span>
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
-              {p.avatar
-                ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #3766B0, #5DBF94)' }}>{p.name[0]}</div>
-              }
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-gray-800">{p.name}</p>
-              <p className="text-xs text-gray-400">{p.plays} {p.plays === 1 ? 'duel' : 'duela'}</p>
-            </div>
-            <div className="flex gap-3 text-center">
-              <div><div className="font-bold text-sm" style={{ color: '#5DBF94' }}>{p.wins}</div><div className="text-xs text-gray-400">W</div></div>
-              <div><div className="font-bold text-sm text-gray-400">{p.draws}</div><div className="text-xs text-gray-400">D</div></div>
-              <div><div className="font-bold text-sm" style={{ color: '#e05252' }}>{p.losses}</div><div className="text-xs text-gray-400">L</div></div>
-            </div>
-          </Link>
-        ))}
+      {isDemo && (
+        <div className="mx-4 mt-3 px-3 py-2 rounded-xl text-xs text-center font-medium" style={{ background: '#FFF8E8', color: '#92681a' }}>
+          Primer kako izgleda rang lista — stvarni podaci se pojavljuju posle prvih duela
+        </div>
+      )}
+      <div className={`divide-y divide-gray-50 ${data.length > 5 ? 'max-h-[420px] overflow-y-auto' : ''}`}>
+        {data.map((p, i) => {
+          const row = (
+            <>
+              <span className="w-8 text-center text-lg">
+                {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
+              </span>
+              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+                {p.avatar
+                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #3766B0, #5DBF94)' }}>{p.name[0]}</div>
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-gray-800">{p.name}</p>
+                <p className="text-xs text-gray-400">{p.plays} {p.plays === 1 ? 'duel' : 'duela'}</p>
+              </div>
+              <div className="flex gap-3 text-center">
+                <div><div className="font-bold text-sm" style={{ color: '#5DBF94' }}>{p.wins}</div><div className="text-xs text-gray-400">W</div></div>
+                <div><div className="font-bold text-sm text-gray-400">{p.draws}</div><div className="text-xs text-gray-400">D</div></div>
+                <div><div className="font-bold text-sm" style={{ color: '#e05252' }}>{p.losses}</div><div className="text-xs text-gray-400">L</div></div>
+              </div>
+            </>
+          )
+          return p.userId
+            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">{row}</Link>
+            : <div key={i} className="flex items-center gap-4 px-6 py-4">{row}</div>
+        })}
       </div>
     </div>
   )
