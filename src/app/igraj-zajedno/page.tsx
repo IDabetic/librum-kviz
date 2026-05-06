@@ -25,7 +25,6 @@ const TIME_FORMATS = [
 
 export default function IgrajZajednoPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [tab, setTab] = useState<'create' | 'join'>('create')
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
@@ -40,15 +39,16 @@ export default function IgrajZajednoPage() {
   const [joinError, setJoinError] = useState('')
 
   useEffect(() => {
+    const supabase = createClient()
     supabase.from('quizzes').select('id, title, difficulty').order('title').then(({ data }) => {
       setQuizzes((data as Quiz[]) || [])
-      // default stays 'mix'
     })
   }, [])
 
   // Watch for guest joining
   useEffect(() => {
     if (!createdCode || !waitingForGuest) return
+    const supabase = createClient()
     const channel = supabase
       .channel(`room-watch-${createdCode}`)
       .on('postgres_changes', {
@@ -61,10 +61,11 @@ export default function IgrajZajednoPage() {
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [createdCode, waitingForGuest, router, supabase])
+  }, [createdCode, waitingForGuest, router])
 
   async function handleCreate() {
     setCreating(true)
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth/prijava'); return }
 
@@ -112,6 +113,7 @@ export default function IgrajZajednoPage() {
     setJoining(true)
     setJoinError('')
 
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth/prijava'); return }
 

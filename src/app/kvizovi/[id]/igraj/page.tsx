@@ -138,7 +138,6 @@ function LevelEndScreen({ level, levelScore, totalScore, pointsPerCorrect, onCon
 export default function IgrajPage() {
   const params = useParams()
   const router = useRouter()
-  const supabase = createClient()
   const quizId = params.id as string
 
   const [quiz, setQuiz] = useState<Quiz | null>(null)
@@ -168,6 +167,7 @@ export default function IgrajPage() {
 
   useEffect(() => {
     async function load() {
+      const supabase = createClient()
       const [{ data: q }, { data: qs }] = await Promise.all([
         supabase.from('quizzes').select('*').eq('id', quizId).single(),
         supabase.from('questions').select('*').eq('quiz_id', quizId),
@@ -190,6 +190,7 @@ export default function IgrajPage() {
 
   async function handleReport(questionId: string) {
     if (reportedIds.has(questionId)) return
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('question_reports').insert({
       question_id: questionId,
@@ -202,6 +203,7 @@ export default function IgrajPage() {
   async function saveAndNavigate(finalScore: number, finalLevel: number, finalAnswers: (number | null)[]) {
     if (savingRef.current) return
     savingRef.current = true
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user && finalLevel >= 1) {
       const correctCount = finalAnswers.filter((a, i) => a === questions[i]?.correct_answer).length

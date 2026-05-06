@@ -64,7 +64,6 @@ function ConfirmPopup({ title, message, onConfirm, onCancel }: {
 export default function MultiplayerGamePage() {
   const params = useParams()
   const router = useRouter()
-  const supabase = createClient()
   const code = params.code as string
 
   const [room, setRoom] = useState<GameRoom | null>(null)
@@ -114,6 +113,7 @@ export default function MultiplayerGamePage() {
 
   useEffect(() => {
     async function load() {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/prijava'); return }
       setMyId(user.id)
@@ -155,11 +155,12 @@ export default function MultiplayerGamePage() {
       setLoading(false)
     }
     load()
-  }, [code, router, supabase])
+  }, [code, router])
 
   // Real-time subscription
   useEffect(() => {
     if (!room?.id) return
+    const supabase = createClient()
     const channel = supabase.channel(`game-${room.id}`)
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'game_rooms', filter: `id=eq.${room.id}`,
@@ -179,7 +180,7 @@ export default function MultiplayerGamePage() {
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [room?.id, profiles, supabase, router])
+  }, [room?.id, profiles, router])
 
   // Countdown timer for time-based games
   useEffect(() => {
@@ -201,6 +202,7 @@ export default function MultiplayerGamePage() {
   async function submitFinished(score: number, levelScores: number[], answers: (number | null)[]) {
     if (!room?.id || !myId || savingRef.current) return
     savingRef.current = true
+    const supabase = createClient()
     const update = isHost
       ? { host_score: score, host_level_scores: levelScores, host_answers: answers, host_finished: true }
       : { guest_score: score, guest_level_scores: levelScores, guest_answers: answers, guest_finished: true }
@@ -226,7 +228,7 @@ export default function MultiplayerGamePage() {
 
     // Push partial answers to DB for real-time progress
     const update = isHost ? { host_answers: newAnswers } : { guest_answers: newAnswers }
-    if (room?.id) supabase.from('game_rooms').update(update).eq('id', room.id)
+    if (room?.id) createClient().from('game_rooms').update(update).eq('id', room.id)
 
     // End of level?
     if (questionInLevel === QUESTIONS_PER_LEVEL - 1) {
@@ -245,7 +247,7 @@ export default function MultiplayerGamePage() {
       const levelUpdate = isHost
         ? { host_level_scores: newLevelScores, host_score: newTotalScore }
         : { guest_level_scores: newLevelScores, guest_score: newTotalScore }
-      if (room?.id) supabase.from('game_rooms').update(levelUpdate).eq('id', room.id)
+      if (room?.id) createClient().from('game_rooms').update(levelUpdate).eq('id', room.id)
 
       setTimeout(() => { setLevelScore(newLevelScore); setShowLevelEnd(true) }, 50)
       return
@@ -254,7 +256,7 @@ export default function MultiplayerGamePage() {
     setCurrent(c => c + 1)
     setSelected(null)
     setRevealed(false)
-  }, [selected, questions, current, totalScore, levelScore, myAnswers, myLevelScores, questionInLevel, pointsPerCorrect, isTimed, targetWins, opponentLvlScores, isHost, room?.id, supabase])
+  }, [selected, questions, current, totalScore, levelScore, myAnswers, myLevelScores, questionInLevel, pointsPerCorrect, isTimed, targetWins, opponentLvlScores, isHost, room?.id])
 
   function handleSelect(idx: number) {
     if (revealed || finished) return
@@ -280,9 +282,8 @@ export default function MultiplayerGamePage() {
   }
 
   async function handleReset() {
-    // Host resets the entire room
     if (!room?.id) return
-    await supabase.from('game_rooms').update({ status: 'waiting', guest_id: null }).eq('id', room.id)
+    await createClient().from('game_rooms').update({ status: 'waiting', guest_id: null }).eq('id', room.id)
     router.push('/igraj-zajedno')
   }
 

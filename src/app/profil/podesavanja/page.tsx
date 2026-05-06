@@ -10,7 +10,6 @@ import Header from '@/components/Header'
 
 export default function PodesavanjaPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   const [form, setForm] = useState({ first_name: '', last_name: '', nickname: '', city: '' })
   const [loading, setLoading] = useState(true)
@@ -27,6 +26,7 @@ export default function PodesavanjaPage() {
 
   useEffect(() => {
     async function load() {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/prijava'); return }
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -47,6 +47,7 @@ export default function PodesavanjaPage() {
     e.preventDefault()
     setSaving(true)
     setError('')
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const { error: err } = await supabase.from('profiles').update({
@@ -62,6 +63,7 @@ export default function PodesavanjaPage() {
 
   async function handleResetPassword() {
     setSendingReset(true)
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user?.email) {
       await supabase.auth.resetPasswordForEmail(user.email, {
@@ -75,7 +77,7 @@ export default function PodesavanjaPage() {
   async function handleDeleteAccount() {
     if (deleteConfirmText !== 'OBRISI') return
     setDeleting(true)
-    // Sign out first, then the user can be deleted via admin or they stay signed out
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/')
   }
