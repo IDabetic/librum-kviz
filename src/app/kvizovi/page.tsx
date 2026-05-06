@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import type { Quiz } from '@/types/database'
 
 const DIFFICULTY_LABEL = { lako: 'Lako', srednje: 'Srednje', tesko: 'Teško' }
@@ -8,7 +9,8 @@ const DIFFICULTY_COLOR = { lako: '#5DBF94', srednje: '#FDC361', tesko: '#e05252'
 
 export default async function KvizovPage() {
   const supabase = await createClient()
-  const { data: user } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/prijava')
 
   const { data: quizzes } = await supabase
     .from('quizzes')
@@ -18,7 +20,7 @@ export default async function KvizovPage() {
   const { data: profile } = await supabase
     .from('profiles')
     .select('first_name')
-    .eq('id', user.user!.id)
+    .eq('id', user.id)
     .single()
 
   const processed = (quizzes || []).map((q: Quiz & { question_count: { count: number }[] }) => ({
