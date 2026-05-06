@@ -262,7 +262,7 @@ export default function MultiplayerGamePage() {
             if (data) setProfiles(p => ({ ...p, [data.id]: data.first_name }))
           })
         }
-        if (updated.host_finished && updated.guest_finished && updated.status !== 'finished') {
+        if (updated.host_finished && updated.guest_finished) {
           supabase.from('game_rooms').update({ status: 'finished' }).eq('id', updated.id)
         }
         if (updated.status === 'waiting') router.push('/igraj-zajedno')
