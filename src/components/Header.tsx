@@ -144,12 +144,12 @@ export default function Header() {
               <div ref={recentRef} className="relative ml-1">
                 <button
                   onClick={() => setShowRecent(o => !o)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all"
                   style={showRecent
-                    ? { background: 'rgba(253,195,97,0.2)', color: '#FDC361', border: '1px solid rgba(253,195,97,0.35)' }
-                    : { color: 'rgba(255,255,255,0.75)', border: '1px solid transparent' }}
+                    ? { background: '#FDC361', color: '#1A1C4E', border: '1px solid #FDC361' }
+                    : { background: 'rgba(253,195,97,0.15)', color: '#FDC361', border: '1px solid rgba(253,195,97,0.4)' }}
                 >
-                  👥
+                  👥 <span className="text-xs">Novi</span>
                 </button>
                 {showRecent && (
                   <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
