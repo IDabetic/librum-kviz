@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
 import { IconHome, IconDiscover, IconTrophy, IconSwords, IconHint, IconUsers, IconMenu, IconClose, IconLogout } from './icons'
+import { Logo } from './Logo'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
 
@@ -85,11 +86,7 @@ export default function Header() {
         style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-            <span className="font-extrabold text-[18px] tracking-tight" style={{ color: '#343434' }}>
-              Librum<span style={{ color: '#609DED' }}>.</span>
-            </span>
-          </Link>
+          <Logo height={28} priority />
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
@@ -282,9 +279,5 @@ export default function Header() {
 }
 
 export function LibrumIcon({ size = 32 }: { size?: number; dark?: boolean }) {
-  return (
-    <span className="font-extrabold tracking-tight" style={{ color: '#343434', fontSize: size * 0.6 }}>
-      Librum<span style={{ color: '#609DED' }}>.</span>
-    </span>
-  )
+  return <Logo height={size * 0.85} href={null} />
 }

@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { Logo } from '@/components/Logo'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ score?: string; level?: string }> }
 
@@ -47,10 +48,8 @@ export default async function SharePage({ params, searchParams }: Props) {
     <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{ background: '#FAFAFA' }}>
       <div className="w-full max-w-md text-center">
 
-        <div className="mb-7">
-          <Link href="/" className="inline-flex font-extrabold text-[20px] tracking-tight" style={{ color: '#343434' }}>
-            Librum<span style={{ color: '#609DED' }}>.</span>
-          </Link>
+        <div className="mb-7 flex justify-center">
+          <Logo height={32} />
         </div>
 
         {hasScore ? (

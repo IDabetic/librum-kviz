@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { IconEmail, IconLock, IconEye, IconEyeOff, IconProfile, IconCheck } from '@/components/icons'
+import { Logo } from '@/components/Logo'
 
 export default function RegistracijaPage() {
   const [form, setForm] = useState({ ime: '', prezime: '', nadimak: '', grad: '', email: '', password: '', password2: '' })
@@ -83,9 +84,7 @@ export default function RegistracijaPage() {
       <nav className="sticky top-0 z-40 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="font-extrabold text-[18px] tracking-tight" style={{ color: '#343434' }}>
-            Librum<span style={{ color: '#609DED' }}>.</span>
-          </Link>
+          <Logo height={28} />
           <Link href="/auth/prijava" className="btn btn-secondary btn-sm">Prijava</Link>
         </div>
       </nav>
