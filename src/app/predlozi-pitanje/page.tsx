@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Header from '@/components/Header'
 import Link from 'next/link'
+import { IconBack, IconHint, IconCheck } from '@/components/icons'
 
 export default function PredloziPitanjePage() {
   const [question, setQuestion] = useState('')
@@ -33,64 +34,70 @@ export default function PredloziPitanjePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF4EC]">
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <Link href="/kvizovi" className="text-sm text-gray-400 hover:text-[#2C2D81] transition-colors">
-            ← Nazad na kvizove
-          </Link>
-        </div>
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        <Link href="/kvizovi"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
+          style={{ color: '#609DED' }}>
+          <IconBack size={16} strokeWidth={2.2} />
+          Kvizovi
+        </Link>
 
         <div className="text-center mb-10">
-          <div className="text-5xl mb-4">💡</div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#2C2D81' }}>Predloži pitanje</h1>
-          <p className="text-gray-500">Imaš dobro pitanje? Pošalji nam ga i možda se nađe u kvizu!</p>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            style={{ background: '#FFECBC' }}>
+            <IconHint size={26} className="text-[#9c7a13]" strokeWidth={2.2} />
+          </div>
+          <h1 className="font-black tracking-tight mb-2 leading-[1.1]" style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+            Predloži pitanje
+          </h1>
+          <p className="text-[14px] sm:text-[15px]" style={{ color: '#9C9C9C' }}>
+            Imaš dobro pitanje? Pošalji nam ga i možda se nađe u kvizu.
+          </p>
         </div>
 
         {done ? (
-          <div className="bg-white rounded-3xl shadow-sm p-10 text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Hvala!</h2>
-            <p className="text-gray-500 mb-6">Tvoje pitanje je uspešno poslato. Pregledaćemo ga i dodati u kviz.</p>
-            <div className="flex gap-3 justify-center">
+          <div className="card-soft p-10 text-center">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: '#E8F8F0' }}>
+              <IconCheck size={32} className="text-[#4CAF50]" />
+            </div>
+            <h2 className="font-black tracking-tight mb-2" style={{ color: '#343434', fontSize: '24px' }}>Hvala!</h2>
+            <p className="text-[14px] mb-7" style={{ color: '#9C9C9C' }}>
+              Tvoje pitanje je uspešno poslato. Pregledaćemo ga i dodati u kviz.
+            </p>
+            <div className="flex gap-3 justify-center flex-wrap">
               <button
                 onClick={() => { setDone(false); setQuestion(''); setAnswer('') }}
-                className="px-6 py-3 rounded-xl border border-gray-200 font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-              >
+                className="btn btn-secondary btn-md">
                 Pošalji još jedno
               </button>
-              <Link
-                href="/kvizovi"
-                className="px-6 py-3 rounded-xl font-semibold text-white transition-colors"
-                style={{ background: '#2C2D81' }}
-              >
+              <Link href="/kvizovi" className="btn btn-primary btn-md">
                 Na kvizove
               </Link>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2C2D81, #5DBF94)' }} />
-            <form onSubmit={handleSubmit} className="p-8 flex flex-col gap-6">
+          <div className="card-soft p-7 sm:p-8">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Pitanje *
+                <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+                  Pitanje
                 </label>
                 <textarea
                   value={question}
                   onChange={e => setQuestion(e.target.value)}
-                  placeholder="Upiši svoje pitanje ovde..."
+                  placeholder="Upiši svoje pitanje ovde…"
                   rows={4}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#2C2D81] focus:ring-2 focus:ring-[#2C2D81]/10 outline-none transition text-gray-800 resize-none text-sm"
+                  className="input resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tačan odgovor *
+                <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+                  Tačan odgovor
                 </label>
                 <textarea
                   value={answer}
@@ -98,26 +105,22 @@ export default function PredloziPitanjePage() {
                   placeholder="Koji je tačan odgovor?"
                   rows={2}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#2C2D81] focus:ring-2 focus:ring-[#2C2D81]/10 outline-none transition text-gray-800 resize-none text-sm"
+                  className="input resize-none"
                 />
               </div>
 
               {error && (
-                <div className="bg-red-50 text-red-600 rounded-xl px-4 py-3 text-sm">
+                <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
                   {error}
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={sending || !question.trim() || !answer.trim()}
-                className="w-full py-4 rounded-xl font-bold text-white text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
-              >
-                {sending ? 'Šaljemo...' : 'Pošalji pitanje'}
+              <button type="submit" disabled={sending || !question.trim() || !answer.trim()}
+                className="btn btn-primary btn-lg w-full">
+                {sending ? 'Šaljemo…' : 'Pošalji pitanje'}
               </button>
 
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-[11px] text-center" style={{ color: '#9C9C9C' }}>
                 Sva predložena pitanja prolaze kroz uredničku proveru pre objavljivanja.
               </p>
             </form>

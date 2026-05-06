@@ -8,6 +8,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import Header from '@/components/Header'
+import { IconBack, IconCheck, IconLock } from '@/components/icons'
 
 const TOTAL_AVATARS = 26
 const AVATAR_LIST = Array.from({ length: TOTAL_AVATARS }, (_, i) =>
@@ -51,7 +52,7 @@ export default function PodesavanjaPage() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [router])
 
   async function handleSaveAvatar() {
     setSavingAvatar(true)
@@ -105,163 +106,159 @@ export default function PodesavanjaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF4EC]">
+      <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
         <Header />
         <div className="flex items-center justify-center py-32">
-          <div className="w-8 h-8 rounded-full border-2 border-[#2C2D81] border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 animate-spin"
+            style={{ borderColor: '#609DED', borderTopColor: 'transparent' }} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF4EC]">
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
       <Header />
-      <main className="max-w-2xl mx-auto px-4 py-10">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
-        <div className="flex items-center gap-3 mb-8">
-          <Link href="/profil" className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors"
-            style={{ background: 'rgba(44,45,129,0.08)' }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2C2D81" strokeWidth="2" strokeLinecap="round">
-              <polyline points="10,4 6,8 10,12" />
-            </svg>
-          </Link>
-          <h1 className="text-2xl font-bold" style={{ color: '#2C2D81' }}>Podešavanja profila</h1>
-        </div>
+        <Link href="/profil"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
+          style={{ color: '#609DED' }}>
+          <IconBack size={16} strokeWidth={2.2} />
+          Profil
+        </Link>
 
-        {/* Avatar picker */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
-          <h2 className="font-bold text-gray-800 mb-4">Avatar</h2>
+        <h1 className="font-black tracking-tight mb-8 leading-[1.1]" style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+          Podešavanja
+        </h1>
+
+        {/* ─ Avatar picker ───────────────────────────────────────── */}
+        <section className="card-soft p-6 sm:p-7 mb-4">
+          <h2 className="font-bold text-[16px] mb-4 tracking-tight" style={{ color: '#343434' }}>Avatar</h2>
           <div className="flex items-center gap-4 mb-5">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm border-2" style={{ borderColor: '#2C2D81' }}>
+            <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 ring-4" style={{ ['--tw-ring-color' as string]: '#609DED' }}>
               <Image src={`/avatars/${avatar}`} alt="Trenutni avatar" width={64} height={64} className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="font-semibold text-sm text-gray-700">Tvoj trenutni avatar</p>
-              <p className="text-xs text-gray-400">Odaberi novi iz liste ispod</p>
+              <p className="font-semibold text-[14px]" style={{ color: '#343434' }}>Tvoj trenutni avatar</p>
+              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>Odaberi novi iz liste ispod</p>
             </div>
           </div>
-          <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 mb-4">
+          <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 mb-5">
             {AVATAR_LIST.map(av => (
-              <button
-                key={av}
-                onClick={() => setAvatar(av)}
-                className="relative rounded-xl overflow-hidden transition-all hover:scale-110"
+              <button key={av} onClick={() => setAvatar(av)}
+                className="relative rounded-2xl overflow-hidden aspect-square transition-all hover:scale-110"
                 style={{
-                  outline: avatar === av ? '3px solid #2C2D81' : '2px solid transparent',
+                  outline: avatar === av ? '3px solid #609DED' : '2px solid transparent',
                   outlineOffset: 2,
-                }}
-              >
+                }}>
                 <Image src={`/avatars/${av}`} alt={av} width={56} height={56} className="w-full h-full object-cover" />
                 {avatar === av && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <span className="text-white text-xs font-bold">✓</span>
+                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(96,157,237,0.35)' }}>
+                    <span className="text-white text-xs font-black">✓</span>
                   </div>
                 )}
               </button>
             ))}
           </div>
-          <button
-            onClick={handleSaveAvatar}
-            disabled={savingAvatar}
-            className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.01] disabled:opacity-70"
-            style={{ background: avatarSaved ? '#5DBF94' : 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
-          >
-            {avatarSaved ? '✓ Avatar sačuvan!' : savingAvatar ? 'Čuvanje...' : 'Sačuvaj avatar'}
+          <button onClick={handleSaveAvatar} disabled={savingAvatar}
+            className="btn btn-md w-full"
+            style={avatarSaved
+              ? { background: '#4CAF50', color: 'white', boxShadow: '0 4px 14px rgba(76,175,80,0.35)' }
+              : { background: '#609DED', color: 'white', boxShadow: '0 4px 14px rgba(96,157,237,0.30)' }
+            }>
+            {avatarSaved ? '✓ Avatar sačuvan' : savingAvatar ? 'Čuvanje…' : 'Sačuvaj avatar'}
           </button>
-        </div>
+        </section>
 
-        {/* Edit profile */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
-          <h2 className="font-bold text-gray-800 mb-5">Lični podaci</h2>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Ime</label>
-                <input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:border-[#2C2D81] outline-none text-sm font-medium transition-colors"
-                  placeholder="Ime" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Prezime</label>
-                <input value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:border-[#2C2D81] outline-none text-sm font-medium transition-colors"
-                  placeholder="Prezime" />
-              </div>
+        {/* ─ Personal info ───────────────────────────────────────── */}
+        <section className="card-soft p-6 sm:p-7 mb-4">
+          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#343434' }}>Lični podaci</h2>
+          <form onSubmit={handleSave} className="space-y-3.5">
+            <div className="grid grid-cols-2 gap-3">
+              <input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))}
+                className="input" placeholder="Ime" />
+              <input value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))}
+                className="input" placeholder="Prezime" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                Nadimak <span className="font-normal text-gray-400">(prikazuje se na rang listi)</span>
-              </label>
               <input value={form.nickname} onChange={e => setForm(f => ({ ...f, nickname: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:border-[#2C2D81] outline-none text-sm font-medium transition-colors"
-                placeholder="npr. KnjigaLover23" />
+                className="input" placeholder="Nadimak (na rang listi)" />
+              <p className="text-[11px] mt-1.5 ml-1" style={{ color: '#9C9C9C' }}>Prikazuje se umesto imena na rang listi</p>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Grad</label>
-              <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-100 focus:border-[#2C2D81] outline-none text-sm font-medium transition-colors"
-                placeholder="npr. Beograd" />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+              className="input" placeholder="Grad" />
+
+            {error && (
+              <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+                {error}
+              </div>
+            )}
+
             <button type="submit" disabled={saving}
-              className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.01] disabled:opacity-70"
-              style={{ background: saved ? '#5DBF94' : 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>
-              {saved ? '✓ Sačuvano!' : saving ? 'Čuvanje...' : 'Sačuvaj izmene'}
+              className="btn btn-md w-full"
+              style={saved
+                ? { background: '#4CAF50', color: 'white', boxShadow: '0 4px 14px rgba(76,175,80,0.35)' }
+                : { background: '#609DED', color: 'white', boxShadow: '0 4px 14px rgba(96,157,237,0.30)' }
+              }>
+              {saved ? '✓ Sačuvano' : saving ? 'Čuvanje…' : 'Sačuvaj izmene'}
             </button>
           </form>
-        </div>
+        </section>
 
-        {/* Reset password */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
-          <h2 className="font-bold text-gray-800 mb-1">Lozinka</h2>
-          <p className="text-sm text-gray-400 mb-5">Poslaćemo ti link za resetovanje lozinke na email.</p>
+        {/* ─ Reset password ──────────────────────────────────────── */}
+        <section className="card-soft p-6 sm:p-7 mb-4">
+          <h2 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#343434' }}>Lozinka</h2>
+          <p className="text-[13px] mb-5" style={{ color: '#9C9C9C' }}>Poslaćemo ti link za novu lozinku na email.</p>
           {emailSent ? (
-            <div className="py-3 px-4 rounded-xl text-sm font-medium" style={{ background: '#E8F8F0', color: '#0A4C35' }}>
-              ✓ Email je poslat! Proveri inbox (i spam).
+            <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2"
+              style={{ background: '#E8F8F0', color: '#15803d' }}>
+              <IconCheck size={16} className="text-[#15803d]" />
+              Email je poslat — proveri inbox (i spam).
             </div>
           ) : (
             <button onClick={handleResetPassword} disabled={sendingReset}
-              className="w-full py-3 rounded-xl font-semibold text-sm border-2 border-gray-100 hover:border-[#2C2D81] hover:text-[#2C2D81] transition-colors disabled:opacity-50"
-              style={{ color: '#6b7280' }}>
-              {sendingReset ? 'Slanje...' : '🔑 Pošalji link za novu lozinku'}
+              className="btn btn-secondary btn-md w-full">
+              <IconLock size={16} strokeWidth={2.2} />
+              {sendingReset ? 'Slanje…' : 'Pošalji link za novu lozinku'}
             </button>
           )}
-        </div>
+        </section>
 
-        {/* Delete account */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-red-50">
-          <h2 className="font-bold text-red-500 mb-1">Brisanje naloga</h2>
-          <p className="text-sm text-gray-400 mb-5">
+        {/* ─ Delete account ──────────────────────────────────────── */}
+        <section className="card-flat p-6 sm:p-7" style={{ borderColor: 'rgba(229,83,83,0.15)' }}>
+          <h2 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#E55353' }}>Brisanje naloga</h2>
+          <p className="text-[13px] mb-5" style={{ color: '#9C9C9C' }}>
             Ova akcija je nepovratna. Svi tvoji podaci i rezultati biće trajno obrisani.
           </p>
           {!showDeleteConfirm ? (
             <button onClick={() => setShowDeleteConfirm(true)}
-              className="w-full py-3 rounded-xl font-semibold text-sm border-2 border-red-200 text-red-400 hover:bg-red-50 transition-colors">
+              className="btn btn-md w-full"
+              style={{ border: '1.5px solid rgba(229,83,83,0.30)', color: '#E55353', background: 'transparent' }}>
               Obriši nalog
             </button>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-gray-700">
-                Ukucaj <span className="font-black text-red-500">OBRISI</span> da potvrdiš:
+              <p className="text-[13px] font-medium" style={{ color: '#343434' }}>
+                Ukucaj <span className="font-black" style={{ color: '#E55353' }}>OBRISI</span> da potvrdiš:
               </p>
               <input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-red-200 focus:border-red-400 outline-none text-sm font-medium"
-                placeholder="OBRISI" />
+                className="input" placeholder="OBRISI"
+                style={{ borderColor: 'rgba(229,83,83,0.30)' }} />
               <div className="flex gap-3">
                 <button onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText('') }}
-                  className="flex-1 py-3 rounded-xl border-2 border-gray-200 font-semibold text-gray-600 text-sm hover:bg-gray-50">
+                  className="btn btn-secondary btn-md flex-1">
                   Odustani
                 </button>
                 <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'OBRISI' || deleting}
-                  className="flex-1 py-3 rounded-xl font-bold text-white text-sm disabled:opacity-40 transition-all"
-                  style={{ background: '#e05252' }}>
-                  {deleting ? 'Brisanje...' : 'Trajno obriši'}
+                  className="btn btn-md flex-1"
+                  style={{ background: '#E55353', color: 'white', boxShadow: '0 4px 14px rgba(229,83,83,0.30)' }}>
+                  {deleting ? 'Brisanje…' : 'Trajno obriši'}
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </section>
       </main>
     </div>
   )

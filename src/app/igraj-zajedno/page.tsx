@@ -182,190 +182,200 @@ export default function IgrajZajednoPage() {
   const formatLabels: Record<string, string> = Object.fromEntries(allFormats.map(f => [f.id, f.label]))
 
   return (
-    <div className="min-h-screen bg-[#FAF4EC]">
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
       <Header />
-      <main className="max-w-lg mx-auto px-4 py-10">
+      <main className="max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="text-center mb-10">
-          <div className="text-5xl mb-4">⚔️</div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#2C2D81' }}>Igraj zajedno</h1>
-          <p className="text-gray-500">Izazovi prijatelja i vidi ko zna više!</p>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
+            Multiplayer
+          </p>
+          <h1 className="font-black tracking-tight leading-[1.1] mb-3"
+            style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
+            Igraj zajedno
+          </h1>
+          <p className="text-[14px] sm:text-[15px]" style={{ color: '#9C9C9C' }}>
+            Izazovi prijatelja i vidi ko zna više.
+          </p>
         </div>
 
-        <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-6">
+        <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto" style={{ background: '#F2F2F2' }}>
           {(['create', 'join'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style={tab === t ? { background: '#2C2D81', color: 'white' } : { color: '#6b7280' }}>
-              {t === 'create' ? '+ Kreiraj sobu' : '→ Pridruži se'}
+              className="flex-1 py-2.5 rounded-full text-[14px] font-semibold transition-all"
+              style={tab === t
+                ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
+                : { color: '#9C9C9C' }}>
+              {t === 'create' ? 'Kreiraj' : 'Pridruži se'}
             </button>
           ))}
         </div>
 
         {tab === 'create' && (
-          <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #2C2D81, #5DBF94)' }} />
-            <div className="p-8">
-              {!createdCode ? (
-                <>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Tema kviza</label>
-                  <div className="mb-6">
-                    {/* Mix option */}
-                    <button
-                      onClick={() => toggleQuiz('mix')}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all mb-3"
+          <div className="card-soft p-6 sm:p-8">
+            {!createdCode ? (
+              <>
+                <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
+                  Tema kviza
+                </label>
+                <div className="mb-7">
+                  <button
+                    onClick={() => toggleQuiz('mix')}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all mb-3"
+                    style={selectedQuizzes.includes('mix')
+                      ? { background: '#BCD9FF', border: '1.5px solid #609DED' }
+                      : { background: '#FCFCFC', border: '1.5px solid rgba(52,52,52,0.10)' }}>
+                    <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all"
                       style={selectedQuizzes.includes('mix')
-                        ? { borderColor: '#2C2D81', background: '#EEF0FF' }
-                        : { borderColor: '#e5e7eb', background: 'white' }}>
-                      <div className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all"
-                        style={selectedQuizzes.includes('mix')
-                          ? { borderColor: '#2C2D81', background: '#2C2D81' }
-                          : { borderColor: '#d1d5db', background: 'white' }}>
-                        {selectedQuizzes.includes('mix') && <span className="text-white font-bold leading-none" style={{ fontSize: 10 }}>✓</span>}
+                        ? { borderColor: '#609DED', background: '#609DED' }
+                        : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                      {selectedQuizzes.includes('mix') && <span className="text-white font-black leading-none" style={{ fontSize: 11 }}>✓</span>}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>
+                        Mix — sve teme
                       </div>
-                      <span className="text-xl">🔀</span>
-                      <div className="flex-1">
-                        <div className="font-bold text-sm" style={{ color: selectedQuizzes.includes('mix') ? '#2C2D81' : '#374151' }}>
-                          Mix — sve teme
-                        </div>
-                        <div className="text-xs text-gray-400">Pitanja iz svih kategorija pomešana</div>
-                      </div>
-                    </button>
+                      <div className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>Pitanja iz svih kategorija pomešana</div>
+                    </div>
+                  </button>
 
-                    {/* Individual quizzes */}
-                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#9ca3af' }}>Ili odaberi teme:</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-0.5">
-                      {quizzes.map(q => {
-                        const selected = selectedQuizzes.includes(q.id)
-                        return (
-                          <button key={q.id} onClick={() => toggleQuiz(q.id)}
-                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 text-left transition-all"
+                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>
+                    ili odaberi teme:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-0.5">
+                    {quizzes.map(q => {
+                      const selected = selectedQuizzes.includes(q.id)
+                      return (
+                        <button key={q.id} onClick={() => toggleQuiz(q.id)}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
+                          style={selected
+                            ? { background: '#BCD9FF', border: '1.5px solid #609DED' }
+                            : { background: '#F2F2F2', border: '1.5px solid transparent' }}>
+                          <div className="w-4 h-4 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all"
                             style={selected
-                              ? { borderColor: '#3766B0', background: '#f0f4ff' }
-                              : { borderColor: '#f0f0f0', background: '#fafafa' }}>
-                            <div className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all"
-                              style={selected
-                                ? { borderColor: '#3766B0', background: '#3766B0' }
-                                : { borderColor: '#d1d5db', background: 'white' }}>
-                              {selected && <span className="text-white font-bold leading-none" style={{ fontSize: 9 }}>✓</span>}
-                            </div>
-                            <span className="text-sm font-medium truncate"
-                              style={{ color: selected ? '#2C2D81' : '#6b7280' }}>
-                              {q.title}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                    {!selectedQuizzes.includes('mix') && selectedQuizzes.length > 1 && (
-                      <p className="text-xs text-center mt-2" style={{ color: '#5DBF94' }}>
-                        ✓ Odabrano {selectedQuizzes.length} tema — pitanja će biti pomešana
-                      </p>
-                    )}
-                  </div>
-
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Format igre</label>
-
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Pobede</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {WIN_FORMATS.map(f => (
-                        <button key={f.id} onClick={() => setSelectedFormat(f.id)}
-                          className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                          style={selectedFormat === f.id
-                            ? { background: '#EEF0FF', borderColor: '#2C2D81', color: '#2C2D81' }
-                            : { background: '#F5F6FA', borderColor: 'transparent', color: '#6b7280' }}>
-                          {f.label}
+                              ? { borderColor: '#609DED', background: '#609DED' }
+                              : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                            {selected && <span className="text-white font-black leading-none" style={{ fontSize: 9 }}>✓</span>}
+                          </div>
+                          <span className="text-[13px] font-semibold truncate" style={{ color: '#343434' }}>
+                            {q.title}
+                          </span>
                         </button>
-                      ))}
-                    </div>
+                      )
+                    })}
                   </div>
-
-                  <div className="mb-6">
-                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Vremenski</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {TIME_FORMATS.map(f => (
-                        <button key={f.id} onClick={() => setSelectedFormat(f.id)}
-                          className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                          style={selectedFormat === f.id
-                            ? { background: '#E8F8F0', borderColor: '#5DBF94', color: '#065f46' }
-                            : { background: '#F5F6FA', borderColor: 'transparent', color: '#6b7280' }}>
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {selectedFormat && (
-                    <p className="text-xs text-gray-400 text-center mb-4">
-                      {allFormats.find(f => f.id === selectedFormat)?.desc}
+                  {!selectedQuizzes.includes('mix') && selectedQuizzes.length > 1 && (
+                    <p className="text-[12px] text-center mt-3 font-medium" style={{ color: '#4CAF50' }}>
+                      ✓ Odabrano {selectedQuizzes.length} tema
                     </p>
                   )}
-
-                  <button onClick={handleCreate} disabled={creating || selectedQuizzes.length === 0}
-                    className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 hover:opacity-90"
-                    style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>
-                    {creating ? 'Kreiranje...' : 'Kreiraj sobu'}
-                  </button>
-                </>
-              ) : (
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-1">Format: <strong>{formatLabels[selectedFormat]}</strong></p>
-                  <p className="text-sm text-gray-500 mb-3">Pošalji ovaj kod prijatelju:</p>
-                  <div className="text-5xl font-black py-6 px-8 rounded-2xl mb-5 inline-block"
-                    style={{ background: '#EEF0FF', color: '#2C2D81', letterSpacing: '0.25em' }}>
-                    {createdCode}
-                  </div>
-
-                  {guestJoined ? (
-                    <div>
-                      <div className="flex items-center gap-3 justify-center mb-4 px-4 py-3 rounded-2xl"
-                        style={{ background: '#E8F8F0' }}>
-                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#5DBF94' }} />
-                        <p className="text-sm font-semibold" style={{ color: '#065f46' }}>
-                          {guestName} se pridružio/la!
-                        </p>
-                      </div>
-                      <button onClick={handleStart} disabled={starting}
-                        className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-60 hover:opacity-90"
-                        style={{ background: 'linear-gradient(135deg, #5DBF94, #3766B0)' }}>
-                        {starting ? 'Pokretamo...' : '⚔️ Započni meč!'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[#5DBF94] animate-pulse" />
-                        <p className="text-sm text-gray-500">Čekamo da se prijatelj pridruži...</p>
-                      </div>
-                      <button onClick={() => navigator.clipboard.writeText(createdCode)}
-                        className="px-6 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
-                        Kopiraj kod
-                      </button>
-                    </div>
-                  )}
                 </div>
-              )}
-            </div>
+
+                <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
+                  Format igre
+                </label>
+
+                <div className="mb-3">
+                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>Po pobedama</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {WIN_FORMATS.map(f => (
+                      <button key={f.id} onClick={() => setSelectedFormat(f.id)}
+                        className="py-3 rounded-xl text-[13px] font-bold transition-all"
+                        style={selectedFormat === f.id
+                          ? { background: '#609DED', color: 'white' }
+                          : { background: '#F2F2F2', color: '#9C9C9C' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>Po vremenu</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {TIME_FORMATS.map(f => (
+                      <button key={f.id} onClick={() => setSelectedFormat(f.id)}
+                        className="py-3 rounded-xl text-[13px] font-bold transition-all"
+                        style={selectedFormat === f.id
+                          ? { background: '#FFCB46', color: '#343434' }
+                          : { background: '#F2F2F2', color: '#9C9C9C' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {selectedFormat && (
+                  <p className="text-[12px] text-center mb-5" style={{ color: '#9C9C9C' }}>
+                    {allFormats.find(f => f.id === selectedFormat)?.desc}
+                  </p>
+                )}
+
+                <button onClick={handleCreate} disabled={creating || selectedQuizzes.length === 0}
+                  className="btn btn-primary btn-lg w-full">
+                  {creating ? 'Kreiranje…' : 'Kreiraj sobu'}
+                </button>
+              </>
+            ) : (
+              <div className="text-center">
+                <p className="text-[13px] mb-1" style={{ color: '#9C9C9C' }}>
+                  Format: <strong style={{ color: '#343434' }}>{formatLabels[selectedFormat]}</strong>
+                </p>
+                <p className="text-[13px] mb-4" style={{ color: '#9C9C9C' }}>Pošalji ovaj kod prijatelju:</p>
+                <div className="font-black py-7 px-8 rounded-3xl mb-6 inline-block"
+                  style={{ background: '#BCD9FF', color: '#343434', letterSpacing: '0.25em', fontSize: 'clamp(36px, 7vw, 56px)' }}>
+                  {createdCode}
+                </div>
+
+                {guestJoined ? (
+                  <div>
+                    <div className="flex items-center gap-3 justify-center mb-5 px-4 py-3 rounded-2xl"
+                      style={{ background: '#E8F8F0' }}>
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#4CAF50' }} />
+                      <p className="text-[13px] font-semibold" style={{ color: '#15803d' }}>
+                        {guestName} se pridružio/la
+                      </p>
+                    </div>
+                    <button onClick={handleStart} disabled={starting}
+                      className="btn btn-primary btn-lg w-full">
+                      {starting ? 'Pokretamo…' : 'Započni meč'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#609DED' }} />
+                      <p className="text-[13px]" style={{ color: '#9C9C9C' }}>Čekamo da se prijatelj pridruži…</p>
+                    </div>
+                    <button onClick={() => navigator.clipboard.writeText(createdCode)}
+                      className="btn btn-secondary btn-md">
+                      Kopiraj kod
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {tab === 'join' && (
-          <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #5DBF94, #2C2D81)' }} />
-            <div className="p-8">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Upiši kod sobe</label>
-              <input type="text" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
-                onKeyDown={e => e.key === 'Enter' && handleJoin()} placeholder="npr. AB12CD"
-                maxLength={6}
-                className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-[#2C2D81] outline-none text-2xl font-black text-center tracking-[0.3em] uppercase mb-4"
-                style={{ color: '#2C2D81' }} />
-              {joinError && <div className="bg-red-50 text-red-600 rounded-xl px-4 py-3 text-sm mb-4">{joinError}</div>}
-              <button onClick={handleJoin} disabled={joining || joinCode.length < 6}
-                className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #5DBF94, #3766B0)' }}>
-                {joining ? 'Spajamo se...' : 'Pridruži se'}
-              </button>
-            </div>
+          <div className="card-soft p-6 sm:p-8">
+            <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
+              Upiši kod sobe
+            </label>
+            <input type="text" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
+              onKeyDown={e => e.key === 'Enter' && handleJoin()} placeholder="AB12CD"
+              maxLength={6}
+              className="input mb-4 font-black text-center uppercase"
+              style={{ fontSize: 'clamp(28px, 6vw, 36px)', letterSpacing: '0.3em', color: '#343434' }} />
+            {joinError && (
+              <div className="rounded-2xl px-4 py-3 text-[13px] font-medium mb-4" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+                {joinError}
+              </div>
+            )}
+            <button onClick={handleJoin} disabled={joining || joinCode.length < 6}
+              className="btn btn-primary btn-lg w-full">
+              {joining ? 'Spajamo se…' : 'Pridruži se'}
+            </button>
           </div>
         )}
       </main>
