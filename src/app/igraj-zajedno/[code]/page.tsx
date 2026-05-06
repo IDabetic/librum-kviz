@@ -6,6 +6,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import Link from 'next/link'
 import { IconClose, IconCheck, IconWrong } from '@/components/icons'
 
 const TIME_PER_QUESTION = 15
@@ -316,6 +317,8 @@ export default function DuelGamePage() {
       totalTime,
       totalQuestions: totalMain,
       goldenRounds: goldenRound,
+      myId: myId || null,
+      opId: opId || null,
       myName: myId ? profiles[myId]?.name : 'Ti',
       opName: opId ? profiles[opId]?.name : 'Protivnik',
       myAvatar: myId ? profiles[myId]?.avatar : null,
@@ -393,7 +396,7 @@ export default function DuelGamePage() {
           </button>
 
           <div className="flex items-center gap-3 sm:gap-5 flex-1 justify-center">
-            <PlayerScore name={myProf?.name || 'Ti'} avatar={myProf?.avatar} score={myScore} accent="#609DED" you />
+            <PlayerScore userId={myId || ''} name={myProf?.name || 'Ti'} avatar={myProf?.avatar} score={myScore} accent="#609DED" you />
             <div className="text-center">
               {isGolden ? (
                 <>
@@ -407,7 +410,7 @@ export default function DuelGamePage() {
                 </>
               )}
             </div>
-            <PlayerScore name={opProf?.name || 'Protivnik'} avatar={opProf?.avatar} score={opScore} accent="#FFCB46" />
+            <PlayerScore userId={opId || ''} name={opProf?.name || 'Protivnik'} avatar={opProf?.avatar} score={opScore} accent="#FFCB46" />
           </div>
 
           <Timer left={Math.max(0, timeLeft)} total={TIME_PER_QUESTION} />
@@ -552,11 +555,11 @@ export default function DuelGamePage() {
   )
 }
 
-function PlayerScore({ name, avatar, score, accent, you }: {
-  name: string; avatar: string | null | undefined; score: number; accent: string; you?: boolean
+function PlayerScore({ userId, name, avatar, score, accent, you }: {
+  userId: string; name: string; avatar: string | null | undefined; score: number; accent: string; you?: boolean
 }) {
-  return (
-    <div className="flex items-center gap-2 min-w-0">
+  const inner = (
+    <>
       <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: '#F2F2F2', border: `2px solid ${accent}` }}>
         {avatar
           ? <Image src={`/avatars/${avatar}`} alt={name} width={36} height={36} className="w-full h-full object-cover" />
@@ -568,6 +571,10 @@ function PlayerScore({ name, avatar, score, accent, you }: {
         </div>
         <div className="font-black text-[18px] tracking-tight" style={{ color: accent }}>{score}</div>
       </div>
-    </div>
+    </>
   )
+  const cls = "flex items-center gap-2 min-w-0 transition-opacity hover:opacity-80"
+  return userId
+    ? <Link href={you ? '/profil' : `/profil/${userId}`} className={cls}>{inner}</Link>
+    : <div className={cls}>{inner}</div>
 }

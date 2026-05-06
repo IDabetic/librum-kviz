@@ -17,6 +17,8 @@ type DuelResult = {
   totalTime: number
   totalQuestions: number
   goldenRounds: number
+  myId: string | null
+  opId: string | null
   myName: string
   opName: string
   myAvatar: string | null
@@ -101,8 +103,8 @@ export default function DuelEndPage() {
           {/* Score battle */}
           <div className="p-7 sm:p-8">
             <div className="grid grid-cols-2 gap-3 mb-7">
-              <PlayerCol name={r.myName} avatar={r.myAvatar} score={r.myScore} accent="#609DED" you winner={r.iWon && !r.isDraw} />
-              <PlayerCol name={r.opName} avatar={r.opAvatar} score={r.opScore} accent="#FFCB46" winner={!r.iWon && !r.isDraw} />
+              <PlayerCol userId={r.myId} name={r.myName} avatar={r.myAvatar} score={r.myScore} accent="#609DED" you winner={r.iWon && !r.isDraw} />
+              <PlayerCol userId={r.opId} name={r.opName} avatar={r.opAvatar} score={r.opScore} accent="#FFCB46" winner={!r.iWon && !r.isDraw} />
             </div>
 
             {/* Stats grid */}
@@ -138,14 +140,11 @@ export default function DuelEndPage() {
   )
 }
 
-function PlayerCol({ name, avatar, score, accent, you, winner }: {
-  name: string; avatar: string | null; score: number; accent: string; you?: boolean; winner?: boolean
+function PlayerCol({ userId, name, avatar, score, accent, you, winner }: {
+  userId: string | null; name: string; avatar: string | null; score: number; accent: string; you?: boolean; winner?: boolean
 }) {
-  return (
-    <div className="rounded-2xl p-5 text-center" style={{
-      background: winner ? '#FFECBC' : '#F2F2F2',
-      border: winner ? '2px solid #FFCB46' : '2px solid transparent',
-    }}>
+  const inner = (
+    <>
       <div className="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3" style={{ background: '#FCFCFC', border: `2px solid ${accent}` }}>
         {avatar
           ? <Image src={`/avatars/${avatar}`} alt={name} width={56} height={56} className="w-full h-full object-cover" />
@@ -155,8 +154,16 @@ function PlayerCol({ name, avatar, score, accent, you, winner }: {
       <div className="font-black tracking-tight" style={{ color: accent, fontSize: 'clamp(28px, 5vw, 36px)' }}>{score}</div>
       <div className="text-[10px] font-medium mt-0.5" style={{ color: '#9C9C9C' }}>bodova</div>
       {winner && <div className="mt-2 text-[18px]">🏆</div>}
-    </div>
+    </>
   )
+  const cls = "rounded-2xl p-5 text-center transition-all hover:scale-[1.02]"
+  const style = {
+    background: winner ? '#FFECBC' : '#F2F2F2',
+    border: winner ? '2px solid #FFCB46' : '2px solid transparent',
+  }
+  return userId
+    ? <Link href={you ? '/profil' : `/profil/${userId}`} className={cls} style={style}>{inner}</Link>
+    : <div className={cls} style={style}>{inner}</div>
 }
 
 function StatRow({ label, me, op }: { label: string; me: number | string; op: number | string }) {
