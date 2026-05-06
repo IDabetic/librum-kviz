@@ -3,12 +3,14 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { IconEmail, IconLock, IconEye, IconEyeOff, IconProfile, IconCheck } from '@/components/icons'
 
 export default function RegistracijaPage() {
   const [form, setForm] = useState({ ime: '', prezime: '', nadimak: '', grad: '', email: '', password: '', password2: '' })
+  const [showPw, setShowPw] = useState(false)
+  const [showPw2, setShowPw2] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -21,14 +23,8 @@ export default function RegistracijaPage() {
     e.preventDefault()
     setError('')
 
-    if (form.password !== form.password2) {
-      setError('Lozinke se ne poklapaju.')
-      return
-    }
-    if (form.password.length < 6) {
-      setError('Lozinka mora imati najmanje 6 karaktera.')
-      return
-    }
+    if (form.password !== form.password2) { setError('Lozinke se ne poklapaju.'); return }
+    if (form.password.length < 6) { setError('Lozinka mora imati najmanje 6 karaktera.'); return }
 
     setLoading(true)
     const supabase = createClient()
@@ -56,137 +52,126 @@ export default function RegistracijaPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #1A1C4E 0%, #2C2D81 60%, #3766B0 100%)' }}>
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #FDC361, #5DBF94)' }} />
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: '#E8F8F0' }}>
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <path d="M6 16l6 6 14-14" stroke="#5DBF94" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold mb-2" style={{ color: '#2C2D81' }}>Proverite email!</h2>
-              <p className="text-gray-500 mb-1 text-sm">Poslali smo vam link za potvrdu na:</p>
-              <p className="font-semibold text-gray-700 mb-4">{form.email}</p>
-              <div className="rounded-xl px-4 py-3 mb-5 text-left text-sm" style={{ background: '#FFF8E8', border: '1px solid #FDC361' }}>
-                <p className="font-semibold mb-1" style={{ color: '#b45309' }}>📬 Nije stigao mejl?</p>
-                <p style={{ color: '#92400e' }}>Proverite <strong>SPAM / Junk</strong> folder — mejl ponekad završi tamo.</p>
-              </div>
-              <Link
-                href="/auth/prijava"
-                className="inline-flex items-center justify-center w-full py-3.5 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
-                style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
-              >
-                Idi na prijavu
-              </Link>
-            </div>
+      <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{ background: '#FAFAFA' }}>
+        <div className="w-full max-w-md card-soft p-8 text-center">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
+            style={{ background: '#FFECBC' }}>
+            <IconCheck size={36} className="text-[#FFCB46]" />
           </div>
+          <h1 className="font-black tracking-tight mb-2" style={{ color: '#343434', fontSize: '28px' }}>
+            Proveri email!
+          </h1>
+          <p className="text-[14px] mb-1" style={{ color: '#9C9C9C' }}>Poslali smo link za potvrdu na:</p>
+          <p className="font-semibold text-[14px] mb-5" style={{ color: '#343434' }}>{form.email}</p>
+
+          <div className="rounded-2xl px-4 py-3 mb-5 text-left text-[13px]" style={{ background: '#FFECBC' }}>
+            <p className="font-bold mb-0.5" style={{ color: '#9c7a13' }}>📬 Nije stigao mejl?</p>
+            <p style={{ color: '#9c7a13' }}>Proveri <strong>SPAM / Junk</strong> folder.</p>
+          </div>
+
+          <Link href="/auth/prijava" className="btn btn-primary btn-lg w-full">
+            Idi na prijavu
+          </Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #1A1C4E 0%, #2C2D81 60%, #3766B0 100%)' }}>
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10" style={{ background: '#FDC361' }} />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full opacity-10" style={{ background: '#5DBF94' }} />
-      </div>
-
-      <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <div className="mb-8 text-center">
-          <a href="https://www.librum.club" rel="noopener noreferrer" className="inline-block mb-4">
-            <Image src="/logo-dark.png" alt="Librum club" height={36} width={160} style={{ objectFit: 'contain' }} />
-          </a>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Kreirajte besplatan nalog</p>
+    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
+      {/* Top bar */}
+      <nav className="sticky top-0 z-40 backdrop-blur-xl"
+        style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="font-extrabold text-[18px] tracking-tight" style={{ color: '#343434' }}>
+            Librum<span style={{ color: '#609DED' }}>.</span>
+          </Link>
+          <Link href="/auth/prijava" className="btn btn-secondary btn-sm">Prijava</Link>
         </div>
+      </nav>
 
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #FDC361, #5DBF94)' }} />
-          <div className="p-8">
-            <h2 className="text-xl font-bold mb-6" style={{ color: '#1A1C4E' }}>Registracija</h2>
+      <main className="flex-1 flex items-center justify-center px-4 py-10 sm:py-16">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="font-black tracking-tight mb-2" style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+              Pridruži nam se.
+            </h1>
+            <p className="text-[14px]" style={{ color: '#9C9C9C' }}>Kreiraj besplatan nalog za 30 sekundi.</p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="card-soft p-7 sm:p-8">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+                <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
                   {error}
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Ime</label>
-                  <input type="text" required value={form.ime} onChange={e => set('ime', e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                    placeholder="Marko" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Prezime</label>
-                  <input type="text" required value={form.prezime} onChange={e => set('prezime', e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                    placeholder="Marković" />
-                </div>
+                <input type="text" required value={form.ime} onChange={e => set('ime', e.target.value)}
+                  className="input" placeholder="Ime" />
+                <input type="text" required value={form.prezime} onChange={e => set('prezime', e.target.value)}
+                  className="input" placeholder="Prezime" />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                  Nadimak <span className="font-normal normal-case text-gray-400">(rang lista)</span>
-                </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
+                  <IconProfile size={18} strokeWidth={2} />
+                </div>
                 <input type="text" value={form.nadimak} onChange={e => set('nadimak', e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                  placeholder="npr. KnjigaLover23" />
+                  className="input pl-11" placeholder="Nadimak (na rang listi)" />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Grad</label>
-                <input type="text" value={form.grad} onChange={e => set('grad', e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                  placeholder="npr. Beograd" />
-              </div>
+              <input type="text" value={form.grad} onChange={e => set('grad', e.target.value)}
+                className="input" placeholder="Grad" />
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Email adresa</label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
+                  <IconEmail size={18} strokeWidth={2} />
+                </div>
                 <input type="email" required value={form.email} onChange={e => set('email', e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                  placeholder="vas@email.com" />
+                  className="input pl-11" placeholder="Email adresa" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Lozinka</label>
-                  <input type="password" required value={form.password} onChange={e => set('password', e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                    placeholder="Min. 6 karaktera" />
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
+                    <IconLock size={18} strokeWidth={2} />
+                  </div>
+                  <input type={showPw ? 'text' : 'password'} required value={form.password} onChange={e => set('password', e.target.value)}
+                    className="input pl-11 pr-10" placeholder="Lozinka" />
+                  <button type="button" onClick={() => setShowPw(s => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#9C9C9C' }}>
+                    {showPw ? <IconEyeOff size={18} strokeWidth={2} /> : <IconEye size={18} strokeWidth={2} />}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Ponovite</label>
-                  <input type="password" required value={form.password2} onChange={e => set('password2', e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                    placeholder="••••••••" />
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
+                    <IconLock size={18} strokeWidth={2} />
+                  </div>
+                  <input type={showPw2 ? 'text' : 'password'} required value={form.password2} onChange={e => set('password2', e.target.value)}
+                    className="input pl-11 pr-10" placeholder="Ponovi" />
+                  <button type="button" onClick={() => setShowPw2(s => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#9C9C9C' }}>
+                    {showPw2 ? <IconEyeOff size={18} strokeWidth={2} /> : <IconEye size={18} strokeWidth={2} />}
+                  </button>
                 </div>
               </div>
 
-              <button type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-xl font-bold text-white transition-all hover:scale-[1.02] disabled:opacity-60 disabled:scale-100 mt-2"
-                style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>
-                {loading ? 'Registracija...' : 'Registrujte se besplatno'}
+              <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full mt-2">
+                {loading ? 'Registracija…' : 'Registruj se'}
               </button>
             </form>
-
-            <div className="mt-6 pt-6 border-t border-gray-100 text-center text-sm text-gray-500">
-              Već imate nalog?{' '}
-              <Link href="/auth/prijava" className="font-semibold hover:underline" style={{ color: '#2C2D81' }}>
-                Prijavite se
-              </Link>
-            </div>
           </div>
-        </div>
 
-        <Link href="/" className="mt-6 text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          ← Nazad na početnu
-        </Link>
-      </div>
+          <p className="text-center mt-6 text-[14px]" style={{ color: '#9C9C9C' }}>
+            Već imaš nalog?{' '}
+            <Link href="/auth/prijava" className="font-semibold transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+              Prijavi se
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

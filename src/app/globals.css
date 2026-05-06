@@ -1,53 +1,216 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────────
+   Design tokens — Apple-minimal, urban, cool
+   ───────────────────────────────────────────────────────────────── */
 @theme {
-  --color-primary: #2C2D81;
-  --color-primary-dark: #1e1f5e;
-  --color-secondary: #3766B0;
-  --color-teal: #5DBF94;
-  --color-teal-dark: #45a87c;
-  --color-pink: #F8C7D6;
-  --color-yellow: #FDC361;
-  --color-dark-green: #0A4C35;
-  --color-bg: #FAF4EC;
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  /* Primary */
+  --color-ink:        #343434;   /* dark black — primary text */
+  --color-blue:       #609DED;   /* primary action */
+  --color-yellow:     #FFCB46;   /* accent */
+  --color-bg:         #FAFAFA;   /* page background */
+
+  /* Secondary */
+  --color-light-blue:   #BCD9FF;
+  --color-light-yellow: #FFECBC;
+  --color-grey-dark:    #B9B9B9;
+  --color-grey:         #9C9C9C;
+  --color-grey-soft:    #F2F2F2;
+  --color-white:        #FCFCFC;
+
+  /* Semantic */
+  --color-success: #4CAF50;
+  --color-danger:  #E55353;
+  --color-warning: #FFCB46;
+
+  /* Aliases used throughout */
+  --color-primary:      #609DED;
+  --color-primary-dark: #4480c8;
+
+  --font-sans: var(--font-poppins), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 :root {
-  --background: #FAF4EC;
-  --foreground: #1a1a2e;
+  --background: #FAFAFA;
+  --foreground: #343434;
 }
 
 html {
   overflow-x: hidden;
+  font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  background-image:
-    radial-gradient(ellipse at 20% 0%, rgba(253,195,97,0.08) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 100%, rgba(44,45,129,0.06) 0%, transparent 60%);
   overflow-x: hidden;
+  letter-spacing: -0.01em;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
+/* Headings — tighter tracking + balanced wraps */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Selection */
+::selection {
+  background: #609DED;
+  color: white;
+}
+
+/* Scrollbar — minimal */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(52,52,52,0.15); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(52,52,52,0.25); }
+
+/* ─────────────────────────────────────────────────────────────────
+   Animations
+   ───────────────────────────────────────────────────────────────── */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes pop-in {
-  0%   { transform: scale(0.92); opacity: 0; }
+  0%   { transform: scale(0.96); opacity: 0; }
   100% { transform: scale(1);    opacity: 1; }
 }
 @keyframes countdown {
   from { stroke-dashoffset: 0; }
   to   { stroke-dashoffset: 164; }
 }
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
-.animate-fade-in { animation: fade-in 0.4s ease both; }
-.animate-pop-in  { animation: pop-in  0.3s ease both; }
+.animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-pop-in  { animation: pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ─────────────────────────────────────────────────────────────────
+   Reusable utility classes (in spirit of Apple HIG)
+   ───────────────────────────────────────────────────────────────── */
+
+/* Soft frosted card — used everywhere */
+.card-soft {
+  background: #FCFCFC;
+  border: 1px solid rgba(52,52,52,0.06);
+  border-radius: 24px;
+  box-shadow: 0 1px 3px rgba(52,52,52,0.04), 0 4px 16px rgba(52,52,52,0.04);
+}
+
+.card-flat {
+  background: #FCFCFC;
+  border: 1px solid rgba(52,52,52,0.08);
+  border-radius: 20px;
+}
+
+/* Buttons — primary blue, secondary outline, sizes S/M/L */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: 999px;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.15s ease,
+              box-shadow 0.2s ease,
+              border-color 0.15s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-sm { padding: 8px 18px; font-size: 13px; }
+.btn-md { padding: 12px 24px; font-size: 14px; }
+.btn-lg { padding: 16px 32px; font-size: 16px; }
+
+.btn-primary {
+  background: #609DED;
+  color: white;
+  box-shadow: 0 4px 14px rgba(96, 157, 237, 0.30);
+}
+.btn-primary:hover:not(:disabled) {
+  background: #4480c8;
+  box-shadow: 0 6px 18px rgba(96, 157, 237, 0.40);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #343434;
+  border: 1.5px solid rgba(52,52,52,0.18);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: #343434;
+  background: rgba(52,52,52,0.04);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #343434;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(52,52,52,0.06);
+}
+
+.btn-yellow {
+  background: #FFCB46;
+  color: #343434;
+  box-shadow: 0 4px 14px rgba(255, 203, 70, 0.35);
+}
+.btn-yellow:hover:not(:disabled) {
+  background: #f5be33;
+  box-shadow: 0 6px 18px rgba(255, 203, 70, 0.45);
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  background: #FCFCFC;
+  border: 1.5px solid rgba(52,52,52,0.10);
+  border-radius: 14px;
+  color: #343434;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+.input::placeholder { color: rgba(52,52,52,0.35); font-weight: 400; }
+.input:focus {
+  border-color: #609DED;
+  box-shadow: 0 0 0 4px rgba(96, 157, 237, 0.12);
+}
+
+/* Chip / tag */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Skeleton loader shimmer */
+.skeleton {
+  background: linear-gradient(90deg, #F2F2F2 0%, #F8F8F8 50%, #F2F2F2 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 12px;
+}

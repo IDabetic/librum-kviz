@@ -3,11 +3,10 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import Image from 'next/image'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Suspense } from 'react'
+import { IconBack, IconEmail, IconLock, IconEye, IconEyeOff, IconCheck } from '@/components/icons'
 
 function PrijavaForm() {
   const router = useRouter()
@@ -16,6 +15,7 @@ function PrijavaForm() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -30,12 +30,8 @@ function PrijavaForm() {
     setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError('Pogrešan email ili lozinka.')
-    } else {
-      router.push(redirect)
-      router.refresh()
-    }
+    if (error) setError('Pogrešan email ili lozinka.')
+    else { router.push(redirect); router.refresh() }
     setLoading(false)
   }
 
@@ -55,44 +51,39 @@ function PrijavaForm() {
       <div>
         <button
           onClick={() => { setForgotMode(false); setResetSent(false) }}
-          className="flex items-center gap-1.5 text-sm mb-5 transition-colors"
-          style={{ color: '#2C2D81' }}
+          className="flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-colors hover:opacity-70"
+          style={{ color: '#609DED' }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="10,4 6,8 10,12"/></svg>
+          <IconBack size={16} strokeWidth={2.2} />
           Nazad na prijavu
         </button>
 
         {resetSent ? (
           <div className="text-center py-4">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#E8F8F0' }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5DBF94" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7"/><path d="M12 17v4"/><path d="M8 21h8"/><polyline points="4 13 12 17 20 13"/>
-              </svg>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: '#FFECBC' }}>
+              <IconCheck size={28} className="text-[#FFCB46]" />
             </div>
-            <h3 className="font-bold text-gray-800 mb-2">Email je poslat!</h3>
-            <p className="text-sm text-gray-500">Proverite inbox (i spam) na adresi <span className="font-medium text-gray-700">{resetEmail}</span> za link za resetovanje lozinke.</p>
+            <h3 className="font-bold text-[17px] mb-2" style={{ color: '#343434' }}>Email je poslat!</h3>
+            <p className="text-[14px] leading-relaxed" style={{ color: '#9C9C9C' }}>
+              Proveri inbox (i spam) na <span className="font-semibold" style={{ color: '#343434' }}>{resetEmail}</span>.
+            </p>
           </div>
         ) : (
           <form onSubmit={handleForgot} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Vaša email adresa</label>
-              <input
-                type="email"
-                required
-                value={resetEmail}
-                onChange={e => setResetEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-                style={{ ['--tw-ring-color' as string]: 'rgba(44,45,129,0.2)' }}
-                placeholder="vas@email.com"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={resetLoading}
-              className="w-full py-3.5 rounded-xl font-bold text-white transition-all hover:scale-[1.02] disabled:opacity-60 disabled:scale-100"
-              style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
-            >
-              {resetLoading ? 'Slanje...' : 'Pošalji link za novu lozinku'}
+            <p className="text-[13px] mb-1" style={{ color: '#9C9C9C' }}>
+              Poslaćemo ti link za novu lozinku.
+            </p>
+            <InputWithIcon
+              Icon={IconEmail}
+              type="email"
+              required
+              value={resetEmail}
+              onChange={e => setResetEmail(e.target.value)}
+              placeholder="vas@email.com"
+            />
+            <button type="submit" disabled={resetLoading} className="btn btn-primary btn-lg w-full">
+              {resetLoading ? 'Slanje...' : 'Pošalji link'}
             </button>
           </form>
         )}
@@ -106,105 +97,118 @@ function PrijavaForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {potvrdjeno && (
-        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#E8F8F0', border: '1px solid #5DBF94' }}>
-          <p className="font-semibold" style={{ color: '#166534' }}>✅ Email potvrđen!</p>
-          <p style={{ color: '#166534' }}>Nalog je aktiviran. Prijavite se ispod.</p>
+        <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#E8F8F0', color: '#15803d' }}>
+          ✓ Email potvrđen — prijavi se ispod.
         </div>
       )}
       {greskaParam === 'potvrda' && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-          Link za potvrdu je istekao ili je neispravan. Pokušajte ponovo da se registrujete.
+        <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+          Link za potvrdu je istekao. Pokušaj ponovo da se registruješ.
         </div>
       )}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+        <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
           {error}
         </div>
       )}
+
+      <InputWithIcon
+        Icon={IconEmail}
+        type="email"
+        required
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        placeholder="Email adresa"
+      />
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email adresa</label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-          placeholder="vas@email.com"
-        />
-      </div>
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium text-gray-700">Lozinka</label>
-          <button
-            type="button"
-            onClick={() => { setForgotMode(true); setResetEmail(email) }}
-            className="text-xs font-medium transition-colors hover:underline"
-            style={{ color: '#3766B0' }}
-          >
-            Zaboravili ste lozinku?
-          </button>
-        </div>
-        <input
-          type="password"
+        <InputWithIcon
+          Icon={IconLock}
+          rightIcon={showPassword ? IconEyeOff : IconEye}
+          onRightIconClick={() => setShowPassword(s => !s)}
+          type={showPassword ? 'text' : 'password'}
           required
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:border-[#2C2D81] transition-colors text-sm"
-          placeholder="••••••••"
+          placeholder="Lozinka"
         />
+        <div className="flex justify-end mt-2">
+          <button type="button" onClick={() => { setForgotMode(true); setResetEmail(email) }}
+            className="text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+            Zaboravljena lozinka?
+          </button>
+        </div>
       </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-3.5 rounded-xl font-bold text-white transition-all hover:scale-[1.02] disabled:opacity-60 disabled:scale-100 mt-2"
-        style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
-      >
-        {loading ? 'Prijava...' : 'Prijavite se'}
+
+      <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full mt-2">
+        {loading ? 'Prijava…' : 'Prijavi se'}
       </button>
     </form>
   )
 }
 
+// Reusable input with leading icon (and optional trailing button)
+function InputWithIcon({
+  Icon, rightIcon: RightIcon, onRightIconClick, ...props
+}: {
+  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
+  rightIcon?: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
+  onRightIconClick?: () => void
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="relative">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
+        <Icon size={18} strokeWidth={2} />
+      </div>
+      <input {...props} className="input pl-11 pr-11" />
+      {RightIcon && (
+        <button type="button" onClick={onRightIconClick}
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-opacity hover:opacity-70"
+          style={{ color: '#9C9C9C' }}>
+          <RightIcon size={18} strokeWidth={2} />
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function PrijavaPage() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #1A1C4E 0%, #2C2D81 60%, #3766B0 100%)' }}>
-      {/* Decorative circles */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10" style={{ background: '#FDC361' }} />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full opacity-10" style={{ background: '#5DBF94' }} />
-      </div>
-
-      <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-12">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <a href="https://www.librum.club" rel="noopener noreferrer" className="inline-block mb-4">
-            <Image src="/logo-dark.png" alt="Librum club" height={36} width={160} style={{ objectFit: 'contain' }} />
-          </a>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Prijavite se na vaš nalog</p>
+    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
+      {/* Top bar */}
+      <nav className="sticky top-0 z-40 backdrop-blur-xl"
+        style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="font-extrabold text-[18px] tracking-tight" style={{ color: '#343434' }}>
+            Librum<span style={{ color: '#609DED' }}>.</span>
+          </Link>
+          <Link href="/auth/registracija" className="btn btn-secondary btn-sm">Registracija</Link>
         </div>
+      </nav>
 
-        {/* Card */}
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Card header strip */}
-          <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #FDC361, #5DBF94)' }} />
-          <div className="p-8">
-            <h2 className="text-xl font-bold mb-6" style={{ color: '#1A1C4E' }}>Prijava</h2>
+      <main className="flex-1 flex items-center justify-center px-4 py-12 sm:py-20">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="font-black tracking-tight mb-2" style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+              Dobrodošao/la nazad.
+            </h1>
+            <p className="text-[14px]" style={{ color: '#9C9C9C' }}>Prijavi se na svoj nalog.</p>
+          </div>
+
+          <div className="card-soft p-7 sm:p-8">
             <Suspense>
               <PrijavaForm />
             </Suspense>
-            <div className="mt-6 pt-6 border-t border-gray-100 text-center text-sm text-gray-500">
-              Nemate nalog?{' '}
-              <Link href="/auth/registracija" className="font-semibold hover:underline" style={{ color: '#2C2D81' }}>
-                Registrujte se besplatno
-              </Link>
-            </div>
           </div>
-        </div>
 
-        <Link href="/" className="mt-6 text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          ← Nazad na početnu
-        </Link>
-      </div>
+          <p className="text-center mt-6 text-[14px]" style={{ color: '#9C9C9C' }}>
+            Nemaš nalog?{' '}
+            <Link href="/auth/registracija" className="font-semibold transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+              Registruj se
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

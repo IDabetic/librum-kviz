@@ -1,9 +1,14 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const poppins = Poppins({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Librum Kviz',
@@ -25,8 +30,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sr" className={`${geist.variable} h-full`}>
-      <body className="min-h-full antialiased">
+    <html lang="sr" className={`${poppins.variable} h-full`}>
+      <body className="min-h-full antialiased font-sans">
         {children}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-LS594VEPZ3"

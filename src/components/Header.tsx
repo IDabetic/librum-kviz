@@ -5,8 +5,16 @@ import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
+import { IconHome, IconDiscover, IconTrophy, IconSwords, IconHint, IconUsers, IconMenu, IconClose, IconLogout } from './icons'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
+
+const NAV_LINKS = [
+  { href: '/kvizovi',          label: 'Kvizovi',          Icon: IconDiscover },
+  { href: '/leaderboard',      label: 'Rang lista',       Icon: IconTrophy },
+  { href: '/igraj-zajedno',    label: 'Igraj zajedno',    Icon: IconSwords },
+  { href: '/predlozi-pitanje', label: 'Predloži pitanje', Icon: IconHint },
+]
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -21,13 +29,6 @@ function timeAgo(dateStr: string): string {
   return `pre ${weeks} ned${weeks > 1 ? 'elje' : 'elju'}`
 }
 
-const NAV_LINKS = [
-  { href: '/kvizovi',          label: 'Kvizovi',          icon: '📚' },
-  { href: '/leaderboard',      label: 'Rang lista',       icon: '🏆' },
-  { href: '/igraj-zajedno',    label: 'Igraj zajedno',    icon: '⚔️' },
-  { href: '/predlozi-pitanje', label: 'Predloži pitanje', icon: '💡' },
-]
-
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
@@ -41,19 +42,14 @@ export default function Header() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        supabase
-          .from('profiles')
-          .select('first_name, avatar')
-          .eq('id', user.id)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              setUserName(data.first_name)
-              setUserAvatar(data.avatar || null)
-            }
-          })
-      }
+      if (!user) return
+      supabase.from('profiles').select('first_name, avatar').eq('id', user.id).single()
+        .then(({ data }) => {
+          if (data) {
+            setUserName(data.first_name)
+            setUserAvatar(data.avatar || null)
+          }
+        })
     })
   }, [])
 
@@ -75,9 +71,7 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [showRecent])
 
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
+  useEffect(() => { setMobileOpen(false) }, [pathname])
 
   async function handleLogout() {
     await createClient().auth.signOut()
@@ -87,90 +81,75 @@ export default function Header() {
 
   return (
     <>
-      <header
-        className="sticky top-0 z-50"
-        style={{
-          background: 'linear-gradient(135deg, #1A1C4E 0%, #2C2D81 60%, #3766B0 100%)',
-          borderBottom: '2px solid #FDC361',
-          boxShadow: '0 4px 20px rgba(26,28,78,0.25)',
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 backdrop-blur-xl"
+        style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
-          <a href="https://www.librum.club" rel="noopener noreferrer" className="flex-shrink-0">
-            <Image
-              src="/logo-dark.png"
-              alt="Librum club"
-              height={36}
-              width={160}
-              style={{ objectFit: 'contain', objectPosition: 'left' }}
-            />
-          </a>
+          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+            <span className="font-extrabold text-[18px] tracking-tight" style={{ color: '#343434' }}>
+              Librum<span style={{ color: '#609DED' }}>.</span>
+            </span>
+          </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map(({ href, label, icon }) => {
+          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+            {NAV_LINKS.map(({ href, label, Icon }) => {
               const active = pathname.startsWith(href)
               return (
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all"
                   style={active
-                    ? { background: 'rgba(253,195,97,0.2)', color: '#FDC361', border: '1px solid rgba(253,195,97,0.35)' }
-                    : { color: 'rgba(255,255,255,0.75)', border: '1px solid transparent' }
+                    ? { background: '#609DED', color: 'white' }
+                    : { color: '#343434' }
                   }
-                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.color = '#fff' }}
-                  onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.75)' }}
+                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(52,52,52,0.06)' }}
+                  onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}
                 >
-                  <span className="text-base leading-none">{icon}</span>
+                  <Icon size={16} strokeWidth={2.2} />
                   {label}
                 </Link>
               )
             })}
-            <a
-              href="https://www.librum.club"
-              rel="noopener noreferrer"
-              className="ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all"
-              style={{ color: 'rgba(255,255,255,0.55)', border: '1px solid transparent' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#fff' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)' }}
-            >
-              ← Klub
-            </a>
+          </nav>
 
+          {/* Right side */}
+          <div className="flex items-center gap-2">
             {/* Recent members dropdown */}
             {recentUsers.length > 0 && (
-              <div ref={recentRef} className="relative ml-1">
+              <div ref={recentRef} className="relative hidden md:block">
                 <button
                   onClick={() => setShowRecent(o => !o)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all"
+                  className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
                   style={showRecent
-                    ? { background: '#FDC361', color: '#1A1C4E', border: '1px solid #FDC361' }
-                    : { background: 'rgba(253,195,97,0.15)', color: '#FDC361', border: '1px solid rgba(253,195,97,0.4)' }}
+                    ? { background: '#609DED', color: 'white' }
+                    : { background: 'rgba(52,52,52,0.06)', color: '#343434' }}
+                  aria-label="Novi članovi"
                 >
-                  👥 <span className="text-xs">Novi</span>
+                  <IconUsers size={18} strokeWidth={2.2} />
                 </button>
                 {showRecent && (
-                  <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-                    <div className="px-4 py-3 border-b border-gray-50">
-                      <p className="font-bold text-sm" style={{ color: '#2C2D81' }}>Novi članovi</p>
+                  <div className="absolute right-0 top-full mt-2 w-80 card-soft overflow-hidden z-50 animate-pop-in">
+                    <div className="px-5 py-4 border-b border-[#F2F2F2]">
+                      <p className="font-bold text-[15px]" style={{ color: '#343434' }}>Novi članovi</p>
+                      <p className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>Poslednji koji su se pridružili</p>
                     </div>
-                    <div className="max-h-80 overflow-y-auto">
+                    <div className="max-h-96 overflow-y-auto">
                       {recentUsers.map(u => {
                         const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
                         return (
                           <Link key={u.id} href={`/profil/${u.id}`} onClick={() => setShowRecent(false)}
-                            className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+                            className="flex items-center gap-3 px-5 py-3 hover:bg-[#F2F2F2] transition-colors">
+                            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
                               {u.avatar
-                                ? <Image src={`/avatars/${u.avatar}`} alt={name} width={36} height={36} className="w-full h-full object-cover" />
-                                : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{name[0]}</div>
+                                ? <Image src={`/avatars/${u.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
+                                : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#609DED', color: 'white' }}>{name[0]}</div>
                               }
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-gray-800 truncate">{name}</p>
-                              <p className="text-xs text-gray-400">{timeAgo(u.created_at)}</p>
+                              <p className="font-semibold text-[14px] truncate" style={{ color: '#343434' }}>{name}</p>
+                              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{timeAgo(u.created_at)}</p>
                             </div>
                           </Link>
                         )
@@ -180,138 +159,120 @@ export default function Header() {
                 )}
               </div>
             )}
-          </nav>
 
-          {/* Right: avatar + logout (desktop) + hamburger (mobile) */}
-          <div className="flex items-center gap-3">
+            {/* User avatar (clickable → /profil) */}
             {userName && (
-              <Link href="/profil" className="hidden md:flex items-center gap-2 rounded-xl px-2 py-1 transition-all hover:bg-white/10">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#FDC361]">
+              <Link href="/profil" className="hidden md:flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-full transition-all hover:bg-[#F2F2F2]">
+                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
                   {userAvatar
-                    ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={32} height={32} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FDC361', color: '#1A1C4E' }}>{userName[0].toUpperCase()}</div>
+                    ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={36} height={36} className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{userName[0].toUpperCase()}</div>
                   }
                 </div>
-                <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                  {userName}
-                </span>
+                <span className="text-[13px] font-semibold" style={{ color: '#343434' }}>{userName}</span>
               </Link>
             )}
-            <button
-              onClick={handleLogout}
-              className="text-sm px-3 py-1.5 rounded-xl font-medium transition-all hidden md:block"
-              style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = '#fff'
-                ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.5)'
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'
-                ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.2)'
-              }}
-            >
-              Odjava
-            </button>
 
-            {/* Hamburger — mobile only */}
+            {/* Logout (desktop) */}
+            {userName && (
+              <button
+                onClick={handleLogout}
+                className="hidden md:flex items-center justify-center w-10 h-10 rounded-full transition-all"
+                style={{ color: '#9C9C9C' }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(229,83,83,0.10)'
+                  ;(e.currentTarget as HTMLButtonElement).style.color = '#E55353'
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+                  ;(e.currentTarget as HTMLButtonElement).style.color = '#9C9C9C'
+                }}
+                aria-label="Odjava"
+              >
+                <IconLogout size={18} strokeWidth={2.2} />
+              </button>
+            )}
+
+            {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(o => !o)}
-              className="md:hidden flex flex-col justify-center items-center w-10 h-10 rounded-xl gap-1.5 transition-all"
-              style={{ border: '1px solid rgba(255,255,255,0.2)' }}
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-full transition-all"
+              style={{ background: mobileOpen ? '#343434' : 'rgba(52,52,52,0.06)', color: mobileOpen ? 'white' : '#343434' }}
               aria-label="Meni"
             >
-              <span
-                className="block w-5 h-0.5 transition-transform duration-200"
-                style={{ background: '#FDC361', transform: mobileOpen ? 'rotate(45deg) translate(2px, 2px)' : '' }}
-              />
-              <span
-                className="block w-5 h-0.5 transition-opacity duration-200"
-                style={{ background: '#FDC361', opacity: mobileOpen ? 0 : 1 }}
-              />
-              <span
-                className="block w-5 h-0.5 transition-transform duration-200"
-                style={{ background: '#FDC361', transform: mobileOpen ? 'rotate(-45deg) translate(2px, -2px)' : '' }}
-              />
+              {mobileOpen ? <IconClose size={20} strokeWidth={2.2} /> : <IconMenu size={20} strokeWidth={2.2} />}
             </button>
           </div>
         </div>
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div
-            className="md:hidden px-4 py-4 flex flex-col gap-1"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(26,28,78,0.97)' }}
-          >
-            {userName && (
-              <Link href="/profil" className="flex items-center gap-2 pb-3 mb-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#FDC361]">
-                  {userAvatar
-                    ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={32} height={32} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FDC361', color: '#1A1C4E' }}>{userName[0].toUpperCase()}</div>
-                  }
-                </div>
-                <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                  {userName}
-                </span>
-              </Link>
-            )}
-            {NAV_LINKS.map(({ href, label, icon }) => {
-              const active = pathname.startsWith(href)
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                  style={active
-                    ? { background: 'rgba(253,195,97,0.15)', color: '#FDC361' }
-                    : { color: 'rgba(255,255,255,0.7)' }
-                  }
-                >
-                  <span className="text-base">{icon}</span>
-                  {label}
+          <div className="md:hidden border-t border-[#F2F2F2] animate-fade-in">
+            <div className="max-w-6xl mx-auto px-4 py-3 space-y-1">
+              {/* User card */}
+              {userName && (
+                <Link href="/profil" className="flex items-center gap-3 p-3 rounded-2xl mb-2"
+                  style={{ background: '#F2F2F2' }}>
+                  <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 bg-white">
+                    {userAvatar
+                      ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={44} height={44} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{userName[0].toUpperCase()}</div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-bold truncate" style={{ color: '#343434' }}>{userName}</p>
+                    <p className="text-[12px]" style={{ color: '#9C9C9C' }}>Otvori profil →</p>
+                  </div>
                 </Link>
-              )
-            })}
-            {recentUsers.length > 0 && (
-              <div>
-                <p className="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Novi članovi</p>
-                {recentUsers.slice(0, 5).map(u => {
-                  const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
-                  return (
-                    <Link key={u.id} href={`/profil/${u.id}`}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all"
-                      style={{ color: 'rgba(255,255,255,0.7)' }}>
-                      <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0">
-                        {u.avatar
-                          ? <Image src={`/avatars/${u.avatar}`} alt={name} width={28} height={28} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{name[0]}</div>
-                        }
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium truncate block">{name}</span>
-                      </div>
-                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{timeAgo(u.created_at)}</span>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-            <a
-              href="https://www.librum.club"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium"
-              style={{ color: 'rgba(255,255,255,0.45)' }}
-            >
-              ← Nazad u Klub
-            </a>
-            <div className="pt-3 mt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium"
-                style={{ color: '#f87171' }}
-              >
-                Odjava
-              </button>
+              )}
+
+              {NAV_LINKS.map(({ href, label, Icon }) => {
+                const active = pathname.startsWith(href)
+                return (
+                  <Link key={href} href={href}
+                    className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"
+                    style={active
+                      ? { background: '#609DED', color: 'white' }
+                      : { color: '#343434' }
+                    }>
+                    <Icon size={18} strokeWidth={2.2} />
+                    {label}
+                  </Link>
+                )
+              })}
+
+              {recentUsers.length > 0 && (
+                <div className="pt-3 mt-3 border-t border-[#F2F2F2]">
+                  <p className="px-4 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>Novi članovi</p>
+                  {recentUsers.slice(0, 5).map(u => {
+                    const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
+                    return (
+                      <Link key={u.id} href={`/profil/${u.id}`}
+                        className="flex items-center gap-3 px-4 py-2.5 rounded-2xl">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+                          {u.avatar
+                            ? <Image src={`/avatars/${u.avatar}`} alt={name} width={32} height={32} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#609DED', color: 'white' }}>{name[0]}</div>
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#343434' }}>{name}</span>
+                          <span className="text-[11px]" style={{ color: '#9C9C9C' }}>{timeAgo(u.created_at)}</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+
+              {userName && (
+                <button onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-colors mt-3 border-t border-[#F2F2F2] pt-4"
+                  style={{ color: '#E55353' }}>
+                  <IconLogout size={18} strokeWidth={2.2} />
+                  Odjava
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -320,28 +281,10 @@ export default function Header() {
   )
 }
 
-function NavLink({ href, current, children }: { href: string; current: string; children: React.ReactNode }) {
-  const active = current.startsWith(href)
+export function LibrumIcon({ size = 32 }: { size?: number; dark?: boolean }) {
   return (
-    <Link
-      href={href}
-      className={`text-sm font-medium transition-colors ${
-        active ? 'text-[#FDC361]' : 'text-white/70 hover:text-white'
-      }`}
-    >
-      {children}
-    </Link>
-  )
-}
-
-export function LibrumIcon({ size = 32, dark = false }: { size?: number; dark?: boolean }) {
-  return (
-    <Image
-      src={dark ? '/logo-dark.png' : '/logo-light.png'}
-      alt="Librum club"
-      height={size}
-      width={size * 4}
-      style={{ objectFit: 'contain', objectPosition: 'left' }}
-    />
+    <span className="font-extrabold tracking-tight" style={{ color: '#343434', fontSize: size * 0.6 }}>
+      Librum<span style={{ color: '#609DED' }}>.</span>
+    </span>
   )
 }
