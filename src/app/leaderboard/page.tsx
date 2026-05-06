@@ -15,12 +15,12 @@ export default async function LeaderboardPage() {
     .order('score_points', { ascending: false })
     .limit(200)
 
-  const soloMap: Record<string, { name: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }> = {}
+  const soloMap: Record<string, { name: string; userId: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }> = {}
   ;(results || []).forEach(r => {
     const uid = r.user_id
     const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; avatar?: string } | null
     const name = prof ? `${prof.first_name} ${prof.last_name}` : 'Igrač'
-    if (!soloMap[uid]) soloMap[uid] = { name, totalPoints: 0, bestLevel: 0, plays: 0, avatar: prof?.avatar || undefined }
+    if (!soloMap[uid]) soloMap[uid] = { name, userId: uid, totalPoints: 0, bestLevel: 0, plays: 0, avatar: prof?.avatar || undefined }
     soloMap[uid].totalPoints += r.score_points ?? 0
     soloMap[uid].bestLevel = Math.max(soloMap[uid].bestLevel, r.level_reached ?? 0)
     soloMap[uid].plays++
@@ -55,11 +55,11 @@ export default async function LeaderboardPage() {
     })
   }
 
-  const duetMap: Record<string, { name: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }> = {}
+  const duetMap: Record<string, { name: string; userId: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }> = {}
 
   function recordDuet(uid: string, myMetric: number, opMetric: number) {
     const name = profileMap[uid] || 'Igrač'
-    if (!duetMap[uid]) duetMap[uid] = { name, wins: 0, losses: 0, draws: 0, plays: 0, avatar: avatarMap[uid] }
+    if (!duetMap[uid]) duetMap[uid] = { name, userId: uid, wins: 0, losses: 0, draws: 0, plays: 0, avatar: avatarMap[uid] }
     duetMap[uid].plays++
     if (myMetric > opMetric) duetMap[uid].wins++
     else if (myMetric < opMetric) duetMap[uid].losses++

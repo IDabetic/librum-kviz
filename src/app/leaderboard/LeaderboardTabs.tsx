@@ -4,8 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-type SoloEntry = { name: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }
-type DuetEntry = { name: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }
+type SoloEntry = { name: string; userId: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }
+type DuetEntry = { name: string; userId: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
@@ -69,7 +69,7 @@ function SoloBoard({ data, user }: { data: SoloEntry[]; user: boolean }) {
       )}
       <div className="divide-y divide-gray-50">
         {data.map((p, i) => (
-          <div key={i} className="flex items-center gap-4 px-6 py-4">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
             <span className="w-8 text-center text-lg">
               {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
             </span>
@@ -90,7 +90,7 @@ function SoloBoard({ data, user }: { data: SoloEntry[]; user: boolean }) {
               </div>
               <div className="text-xs text-gray-400">bodova</div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
@@ -130,7 +130,7 @@ function DuetBoard({ data, user }: { data: DuetEntry[]; user: boolean }) {
       )}
       <div className="divide-y divide-gray-50">
         {data.map((p, i) => (
-          <div key={i} className="flex items-center gap-4 px-6 py-4">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
             <span className="w-8 text-center text-lg">
               {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
             </span>
@@ -149,7 +149,7 @@ function DuetBoard({ data, user }: { data: DuetEntry[]; user: boolean }) {
               <div><div className="font-bold text-sm text-gray-400">{p.draws}</div><div className="text-xs text-gray-400">D</div></div>
               <div><div className="font-bold text-sm" style={{ color: '#e05252' }}>{p.losses}</div><div className="text-xs text-gray-400">L</div></div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

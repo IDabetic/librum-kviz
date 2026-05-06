@@ -28,7 +28,7 @@ export default function IgrajZajednoPage() {
   const [tab, setTab] = useState<'create' | 'join'>('create')
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
-  const [selectedQuiz, setSelectedQuiz] = useState('mix')
+  const [selectedQuizzes, setSelectedQuizzes] = useState<string[]>(['mix'])
   const [selectedFormat, setSelectedFormat] = useState('best_of_5')
   const [creating, setCreating] = useState(false)
   const [createdCode, setCreatedCode] = useState('')
@@ -69,6 +69,21 @@ export default function IgrajZajednoPage() {
     return () => { supabase.removeChannel(channel) }
   }, [createdCode, waitingForGuest, guestJoined])
 
+  function toggleQuiz(id: string) {
+    if (id === 'mix') {
+      setSelectedQuizzes(['mix'])
+    } else {
+      setSelectedQuizzes(prev => {
+        const filtered = prev.filter(q => q !== 'mix')
+        if (filtered.includes(id)) {
+          const next = filtered.filter(q => q !== id)
+          return next.length === 0 ? ['mix'] : next
+        }
+        return [...filtered, id]
+      })
+    }
+  }
+
   async function handleCreate() {
     setCreating(true)
     const supabase = createClient()
@@ -76,11 +91,15 @@ export default function IgrajZajednoPage() {
     if (!user) { router.push('/auth/prijava'); return }
 
     let questionIds: string[]
-    if (selectedQuiz === 'mix') {
+    const isMix = selectedQuizzes.includes('mix') || selectedQuizzes.length === 0
+    if (isMix) {
       const { data: all } = await supabase.from('questions').select('id')
       questionIds = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id).slice(0, 200)
+    } else if (selectedQuizzes.length === 1) {
+      const { data: questions } = await supabase.from('questions').select('id').eq('quiz_id', selectedQuizzes[0])
+      questionIds = (questions || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id)
     } else {
-      const { data: questions } = await supabase.from('questions').select('id').eq('quiz_id', selectedQuiz)
+      const { data: questions } = await supabase.from('questions').select('id').in('quiz_id', selectedQuizzes)
       questionIds = (questions || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id)
     }
 
@@ -94,9 +113,11 @@ export default function IgrajZajednoPage() {
       code = generateCode()
     }
 
+    const singleQuizId = !isMix && selectedQuizzes.length === 1 ? selectedQuizzes[0] : null
+
     const { error } = await supabase.from('game_rooms').insert({
       room_code: code,
-      quiz_id: selectedQuiz === 'mix' ? null : selectedQuiz,
+      quiz_id: singleQuizId,
       host_id: user.id,
       question_ids: questionIds,
       total_questions: questionIds.length,
@@ -187,45 +208,59 @@ export default function IgrajZajednoPage() {
               {!createdCode ? (
                 <>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Tema kviza</label>
-                  <div className="space-y-2 mb-6">
+                  <div className="mb-6">
+                    {/* Mix option */}
                     <button
-                      onClick={() => setSelectedQuiz('mix')}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all"
-                      style={selectedQuiz === 'mix'
+                      onClick={() => toggleQuiz('mix')}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all mb-3"
+                      style={selectedQuizzes.includes('mix')
                         ? { borderColor: '#2C2D81', background: '#EEF0FF' }
                         : { borderColor: '#e5e7eb', background: 'white' }}>
+                      <div className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                        style={selectedQuizzes.includes('mix')
+                          ? { borderColor: '#2C2D81', background: '#2C2D81' }
+                          : { borderColor: '#d1d5db', background: 'white' }}>
+                        {selectedQuizzes.includes('mix') && <span className="text-white font-bold leading-none" style={{ fontSize: 10 }}>✓</span>}
+                      </div>
                       <span className="text-xl">🔀</span>
                       <div className="flex-1">
-                        <div className="font-bold text-sm" style={{ color: selectedQuiz === 'mix' ? '#2C2D81' : '#374151' }}>
+                        <div className="font-bold text-sm" style={{ color: selectedQuizzes.includes('mix') ? '#2C2D81' : '#374151' }}>
                           Mix — sve teme
                         </div>
                         <div className="text-xs text-gray-400">Pitanja iz svih kategorija pomešana</div>
                       </div>
-                      {selectedQuiz === 'mix' && (
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0"
-                          style={{ background: '#2C2D81' }}>✓</span>
-                      )}
                     </button>
 
-                    <div className="max-h-40 overflow-y-auto space-y-1.5 pr-0.5">
-                      {quizzes.map(q => (
-                        <button key={q.id} onClick={() => setSelectedQuiz(q.id)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all"
-                          style={selectedQuiz === q.id
-                            ? { borderColor: '#3766B0', background: '#f0f4ff' }
-                            : { borderColor: '#f0f0f0', background: '#fafafa' }}>
-                          <span className="text-sm">📚</span>
-                          <span className="flex-1 text-sm font-medium truncate"
-                            style={{ color: selectedQuiz === q.id ? '#2C2D81' : '#6b7280' }}>
-                            {q.title}
-                          </span>
-                          {selectedQuiz === q.id && (
-                            <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0"
-                              style={{ background: '#3766B0' }}>✓</span>
-                          )}
-                        </button>
-                      ))}
+                    {/* Individual quizzes */}
+                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#9ca3af' }}>Ili odaberi teme:</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-52 overflow-y-auto pr-0.5">
+                      {quizzes.map(q => {
+                        const selected = selectedQuizzes.includes(q.id)
+                        return (
+                          <button key={q.id} onClick={() => toggleQuiz(q.id)}
+                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 text-left transition-all"
+                            style={selected
+                              ? { borderColor: '#3766B0', background: '#f0f4ff' }
+                              : { borderColor: '#f0f0f0', background: '#fafafa' }}>
+                            <div className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                              style={selected
+                                ? { borderColor: '#3766B0', background: '#3766B0' }
+                                : { borderColor: '#d1d5db', background: 'white' }}>
+                              {selected && <span className="text-white font-bold leading-none" style={{ fontSize: 9 }}>✓</span>}
+                            </div>
+                            <span className="text-sm font-medium truncate"
+                              style={{ color: selected ? '#2C2D81' : '#6b7280' }}>
+                              {q.title}
+                            </span>
+                          </button>
+                        )
+                      })}
                     </div>
+                    {!selectedQuizzes.includes('mix') && selectedQuizzes.length > 1 && (
+                      <p className="text-xs text-center mt-2" style={{ color: '#5DBF94' }}>
+                        ✓ Odabrano {selectedQuizzes.length} tema — pitanja će biti pomešana
+                      </p>
+                    )}
                   </div>
 
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Format igre</label>
@@ -266,7 +301,7 @@ export default function IgrajZajednoPage() {
                     </p>
                   )}
 
-                  <button onClick={handleCreate} disabled={creating || !selectedQuiz}
+                  <button onClick={handleCreate} disabled={creating || selectedQuizzes.length === 0}
                     className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 hover:opacity-90"
                     style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>
                     {creating ? 'Kreiranje...' : 'Kreiraj sobu'}
