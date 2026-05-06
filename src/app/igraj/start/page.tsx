@@ -417,35 +417,35 @@ export default function SurvivorGame() {
       {/* ── Top HUD ────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={() => setShowExitConfirm(true)}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2]"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2] flex-shrink-0"
             style={{ color: '#9C9C9C' }} aria-label="Izađi">
-            <IconClose size={18} strokeWidth={2.2} />
+            <IconClose size={20} strokeWidth={2.2} />
           </button>
 
-          <div className="flex items-center gap-3 flex-1 justify-center">
-            <Stat label="❤" value={lives} color={lives <= 3 ? '#E55353' : '#343434'} />
-            <Stat label="bod" value={score} color="#343434" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
-            <Stat label="?" value={reached} color="#9C9C9C" />
-            <Stat label="niz" value={combo} color="#609DED" />
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-center">
+            <Stat label="Životi"  value={lives} color={lives <= 3 ? '#E55353' : '#343434'} bg={lives <= 3 ? '#FEE2E2' : '#F2F2F2'} />
+            <Stat label="Bodovi"  value={score} color="#343434" bg="#FFECBC" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
+            <Stat label="Pitanje" value={reached} color="#1e5fa4" bg="#BCD9FF" />
+            <Stat label="Niz"     value={combo} color="#15803d" bg="#E8F8F0" />
           </div>
 
           <Timer left={timeLeft} total={TIME_PER_QUESTION + (lifelines.extraTime < 1 && timeLeft > TIME_PER_QUESTION ? 15 : 0)} />
         </div>
         {/* Progress dots within current 10-bucket */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-2 flex gap-1">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2.5 flex gap-1">
           {Array.from({ length: 10 }).map((_, i) => {
             const idx = (reached % 10)
             const bg = i < idx ? '#4CAF50' : i === idx ? '#FFCB46' : 'rgba(52,52,52,0.10)'
-            return <div key={i} className="flex-1 h-1 rounded-full transition-all" style={{ background: bg }} />
+            return <div key={i} className="flex-1 h-1.5 rounded-full transition-all" style={{ background: bg }} />
           })}
         </div>
       </header>
 
       {/* ── Main play area ─────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col items-center justify-start px-4 sm:px-6 py-5">
-        <div className="w-full max-w-2xl" key={current.id}>
+      <main className="flex-1 flex flex-col items-center justify-start px-4 sm:px-6 py-6">
+        <div className="w-full max-w-3xl" key={current.id}>
 
           {/* Risk banner */}
           {riskActive && (
@@ -586,15 +586,15 @@ export default function SurvivorGame() {
   )
 }
 
-function Stat({ label, value, color, highlight, highlightKey }: {
-  label: string; value: number; color: string; highlight?: number; highlightKey?: number
+function Stat({ label, value, color, bg, highlight, highlightKey }: {
+  label: string; value: number; color: string; bg: string; highlight?: number; highlightKey?: number
 }) {
   return (
-    <div className="text-center relative">
-      <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>{label}</div>
-      <div className="font-black text-[18px] sm:text-[20px] tracking-tight" style={{ color }}>{value}</div>
+    <div className="relative px-3 sm:px-4 py-2 rounded-2xl flex-1 sm:flex-initial sm:min-w-[80px] text-center" style={{ background: bg }}>
+      <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: color, opacity: 0.65 }}>{label}</div>
+      <div className="font-black text-[22px] sm:text-[26px] tracking-tight leading-none mt-0.5" style={{ color }}>{value}</div>
       {highlight !== undefined && (
-        <span key={highlightKey} className="absolute -top-1 left-1/2 -translate-x-1/2 font-black text-[12px]"
+        <span key={highlightKey} className="absolute -top-2 left-1/2 -translate-x-1/2 font-black text-[13px] whitespace-nowrap"
           style={{ color: highlight > 0 ? '#4CAF50' : '#E55353', animation: 'floatUp 0.9s ease-out forwards' }}>
           {highlight > 0 ? `+${highlight}` : highlight}
         </span>
@@ -602,7 +602,7 @@ function Stat({ label, value, color, highlight, highlightKey }: {
       <style jsx>{`
         @keyframes floatUp {
           0%   { opacity: 1; transform: translate(-50%, 0); }
-          100% { opacity: 0; transform: translate(-50%, -16px); }
+          100% { opacity: 0; transform: translate(-50%, -20px); }
         }
       `}</style>
     </div>
