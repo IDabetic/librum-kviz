@@ -11,13 +11,13 @@ const NAV_LINKS = [
   { href: '/leaderboard',      label: 'Rang lista',       icon: '🏆' },
   { href: '/igraj-zajedno',    label: 'Igraj zajedno',    icon: '⚔️' },
   { href: '/predlozi-pitanje', label: 'Predloži pitanje', icon: '💡' },
-  { href: '/profil',           label: 'Profil',           icon: '👤' },
 ]
 
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const [userName, setUserName] = useState<string | null>(null)
+  const [userAvatar, setUserAvatar] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
@@ -26,11 +26,14 @@ export default function Header() {
       if (user) {
         supabase
           .from('profiles')
-          .select('first_name')
+          .select('first_name, avatar')
           .eq('id', user.id)
           .single()
           .then(({ data }) => {
-            if (data) setUserName(data.first_name)
+            if (data) {
+              setUserName(data.first_name)
+              setUserAvatar(data.avatar || null)
+            }
           })
       }
     })
@@ -104,17 +107,17 @@ export default function Header() {
           {/* Right: avatar + logout (desktop) + hamburger (mobile) */}
           <div className="flex items-center gap-3">
             {userName && (
-              <div className="hidden md:flex items-center gap-2">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                  style={{ background: '#FDC361', color: '#1A1C4E' }}
-                >
-                  {userName[0].toUpperCase()}
+              <Link href="/profil" className="hidden md:flex items-center gap-2 rounded-xl px-2 py-1 transition-all hover:bg-white/10">
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#FDC361]">
+                  {userAvatar
+                    ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={32} height={32} className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FDC361', color: '#1A1C4E' }}>{userName[0].toUpperCase()}</div>
+                  }
                 </div>
                 <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
                   {userName}
                 </span>
-              </div>
+              </Link>
             )}
             <button
               onClick={handleLogout}
@@ -162,17 +165,17 @@ export default function Header() {
             style={{ borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(26,28,78,0.97)' }}
           >
             {userName && (
-              <div className="flex items-center gap-2 pb-3 mb-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                  style={{ background: '#FDC361', color: '#1A1C4E' }}
-                >
-                  {userName[0].toUpperCase()}
+              <Link href="/profil" className="flex items-center gap-2 pb-3 mb-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#FDC361]">
+                  {userAvatar
+                    ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={32} height={32} className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FDC361', color: '#1A1C4E' }}>{userName[0].toUpperCase()}</div>
+                  }
                 </div>
                 <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
                   {userName}
                 </span>
-              </div>
+              </Link>
             )}
             {NAV_LINKS.map(({ href, label, icon }) => {
               const active = pathname.startsWith(href)

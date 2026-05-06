@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
-type SoloEntry = { name: string; totalPoints: number; bestLevel: number; plays: number }
-type DuetEntry = { name: string; wins: number; losses: number; draws: number; plays: number }
+type SoloEntry = { name: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }
+type DuetEntry = { name: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
@@ -72,9 +73,11 @@ function SoloBoard({ data, user }: { data: SoloEntry[]; user: boolean }) {
             <span className="w-8 text-center text-lg">
               {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
             </span>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>
-              {p.name[0]}
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+              {p.avatar
+                ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{p.name[0]}</div>
+              }
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-gray-800">{p.name}</p>
@@ -131,9 +134,11 @@ function DuetBoard({ data, user }: { data: DuetEntry[]; user: boolean }) {
             <span className="w-8 text-center text-lg">
               {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
             </span>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #3766B0, #5DBF94)' }}>
-              {p.name[0]}
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+              {p.avatar
+                ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #3766B0, #5DBF94)' }}>{p.name[0]}</div>
+              }
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-gray-800">{p.name}</p>

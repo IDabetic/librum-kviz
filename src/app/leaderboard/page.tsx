@@ -10,17 +10,17 @@ export default async function LeaderboardPage() {
   // Solo: aggregate score_points and level_reached per player
   const { data: results } = await supabase
     .from('quiz_results')
-    .select('user_id, score_points, level_reached, profiles(first_name, last_name)')
+    .select('user_id, score_points, level_reached, profiles(first_name, last_name, avatar)')
     .gt('level_reached', 0)  // only count games where at least 1 level was completed
     .order('score_points', { ascending: false })
     .limit(200)
 
-  const soloMap: Record<string, { name: string; totalPoints: number; bestLevel: number; plays: number }> = {}
+  const soloMap: Record<string, { name: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }> = {}
   ;(results || []).forEach(r => {
     const uid = r.user_id
-    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string } | null
+    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; avatar?: string } | null
     const name = prof ? `${prof.first_name} ${prof.last_name}` : 'Igrač'
-    if (!soloMap[uid]) soloMap[uid] = { name, totalPoints: 0, bestLevel: 0, plays: 0 }
+    if (!soloMap[uid]) soloMap[uid] = { name, totalPoints: 0, bestLevel: 0, plays: 0, avatar: prof?.avatar || undefined }
     soloMap[uid].totalPoints += r.score_points ?? 0
     soloMap[uid].bestLevel = Math.max(soloMap[uid].bestLevel, r.level_reached ?? 0)
     soloMap[uid].plays++
@@ -45,19 +45,21 @@ export default async function LeaderboardPage() {
   )] as string[]
 
   const profileMap: Record<string, string> = {}
+  const avatarMap: Record<string, string> = {}
   if (userIds.length > 0) {
     const { data: profileData } = await supabase
-      .from('profiles').select('id, first_name, last_name').in('id', userIds)
-    ;(profileData || []).forEach((p: { id: string; first_name: string; last_name: string }) => {
+      .from('profiles').select('id, first_name, last_name, avatar').in('id', userIds)
+    ;(profileData || []).forEach((p: { id: string; first_name: string; last_name: string; avatar?: string }) => {
       profileMap[p.id] = `${p.first_name} ${p.last_name}`
+      if (p.avatar) avatarMap[p.id] = p.avatar
     })
   }
 
-  const duetMap: Record<string, { name: string; wins: number; losses: number; draws: number; plays: number }> = {}
+  const duetMap: Record<string, { name: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }> = {}
 
   function recordDuet(uid: string, myMetric: number, opMetric: number) {
     const name = profileMap[uid] || 'Igrač'
-    if (!duetMap[uid]) duetMap[uid] = { name, wins: 0, losses: 0, draws: 0, plays: 0 }
+    if (!duetMap[uid]) duetMap[uid] = { name, wins: 0, losses: 0, draws: 0, plays: 0, avatar: avatarMap[uid] }
     duetMap[uid].plays++
     if (myMetric > opMetric) duetMap[uid].wins++
     else if (myMetric < opMetric) duetMap[uid].losses++
