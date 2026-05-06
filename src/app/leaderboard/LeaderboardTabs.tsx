@@ -54,7 +54,7 @@ export default function LeaderboardTabs({ today, week, month, all, user }: {
         ))}
       </div>
 
-      <Board data={data.length >= 3 ? data : DEMO} isDemo={data.length < 3} user={user} />
+      <Board data={data.length > 0 ? data : DEMO} isDemo={data.length === 0} user={user} />
     </>
   )
 }
