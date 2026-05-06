@@ -11,19 +11,19 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'Librum Kviz',
-  description: 'Kvizovi iz književnosti, istorije i kulture. Testiraj znanje, takmiči se sa prijateljima i penjaj se na rang listu!',
+  title: 'Librum Kviz — Usudi se da budeš bolji od drugih',
+  description: '10 života. Hiljade pitanja. Jedna rang lista. Survivor kviz na srpskom.',
   openGraph: {
-    title: 'Librum Kviz — Testiraj svoje znanje!',
-    description: 'Kvizovi iz književnosti, istorije i kulture. Besplatno!',
+    title: 'Librum Kviz — Usudi se da budeš bolji od drugih',
+    description: '10 života. Hiljade pitanja. Jedna rang lista.',
     images: [{ url: 'https://kviz.librum.club/api/og', width: 1200, height: 628 }],
     locale: 'sr_RS',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Librum Kviz — Testiraj svoje znanje!',
-    description: 'Kvizovi iz književnosti, istorije i kulture. Besplatno!',
+    title: 'Librum Kviz — Usudi se da budeš bolji od drugih',
+    description: '10 života. Hiljade pitanja. Jedna rang lista.',
     images: ['https://kviz.librum.club/api/og'],
   },
 }
