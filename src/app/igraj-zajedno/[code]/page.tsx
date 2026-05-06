@@ -155,66 +155,74 @@ export default function MultiplayerGamePage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth/prijava'); return }
-      setMyId(user.id)
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/auth/prijava'); return }
+        setMyId(user.id)
 
-      const { data: roomData } = await supabase
-        .from('game_rooms').select('*').eq('room_code', code).single()
-      if (!roomData) { router.push('/igraj-zajedno'); return }
-      setRoom(roomData as GameRoom)
+        const { data: roomData } = await supabase
+          .from('game_rooms').select('*').eq('room_code', code).single()
+        if (!roomData) { router.push('/igraj-zajedno'); return }
+        setRoom(roomData as GameRoom)
 
-      if (roomData.quiz_id) {
-        const { data: quizData } = await supabase
-          .from('quizzes').select('difficulty').eq('id', roomData.quiz_id).single()
-        if (quizData) setQuizDifficulty(quizData.difficulty)
+        if (roomData.quiz_id) {
+          const { data: quizData } = await supabase
+            .from('quizzes').select('difficulty').eq('id', roomData.quiz_id).single()
+          if (quizData) setQuizDifficulty(quizData.difficulty)
+        }
+
+        // Fetch questions in chunks to avoid URL length limits
+        const qIds = roomData.question_ids as string[]
+        const chunkSize = 50
+        const allQData: Question[] = []
+        for (let i = 0; i < qIds.length; i += chunkSize) {
+          const { data: chunk } = await supabase
+            .from('questions').select('*').in('id', qIds.slice(i, i + chunkSize))
+          if (chunk) allQData.push(...(chunk as Question[]))
+        }
+        const ordered = qIds
+          .map(id => allQData.find((q: Question) => q.id === id))
+          .filter(Boolean) as Question[]
+        setQuestions(ordered)
+
+        const playerIds = [roomData.host_id, roomData.guest_id].filter(Boolean) as string[]
+        if (playerIds.length > 0) {
+          const { data: profData } = await supabase
+            .from('profiles').select('id, first_name').in('id', playerIds)
+          const map: Record<string, string> = {}
+          ;(profData || []).forEach((p: { id: string; first_name: string }) => { map[p.id] = p.first_name })
+          setProfiles(map)
+
+          // Fetch duet wins with simple per-player queries (avoids OR+IN filter issues)
+          const opId = roomData.host_id === user.id ? roomData.guest_id : roomData.host_id
+          const [mh, mg, oh, og] = await Promise.all([
+            supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('host_id', user.id).limit(200),
+            supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('guest_id', user.id).limit(200),
+            opId ? supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('host_id', opId).limit(200) : Promise.resolve({ data: [] }),
+            opId ? supabase.from('game_rooms').select('host_score, guest_score').eq('status', 'finished').eq('guest_id', opId).limit(200) : Promise.resolve({ data: [] }),
+          ])
+          const myW = [
+            ...((mh.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.host_score > g.guest_score),
+            ...((mg.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.guest_score > g.host_score),
+          ].length
+          const opW = [
+            ...((oh.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.host_score > g.guest_score),
+            ...((og.data || []) as {host_score:number;guest_score:number}[]).filter(g => g.guest_score > g.host_score),
+          ].length
+          setMyDuetWins(myW)
+          setOpDuetWins(opW)
+        }
+
+        // Initialize timer if time-based and already started
+        if (roomData.time_limit_seconds && roomData.game_start_time) {
+          const elapsed = Math.floor((Date.now() - new Date(roomData.game_start_time).getTime()) / 1000)
+          const remaining = Math.max(0, roomData.time_limit_seconds - elapsed)
+          setTimeRemaining(remaining)
+        }
+      } finally {
+        setLoading(false)
       }
-
-      const { data: qData } = await supabase
-        .from('questions').select('*').in('id', roomData.question_ids as string[])
-      const ordered = (roomData.question_ids as string[])
-        .map(id => (qData || []).find((q: Question) => q.id === id))
-        .filter(Boolean) as Question[]
-      setQuestions(ordered)
-
-      const playerIds = [roomData.host_id, roomData.guest_id].filter(Boolean) as string[]
-      if (playerIds.length > 0) {
-        const { data: profData } = await supabase
-          .from('profiles').select('id, first_name').in('id', playerIds)
-        const map: Record<string, string> = {}
-        ;(profData || []).forEach((p: { id: string; first_name: string }) => { map[p.id] = p.first_name })
-        setProfiles(map)
-
-        // Fetch duet win records for both players
-        const { data: duelGames } = await supabase
-          .from('game_rooms')
-          .select('host_id, guest_id, host_score, guest_score')
-          .eq('status', 'finished')
-          .or(`host_id.in.(${playerIds.join(',')}),guest_id.in.(${playerIds.join(',')})`)
-          .limit(500)
-
-        const winsMap: Record<string, number> = {}
-        ;(duelGames || []).forEach(g => {
-          if (g.host_score > g.guest_score) {
-            winsMap[g.host_id] = (winsMap[g.host_id] ?? 0) + 1
-          } else if (g.guest_id && g.guest_score > g.host_score) {
-            winsMap[g.guest_id] = (winsMap[g.guest_id] ?? 0) + 1
-          }
-        })
-        setMyDuetWins(winsMap[user.id] ?? 0)
-        const opId = roomData.host_id === user.id ? roomData.guest_id : roomData.host_id
-        if (opId) setOpDuetWins(winsMap[opId] ?? 0)
-      }
-
-      // Initialize timer if time-based and already started
-      if (roomData.time_limit_seconds && roomData.game_start_time) {
-        const elapsed = Math.floor((Date.now() - new Date(roomData.game_start_time).getTime()) / 1000)
-        const remaining = Math.max(0, roomData.time_limit_seconds - elapsed)
-        setTimeRemaining(remaining)
-      }
-
-      setLoading(false)
     }
     load()
   }, [code, router])

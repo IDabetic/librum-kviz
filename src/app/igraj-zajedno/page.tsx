@@ -78,7 +78,7 @@ export default function IgrajZajednoPage() {
     let questionIds: string[]
     if (selectedQuiz === 'mix') {
       const { data: all } = await supabase.from('questions').select('id')
-      questionIds = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id)
+      questionIds = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id).slice(0, 200)
     } else {
       const { data: questions } = await supabase.from('questions').select('id').eq('quiz_id', selectedQuiz)
       questionIds = (questions || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id)
