@@ -51,7 +51,7 @@ function SoloBoard({ data, user }: { data: SoloEntry[]; user: boolean }) {
           <div className="flex items-end justify-center gap-4">
             {[1, 0, 2].map(i => {
               const p = data[i]; if (!p) return null
-              const heights = [24, 32, 20]
+              const heights = [32, 24, 20]
               return (
                 <div key={i} className="text-center flex-1 max-w-[120px]">
                   <div className="text-2xl mb-1">{MEDALS[i]}</div>
@@ -112,7 +112,7 @@ function DuetBoard({ data, user }: { data: DuetEntry[]; user: boolean }) {
           <div className="flex items-end justify-center gap-4">
             {[1, 0, 2].map(i => {
               const p = data[i]; if (!p) return null
-              const heights = [24, 32, 20]
+              const heights = [32, 24, 20]
               return (
                 <div key={i} className="text-center flex-1 max-w-[120px]">
                   <div className="text-2xl mb-1">{MEDALS[i]}</div>
