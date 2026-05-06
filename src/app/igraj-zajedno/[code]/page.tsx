@@ -133,7 +133,12 @@ export default function MultiplayerGamePage() {
   const savingRef = useRef(false)
 
   const isHost = myId && room ? myId === room.host_id : false
-  const myLvlScores = myLevelScores
+  // After finish, use DB as authoritative source — local state may be stale on refresh
+  const isFinishedView = room?.status === 'finished'
+  const myDbLvlScores: number[] = isHost ? (room?.host_level_scores ?? []) : (room?.guest_level_scores ?? [])
+  const myDbScore: number = isHost ? (room?.host_score ?? 0) : (room?.guest_score ?? 0)
+  const myLvlScores = isFinishedView ? myDbLvlScores : myLevelScores
+  const myFinalScore = isFinishedView ? myDbScore : totalScore
   const opponentLvlScores: number[] = isHost ? (room?.guest_level_scores ?? []) : (room?.host_level_scores ?? [])
   const opponentScore: number = isHost ? (room?.guest_score ?? 0) : (room?.host_score ?? 0)
   const opponentFinished = isHost ? room?.guest_finished : room?.host_finished
@@ -428,8 +433,10 @@ export default function MultiplayerGamePage() {
 
   // Both finished — results
   if (room?.status === 'finished') {
-    const iWon = isTimed ? totalScore > opponentScore : myWins >= targetWins
-    const draw = totalScore === opponentScore && isTimed
+    // Wins-based: whoever has more level wins; draws if equal.
+    // Timed: compare total scores from DB.
+    const iWon = isTimed ? myFinalScore > opponentScore : myWins > opponentWins
+    const draw = isTimed ? myFinalScore === opponentScore : myWins === opponentWins
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10"
         style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
@@ -441,7 +448,7 @@ export default function MultiplayerGamePage() {
             <h2 className="text-2xl font-black" style={{ color: draw ? '#92400e' : iWon ? '#065f46' : '#b91c1c' }}>
               {draw ? 'Nerešeno!' : iWon ? 'Pobedio/la si!' : 'Izgubio/la si!'}
             </h2>
-            {!isTimed && <p className="text-sm mt-1" style={{ color: iWon ? '#065f46' : '#b91c1c' }}>
+            {!isTimed && <p className="text-sm mt-1" style={{ color: draw ? '#92400e' : iWon ? '#065f46' : '#b91c1c' }}>
               {myWins} – {opponentWins} u nivoima
             </p>}
           </div>
@@ -449,7 +456,7 @@ export default function MultiplayerGamePage() {
             <div className="flex gap-4 mb-6">
               <div className="flex-1 bg-[#EEF0FF] rounded-2xl p-4 text-center">
                 <p className="text-xs text-gray-500 mb-1">Ti</p>
-                <p className="text-3xl font-black" style={{ color: '#2C2D81' }}>{totalScore}</p>
+                <p className="text-3xl font-black" style={{ color: '#2C2D81' }}>{myFinalScore}</p>
                 <p className="text-xs text-gray-400">bodova</p>
               </div>
               <div className="flex-1 bg-[#FAF4EC] rounded-2xl p-4 text-center">
