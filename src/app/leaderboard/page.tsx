@@ -30,15 +30,18 @@ export default async function LeaderboardPage() {
     .sort((a, b) => b.totalPoints - a.totalPoints || b.bestLevel - a.bestLevel)
     .slice(0, 10)
 
-  // Duet: from finished game_rooms
-  const { data: finishedGames } = await supabase
+  // Duet: fetch any game where at least one player submitted results.
+  // status='finished' may never be set if one player leaves before the other finishes
+  // (it's triggered client-side via realtime), so we also check host_finished / guest_finished.
+  const { data: duetGames } = await supabase
     .from('game_rooms')
-    .select('host_id, guest_id, host_score, guest_score')
-    .eq('status', 'finished')
-    .limit(100)
+    .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, host_level_scores, guest_level_scores, game_format')
+    .or('status.eq.finished,host_finished.eq.true,guest_finished.eq.true')
+    .not('guest_id', 'is', null)
+    .limit(300)
 
   const userIds = [...new Set(
-    (finishedGames || []).flatMap(g => [g.host_id, g.guest_id]).filter(Boolean)
+    (duetGames || []).flatMap(g => [g.host_id, g.guest_id]).filter(Boolean)
   )] as string[]
 
   const profileMap: Record<string, string> = {}
@@ -51,17 +54,48 @@ export default async function LeaderboardPage() {
   }
 
   const duetMap: Record<string, { name: string; wins: number; losses: number; draws: number; plays: number }> = {}
-  function addDuet(uid: string, myScore: number, opScore: number) {
+
+  function recordDuet(uid: string, myMetric: number, opMetric: number) {
     const name = profileMap[uid] || 'Igrač'
     if (!duetMap[uid]) duetMap[uid] = { name, wins: 0, losses: 0, draws: 0, plays: 0 }
     duetMap[uid].plays++
-    if (myScore > opScore) duetMap[uid].wins++
-    else if (myScore < opScore) duetMap[uid].losses++
+    if (myMetric > opMetric) duetMap[uid].wins++
+    else if (myMetric < opMetric) duetMap[uid].losses++
     else duetMap[uid].draws++
   }
-  ;(finishedGames || []).forEach(g => {
-    if (g.host_id) addDuet(g.host_id, g.host_score, g.guest_score)
-    if (g.guest_id) addDuet(g.guest_id, g.guest_score, g.host_score)
+
+  ;(duetGames || []).forEach(g => {
+    if (!g.host_id || !g.guest_id) return
+
+    const isTimed = (g.game_format ?? '').startsWith('time_')
+    const hLvl: number[] = (g.host_level_scores as number[]) ?? []
+    const gLvl: number[] = (g.guest_level_scores as number[]) ?? []
+
+    if (isTimed) {
+      // Timed games: both must have finished — compare total scores
+      // Level scores are saved after every 10 questions, so data is always fresh
+      if (!g.host_finished || !g.guest_finished) return
+      recordDuet(g.host_id, g.host_score ?? 0, g.guest_score ?? 0)
+      recordDuet(g.guest_id, g.guest_score ?? 0, g.host_score ?? 0)
+    } else {
+      // Wins-based (best_of_3/5/11): count level wins
+      // Levels where both players competed
+      const both = Math.min(hLvl.length, gLvl.length)
+      let hW = 0, gW = 0
+      for (let i = 0; i < both; i++) {
+        if (hLvl[i] > gLvl[i]) hW++
+        else if (gLvl[i] > hLvl[i]) gW++
+      }
+      // Extra levels completed only by the player who stayed (other quit)
+      if (g.host_finished) hW += Math.max(0, hLvl.length - both)
+      if (g.guest_finished) gW += Math.max(0, gLvl.length - both)
+
+      // Skip if no countable levels at all
+      if (hW === 0 && gW === 0 && both === 0) return
+
+      recordDuet(g.host_id, hW, gW)
+      recordDuet(g.guest_id, gW, hW)
+    }
   })
 
   const duetAggregated = Object.values(duetMap)

@@ -296,6 +296,15 @@ export default function MultiplayerGamePage() {
       ? { host_score: score, host_level_scores: levelScores, host_answers: answers, host_finished: true }
       : { guest_score: score, guest_level_scores: levelScores, guest_answers: answers, guest_finished: true }
     await supabase.from('game_rooms').update(update).eq('id', room.id)
+
+    // After saving own result, check if opponent already finished.
+    // The realtime handler also does this, but if the opponent left the page,
+    // nobody else will trigger the status update — so we do it ourselves here.
+    const { data: latest } = await supabase
+      .from('game_rooms').select('host_finished, guest_finished').eq('id', room.id).single()
+    if (latest?.host_finished && latest?.guest_finished) {
+      await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
+    }
   }
 
   const goNext = useCallback((forcedAnswer?: number | null) => {
@@ -471,11 +480,18 @@ export default function MultiplayerGamePage() {
     return (
       <div className="min-h-screen flex items-center justify-center"
         style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
-        <div className="text-white text-center px-6">
+        <div className="text-white text-center px-6 max-w-sm">
           <div className="text-6xl mb-4 animate-bounce">⏰</div>
           <h2 className="text-2xl font-bold mb-2">Završio/la si!</h2>
           <p className="text-white/70">Tvoj rezultat: <strong className="text-white">{totalScore} bodova</strong></p>
-          <p className="text-white/50 text-sm mt-4">Čekamo da {opponentName} završi...</p>
+          <p className="text-white/50 text-sm mt-4 mb-8">Čekamo da {opponentName} završi...</p>
+          <p className="text-white/30 text-xs mb-3">Ako protivnik ne završi, možeš otići — tvoj rezultat je sačuvan.</p>
+          <button
+            onClick={() => router.push('/igraj-zajedno')}
+            className="w-full py-3 rounded-xl font-semibold text-sm"
+            style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}>
+            Idi na lobi →
+          </button>
         </div>
       </div>
     )
