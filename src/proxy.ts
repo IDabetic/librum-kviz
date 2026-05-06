@@ -1,48 +1,24 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function proxy(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseKey) return NextResponse.next({ request })
-
-  let supabaseResponse = NextResponse.next({ request })
-
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseKey,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-
+export function proxy(request: NextRequest) {
   const protectedRoutes = ['/kvizovi', '/profil', '/igraj-zajedno']
   const isSharePage = /\/kvizovi\/[^/]+\/share/.test(request.nextUrl.pathname)
   const isProtected = !isSharePage && protectedRoutes.some(r => request.nextUrl.pathname.startsWith(r))
 
-  if (!user && isProtected) {
+  const hasSession = request.cookies.getAll().some(c => c.name.startsWith('sb-'))
+
+  if (!hasSession && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/prijava'
     url.searchParams.set('redirect', request.nextUrl.pathname)
     return NextResponse.redirect(url)
   }
 
-  if (user && (request.nextUrl.pathname.startsWith('/auth/'))) {
+  if (hasSession && request.nextUrl.pathname.startsWith('/auth/')) {
     return NextResponse.redirect(new URL('/kvizovi', request.url))
   }
 
-  return supabaseResponse
+  return NextResponse.next({ request })
 }
 
 export const config = {
