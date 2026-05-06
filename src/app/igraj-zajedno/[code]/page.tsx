@@ -227,7 +227,10 @@ export default function MultiplayerGamePage() {
     load()
   }, [code, router])
 
-  // Real-time subscription
+  // Real-time subscription — profiles deliberately excluded from deps to keep channel stable
+  const profilesRef = useRef(profiles)
+  useEffect(() => { profilesRef.current = profiles }, [profiles])
+
   useEffect(() => {
     if (!room?.id) return
     const supabase = createClient()
@@ -236,6 +239,15 @@ export default function MultiplayerGamePage() {
         event: 'UPDATE', schema: 'public', table: 'game_rooms', filter: `id=eq.${room.id}`,
       }, (payload) => {
         const updated = payload.new as GameRoom
+
+        // When game finishes, re-fetch authoritative data from DB
+        if (updated.status === 'finished') {
+          supabase.from('game_rooms').select('*').eq('id', updated.id).single().then(({ data }) => {
+            if (data) setRoom(data as GameRoom)
+          })
+          return
+        }
+
         setRoom(prev => ({ ...prev, ...updated }))
 
         // Guest was waiting for host to start — initialize timer now
@@ -245,7 +257,7 @@ export default function MultiplayerGamePage() {
           setTimeRemaining(remaining)
         }
 
-        if (updated.guest_id && !profiles[updated.guest_id]) {
+        if (updated.guest_id && !profilesRef.current[updated.guest_id]) {
           supabase.from('profiles').select('id, first_name').eq('id', updated.guest_id).single().then(({ data }) => {
             if (data) setProfiles(p => ({ ...p, [data.id]: data.first_name }))
           })
@@ -257,7 +269,7 @@ export default function MultiplayerGamePage() {
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [room?.id, profiles, router])
+  }, [room?.id, router])
 
   // Countdown timer for time-based games
   useEffect(() => {
