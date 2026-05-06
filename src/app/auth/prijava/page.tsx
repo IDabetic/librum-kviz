@@ -12,7 +12,7 @@ import { Logo } from '@/components/Logo'
 function PrijavaForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/kvizovi'
+  const redirect = searchParams.get('redirect') || '/igraj'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

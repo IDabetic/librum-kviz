@@ -11,9 +11,9 @@ import { Logo } from './Logo'
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
 
 const NAV_LINKS = [
-  { href: '/kvizovi',          label: 'Kvizovi',          Icon: IconDiscover },
+  { href: '/igraj',            label: 'Igraj',            Icon: IconHome },
   { href: '/leaderboard',      label: 'Rang lista',       Icon: IconTrophy },
-  { href: '/igraj-zajedno',    label: 'Igraj zajedno',    Icon: IconSwords },
+  { href: '/igraj-zajedno',    label: 'Duel',             Icon: IconSwords },
   { href: '/predlozi-pitanje', label: 'Predloži pitanje', Icon: IconHint },
 ]
 

@@ -4,106 +4,74 @@ import Link from 'next/link'
 import LeaderboardTabs from './LeaderboardTabs'
 import { Logo } from '@/components/Logo'
 
+export const dynamic = 'force-dynamic'
+
+export type SurvivorRow = {
+  userId: string
+  name: string
+  avatar: string | null
+  score: number
+  questionsReached: number
+  correctAnswers: number
+  wrongAnswers: number
+  accuracy: number
+  bestCombo: number
+  totalTime: number
+  createdAt: string
+}
+
+async function loadRows(supabase: Awaited<ReturnType<typeof createClient>>, since: Date | null): Promise<SurvivorRow[]> {
+  let q = supabase
+    .from('survivor_sessions')
+    .select('user_id, score, questions_reached, correct_answers, wrong_answers, accuracy, best_combo, total_time_seconds, created_at, profiles(first_name, last_name, nickname, avatar)')
+    .gt('questions_reached', 0)
+    .order('score', { ascending: false })
+    .order('correct_answers', { ascending: false })
+    .order('total_time_seconds', { ascending: true })
+    .limit(500)
+  if (since) q = q.gte('created_at', since.toISOString())
+  const { data } = await q
+  // Keep only best run per user (highest score)
+  const seen = new Set<string>()
+  const rows: SurvivorRow[] = []
+  for (const r of (data || [])) {
+    if (!r.user_id || seen.has(r.user_id)) continue
+    seen.add(r.user_id)
+    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
+    const name = prof?.nickname || (prof ? `${prof.first_name} ${prof.last_name}`.trim() : 'Igrač')
+    rows.push({
+      userId: r.user_id,
+      name: name || 'Igrač',
+      avatar: prof?.avatar || null,
+      score: r.score,
+      questionsReached: r.questions_reached,
+      correctAnswers: r.correct_answers,
+      wrongAnswers: r.wrong_answers,
+      accuracy: Number(r.accuracy),
+      bestCombo: r.best_combo,
+      totalTime: r.total_time_seconds,
+      createdAt: r.created_at,
+    })
+    if (rows.length >= 200) break
+  }
+  return rows
+}
+
 export default async function LeaderboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Solo: aggregate score_points and level_reached per player
-  const { data: results } = await supabase
-    .from('quiz_results')
-    .select('user_id, score_points, level_reached, profiles(first_name, last_name, avatar)')
-    .gt('level_reached', 0)  // only count games where at least 1 level was completed
-    .order('score_points', { ascending: false })
-    .limit(2000)
+  const now = new Date()
+  const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0)
+  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - 7)
+  const startOfMonth = new Date(now); startOfMonth.setDate(now.getDate() - 30)
 
-  const soloMap: Record<string, { name: string; userId: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }> = {}
-  ;(results || []).forEach(r => {
-    const uid = r.user_id
-    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; avatar?: string } | null
-    const name = prof ? `${prof.first_name} ${prof.last_name}` : 'Igrač'
-    if (!soloMap[uid]) soloMap[uid] = { name, userId: uid, totalPoints: 0, bestLevel: 0, plays: 0, avatar: prof?.avatar || undefined }
-    soloMap[uid].totalPoints += r.score_points ?? 0
-    soloMap[uid].bestLevel = Math.max(soloMap[uid].bestLevel, r.level_reached ?? 0)
-    soloMap[uid].plays++
-  })
-
-  const soloAggregated = Object.values(soloMap)
-    .sort((a, b) => b.totalPoints - a.totalPoints || b.bestLevel - a.bestLevel)
-    .slice(0, 200)
-
-  // Duet: fetch any game where at least one player submitted results.
-  // status='finished' may never be set if one player leaves before the other finishes
-  // (it's triggered client-side via realtime), so we also check host_finished / guest_finished.
-  const { data: duetGames } = await supabase
-    .from('game_rooms')
-    .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, host_level_scores, guest_level_scores, game_format')
-    .or('status.eq.finished,host_finished.eq.true,guest_finished.eq.true')
-    .not('guest_id', 'is', null)
-    .limit(1000)
-
-  const userIds = [...new Set(
-    (duetGames || []).flatMap(g => [g.host_id, g.guest_id]).filter(Boolean)
-  )] as string[]
-
-  const profileMap: Record<string, string> = {}
-  const avatarMap: Record<string, string> = {}
-  if (userIds.length > 0) {
-    const { data: profileData } = await supabase
-      .from('profiles').select('id, first_name, last_name, avatar').in('id', userIds)
-    ;(profileData || []).forEach((p: { id: string; first_name: string; last_name: string; avatar?: string }) => {
-      profileMap[p.id] = `${p.first_name} ${p.last_name}`
-      if (p.avatar) avatarMap[p.id] = p.avatar
-    })
-  }
-
-  const duetMap: Record<string, { name: string; userId: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }> = {}
-
-  function recordDuet(uid: string, myMetric: number, opMetric: number) {
-    const name = profileMap[uid] || 'Igrač'
-    if (!duetMap[uid]) duetMap[uid] = { name, userId: uid, wins: 0, losses: 0, draws: 0, plays: 0, avatar: avatarMap[uid] }
-    duetMap[uid].plays++
-    if (myMetric > opMetric) duetMap[uid].wins++
-    else if (myMetric < opMetric) duetMap[uid].losses++
-    else duetMap[uid].draws++
-  }
-
-  ;(duetGames || []).forEach(g => {
-    if (!g.host_id || !g.guest_id) return
-
-    const isTimed = (g.game_format ?? '').startsWith('time_')
-    const hLvl: number[] = (g.host_level_scores as number[]) ?? []
-    const gLvl: number[] = (g.guest_level_scores as number[]) ?? []
-
-    if (isTimed) {
-      // Timed games: both must have finished — compare total scores
-      // Level scores are saved after every 10 questions, so data is always fresh
-      if (!g.host_finished || !g.guest_finished) return
-      recordDuet(g.host_id, g.host_score ?? 0, g.guest_score ?? 0)
-      recordDuet(g.guest_id, g.guest_score ?? 0, g.host_score ?? 0)
-    } else {
-      // Wins-based (best_of_3/5/11): count level wins
-      // Levels where both players competed
-      const both = Math.min(hLvl.length, gLvl.length)
-      let hW = 0, gW = 0
-      for (let i = 0; i < both; i++) {
-        if (hLvl[i] > gLvl[i]) hW++
-        else if (gLvl[i] > hLvl[i]) gW++
-      }
-      // Extra levels completed only by the player who stayed (other quit)
-      if (g.host_finished) hW += Math.max(0, hLvl.length - both)
-      if (g.guest_finished) gW += Math.max(0, gLvl.length - both)
-
-      // Skip if no countable levels at all
-      if (hW === 0 && gW === 0 && both === 0) return
-
-      recordDuet(g.host_id, hW, gW)
-      recordDuet(g.guest_id, gW, hW)
-    }
-  })
-
-  const duetAggregated = Object.values(duetMap)
-    .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
-    .slice(0, 200)
+  const [today, week, month, all] = await Promise.all([
+    loadRows(supabase, startOfDay),
+    loadRows(supabase, startOfWeek),
+    loadRows(supabase, startOfMonth),
+    loadRows(supabase, null),
+  ])
 
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
@@ -120,13 +88,13 @@ export default async function LeaderboardPage() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="text-center mb-10">
           <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
-            Najbolji igrači
+            Survivor rang lista
           </p>
           <h1 className="font-black tracking-tight leading-[1.1]" style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
-            Rang lista
+            Najbolji igrači
           </h1>
         </div>
-        <LeaderboardTabs soloData={soloAggregated} duetData={duetAggregated} user={!!user} />
+        <LeaderboardTabs today={today} week={week} month={month} all={all} user={!!user} />
       </main>
     </div>
   )
