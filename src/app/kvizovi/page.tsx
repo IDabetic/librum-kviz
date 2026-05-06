@@ -29,7 +29,7 @@ export default async function KvizovPage() {
   const categories = [...new Set(processed.map((q: Quiz) => q.category).filter(Boolean))]
 
   return (
-    <div className="min-h-screen bg-[#F5F6FA]">
+    <div className="min-h-screen bg-[#FAF4EC]">
       <Header />
 
       <main className="max-w-6xl mx-auto px-4 py-10">

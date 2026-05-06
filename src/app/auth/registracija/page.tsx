@@ -11,7 +11,7 @@ import { LibrumIcon } from '@/components/Header'
 export default function RegistracijaPage() {
   const router = useRouter()
 
-  const [form, setForm] = useState({ ime: '', prezime: '', email: '', telefon: '', password: '', password2: '' })
+  const [form, setForm] = useState({ ime: '', prezime: '', nadimak: '', grad: '', email: '', telefon: '', password: '', password2: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -43,6 +43,8 @@ export default function RegistracijaPage() {
           first_name: form.ime,
           last_name: form.prezime,
           phone: form.telefon,
+          nickname: form.nadimak,
+          city: form.grad,
         },
       },
     })
@@ -124,6 +126,26 @@ export default function RegistracijaPage() {
                   placeholder="Marković"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Nadimak <span className="font-normal text-gray-400">(prikazuje se na rang listi)</span>
+              </label>
+              <input
+                type="text" value={form.nadimak} onChange={e => set('nadimak', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2C2D81]/20 focus:border-[#2C2D81] transition-colors text-sm"
+                placeholder="npr. KnjigaLover23"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Grad</label>
+              <input
+                type="text" value={form.grad} onChange={e => set('grad', e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#2C2D81]/20 focus:border-[#2C2D81] transition-colors text-sm"
+                placeholder="npr. Beograd"
+              />
             </div>
 
             <div>

@@ -23,8 +23,9 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const protectedRoutes = ['/kvizovi', '/profil']
-  const isProtected = protectedRoutes.some(r => request.nextUrl.pathname.startsWith(r))
+  const protectedRoutes = ['/kvizovi', '/profil', '/igraj-zajedno']
+  const isSharePage = /\/kvizovi\/[^/]+\/share/.test(request.nextUrl.pathname)
+  const isProtected = !isSharePage && protectedRoutes.some(r => request.nextUrl.pathname.startsWith(r))
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()

@@ -34,7 +34,7 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
   const diff = quiz.difficulty as keyof typeof DIFFICULTY_LABEL
 
   return (
-    <div className="min-h-screen bg-[#F5F6FA]">
+    <div className="min-h-screen bg-[#FAF4EC]">
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 py-10">
@@ -71,7 +71,7 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
                 { icon: '📂', label: 'Kategorija', value: quiz.category || '—' },
                 { icon: '▶️', label: 'Igranja', value: quiz.plays },
               ].map(({ icon, label, value }) => (
-                <div key={label} className="bg-[#F5F6FA] rounded-xl p-4 text-center">
+                <div key={label} className="bg-[#FAF4EC] rounded-xl p-4 text-center">
                   <div className="text-2xl mb-1">{icon}</div>
                   <div className="font-bold text-gray-800">{value}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{label}</div>
@@ -83,7 +83,7 @@ export default async function QuizDetailPage({ params }: { params: Promise<{ id:
               <h3 className="font-semibold text-sm mb-2" style={{ color: '#2C2D81' }}>📋 Kako funkcioniše:</h3>
               <ul className="text-sm text-gray-600 space-y-1.5">
                 <li>✅ Svako pitanje ima 4 ponuđena odgovora</li>
-                <li>⏱️ Imate 30 sekundi po pitanju</li>
+                <li>⏱️ Imate {quiz.difficulty === 'lako' ? '10' : '15'} sekundi po pitanju</li>
                 <li>📊 Na kraju vidite vaš rezultat i tačne odgovore</li>
               </ul>
             </div>

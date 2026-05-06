@@ -40,3 +40,30 @@ export type QuizResult = {
   profiles?: { first_name: string; last_name: string }
   quizzes?: { title: string }
 }
+
+export type GameRoom = {
+  id: string
+  room_code: string
+  quiz_id: string
+  host_id: string
+  guest_id: string | null
+  status: 'waiting' | 'playing' | 'finished'
+  question_ids: string[]
+  host_answers: (number | null)[]
+  guest_answers: (number | null)[]
+  host_score: number
+  guest_score: number
+  host_finished: boolean
+  guest_finished: boolean
+  total_questions: number
+  created_at: string
+}
+
+export type QuestionSubmission = {
+  id: string
+  question_text: string
+  correct_answer: string
+  submitted_by: string | null
+  submitter_email: string | null
+  created_at: string
+}

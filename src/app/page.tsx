@@ -78,7 +78,7 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-[#F5F6FA]">
+      <section className="py-20 bg-[#FAF4EC]">
         <div className="max-w-5xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-4" style={{ color: '#2C2D81' }}>Zašto Librum Kviz?</h2>
           <p className="text-gray-500 text-center mb-12 max-w-xl mx-auto">Zabavan, izazovan i besplatan način da proverite i unapredite svoje znanje.</p>
