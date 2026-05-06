@@ -61,6 +61,47 @@ function ConfirmPopup({ title, message, onConfirm, onCancel }: {
   )
 }
 
+// Side panel shown during active play on large screens
+function PlayerCard({ name, score, wins, color, label }: {
+  name: string; score: number; wins: number; color: string; label: string
+}) {
+  return (
+    <div style={{
+      width: 148,
+      background: 'rgba(255,255,255,0.07)',
+      backdropFilter: 'blur(12px)',
+      border: `1.5px solid ${color}40`,
+      borderRadius: 20,
+      padding: '18px 12px',
+      textAlign: 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 2,
+    }}>
+      <div style={{ fontSize: 26, marginBottom: 4 }}>{label === 'Ti' ? '👤' : '⚔️'}</div>
+      <div style={{
+        color: color, fontWeight: 800, fontSize: 12, letterSpacing: 1,
+        textTransform: 'uppercase', marginBottom: 4,
+      }}>{label}</div>
+      <div style={{
+        color: 'rgba(255,255,255,0.92)', fontWeight: 700, fontSize: 13,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        maxWidth: '100%', marginBottom: 10,
+      }}>{name}</div>
+      <div style={{ color, fontSize: 42, fontWeight: 900, lineHeight: 1 }}>{score}</div>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 10 }}>bodova</div>
+      <div style={{
+        width: '100%', background: 'rgba(255,255,255,0.07)',
+        borderRadius: 10, padding: '8px 4px',
+      }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.85)' }}>{wins}</div>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>duet pobeda</div>
+      </div>
+    </div>
+  )
+}
+
 export default function MultiplayerGamePage() {
   const params = useParams()
   const router = useRouter()
@@ -71,6 +112,8 @@ export default function MultiplayerGamePage() {
   const [quizDifficulty, setQuizDifficulty] = useState<string>('srednje')
   const [myId, setMyId] = useState<string | null>(null)
   const [profiles, setProfiles] = useState<Record<string, string>>({})
+  const [myDuetWins, setMyDuetWins] = useState(0)
+  const [opDuetWins, setOpDuetWins] = useState(0)
   const [loading, setLoading] = useState(true)
 
   // Game state
@@ -86,7 +129,6 @@ export default function MultiplayerGamePage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [showFinishConfirm, setShowFinishConfirm] = useState(false)
 
-  // Timer for time-based format
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
   const savingRef = useRef(false)
 
@@ -100,8 +142,8 @@ export default function MultiplayerGamePage() {
     const opId = isHost ? room.guest_id : room.host_id
     return opId ? (profiles[opId] ?? 'Igrač') : 'Čeka se...'
   })()
+  const myName = myId ? (profiles[myId] ?? 'Ti') : 'Ti'
 
-  // Wins count
   const myWins = myLvlScores.filter((s, i) => s > (opponentLvlScores[i] ?? -Infinity)).length
   const opponentWins = opponentLvlScores.filter((s, i) => s > (myLvlScores[i] ?? -Infinity)).length
   const targetWins = room?.target_wins ?? 5
@@ -143,9 +185,29 @@ export default function MultiplayerGamePage() {
         const map: Record<string, string> = {}
         ;(profData || []).forEach((p: { id: string; first_name: string }) => { map[p.id] = p.first_name })
         setProfiles(map)
+
+        // Fetch duet win records for both players
+        const { data: duelGames } = await supabase
+          .from('game_rooms')
+          .select('host_id, guest_id, host_score, guest_score')
+          .eq('status', 'finished')
+          .or(`host_id.in.(${playerIds.join(',')}),guest_id.in.(${playerIds.join(',')})`)
+          .limit(500)
+
+        const winsMap: Record<string, number> = {}
+        ;(duelGames || []).forEach(g => {
+          if (g.host_score > g.guest_score) {
+            winsMap[g.host_id] = (winsMap[g.host_id] ?? 0) + 1
+          } else if (g.guest_id && g.guest_score > g.host_score) {
+            winsMap[g.guest_id] = (winsMap[g.guest_id] ?? 0) + 1
+          }
+        })
+        setMyDuetWins(winsMap[user.id] ?? 0)
+        const opId = roomData.host_id === user.id ? roomData.guest_id : roomData.host_id
+        if (opId) setOpDuetWins(winsMap[opId] ?? 0)
       }
 
-      // Initialize time remaining if time-based
+      // Initialize timer if time-based and already started
       if (roomData.time_limit_seconds && roomData.game_start_time) {
         const elapsed = Math.floor((Date.now() - new Date(roomData.game_start_time).getTime()) / 1000)
         const remaining = Math.max(0, roomData.time_limit_seconds - elapsed)
@@ -167,6 +229,14 @@ export default function MultiplayerGamePage() {
       }, (payload) => {
         const updated = payload.new as GameRoom
         setRoom(prev => ({ ...prev, ...updated }))
+
+        // Guest was waiting for host to start — initialize timer now
+        if (updated.status === 'playing' && updated.game_start_time && updated.time_limit_seconds) {
+          const elapsed = Math.floor((Date.now() - new Date(updated.game_start_time).getTime()) / 1000)
+          const remaining = Math.max(0, updated.time_limit_seconds - elapsed)
+          setTimeRemaining(remaining)
+        }
+
         if (updated.guest_id && !profiles[updated.guest_id]) {
           supabase.from('profiles').select('id, first_name').eq('id', updated.guest_id).single().then(({ data }) => {
             if (data) setProfiles(p => ({ ...p, [data.id]: data.first_name }))
@@ -175,7 +245,6 @@ export default function MultiplayerGamePage() {
         if (updated.host_finished && updated.guest_finished && updated.status !== 'finished') {
           supabase.from('game_rooms').update({ status: 'finished' }).eq('id', updated.id)
         }
-        // Handle reset request
         if (updated.status === 'waiting') router.push('/igraj-zajedno')
       })
       .subscribe()
@@ -226,16 +295,13 @@ export default function MultiplayerGamePage() {
     setLevelScore(newLevelScore)
     setMyAnswers(newAnswers)
 
-    // Push partial answers to DB for real-time progress
     const update = isHost ? { host_answers: newAnswers } : { guest_answers: newAnswers }
     if (room?.id) createClient().from('game_rooms').update(update).eq('id', room.id)
 
-    // End of level?
     if (questionInLevel === QUESTIONS_PER_LEVEL - 1) {
       const newLevelScores = [...myLevelScores, newLevelScore]
       setMyLevelScores(newLevelScores)
 
-      // For wins-based: check if won the match
       const newMyWins = newLevelScores.filter((s, i) => s > (opponentLvlScores[i] ?? -Infinity)).length
       if (!isTimed && newMyWins >= targetWins) {
         setFinished(true)
@@ -243,7 +309,6 @@ export default function MultiplayerGamePage() {
         return
       }
 
-      // Update level scores in DB
       const levelUpdate = isHost
         ? { host_level_scores: newLevelScores, host_score: newTotalScore }
         : { guest_level_scores: newLevelScores, guest_score: newTotalScore }
@@ -289,20 +354,32 @@ export default function MultiplayerGamePage() {
 
   // ── Screens ────────────────────────────────────────────────────────────────
 
+  // Guest waiting for host to start (status = 'waiting' with guest_id set)
   if (!loading && room?.status === 'waiting') {
+    const amGuest = myId === room.guest_id
     return (
       <div className="min-h-screen flex items-center justify-center"
         style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
         <div className="text-white text-center px-6">
-          <div className="text-6xl mb-6">⏳</div>
-          <h2 className="text-2xl font-bold mb-2">Čekamo protivnika...</h2>
-          <p className="text-white/70 mb-6">Format: <strong>{formatLabel(room.game_format)}</strong></p>
-          <div className="text-5xl font-black py-6 px-8 rounded-2xl mb-4 inline-block"
-            style={{ background: 'rgba(255,255,255,0.15)', letterSpacing: '0.25em' }}>{code}</div>
-          <div className="flex items-center gap-2 justify-center">
-            <div className="w-2 h-2 rounded-full bg-[#5DBF94] animate-pulse" />
-            <p className="text-white/70 text-sm">Čekanje...</p>
-          </div>
+          {amGuest ? (
+            <>
+              <div className="text-6xl mb-6">⏳</div>
+              <h2 className="text-2xl font-bold mb-2">Ušao/la si u sobu!</h2>
+              <p className="text-white/70 mb-4">Čekamo da domaćin počne meč...</p>
+              <div className="flex items-center gap-2 justify-center">
+                <div className="w-2 h-2 rounded-full bg-[#5DBF94] animate-pulse" />
+                <span className="text-white/50 text-sm">Format: {formatLabel(room.game_format)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-6xl mb-6">⏳</div>
+              <h2 className="text-2xl font-bold mb-2">Čekamo protivnika...</h2>
+              <p className="text-white/70 mb-6">Format: <strong>{formatLabel(room.game_format)}</strong></p>
+              <div className="text-5xl font-black py-6 px-8 rounded-2xl mb-4 inline-block"
+                style={{ background: 'rgba(255,255,255,0.15)', letterSpacing: '0.25em' }}>{code}</div>
+            </>
+          )}
         </div>
       </div>
     )
@@ -333,7 +410,7 @@ export default function MultiplayerGamePage() {
           <div className="p-6 text-center"
             style={{ background: draw ? '#FFF8EC' : iWon ? '#E8F8F0' : '#FEF2F2' }}>
             <h2 className="text-2xl font-black" style={{ color: draw ? '#92400e' : iWon ? '#065f46' : '#b91c1c' }}>
-              {draw ? 'Nerešeno!' : iWon ? 'Pobedio si!' : 'Izgubio si!'}
+              {draw ? 'Nerešeno!' : iWon ? 'Pobedio/la si!' : 'Izgubio/la si!'}
             </h2>
             {!isTimed && <p className="text-sm mt-1" style={{ color: iWon ? '#065f46' : '#b91c1c' }}>
               {myWins} – {opponentWins} u nivoima
@@ -369,14 +446,14 @@ export default function MultiplayerGamePage() {
     )
   }
 
-  // Waiting for results after I finished
+  // Waiting for opponent to finish
   if (finished && !opponentFinished) {
     return (
       <div className="min-h-screen flex items-center justify-center"
         style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
         <div className="text-white text-center px-6">
           <div className="text-6xl mb-4 animate-bounce">⏰</div>
-          <h2 className="text-2xl font-bold mb-2">Završio si!</h2>
+          <h2 className="text-2xl font-bold mb-2">Završio/la si!</h2>
           <p className="text-white/70">Tvoj rezultat: <strong className="text-white">{totalScore} bodova</strong></p>
           <p className="text-white/50 text-sm mt-4">Čekamo da {opponentName} završi...</p>
         </div>
@@ -387,15 +464,33 @@ export default function MultiplayerGamePage() {
   if (questions.length === 0) return null
   const q = questions[current]
 
-  // Opponent's current position
   const opponentAnswers = isHost ? (room?.guest_answers ?? []) : (room?.host_answers ?? [])
   const opponentProgress = Math.round((opponentAnswers.length / Math.max(questions.length, 1)) * 100)
-
   const formatTimeRemaining = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #2C2D81 0%, #3766B0 60%, #F5F6FA 100%)' }}>
+
+      {/* ── Side panels (desktop only) ── */}
+      <div className="hidden xl:block fixed z-10" style={{ left: 16, top: '50%', transform: 'translateY(-50%)' }}>
+        <PlayerCard
+          name={myName}
+          score={totalScore}
+          wins={myDuetWins}
+          color="#5DBF94"
+          label="Ti"
+        />
+      </div>
+      <div className="hidden xl:block fixed z-10" style={{ right: 16, top: '50%', transform: 'translateY(-50%)' }}>
+        <PlayerCard
+          name={opponentName}
+          score={opponentScore}
+          wins={opDuetWins}
+          color="#FDC361"
+          label="Protivnik"
+        />
+      </div>
 
       {/* ── Top control bar ── */}
       <div className="sticky top-0 z-20 px-4 py-2"
@@ -423,7 +518,7 @@ export default function MultiplayerGamePage() {
       {/* ── Dual progress ── */}
       <div className="px-4 pt-3 pb-1 max-w-2xl mx-auto w-full">
         <div className="flex items-center justify-between text-xs text-white/60 mb-1">
-          <span>Ti · {totalScore} bod.</span>
+          <span>{myName} · {totalScore} bod.</span>
           <span>Pit. {questionInLevel + 1}/10</span>
           <span>{opponentName} · {opponentScore} bod.</span>
         </div>

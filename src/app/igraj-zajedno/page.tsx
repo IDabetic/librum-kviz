@@ -33,6 +33,9 @@ export default function IgrajZajednoPage() {
   const [creating, setCreating] = useState(false)
   const [createdCode, setCreatedCode] = useState('')
   const [waitingForGuest, setWaitingForGuest] = useState(false)
+  const [guestJoined, setGuestJoined] = useState(false)
+  const [guestName, setGuestName] = useState('')
+  const [starting, setStarting] = useState(false)
 
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
@@ -45,7 +48,7 @@ export default function IgrajZajednoPage() {
     })
   }, [])
 
-  // Watch for guest joining
+  // Watch for guest joining — show Start button when they arrive
   useEffect(() => {
     if (!createdCode || !waitingForGuest) return
     const supabase = createClient()
@@ -54,14 +57,17 @@ export default function IgrajZajednoPage() {
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'game_rooms',
         filter: `room_code=eq.${createdCode}`,
-      }, (payload) => {
-        if (payload.new.guest_id && payload.new.status === 'playing') {
-          router.push(`/igraj-zajedno/${createdCode}`)
+      }, async (payload) => {
+        if (payload.new.guest_id && !guestJoined) {
+          const { data: prof } = await supabase
+            .from('profiles').select('first_name').eq('id', payload.new.guest_id).single()
+          setGuestName(prof?.first_name ?? 'Prijatelj')
+          setGuestJoined(true)
         }
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [createdCode, waitingForGuest, router])
+  }, [createdCode, waitingForGuest, guestJoined])
 
   async function handleCreate() {
     setCreating(true)
@@ -78,7 +84,6 @@ export default function IgrajZajednoPage() {
       questionIds = (questions || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id)
     }
 
-    // Determine format params
     const winFmt = WIN_FORMATS.find(f => f.id === selectedFormat)
     const timeFmt = TIME_FORMATS.find(f => f.id === selectedFormat)
 
@@ -107,6 +112,18 @@ export default function IgrajZajednoPage() {
     setWaitingForGuest(true)
   }
 
+  // Host explicitly starts the match
+  async function handleStart() {
+    if (!createdCode || starting) return
+    setStarting(true)
+    const supabase = createClient()
+    await supabase.from('game_rooms').update({
+      status: 'playing',
+      game_start_time: new Date().toISOString(),
+    }).eq('room_code', createdCode)
+    router.push(`/igraj-zajedno/${createdCode}`)
+  }
+
   async function handleJoin() {
     const code = joinCode.trim().toUpperCase()
     if (!code) return
@@ -123,12 +140,18 @@ export default function IgrajZajednoPage() {
     if (!room) { setJoinError('Soba sa tim kodom ne postoji.'); setJoining(false); return }
     if (room.status !== 'waiting') { setJoinError('Igra je već počela ili završena.'); setJoining(false); return }
     if (room.host_id === user.id) { setJoinError('Ne možeš da se pridružiš sopstvenoj sobi.'); setJoining(false); return }
+    if (room.guest_id) { setJoinError('Neko je već zauzeo ovo mesto.'); setJoining(false); return }
 
-    await supabase.from('game_rooms').update({
-      guest_id: user.id,
-      status: 'playing',
-      game_start_time: new Date().toISOString(),
-    }).eq('room_code', code)
+    // Atomic update: only succeeds if guest_id is still null (race-condition safe)
+    const { data: updated } = await supabase
+      .from('game_rooms')
+      .update({ guest_id: user.id })
+      .eq('room_code', code)
+      .is('guest_id', null)
+      .select()
+      .maybeSingle()
+
+    if (!updated) { setJoinError('Neko je već zauzeo ovo mesto.'); setJoining(false); return }
 
     setJoining(false)
     router.push(`/igraj-zajedno/${code}`)
@@ -165,7 +188,6 @@ export default function IgrajZajednoPage() {
                 <>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Tema kviza</label>
                   <div className="space-y-2 mb-6">
-                    {/* Mix option — default */}
                     <button
                       onClick={() => setSelectedQuiz('mix')}
                       className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all"
@@ -185,7 +207,6 @@ export default function IgrajZajednoPage() {
                       )}
                     </button>
 
-                    {/* Individual quizzes */}
                     <div className="max-h-40 overflow-y-auto space-y-1.5 pr-0.5">
                       {quizzes.map(q => (
                         <button key={q.id} onClick={() => setSelectedQuiz(q.id)}
@@ -255,18 +276,38 @@ export default function IgrajZajednoPage() {
                 <div className="text-center">
                   <p className="text-sm text-gray-500 mb-1">Format: <strong>{formatLabels[selectedFormat]}</strong></p>
                   <p className="text-sm text-gray-500 mb-3">Pošalji ovaj kod prijatelju:</p>
-                  <div className="text-5xl font-black py-6 px-8 rounded-2xl mb-4 inline-block"
+                  <div className="text-5xl font-black py-6 px-8 rounded-2xl mb-5 inline-block"
                     style={{ background: '#EEF0FF', color: '#2C2D81', letterSpacing: '0.25em' }}>
                     {createdCode}
                   </div>
-                  <div className="flex items-center gap-2 justify-center mb-6">
-                    <div className="w-2 h-2 rounded-full bg-[#5DBF94] animate-pulse" />
-                    <p className="text-sm text-gray-500">Čekamo da se prijatelj pridruži...</p>
-                  </div>
-                  <button onClick={() => navigator.clipboard.writeText(createdCode)}
-                    className="px-6 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
-                    Kopiraj kod
-                  </button>
+
+                  {guestJoined ? (
+                    <div>
+                      <div className="flex items-center gap-3 justify-center mb-4 px-4 py-3 rounded-2xl"
+                        style={{ background: '#E8F8F0' }}>
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#5DBF94' }} />
+                        <p className="text-sm font-semibold" style={{ color: '#065f46' }}>
+                          {guestName} se pridružio/la!
+                        </p>
+                      </div>
+                      <button onClick={handleStart} disabled={starting}
+                        className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-60 hover:opacity-90"
+                        style={{ background: 'linear-gradient(135deg, #5DBF94, #3766B0)' }}>
+                        {starting ? 'Pokretamo...' : '⚔️ Započni meč!'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#5DBF94] animate-pulse" />
+                        <p className="text-sm text-gray-500">Čekamo da se prijatelj pridruži...</p>
+                      </div>
+                      <button onClick={() => navigator.clipboard.writeText(createdCode)}
+                        className="px-6 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
+                        Kopiraj kod
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
