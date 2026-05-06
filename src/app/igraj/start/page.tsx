@@ -15,8 +15,8 @@ const POINTS_WRONG = 5
 const RISK_BONUS = 10              // +10 extra (so total +20 instead of +10)
 const RISK_PENALTY_LIVES = 2       // 2 lives lost on wrong risk
 const RISK_PENALTY_POINTS = 10     // 10 points lost on wrong risk
-const MILESTONE_INTERVAL = 100
-const MILESTONE_LIVES_BONUS = 10
+const MILESTONE_INTERVAL = 50      // every 50 questions
+const MILESTONE_LIVES_BONUS = 5    // +5 lives + 1 random lifeline
 const COMBO_BONUSES: Record<number, { points: number; msg: string }> = {
   5:   { points: 10,  msg: 'Lep niz!' },
   10:  { points: 25,  msg: 'Odličan ritam!' },
@@ -286,19 +286,20 @@ export default function SurvivorGame() {
       setRiskCorrect(newRiskC)
       setScoreFlash({ delta: baseDelta, key: Date.now() })
 
-      // Milestones
+      // Milestones — every 50 → +5 lives + bonus lifeline
       if (newReached % MILESTONE_INTERVAL === 0) {
         setLives(l => l + MILESTONE_LIVES_BONUS)
         // Award one random lifeline
         const lls = ['fiftyFifty', 'skip', 'extraTime'] as const
         const award = lls[Math.floor(Math.random() * lls.length)]
         setLifelines(l => ({ ...l, [award]: l[award] + 1 }))
-        setMilestone(`Preživeo/la si ${newReached} pitanja! +10 života + bonus pomoć`)
+        setMilestone(`Preživeo/la si ${newReached} pitanja! +${MILESTONE_LIVES_BONUS} života + bonus pomoć`)
         setTimeout(() => setMilestone(null), 3500)
-      } else if ([25, 50, 200, 300, 500, 1000].includes(newReached)) {
+      } else if ([10, 25, 100, 200, 300, 500, 1000].includes(newReached)) {
         const msgs: Record<number, string> = {
-          25: 'Dobro ide! Prešao/la si 25 pitanja.',
-          50: 'Pola puta do prve velike nagrade.',
+          10:  'Krenulo je! 10 pitanja.',
+          25:  'Dobro ide! 25 pitanja.',
+          100: 'Stigao/la si do 100 pitanja.',
           200: 'Ovo je već ozbiljan maraton znanja.',
           300: 'Ulaziš u zonu najjačih igrača.',
           500: 'Librum legenda u nastajanju.',

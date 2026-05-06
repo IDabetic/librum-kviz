@@ -21,10 +21,10 @@ export type SurvivorRow = {
 }
 
 async function loadRows(supabase: Awaited<ReturnType<typeof createClient>>, since: Date | null): Promise<SurvivorRow[]> {
+  // No threshold — every finished session counts on the leaderboard
   let q = supabase
     .from('survivor_sessions')
     .select('user_id, score, questions_reached, correct_answers, wrong_answers, accuracy, best_combo, total_time_seconds, created_at, profiles(first_name, last_name, nickname, avatar)')
-    .gt('questions_reached', 0)
     .order('score', { ascending: false })
     .order('correct_answers', { ascending: false })
     .order('total_time_seconds', { ascending: true })
