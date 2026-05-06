@@ -3,18 +3,16 @@ import Header from '@/components/Header'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { IconBack, IconTrophy, IconStar, IconDiscover, IconSwords } from '@/components/icons'
 
-const CATEGORY_COLORS = ['#2C2D81', '#3766B0', '#5DBF94', '#FDC361', '#e05252']
+const CATEGORY_COLORS = ['#609DED', '#FFCB46', '#4CAF50', '#E55353', '#BCD9FF']
 
 export default async function PublicProfilPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
   const supabase = await createClient()
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
+    .from('profiles').select('*').eq('id', userId).single()
 
   if (!profile) notFound()
 
@@ -33,12 +31,10 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
     .or('host_finished.eq.true,guest_finished.eq.true')
     .not('guest_id', 'is', null)
 
-  // Solo stats
   const totalSolo = results?.length || 0
   const totalPoints = results?.reduce((s, r) => s + (r.score_points ?? 0), 0) || 0
   const bestLevel = totalSolo > 0 ? Math.max(...results!.map(r => r.level_reached ?? 0)) : 0
 
-  // Category breakdown
   const categoryMap: Record<string, { count: number; points: number }> = {}
   ;(results || []).forEach(r => {
     const q = Array.isArray(r.quizzes) ? r.quizzes[0] : r.quizzes as { title: string; category?: string } | null
@@ -47,12 +43,9 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
     categoryMap[cat].count++
     categoryMap[cat].points += r.score_points ?? 0
   })
-  const topCategories = Object.entries(categoryMap)
-    .sort((a, b) => b[1].count - a[1].count)
-    .slice(0, 5)
+  const topCategories = Object.entries(categoryMap).sort((a, b) => b[1].count - a[1].count).slice(0, 5)
   const maxCatCount = topCategories[0]?.[1].count || 1
 
-  // Duet stats
   const totalDuet = (duetGames || []).length
   let duetWins = 0, duetLosses = 0, duetDraws = 0
   ;(duetGames || []).forEach(g => {
@@ -89,63 +82,68 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
   const initials = (profile.first_name?.[0] || '') + (profile.last_name?.[0] || '') || displayName[0]
 
   return (
-    <div className="min-h-screen bg-[#FAF4EC]">
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
       <Header />
-      <main className="max-w-3xl mx-auto px-4 py-10">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
-        <div className="flex items-center gap-2 mb-6">
-          <Link href="/leaderboard" className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-xl transition-colors hover:bg-white"
-            style={{ color: '#6b7280' }}>
-            ← Rang lista
-          </Link>
-        </div>
+        <Link href="/leaderboard"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
+          style={{ color: '#609DED' }}>
+          <IconBack size={16} strokeWidth={2.2} />
+          Rang lista
+        </Link>
 
         {/* Profile card */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm mb-6">
-          <div className="flex items-center gap-5 mb-6">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
+        <div className="card-soft p-6 sm:p-8 mb-6">
+          <div className="flex items-center gap-4 sm:gap-5 mb-6">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
               {profile.avatar
                 ? <Image src={`/avatars/${profile.avatar}`} alt={displayName} width={80} height={80} className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{initials.toUpperCase()}</div>
+                : <div className="w-full h-full flex items-center justify-center font-black text-[24px]" style={{ background: '#609DED', color: 'white' }}>{initials.toUpperCase()}</div>
               }
             </div>
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: '#2C2D81' }}>{displayName}</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="font-black tracking-tight truncate" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
+                {displayName}
+              </h1>
               {profile.nickname && (
-                <p className="text-gray-500 text-sm">{profile.first_name} {profile.last_name}</p>
+                <p className="text-[13px] truncate" style={{ color: '#9C9C9C' }}>{profile.first_name} {profile.last_name}</p>
               )}
-              {profile.city && <p className="text-gray-400 text-sm mt-0.5">📍 {profile.city}</p>}
+              {profile.city && <p className="text-[12px] truncate mt-0.5" style={{ color: '#9C9C9C' }}>📍 {profile.city}</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Solo igara', value: totalSolo, color: '#2C2D81', bg: '#EEF0FF' },
-              { label: 'Duet igara', value: totalDuet, color: '#3766B0', bg: '#EEF5FF' },
-              { label: 'Ukupno bod.', value: totalPoints, color: '#FDC361', bg: '#FFF9EC' },
-              { label: 'Max nivo', value: bestLevel, color: '#5DBF94', bg: '#E8F8F0' },
-            ].map(({ label, value, color, bg }) => (
-              <div key={label} className="rounded-xl p-4 text-center" style={{ background: bg }}>
-                <div className="text-2xl font-black mb-0.5" style={{ color }}>{value}</div>
-                <div className="text-xs text-gray-500">{label}</div>
+              { Icon: IconDiscover, label: 'Solo igara', value: totalSolo,    bg: '#BCD9FF', fg: '#1e5fa4' },
+              { Icon: IconSwords,   label: 'Duet igara', value: totalDuet,    bg: '#FFECBC', fg: '#9c7a13' },
+              { Icon: IconStar,     label: 'Bodova',     value: totalPoints,  bg: '#E8F8F0', fg: '#15803d' },
+              { Icon: IconTrophy,   label: 'Max nivo',   value: bestLevel,    bg: '#F2F2F2', fg: '#343434' },
+            ].map(({ Icon, label, value, bg, fg }) => (
+              <div key={label} className="rounded-2xl p-4" style={{ background: bg }}>
+                <Icon size={16} strokeWidth={2.2} style={{ color: fg, opacity: 0.7 }} />
+                <div className="font-black tracking-tight mt-2" style={{ color: fg, fontSize: 'clamp(20px, 3.5vw, 26px)' }}>{value}</div>
+                <div className="text-[11px] font-medium mt-0.5" style={{ color: fg, opacity: 0.7 }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-6 mb-6">
-          {/* Category breakdown */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+          {/* Categories */}
           {topCategories.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="font-bold text-base mb-4" style={{ color: '#2C2D81' }}>📂 Omiljene kategorije</h2>
+            <div className="card-soft p-6">
+              <h2 className="font-bold text-[15px] mb-4 tracking-tight" style={{ color: '#343434' }}>
+                Omiljene kategorije
+              </h2>
               <div className="space-y-3">
                 {topCategories.map(([cat, data], idx) => (
                   <div key={cat}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium text-gray-700 truncate">{cat}</span>
-                      <span className="text-gray-400 ml-2 flex-shrink-0">{data.count}×</span>
+                    <div className="flex justify-between text-[13px] mb-1.5">
+                      <span className="font-semibold truncate" style={{ color: '#343434' }}>{cat}</span>
+                      <span className="ml-2 flex-shrink-0" style={{ color: '#9C9C9C' }}>{data.count}×</span>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: '#F2F2F2' }}>
                       <div className="h-full rounded-full transition-all"
                         style={{ width: `${(data.count / maxCatCount) * 100}%`, background: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] }} />
                     </div>
@@ -157,28 +155,32 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
           {/* Solo vs Duet */}
           {(totalSolo > 0 || totalDuet > 0) && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="font-bold text-base mb-4" style={{ color: '#2C2D81' }}>🎯 Solo vs ⚔️ Duet</h2>
+            <div className="card-soft p-6">
+              <h2 className="font-bold text-[15px] mb-4 tracking-tight" style={{ color: '#343434' }}>
+                Solo vs Duet
+              </h2>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="text-center p-3 rounded-xl" style={{ background: '#EEF0FF' }}>
-                  <div className="text-2xl font-black" style={{ color: '#2C2D81' }}>{totalSolo}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Solo igara</div>
+                <div className="text-center p-3 rounded-2xl" style={{ background: '#BCD9FF' }}>
+                  <div className="font-black text-[24px]" style={{ color: '#1e5fa4' }}>{totalSolo}</div>
+                  <div className="text-[11px] font-medium mt-0.5" style={{ color: '#1e5fa4', opacity: 0.7 }}>Solo</div>
                 </div>
-                <div className="text-center p-3 rounded-xl" style={{ background: '#E8F8F0' }}>
-                  <div className="text-2xl font-black" style={{ color: '#5DBF94' }}>{totalDuet}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Duet igara</div>
+                <div className="text-center p-3 rounded-2xl" style={{ background: '#FFECBC' }}>
+                  <div className="font-black text-[24px]" style={{ color: '#9c7a13' }}>{totalDuet}</div>
+                  <div className="text-[11px] font-medium mt-0.5" style={{ color: '#9c7a13', opacity: 0.7 }}>Duet</div>
                   {totalDuet > 0 && (
-                    <div className="text-xs mt-0.5" style={{ color: '#5DBF94' }}>{duetWins}W · {duetDraws}D · {duetLosses}L</div>
+                    <div className="text-[10px] mt-1" style={{ color: '#9c7a13', opacity: 0.8 }}>
+                      {duetWins}W·{duetDraws}D·{duetLosses}L
+                    </div>
                   )}
                 </div>
               </div>
               {(totalSolo > 0 && totalDuet > 0) && (
                 <>
-                  <div className="h-2.5 rounded-full overflow-hidden flex">
-                    <div className="h-full" style={{ width: `${(totalSolo / (totalSolo + totalDuet)) * 100}%`, background: '#2C2D81' }} />
-                    <div className="h-full flex-1" style={{ background: '#5DBF94' }} />
+                  <div className="h-2 rounded-full overflow-hidden flex" style={{ background: '#F2F2F2' }}>
+                    <div className="h-full" style={{ width: `${(totalSolo / (totalSolo + totalDuet)) * 100}%`, background: '#609DED' }} />
+                    <div className="h-full flex-1" style={{ background: '#FFCB46' }} />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <div className="flex justify-between text-[10px] mt-1.5 font-medium" style={{ color: '#9C9C9C' }}>
                     <span>Solo {Math.round((totalSolo / (totalSolo + totalDuet)) * 100)}%</span>
                     <span>Duet {Math.round((totalDuet / (totalSolo + totalDuet)) * 100)}%</span>
                   </div>
@@ -190,22 +192,27 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
         {/* Recent games */}
         {results && results.length > 0 && (
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="font-bold text-base mb-4" style={{ color: '#2C2D81' }}>Poslednje igre</h2>
+          <div className="card-soft p-6 sm:p-8">
+            <h2 className="font-bold text-[18px] mb-5 tracking-tight" style={{ color: '#343434' }}>
+              Poslednje igre
+            </h2>
             <div className="space-y-1">
               {results.slice(0, 10).map((r, i) => {
                 const pts = r.score_points ?? 0
                 const lvl = r.level_reached ?? 0
                 const q = Array.isArray(r.quizzes) ? r.quizzes[0] : r.quizzes as { title: string } | null
+                const accent = pts >= 100 ? '#4CAF50' : pts >= 50 ? '#FFCB46' : '#609DED'
                 return (
-                  <div key={i} className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                      style={{ background: pts >= 100 ? 'linear-gradient(135deg, #5DBF94, #3ea87a)' : pts >= 50 ? 'linear-gradient(135deg, #FDC361, #e8a800)' : 'linear-gradient(135deg, #3766B0, #2C2D81)' }}>
+                  <div key={i} className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-[13px] flex-shrink-0"
+                      style={{ background: accent, color: 'white' }}>
                       {pts > 0 ? `+${pts}` : pts}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-700 truncate">{q?.title || 'Kviz'}</p>
-                      <p className="text-xs text-gray-400">Nivo {lvl} · {r.score}/{r.total} tačnih · {new Date(r.completed_at).toLocaleDateString('sr')}</p>
+                      <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{q?.title || 'Kviz'}</p>
+                      <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+                        Nivo {lvl} · {r.score}/{r.total} tačnih · {new Date(r.completed_at).toLocaleDateString('sr')}
+                      </p>
                     </div>
                   </div>
                 )
@@ -215,9 +222,9 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
         )}
 
         {totalSolo === 0 && totalDuet === 0 && (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
+          <div className="card-soft py-16 text-center">
             <div className="text-5xl mb-4">🎮</div>
-            <p className="text-lg font-medium text-gray-600">Ovaj igrač još nije igrao</p>
+            <p className="font-bold text-[17px]" style={{ color: '#343434' }}>Ovaj igrač još nije igrao</p>
           </div>
         )}
       </main>

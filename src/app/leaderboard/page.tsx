@@ -105,19 +105,27 @@ export default async function LeaderboardPage() {
     .slice(0, 200)
 
   return (
-    <div className="min-h-screen bg-[#FAF4EC]">
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
       {user && <Header />}
       {!user && (
-        <nav className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
-          <Link href="/" className="font-bold text-xl" style={{ color: '#2C2D81' }}>Librum kviz</Link>
-          <Link href="/auth/prijava" className="text-sm font-medium px-4 py-2 rounded-lg text-white"
-            style={{ background: '#2C2D81' }}>Prijava</Link>
+        <nav className="sticky top-0 z-40 backdrop-blur-xl"
+          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <Link href="/" className="font-extrabold text-[18px] tracking-tight" style={{ color: '#343434' }}>
+              Librum<span style={{ color: '#609DED' }}>.</span>
+            </Link>
+            <Link href="/auth/prijava" className="btn btn-primary btn-sm">Prijava</Link>
+          </div>
         </nav>
       )}
-      <main className="max-w-3xl mx-auto px-4 py-10">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold mb-2" style={{ color: '#2C2D81' }}>🏆 Rang lista</h1>
-          <p className="text-gray-500">Najbolji igrači Librum kviz platforme</p>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
+            Najbolji igrači
+          </p>
+          <h1 className="font-black tracking-tight leading-[1.1]" style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
+            Rang lista
+          </h1>
         </div>
         <LeaderboardTabs soloData={soloAggregated} duetData={duetAggregated} user={!!user} />
       </main>

@@ -3,6 +3,7 @@ import Header from '@/components/Header'
 import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
+import { IconSettings, IconTrophy, IconStar, IconTime, IconDiscover } from '@/components/icons'
 
 export default async function ProfilPage() {
   const supabase = await createClient()
@@ -10,10 +11,7 @@ export default async function ProfilPage() {
   if (!user) redirect('/auth/prijava')
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+    .from('profiles').select('*').eq('id', user.id).single()
 
   const { data: results } = await supabase
     .from('quiz_results')
@@ -24,84 +22,81 @@ export default async function ProfilPage() {
 
   const totalPlayed = results?.length || 0
   const totalPoints = results?.reduce((s, r) => s + (r.score_points ?? 0), 0) || 0
-  const bestPoints = results && results.length > 0
-    ? Math.max(...results.map(r => r.score_points ?? 0))
-    : 0
-  const bestLevel = results && results.length > 0
-    ? Math.max(...results.map(r => r.level_reached ?? 0))
-    : 0
+  const bestPoints = results && results.length > 0 ? Math.max(...results.map(r => r.score_points ?? 0)) : 0
+  const bestLevel = results && results.length > 0 ? Math.max(...results.map(r => r.level_reached ?? 0)) : 0
 
   const displayName = profile?.nickname || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Igrač'
   const initials = (profile?.first_name?.[0] || '') + (profile?.last_name?.[0] || '') || displayName[0]
 
   return (
-    <div className="min-h-screen bg-[#FAF4EC]">
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
       <Header />
-      <main className="max-w-3xl mx-auto px-4 py-10">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
-        {/* Profile card */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
+        {/* ─ Profile card ─────────────────────────────────────────── */}
+        <div className="card-soft p-6 sm:p-8 mb-6">
+          <div className="flex items-start sm:items-center justify-between gap-4 mb-7 flex-wrap">
+            <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
                 {profile?.avatar
-                  ? <Image src={`/avatars/${profile.avatar}`} alt="Avatar" width={64} height={64} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{initials.toUpperCase()}</div>
+                  ? <Image src={`/avatars/${profile.avatar}`} alt="Avatar" width={80} height={80} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center font-black text-[24px]" style={{ background: '#609DED', color: 'white' }}>{initials.toUpperCase()}</div>
                 }
               </div>
-              <div>
-                <h1 className="text-2xl font-bold" style={{ color: '#2C2D81' }}>{displayName}</h1>
+              <div className="min-w-0 flex-1">
+                <h1 className="font-black tracking-tight truncate" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
+                  {displayName}
+                </h1>
                 {profile?.nickname && (
-                  <p className="text-gray-500 text-sm">{profile.first_name} {profile.last_name}</p>
+                  <p className="text-[13px] truncate" style={{ color: '#9C9C9C' }}>{profile.first_name} {profile.last_name}</p>
                 )}
-                <p className="text-gray-400 text-sm">{profile?.email}</p>
-                {profile?.city && <p className="text-gray-400 text-sm">📍 {profile.city}</p>}
+                <p className="text-[12px] truncate" style={{ color: '#9C9C9C' }}>{profile?.email}</p>
+                {profile?.city && <p className="text-[12px] truncate" style={{ color: '#9C9C9C' }}>📍 {profile.city}</p>}
               </div>
             </div>
-            <Link href="/profil/podesavanja"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02]"
-              style={{ background: '#EEF0FF', color: '#2C2D81' }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                <circle cx="7" cy="7" r="2.5" />
-                <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1 1M10.4 10.4l1 1M10.4 2.6l1-1M2.6 11.4l-1 1" />
-              </svg>
+            <Link href="/profil/podesavanja" className="btn btn-secondary btn-sm flex-shrink-0">
+              <IconSettings size={14} strokeWidth={2.2} />
               Podešavanja
             </Link>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Odigrano', value: totalPlayed, color: '#2C2D81', bg: '#EEF0FF', suffix: '' },
-              { label: 'Ukupno bod.', value: totalPoints, color: '#3766B0', bg: '#EEF5FF', suffix: '' },
-              { label: 'Rekord', value: bestPoints, color: '#FDC361', bg: '#FFF9EC', suffix: ' bod' },
-              { label: 'Max nivo', value: bestLevel, color: '#5DBF94', bg: '#E8F8F0', suffix: '' },
-            ].map(({ label, value, color, bg, suffix }) => (
-              <div key={label} className="rounded-xl p-4 text-center" style={{ background: bg }}>
-                <div className="text-2xl font-black mb-0.5" style={{ color }}>{value}{suffix}</div>
-                <div className="text-xs text-gray-500">{label}</div>
+              { Icon: IconDiscover, label: 'Odigrano', value: totalPlayed, bg: '#BCD9FF', fg: '#1e5fa4' },
+              { Icon: IconStar,     label: 'Bodova',   value: totalPoints, bg: '#FFECBC', fg: '#9c7a13' },
+              { Icon: IconTrophy,   label: 'Rekord',   value: bestPoints,  bg: '#E8F8F0', fg: '#15803d' },
+              { Icon: IconTime,     label: 'Max nivo', value: bestLevel,   bg: '#F2F2F2', fg: '#343434' },
+            ].map(({ Icon, label, value, bg, fg }) => (
+              <div key={label} className="rounded-2xl p-4" style={{ background: bg }}>
+                <Icon size={16} className="mb-2" strokeWidth={2.2} style={{ color: fg, opacity: 0.7 }} />
+                <div className="font-black tracking-tight" style={{ color: fg, fontSize: 'clamp(20px, 3.5vw, 26px)' }}>{value}</div>
+                <div className="text-[11px] font-medium mt-0.5" style={{ color: fg, opacity: 0.7 }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* History */}
+        {/* ─ History ──────────────────────────────────────────────── */}
         {results && results.length > 0 && (
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="font-bold text-lg mb-4" style={{ color: '#2C2D81' }}>Istorija igranja</h2>
-            <div className="space-y-2">
+          <div className="card-soft p-6 sm:p-8">
+            <h2 className="font-bold text-[18px] mb-5 tracking-tight" style={{ color: '#343434' }}>
+              Istorija igranja
+            </h2>
+            <div className="space-y-1">
               {results.map((r, i) => {
                 const pts = r.score_points ?? 0
                 const lvl = r.level_reached ?? 0
                 const quizTitle = (Array.isArray(r.quizzes) ? (r.quizzes as { title: string }[])[0] : r.quizzes as { title: string } | null)?.title || 'Kviz'
+                const accent = pts >= 100 ? '#4CAF50' : pts >= 50 ? '#FFCB46' : '#609DED'
                 return (
-                  <div key={i} className="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                      style={{ background: pts >= 100 ? 'linear-gradient(135deg, #5DBF94, #3ea87a)' : pts >= 50 ? 'linear-gradient(135deg, #FDC361, #e8a800)' : 'linear-gradient(135deg, #3766B0, #2C2D81)' }}>
+                  <div key={i} className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-[13px] flex-shrink-0"
+                      style={{ background: accent, color: 'white' }}>
                       {pts > 0 ? `+${pts}` : pts}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-700 truncate">{quizTitle}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{quizTitle}</p>
+                      <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
                         Nivo {lvl} · {r.score}/{r.total} tačnih · {new Date(r.completed_at).toLocaleDateString('sr')}
                       </p>
                     </div>

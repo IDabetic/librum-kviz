@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { IconTrophy, IconSwords } from '@/components/icons'
 
 type SoloEntry = { name: string; userId: string; totalPoints: number; bestLevel: number; plays: number; avatar?: string }
 type DuetEntry = { name: string; userId: string; wins: number; losses: number; draws: number; plays: number; avatar?: string }
@@ -47,12 +48,19 @@ export default function LeaderboardTabs({
 
   return (
     <>
-      <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-6">
-        {(['solo', 'duet'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
-            style={tab === t ? { background: '#2C2D81', color: 'white' } : { color: '#6b7280' }}>
-            {t === 'solo' ? '🎯 Solo' : '⚔️ Duet'}
+      <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto" style={{ background: '#F2F2F2' }}>
+        {([
+          { id: 'solo', label: 'Solo', Icon: IconTrophy },
+          { id: 'duet', label: 'Dueli', Icon: IconSwords },
+        ] as const).map(({ id, label, Icon }) => (
+          <button key={id} onClick={() => setTab(id)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-[14px] font-semibold transition-all"
+            style={tab === id
+              ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
+              : { color: '#9C9C9C' }
+            }>
+            <Icon size={16} strokeWidth={2.2} />
+            {label}
           </button>
         ))}
       </div>
@@ -63,18 +71,18 @@ export default function LeaderboardTabs({
   )
 }
 
-function ViewTabs({ view, onChange, total, accentColor }: { view: ViewOption; onChange: (v: ViewOption) => void; total: number; accentColor: string }) {
+function ViewTabs({ view, onChange, total }: { view: ViewOption; onChange: (v: ViewOption) => void; total: number }) {
   return (
-    <div className="flex items-center gap-1.5 px-4 py-3 border-b border-gray-50 overflow-x-auto">
+    <div className="flex items-center gap-1.5 px-5 py-3.5 border-b overflow-x-auto" style={{ borderColor: '#F2F2F2' }}>
       {VIEW_OPTIONS.map(opt => {
         const count = opt.value === 0 ? total : Math.min(opt.value, total)
         const active = view === opt.value
         return (
           <button key={opt.value} onClick={() => onChange(opt.value)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all"
             style={active
-              ? { background: accentColor, color: 'white' }
-              : { background: '#f3f4f6', color: '#6b7280' }}>
+              ? { background: '#343434', color: '#FCFCFC' }
+              : { background: 'transparent', color: '#9C9C9C' }}>
             {opt.label}
             <span className="ml-1 opacity-60">({count})</span>
           </button>
@@ -84,99 +92,87 @@ function ViewTabs({ view, onChange, total, accentColor }: { view: ViewOption; on
   )
 }
 
-function PlayerRow({ p, i, gradient }: { p: SoloEntry | DuetEntry; i: number; gradient: string }) {
-  const content = (
-    <>
-      <span className="w-8 text-center text-lg flex-shrink-0">
-        {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
-      </span>
-      <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
-        {p.avatar
-          ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: gradient }}>{p.name[0]}</div>
-        }
+function Podium({ data, isDuet }: { data: (SoloEntry | DuetEntry)[]; isDuet: boolean }) {
+  const heights = [40, 28, 22]
+  return (
+    <div className="px-6 pt-8 pb-6" style={{ background: 'linear-gradient(135deg, #BCD9FF 0%, #FFECBC 100%)' }}>
+      <div className="flex items-end justify-center gap-3 sm:gap-5 max-w-md mx-auto">
+        {[1, 0, 2].map(i => {
+          const p = data[i]
+          if (!p) return null
+          return (
+            <div key={i} className="text-center flex-1 min-w-0">
+              <div className="text-2xl mb-1">{MEDALS[i]}</div>
+              <div className="w-14 h-14 mx-auto mb-2 rounded-2xl overflow-hidden bg-white shadow-md">
+                {p.avatar
+                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={56} height={56} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center font-bold text-[18px]" style={{ background: '#609DED', color: 'white' }}>{p.name[0]}</div>
+                }
+              </div>
+              <div className="font-bold text-[13px] truncate tracking-tight" style={{ color: '#343434' }}>
+                {p.name.split(' ')[0]}
+              </div>
+              <div className="text-[11px] font-medium" style={{ color: '#343434', opacity: 0.6 }}>
+                {isDuet ? `${(p as DuetEntry).wins} W` : `${(p as SoloEntry).totalPoints} bod.`}
+              </div>
+              <div className="rounded-t-2xl mt-2 flex items-end justify-center pb-2"
+                style={{ height: heights[i] * 2.5, background: '#FCFCFC', opacity: 0.85 }}>
+                <span className="font-black text-[16px]" style={{ color: '#343434' }}>{i + 1}</span>
+              </div>
+            </div>
+          )
+        })}
       </div>
-    </>
+    </div>
   )
-  return content
 }
 
 function SoloBoard({ data, isDemo, user }: { data: SoloEntry[]; isDemo: boolean; user: boolean }) {
   const [view, setView] = useState<ViewOption>(10)
 
   if (data.length === 0) {
-    return (
-      <EmptyState emoji="🎯" title="Solo rang lista je prazna" subtitle="Budite prvi koji će igrati!"
-        href={user ? '/kvizovi' : '/auth/registracija'} label={user ? 'Idi na kvizove' : 'Registruj se'} />
-    )
+    return <EmptyState emoji="🎯" title="Solo rang lista je prazna" subtitle="Budi prvi koji će igrati!"
+      href={user ? '/kvizovi' : '/auth/registracija'} label={user ? 'Idi na kvizove' : 'Registruj se'} />
   }
 
   const displayed = view === 0 ? data : data.slice(0, view)
   const isScroll = view === 0 && data.length > 10
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-      {/* Podium — always top 3 */}
-      {data.length >= 3 && (
-        <div className="p-6 border-b border-gray-50"
-          style={{ background: 'linear-gradient(135deg, #2C2D81 0%, #3766B0 100%)' }}>
-          <div className="flex items-end justify-center gap-4">
-            {[1, 0, 2].map(i => {
-              const p = data[i]; if (!p) return null
-              const heights = [32, 24, 20]
-              return (
-                <div key={i} className="text-center flex-1 max-w-[120px]">
-                  <div className="text-2xl mb-1">{MEDALS[i]}</div>
-                  <div className="text-white font-bold text-sm truncate">{p.name.split(' ')[0]}</div>
-                  <div className="text-white/70 text-xs mb-2">{p.totalPoints} bod.</div>
-                  <div className="rounded-t-xl flex items-end justify-center pb-2"
-                    style={{ height: heights[i] * 3, background: 'rgba(255,255,255,0.15)' }}>
-                    <span className="text-white font-black text-xl">{i + 1}</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
+    <div className="card-soft overflow-hidden">
+      {data.length >= 3 && <Podium data={data} isDuet={false} />}
       {isDemo && (
-        <div className="mx-4 mt-3 px-3 py-2 rounded-xl text-xs text-center font-medium" style={{ background: '#FFF8E8', color: '#92681a' }}>
-          Primer kako izgleda rang lista — stvarni podaci se pojavljuju posle prvih igara
+        <div className="mx-5 mt-3 px-4 py-2.5 rounded-2xl text-[12px] text-center font-medium" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+          Primer kako izgleda rang lista
         </div>
       )}
-
-      <ViewTabs view={view} onChange={setView} total={data.length} accentColor="#2C2D81" />
-
+      <ViewTabs view={view} onChange={setView} total={data.length} />
       <div className={isScroll ? 'max-h-[520px] overflow-y-auto' : ''}>
         {displayed.map((p, i) => {
           const row = (
             <>
-              <span className="w-8 text-center text-lg flex-shrink-0">
-                {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
+              <span className="w-7 text-center flex-shrink-0">
+                {i < 3 ? <span className="text-lg">{MEDALS[i]}</span> : <span className="text-[13px] font-bold" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
               </span>
-              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+              <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
                 {p.avatar
-                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{p.name[0]}</div>
+                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={40} height={40} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-[14px] font-bold text-white" style={{ background: '#609DED' }}>{p.name[0]}</div>
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-gray-800">{p.name}</p>
-                <p className="text-xs text-gray-400">Nivo {(p as SoloEntry).bestLevel} · {p.plays} {p.plays === 1 ? 'igra' : 'igara'}</p>
+                <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+                <p className="text-[12px]" style={{ color: '#9C9C9C' }}>Nivo {p.bestLevel} · {p.plays} {p.plays === 1 ? 'igra' : 'igara'}</p>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-lg"
-                  style={{ color: i === 0 ? '#FDC361' : i === 1 ? '#3766B0' : i === 2 ? '#c08a4a' : '#5DBF94' }}>
-                  {(p as SoloEntry).totalPoints}
-                </div>
-                <div className="text-xs text-gray-400">bodova</div>
+              <div className="text-right flex-shrink-0">
+                <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.totalPoints}</div>
+                <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
               </div>
             </>
           )
           return p.userId
-            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">{row}</Link>
-            : <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0">{row}</div>
+            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 border-b last:border-0 hover:bg-[#F2F2F2] transition-colors" style={{ borderColor: '#F2F2F2' }}>{row}</Link>
+            : <div key={i} className="flex items-center gap-3 px-5 py-3.5 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>{row}</div>
         })}
       </div>
     </div>
@@ -187,76 +183,58 @@ function DuetBoard({ data, isDemo, user }: { data: DuetEntry[]; isDemo: boolean;
   const [view, setView] = useState<ViewOption>(10)
 
   if (data.length === 0) {
-    return (
-      <EmptyState emoji="⚔️" title="Nema duel rezultata" subtitle="Izazovi prijatelja i budi prvi na listi!"
-        href={user ? '/igraj-zajedno' : '/auth/registracija'} label={user ? 'Igraj zajedno' : 'Registruj se'} />
-    )
+    return <EmptyState emoji="⚔️" title="Nema duel rezultata" subtitle="Izazovi prijatelja i budi prvi na listi!"
+      href={user ? '/igraj-zajedno' : '/auth/registracija'} label={user ? 'Igraj zajedno' : 'Registruj se'} />
   }
 
   const displayed = view === 0 ? data : data.slice(0, view)
   const isScroll = view === 0 && data.length > 10
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-      {/* Podium */}
-      {data.length >= 3 && (
-        <div className="p-6 border-b border-gray-50"
-          style={{ background: 'linear-gradient(135deg, #3766B0 0%, #5DBF94 100%)' }}>
-          <div className="flex items-end justify-center gap-4">
-            {[1, 0, 2].map(i => {
-              const p = data[i]; if (!p) return null
-              const heights = [32, 24, 20]
-              return (
-                <div key={i} className="text-center flex-1 max-w-[120px]">
-                  <div className="text-2xl mb-1">{MEDALS[i]}</div>
-                  <div className="text-white font-bold text-sm truncate">{p.name.split(' ')[0]}</div>
-                  <div className="text-white/70 text-xs mb-2">{p.wins}W</div>
-                  <div className="rounded-t-xl flex items-end justify-center pb-2"
-                    style={{ height: heights[i] * 3, background: 'rgba(255,255,255,0.15)' }}>
-                    <span className="text-white font-black text-xl">{i + 1}</span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
+    <div className="card-soft overflow-hidden">
+      {data.length >= 3 && <Podium data={data} isDuet={true} />}
       {isDemo && (
-        <div className="mx-4 mt-3 px-3 py-2 rounded-xl text-xs text-center font-medium" style={{ background: '#FFF8E8', color: '#92681a' }}>
-          Primer kako izgleda rang lista — stvarni podaci se pojavljuju posle prvih duela
+        <div className="mx-5 mt-3 px-4 py-2.5 rounded-2xl text-[12px] text-center font-medium" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+          Primer kako izgleda rang lista
         </div>
       )}
-
-      <ViewTabs view={view} onChange={setView} total={data.length} accentColor="#3766B0" />
-
+      <ViewTabs view={view} onChange={setView} total={data.length} />
       <div className={isScroll ? 'max-h-[520px] overflow-y-auto' : ''}>
         {displayed.map((p, i) => {
           const row = (
             <>
-              <span className="w-8 text-center text-lg flex-shrink-0">
-                {i < 3 ? MEDALS[i] : <span className="text-sm font-bold text-gray-400">{i + 1}</span>}
+              <span className="w-7 text-center flex-shrink-0">
+                {i < 3 ? <span className="text-lg">{MEDALS[i]}</span> : <span className="text-[13px] font-bold" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
               </span>
-              <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0">
+              <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
                 {p.avatar
-                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={36} height={36} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #3766B0, #5DBF94)' }}>{p.name[0]}</div>
+                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={40} height={40} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-[14px] font-bold text-white" style={{ background: '#609DED' }}>{p.name[0]}</div>
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-gray-800">{p.name}</p>
-                <p className="text-xs text-gray-400">{p.plays} {p.plays === 1 ? 'duel' : 'duela'}</p>
+                <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+                <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.plays} {p.plays === 1 ? 'duel' : 'duela'}</p>
               </div>
-              <div className="flex gap-3 text-center">
-                <div><div className="font-bold text-sm" style={{ color: '#5DBF94' }}>{p.wins}</div><div className="text-xs text-gray-400">W</div></div>
-                <div><div className="font-bold text-sm text-gray-400">{p.draws}</div><div className="text-xs text-gray-400">D</div></div>
-                <div><div className="font-bold text-sm" style={{ color: '#e05252' }}>{p.losses}</div><div className="text-xs text-gray-400">L</div></div>
+              <div className="flex gap-2.5 text-center flex-shrink-0">
+                <div>
+                  <div className="font-bold text-[15px]" style={{ color: '#4CAF50' }}>{p.wins}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>W</div>
+                </div>
+                <div>
+                  <div className="font-bold text-[15px]" style={{ color: '#9C9C9C' }}>{p.draws}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>D</div>
+                </div>
+                <div>
+                  <div className="font-bold text-[15px]" style={{ color: '#E55353' }}>{p.losses}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>L</div>
+                </div>
               </div>
             </>
           )
           return p.userId
-            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">{row}</Link>
-            : <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-50 last:border-0">{row}</div>
+            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 border-b last:border-0 hover:bg-[#F2F2F2] transition-colors" style={{ borderColor: '#F2F2F2' }}>{row}</Link>
+            : <div key={i} className="flex items-center gap-3 px-5 py-3.5 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>{row}</div>
         })}
       </div>
     </div>
@@ -267,13 +245,11 @@ function EmptyState({ emoji, title, subtitle, href, label }: {
   emoji: string; title: string; subtitle: string; href: string; label: string
 }) {
   return (
-    <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
+    <div className="card-soft py-20 text-center px-6">
       <div className="text-5xl mb-4">{emoji}</div>
-      <p className="text-lg font-medium text-gray-600">{title}</p>
-      <p className="text-sm text-gray-400 mt-1 mb-6">{subtitle}</p>
-      <Link href={href} className="inline-flex px-6 py-3 rounded-xl font-bold text-white" style={{ background: '#2C2D81' }}>
-        {label}
-      </Link>
+      <p className="font-bold text-[17px] mb-1" style={{ color: '#343434' }}>{title}</p>
+      <p className="text-[14px] mb-6" style={{ color: '#9C9C9C' }}>{subtitle}</p>
+      <Link href={href} className="btn btn-primary btn-md">{label}</Link>
     </div>
   )
 }
