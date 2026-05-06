@@ -100,8 +100,22 @@ function PrijavaForm() {
     )
   }
 
+  const potvrdjeno = searchParams.get('potvrdjeno') === '1'
+  const greskaParam = searchParams.get('greska')
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {potvrdjeno && (
+        <div className="rounded-xl px-4 py-3 text-sm" style={{ background: '#E8F8F0', border: '1px solid #5DBF94' }}>
+          <p className="font-semibold" style={{ color: '#166534' }}>✅ Email potvrđen!</p>
+          <p style={{ color: '#166534' }}>Nalog je aktiviran. Prijavite se ispod.</p>
+        </div>
+      )}
+      {greskaParam === 'potvrda' && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          Link za potvrdu je istekao ili je neispravan. Pokušajte ponovo da se registrujete.
+        </div>
+      )}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
           {error}

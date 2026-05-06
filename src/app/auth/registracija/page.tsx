@@ -36,6 +36,7 @@ export default function RegistracijaPage() {
       email: form.email,
       password: form.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           first_name: form.ime,
           last_name: form.prezime,
@@ -67,14 +68,17 @@ export default function RegistracijaPage() {
               </div>
               <h2 className="text-2xl font-bold mb-2" style={{ color: '#2C2D81' }}>Proverite email!</h2>
               <p className="text-gray-500 mb-1 text-sm">Poslali smo vam link za potvrdu na:</p>
-              <p className="font-semibold text-gray-700 mb-5">{form.email}</p>
-              <p className="text-xs text-gray-400 mb-6">Kliknite na link u emailu da aktivirate nalog. Proverite i spam folder.</p>
+              <p className="font-semibold text-gray-700 mb-4">{form.email}</p>
+              <div className="rounded-xl px-4 py-3 mb-5 text-left text-sm" style={{ background: '#FFF8E8', border: '1px solid #FDC361' }}>
+                <p className="font-semibold mb-1" style={{ color: '#b45309' }}>📬 Nije stigao mejl?</p>
+                <p style={{ color: '#92400e' }}>Proverite <strong>SPAM / Junk</strong> folder — mejl ponekad završi tamo.</p>
+              </div>
               <Link
                 href="/auth/prijava"
                 className="inline-flex items-center justify-center w-full py-3.5 rounded-xl font-bold text-white transition-all hover:scale-[1.02]"
                 style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
               >
-                Idite na prijavu
+                Idi na prijavu
               </Link>
             </div>
           </div>
