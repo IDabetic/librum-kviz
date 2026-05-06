@@ -153,9 +153,62 @@ export default function Home() {
               </Link>
             </div>
             {/* Mascots row on mobile */}
-            <div className="flex justify-center items-end gap-8">
-              <div style={{ transform: 'rotate(-10deg)' }}><BookmarkMascot /></div>
-              <div style={{ transform: 'rotate(6deg)', marginBottom: '-8px' }}><BookMascot /></div>
+            <div className="flex justify-center items-end gap-4 overflow-hidden">
+              <div style={{ transform: 'rotate(-10deg)', width: 80, flexShrink: 0 }}>
+                <svg width="80" height="134" viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="bmGrad2" x1="15" y1="10" x2="105" y2="190" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#FDC361"/>
+                      <stop offset="100%" stopColor="#f0a832"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M15 10 H105 V165 L60 190 L15 165 Z" fill="url(#bmGrad2)"/>
+                  <path d="M25 20 H95 V158 L60 181 L25 158 Z" fill="#fdd07a" opacity="0.4"/>
+                  <circle cx="44" cy="90" r="11" fill="white"/>
+                  <circle cx="76" cy="90" r="11" fill="white"/>
+                  <circle cx="46" cy="90" r="5.5" fill="#1A1C4E"/>
+                  <circle cx="78" cy="90" r="5.5" fill="#1A1C4E"/>
+                  <circle cx="48" cy="88" r="2" fill="white"/>
+                  <circle cx="80" cy="88" r="2" fill="white"/>
+                  <path d="M36 76 Q44 71 52 76" stroke="#1A1C4E" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                  <path d="M68 76 Q76 71 84 76" stroke="#1A1C4E" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                  <path d="M42 112 Q60 128 78 112" stroke="#1A1C4E" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                  <circle cx="33" cy="106" r="8" fill="#e8944a" opacity="0.4"/>
+                  <circle cx="87" cy="106" r="8" fill="#e8944a" opacity="0.4"/>
+                  <rect x="42" y="4" width="36" height="10" rx="5" fill="#2C2D81"/>
+                  <circle cx="60" cy="9" r="5" fill="#3766B0"/>
+                </svg>
+              </div>
+              <div style={{ transform: 'rotate(6deg)', marginBottom: '-8px', width: 110, flexShrink: 0 }}>
+                <svg width="110" height="122" viewBox="0 0 180 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="20" y="30" width="140" height="155" rx="12" fill="#1A1C4E"/>
+                  <rect x="20" y="30" width="12" height="155" rx="6" fill="#0f1033"/>
+                  <rect x="36" y="42" width="112" height="131" rx="6" fill="#FAF4EC"/>
+                  <line x1="92" y1="42" x2="92" y2="173" stroke="#e0d8ce" strokeWidth="2"/>
+                  <rect x="44" y="62" width="40" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <rect x="44" y="74" width="36" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <rect x="44" y="86" width="40" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <rect x="44" y="98" width="32" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <rect x="100" y="62" width="40" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <rect x="100" y="74" width="36" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <rect x="100" y="86" width="40" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <rect x="100" y="98" width="32" height="5" rx="2.5" fill="#c8c0b4"/>
+                  <circle cx="68" cy="128" r="10" fill="white"/>
+                  <circle cx="112" cy="128" r="10" fill="white"/>
+                  <circle cx="70" cy="128" r="5" fill="#1A1C4E"/>
+                  <circle cx="114" cy="128" r="5" fill="#1A1C4E"/>
+                  <circle cx="72" cy="126" r="2" fill="white"/>
+                  <circle cx="116" cy="126" r="2" fill="white"/>
+                  <path d="M74 148 Q90 162 106 148" stroke="#1A1C4E" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                  <circle cx="58" cy="143" r="7" fill="#FDC361" opacity="0.5"/>
+                  <circle cx="122" cy="143" r="7" fill="#FDC361" opacity="0.5"/>
+                  <path d="M20 90 Q4 100 8 115" stroke="#1A1C4E" strokeWidth="8" strokeLinecap="round"/>
+                  <circle cx="8" cy="117" r="6" fill="#1A1C4E"/>
+                  <path d="M160 90 Q176 100 172 115" stroke="#1A1C4E" strokeWidth="8" strokeLinecap="round"/>
+                  <circle cx="172" cy="117" r="6" fill="#1A1C4E"/>
+                  <text x="148" y="28" fontSize="18" fill="#FDC361">✦</text>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
