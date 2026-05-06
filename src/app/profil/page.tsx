@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 
 export default async function ProfilPage() {
@@ -42,9 +43,11 @@ export default async function ProfilPage() {
         <div className="bg-white rounded-2xl p-8 shadow-sm mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>
-                {initials.toUpperCase()}
+              <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
+                {profile?.avatar
+                  ? <Image src={`/avatars/${profile.avatar}`} alt="Avatar" width={64} height={64} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white" style={{ background: 'linear-gradient(135deg, #2C2D81, #3766B0)' }}>{initials.toUpperCase()}</div>
+                }
               </div>
               <div>
                 <h1 className="text-2xl font-bold" style={{ color: '#2C2D81' }}>{displayName}</h1>

@@ -5,13 +5,22 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import Header from '@/components/Header'
+
+const TOTAL_AVATARS = 26
+const AVATAR_LIST = Array.from({ length: TOTAL_AVATARS }, (_, i) =>
+  `avatar_${String(i + 1).padStart(2, '0')}.jpg`
+)
 
 export default function PodesavanjaPage() {
   const router = useRouter()
 
   const [form, setForm] = useState({ first_name: '', last_name: '', nickname: '', city: '' })
+  const [avatar, setAvatar] = useState<string>('')
+  const [avatarSaved, setAvatarSaved] = useState(false)
+  const [savingAvatar, setSavingAvatar] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -37,11 +46,23 @@ export default function PodesavanjaPage() {
           nickname: profile.nickname || '',
           city: profile.city || '',
         })
+        setAvatar(profile.avatar || 'avatar_01.jpg')
       }
       setLoading(false)
     }
     load()
   }, [])
+
+  async function handleSaveAvatar() {
+    setSavingAvatar(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('profiles').update({ avatar }).eq('id', user.id)
+    setAvatarSaved(true)
+    setTimeout(() => setAvatarSaved(false), 2500)
+    setSavingAvatar(false)
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -106,6 +127,48 @@ export default function PodesavanjaPage() {
             </svg>
           </Link>
           <h1 className="text-2xl font-bold" style={{ color: '#2C2D81' }}>Podešavanja profila</h1>
+        </div>
+
+        {/* Avatar picker */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
+          <h2 className="font-bold text-gray-800 mb-4">Avatar</h2>
+          <div className="flex items-center gap-4 mb-5">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm border-2" style={{ borderColor: '#2C2D81' }}>
+              <Image src={`/avatars/${avatar}`} alt="Trenutni avatar" width={64} height={64} className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-gray-700">Tvoj trenutni avatar</p>
+              <p className="text-xs text-gray-400">Odaberi novi iz liste ispod</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 mb-4">
+            {AVATAR_LIST.map(av => (
+              <button
+                key={av}
+                onClick={() => setAvatar(av)}
+                className="relative rounded-xl overflow-hidden transition-all hover:scale-110"
+                style={{
+                  outline: avatar === av ? '3px solid #2C2D81' : '2px solid transparent',
+                  outlineOffset: 2,
+                }}
+              >
+                <Image src={`/avatars/${av}`} alt={av} width={56} height={56} className="w-full h-full object-cover" />
+                {avatar === av && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <span className="text-white text-xs font-bold">✓</span>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleSaveAvatar}
+            disabled={savingAvatar}
+            className="w-full py-3 rounded-xl font-bold text-white transition-all hover:scale-[1.01] disabled:opacity-70"
+            style={{ background: avatarSaved ? '#5DBF94' : 'linear-gradient(135deg, #2C2D81, #3766B0)' }}
+          >
+            {avatarSaved ? '✓ Avatar sačuvan!' : savingAvatar ? 'Čuvanje...' : 'Sačuvaj avatar'}
+          </button>
         </div>
 
         {/* Edit profile */}
