@@ -25,6 +25,12 @@ body {
   background-image:
     radial-gradient(ellipse at 20% 0%, rgba(253,195,97,0.08) 0%, transparent 60%),
     radial-gradient(ellipse at 80% 100%, rgba(44,45,129,0.06) 0%, transparent 60%);
+  overflow-x: hidden;
+}
+
+*, *::before, *::after {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @keyframes fade-in {
