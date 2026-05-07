@@ -165,11 +165,22 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       )}
 
       {/* Last 10 individual answers — text + time + correct/wrong */}
-      {last10.length > 0 && (
-        <div className="card-soft p-5">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
-            Poslednjih {last10.length} odgovora
+      <div className="card-soft p-5">
+        <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
+          Poslednjih {Math.max(last10.length, 0) || 10} odgovora
+        </p>
+        {last10.length === 0 ? (
+          <p className="text-[13px]" style={{ color: '#9C9C9C' }}>
+            Nema zapisa pojedinačnih odgovora. Per-answer logging je uključen 07.05.2026. u 09:30 —
+            ako je korisnik poslednji put igrao pre toga, sesije postoje ali pojedinačni odgovori nisu sačuvani.
+            {sTotal > 0 || qTotal > 0 ? (
+              <span style={{ color: '#9c7a13' }}>
+                {' '}Korisnik ima ukupno {sTotal + qTotal} sesija ali bez detaljnih zapisa — što
+                može značiti da nije igrao posle 09:30 ili da je skor unet zaobilaženjem klijenta.
+              </span>
+            ) : null}
           </p>
+        ) : (
           <div className="space-y-1">
             {last10.map((l, i) => {
               const text = l.question_id ? questionMap.get(l.question_id) : null
@@ -200,8 +211,8 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
               )
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
         <StatCard label="PRO kviz" total={sTotal} primary={sBest} primaryLabel="Rekord" accent="#609DED" bg="#BCD9FF"
