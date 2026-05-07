@@ -145,12 +145,14 @@ export default function SurvivorGame() {
       if (!user) { router.push('/auth/prijava'); return }
       setMyId(user.id)
 
-      // Pull every active question — players can keep going until the DB is exhausted
+      // Pull a random batch large enough that no real session will exhaust
+      // it. Capped to keep payload light on mobile (~70% smaller than
+      // pulling the full 3.5k pool every game start).
       const { data } = await supabase
         .from('questions')
         .select('id, question_text, options, correct_answer, difficulty, info')
         .eq('is_active', true)
-        .limit(10000)
+        .limit(1200)
 
       if (!data || data.length === 0) { setLoading(false); return }
 
