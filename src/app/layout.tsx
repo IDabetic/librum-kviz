@@ -12,8 +12,8 @@ const poppins = Poppins({
 
 const SITE_URL = 'https://kviz.librum.club'
 const SITE_NAME = 'Librum Kviz'
-const DEFAULT_TITLE = 'Librum kviz – besplatne igre znanja, književnosti, istorije i geografije'
-const DEFAULT_DESC = 'Igraj Librum kviz besplatno. Proveri znanje iz književnosti, istorije, geografije, sporta, kulture i prirode kroz PRO kviz, trivia duel, vešanje i brzi kviz.'
+const DEFAULT_TITLE = 'Librum kviz – besplatan online kviz znanja, kafanski kviz, trivia duel'
+const DEFAULT_DESC = 'Besplatan online kviz znanja na srpskom. Igraj PRO kviz, kafanski kviz, muzički kviz, kviz iz književnosti, trivia duel, brzi kviz i igru vešanja. Hiljade pitanja iz opšte kulture — sam ili sa prijateljima.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -24,10 +24,26 @@ export const metadata: Metadata = {
   description: DEFAULT_DESC,
   applicationName: SITE_NAME,
   keywords: [
-    'kviz', 'kviz na srpskom', 'igre znanja', 'opšte znanje', 'književnost',
-    'istorija', 'geografija', 'sport', 'kultura', 'priroda',
-    'PRO kviz', 'trivia duel', 'vešanje', 'brzi kviz', 'rang lista',
-    'Librum', 'Librum kviz',
+    // Brand + core
+    'Librum kviz', 'Librum', 'online kviz', 'kviz online', 'besplatan online kviz',
+    'kviz znanja', 'igre znanja', 'kvizoman', 'pub kviz', 'trivia kviz',
+    // Modes
+    'PRO kviz', 'survival kviz', 'kviz sa životima', 'najteži kviz znanja',
+    'kviz opšteg znanja', 'online kviz znanja', 'kviz sa rang-listom', 'kviz izazov',
+    'Book kviz', 'književni kviz', 'kviz iz književnosti', 'književnost kviz',
+    'kviz o knjigama', 'kviz o piscima', 'kviz o žanrovima', 'kviz za čitaoce',
+    'kafanski kviz', 'pub quiz Srbija', 'kviz za društvo', 'kviz za kafanu',
+    'muzički kviz', 'kviz o muzici', 'domaća muzika kviz', 'ex yu muzika kviz',
+    'pitanja za pub kviz', 'brzi kviz', 'kviz 60 sekundi', 'tačno netačno kviz',
+    'trivia duel', 'duel kviz', 'kviz protiv prijatelja', 'multiplayer kviz',
+    'kviz za dvoje', 'kviz takmičenje online',
+    'igra vešanja', 'vešanje online', 'pogađanje reči', 'igra pogađanja reči',
+    'online igra vešanja', 'igra reči online',
+    // Locale + intent
+    'kviz Srbija', 'kviz na srpskom', 'kviz pitanja', 'kviz pitanja i odgovori',
+    'kviz za zabavu', 'kviz za telefon', 'kviz za odrasle',
+    'edukativne igre online', 'igre za mozak', 'igre znanja online',
+    'besplatne igre znanja', 'kviz opšte kulture',
   ],
   authors: [{ name: 'Librum', url: 'https://www.librum.club' }],
   publisher: 'Librum',

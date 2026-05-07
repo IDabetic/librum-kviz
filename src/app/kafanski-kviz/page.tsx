@@ -7,12 +7,19 @@ import { IconTime, IconTrophy, IconSwords } from '@/components/icons'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Kafanski kviz – pitanja o muzici i kafanskim hitovima',
-  description: 'Igraj Kafanski kviz – pitanja o domaćoj muzici, narodnjacima, pop i rock klasicima. 15 sekundi po pitanju, bez pomoći.',
+  title: 'Kafanski kviz – muzički kviz, pub kviz i kviz za društvo',
+  description: 'Kafanski kviz – online muzički kviz na srpskom. Pitanja o domaćoj muzici, ex YU klasicima, narodnjacima i kafanskim hitovima. Pub kviz za društvo, kafanu i kućno druženje — preko 1000 pitanja.',
+  keywords: [
+    'kafanski kviz', 'pub kviz', 'pub quiz Srbija', 'kviz za društvo',
+    'kviz za kafanu', 'kviz za prijatelje', 'muzički kviz', 'kviz o muzici',
+    'kviz o pesmama', 'kviz o pevačima', 'domaća muzika kviz',
+    'ex yu muzika kviz', 'kafanski muzički kviz', 'kviz za kućno druženje',
+    'pitanja za pub kviz', 'kviz za ekipu', 'Librum kviz',
+  ],
   alternates: { canonical: '/kafanski-kviz' },
   openGraph: {
-    title: 'Kafanski kviz | Librum Kviz',
-    description: 'Hiljada pitanja o muzici. Koliko poznaješ kafanske hitove?',
+    title: 'Kafanski kviz – muzički pub kviz | Librum Kviz',
+    description: 'Preko 1000 pitanja o domaćoj i ex YU muzici. Pub kviz za društvo i kafanu.',
     url: 'https://kviz.librum.club/kafanski-kviz',
     type: 'website',
     images: ['/og-share.jpg?v=6'],

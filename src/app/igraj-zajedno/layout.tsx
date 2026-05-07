@@ -1,12 +1,18 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Trivia duel – izazovi prijatelja u kvizu znanja',
-  description: 'Pokreni trivia duel, izazovi prijatelja i odmeri znanje kroz brzu kviz partiju. Igrajte ista pitanja i proverite ko ima bolji rezultat.',
+  title: 'Trivia duel – kviz protiv prijatelja, multiplayer kviz online',
+  description: 'Trivia duel – online kviz protiv prijatelja u realnom vremenu. Kviz za dvoje, multiplayer kviz na srpskom. Izazovi prijatelje preko koda i odmerite znanje kroz ista pitanja u live duelu.',
+  keywords: [
+    'trivia duel', 'duel kviz', 'kviz protiv prijatelja',
+    'online kviz sa prijateljem', 'kviz za dvoje', 'izazovi prijatelja kviz',
+    'multiplayer kviz', 'kviz takmičenje online', 'online trivia igra',
+    'kviz duel', 'igraj kviz protiv prijatelja', 'Librum kviz',
+  ],
   alternates: { canonical: '/igraj-zajedno' },
   openGraph: {
-    title: 'Trivia duel – odmeri znanje sa protivnikom | Librum Kviz',
-    description: 'Igra za dva igrača, ista pitanja, brzi rezultat.',
+    title: 'Trivia duel – kviz protiv prijatelja | Librum Kviz',
+    description: 'Multiplayer kviz uživo. Pozovi prijatelja kodom i odmerite znanje.',
     url: 'https://kviz.librum.club/igraj-zajedno',
     type: 'website',
     images: ['/og-share.jpg?v=6'],

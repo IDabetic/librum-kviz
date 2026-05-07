@@ -10,8 +10,13 @@ import Footer from '@/components/Footer'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Rang lista – najbolji igrači Librum kviza',
-  description: 'Pogledaj rang-listu Librum kviza. Prati najbolje rezultate u PRO kvizu, trivia duelu, vešanju i Brzom kvizu.',
+  title: 'Rang lista – kviz sa rang listom, najbolji igrači Librum kviza',
+  description: 'Rang lista Librum kviza – najbolji igrači u PRO kvizu, kafanskom kvizu, Book kvizu, trivia duelu, vešanju i Brzom kvizu. Kviz sa rang listom za takmičenje na srpskom.',
+  keywords: [
+    'rang lista', 'kviz sa rang listom', 'kviz za takmičenje',
+    'kviz takmičenje online', 'najbolji igrači kviz', 'top igrači',
+    'kviz pobednici', 'Librum kviz', 'kviz Srbija', 'kviz na srpskom',
+  ],
   alternates: { canonical: '/leaderboard' },
   openGraph: {
     title: 'Rang lista – Librum Kviz',

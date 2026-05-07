@@ -8,12 +8,19 @@ import { IconUsers, IconStar, IconTrophy } from '@/components/icons'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Vešanje – igra pogađanja reči po kategorijama',
-  description: 'Igraj vešanje online. Izaberi kategoriju, pročitaj hint i pogodi skrivenu reč iz sporta, geografije, istorije, kulture, prirode ili predmeta.',
+  title: 'Vešanje – igra pogađanja reči online sa hintom',
+  description: 'Online igra vešanja na srpskom. Izaberi kategoriju (sport, geografija, istorija, kultura, priroda, predmeti), pročitaj hint i pogodi skrivenu reč. Klasična igra reči online za sve uzraste.',
+  keywords: [
+    'igra vešanja', 'vešanje online', 'pogađanje reči', 'igra pogađanja reči',
+    'online igra vešanja', 'vešanje sa hintom', 'igra reči online',
+    'igra vešanja za decu', 'igra vešanja za odrasle', 'zabavna igra reči',
+    'online igra vešanja sa kategorijama', 'igra vešanja na srpskom',
+    'Librum kviz',
+  ],
   alternates: { canonical: '/vesanje' },
   openGraph: {
-    title: 'Vešanje – pogodi skrivenu reč | Librum Kviz',
-    description: 'Klasična igra pogađanja reči po kategorijama.',
+    title: 'Vešanje – online igra pogađanja reči | Librum Kviz',
+    description: 'Klasična igra reči po kategorijama, sa hintom. Sport, geografija, istorija, kultura.',
     url: 'https://kviz.librum.club/vesanje',
     type: 'website',
     images: ['/og-share.jpg?v=6'],
