@@ -58,14 +58,20 @@ export default function Header() {
     })
   }, [])
 
+  // Defer the recent-users fetch until the dropdown actually opens or the
+  // mobile drawer is opened. Saves ~5-15kb on first paint and one round
+  // trip for users who never click that button.
+  const [recentLoaded, setRecentLoaded] = useState(false)
   useEffect(() => {
-    const supabase = createClient()
-    supabase.from('profiles')
+    if (!showRecent && !mobileOpen) return
+    if (recentLoaded) return
+    setRecentLoaded(true)
+    createClient().from('profiles')
       .select('id, first_name, last_name, nickname, avatar, created_at')
       .order('created_at', { ascending: false })
       .limit(15)
       .then(({ data }) => { if (data) setRecentUsers(data as RecentUser[]) })
-  }, [])
+  }, [showRecent, mobileOpen, recentLoaded])
 
   useEffect(() => {
     if (!showRecent) return
@@ -95,7 +101,9 @@ export default function Header() {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
             {NAV_LINKS.map(({ href, label, Icon }) => {
-              const active = pathname.startsWith(href)
+              // Exact match OR /href/* — prevents "/igraj-zajedno" from
+              // marking "/igraj" active because of the prefix overlap.
+              const active = pathname === href || pathname.startsWith(href + '/')
               return (
                 <Link
                   key={href}
@@ -117,9 +125,8 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {/* Recent members dropdown */}
-            {recentUsers.length > 0 && (
-              <div ref={recentRef} className="relative hidden md:block">
+            {/* Recent members dropdown — always rendered; data fetched on first open */}
+            <div ref={recentRef} className="relative hidden md:block">
                 <button
                   onClick={() => setShowRecent(o => !o)}
                   className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
@@ -137,6 +144,9 @@ export default function Header() {
                       <p className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>Poslednji koji su se pridružili</p>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
+                      {recentUsers.length === 0 && (
+                        <p className="px-5 py-4 text-[13px]" style={{ color: '#9C9C9C' }}>Učitavanje…</p>
+                      )}
                       {recentUsers.map(u => {
                         const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
                         return (
@@ -159,7 +169,6 @@ export default function Header() {
                   </div>
                 )}
               </div>
-            )}
 
             {/* User avatar (clickable → /profil) */}
             {userName && (
@@ -228,7 +237,9 @@ export default function Header() {
               )}
 
               {NAV_LINKS.map(({ href, label, Icon }) => {
-                const active = pathname.startsWith(href)
+                // Exact match OR /href/* — prevents "/igraj-zajedno" from
+              // marking "/igraj" active because of the prefix overlap.
+              const active = pathname === href || pathname.startsWith(href + '/')
                 return (
                   <Link key={href} href={href}
                     className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"
