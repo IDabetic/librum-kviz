@@ -3,6 +3,8 @@ import Script from 'next/script'
 import { IconDiscover, IconSwords, IconTrophy, IconStar } from '@/components/icons'
 import { Logo } from '@/components/Logo'
 import Footer from '@/components/Footer'
+import Header from '@/components/Header'
+import { createClient } from '@/lib/supabase/server'
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -46,20 +48,29 @@ const features = [
   { Icon: IconTrophy,   title: 'Penji se na vrh',      desc: 'Skupljaj poene i postani prvak rang liste.' },
 ]
 
-export default function Home() {
+export default async function Home() {
+  // Logged-in visitors see the full app Header (Igre / Rang lista /
+  // Nagrade / Pošalji pitanje + recent + avatar). Anonymous visitors
+  // get the marketing top-bar with sign-in / register CTAs.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
-      {/* ── Top bar ──────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-40 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Logo height={28} priority />
-          <div className="flex items-center gap-2">
-            <Link href="/auth/prijava" className="btn btn-ghost btn-sm">Prijava</Link>
-            <Link href="/auth/registracija" className="btn btn-primary btn-sm">Registracija</Link>
+      {user ? (
+        <Header />
+      ) : (
+        <nav className="sticky top-0 z-40 backdrop-blur-xl"
+          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <Logo height={28} priority />
+            <div className="flex items-center gap-2">
+              <Link href="/auth/prijava" className="btn btn-ghost btn-sm">Prijava</Link>
+              <Link href="/auth/registracija" className="btn btn-primary btn-sm">Registracija</Link>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative pt-20 pb-24 sm:pt-32 sm:pb-32 px-4 sm:px-6 overflow-hidden">
