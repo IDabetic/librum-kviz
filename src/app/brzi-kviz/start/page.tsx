@@ -332,42 +332,66 @@ export default function BrziKvizStart() {
         <div className="w-full max-w-2xl">
 
           {/* Question card */}
-          <div className="card-soft p-7 sm:p-9 mb-5 text-center" key={current.id}>
-            {/* Question timer */}
-            <div className="flex justify-center mb-5">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-[16px]"
-                style={{
-                  background: qProgress > 0.5 ? '#E8F8F0' : qProgress > 0.2 ? '#FFECBC' : '#FEE2E2',
-                  color: qProgress > 0.5 ? '#15803d' : qProgress > 0.2 ? '#9c7a13' : '#E55353',
-                }}>
-                {questionTime}
+          <div className="card-soft overflow-hidden mb-5" key={current.id}>
+
+            {/* Header strip with timer */}
+            <div className="px-6 sm:px-8 py-4 flex items-center justify-between gap-3"
+              style={{ background: '#F2F2F2', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+              <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
+                Pitanje
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: qProgress > 0.5 ? '#15803d' : qProgress > 0.2 ? '#9c7a13' : '#E55353' }}>
+                  {questionTime}s
+                </span>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center font-black text-[14px]"
+                  style={{
+                    background: qProgress > 0.5 ? '#E8F8F0' : qProgress > 0.2 ? '#FFECBC' : '#FEE2E2',
+                    color: qProgress > 0.5 ? '#15803d' : qProgress > 0.2 ? '#9c7a13' : '#E55353',
+                  }}>
+                  {questionTime}
+                </div>
               </div>
             </div>
 
-            {/* Question */}
-            <p className="text-[14px] sm:text-[15px] font-medium leading-snug mb-5" style={{ color: '#9C9C9C' }}>
-              {current.question}
-            </p>
-
-            {/* Shown answer (the assertion) */}
-            <div className="rounded-2xl px-5 py-5 mb-2"
-              style={{ background: showResult
-                ? (isUserCorrect ? '#E8F8F0' : '#FEE2E2')
-                : '#F2F2F2'
-              }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-2"
-                style={{ color: showResult ? (isUserCorrect ? '#15803d' : '#b91c1c') : '#9C9C9C' }}>
-                Predloženi odgovor
-              </p>
-              <p className="font-black tracking-tight"
+            {/* QUESTION — hero */}
+            <div className="px-6 sm:px-8 py-7">
+              <p className="font-black tracking-tight leading-[1.2]"
                 style={{ color: '#343434', fontSize: 'clamp(20px, 4vw, 28px)' }}>
+                {current.question}
+              </p>
+            </div>
+
+            {/* Divider with "ODGOVOR" label */}
+            <div className="px-6 sm:px-8 flex items-center gap-3" style={{ marginTop: -4 }}>
+              <div className="flex-1 h-px" style={{ background: 'rgba(52,52,52,0.12)' }} />
+              <span className="text-[10px] font-bold uppercase tracking-[3px]" style={{ color: '#9C9C9C' }}>
+                Predloženi odgovor
+              </span>
+              <div className="flex-1 h-px" style={{ background: 'rgba(52,52,52,0.12)' }} />
+            </div>
+
+            {/* SHOWN ANSWER — clear claim card */}
+            <div className="px-6 sm:px-8 py-7 text-center"
+              style={{
+                background: showResult
+                  ? (isUserCorrect ? '#E8F8F0' : '#FEE2E2')
+                  : '#FFECBC',
+                transition: 'background 0.3s',
+              }}>
+              <p className="font-black tracking-tight leading-tight"
+                style={{
+                  color: showResult ? (isUserCorrect ? '#15803d' : '#b91c1c') : '#343434',
+                  fontSize: 'clamp(28px, 6vw, 44px)',
+                }}>
                 {current.shownAnswer}
               </p>
             </div>
 
             {/* Result reveal */}
             {showResult && (
-              <div className="mt-5">
+              <div className="px-6 sm:px-8 py-5 border-t" style={{ borderColor: 'rgba(52,52,52,0.06)' }}>
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {isUserCorrect ? (
                     <>
@@ -388,12 +412,12 @@ export default function BrziKvizStart() {
                   )}
                 </div>
                 {!current.isShownCorrect && (
-                  <p className="text-[13px] leading-relaxed mt-2" style={{ color: '#9C9C9C' }}>
+                  <p className="text-[13px] leading-relaxed mt-2 text-center" style={{ color: '#9C9C9C' }}>
                     Tačan odgovor je: <strong style={{ color: '#343434' }}>{current.correctAnswer}</strong>
                   </p>
                 )}
                 {current.isShownCorrect && (
-                  <p className="text-[13px] leading-relaxed mt-2" style={{ color: '#9C9C9C' }}>
+                  <p className="text-[13px] leading-relaxed mt-2 text-center" style={{ color: '#9C9C9C' }}>
                     Da, to je tačan odgovor.
                   </p>
                 )}
