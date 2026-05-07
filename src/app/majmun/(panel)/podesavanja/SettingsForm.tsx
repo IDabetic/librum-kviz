@@ -4,8 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { IconCheck, IconLock, IconEye, IconEyeOff } from '@/components/icons'
-import { changeUnlockCode } from './actions'
+import { IconCheck, IconLock } from '@/components/icons'
 import { sendCustomPasswordResetEmail } from '@/lib/password-reset'
 
 const TOTAL_AVATARS = 26
@@ -49,14 +48,6 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
   const [sendingReset, setSendingReset] = useState(false)
   const [resetSent, setResetSent] = useState(false)
 
-  // Admin unlock code (super_admin only)
-  const [unlockCode, setUnlockCode] = useState('')
-  const [unlockCode2, setUnlockCode2] = useState('')
-  const [showCode, setShowCode] = useState(false)
-  const [savingCode, setSavingCode] = useState(false)
-  const [codeSaved, setCodeSaved] = useState(false)
-  const [codeError, setCodeError] = useState('')
-
   async function saveProfile() {
     setProfileError('')
     setSavingProfile(true)
@@ -96,19 +87,6 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
     setSendingReset(false)
     setResetSent(true)
     setTimeout(() => setResetSent(false), 5000)
-  }
-
-  async function saveUnlockCode() {
-    setCodeError('')
-    if (unlockCode.length < 6) { setCodeError('Kod mora imati najmanje 6 karaktera.'); return }
-    if (unlockCode !== unlockCode2) { setCodeError('Kodovi se ne poklapaju.'); return }
-    setSavingCode(true)
-    const res = await changeUnlockCode(unlockCode)
-    setSavingCode(false)
-    if (!res.ok) { setCodeError(res.error); return }
-    setCodeSaved(true)
-    setUnlockCode(''); setUnlockCode2('')
-    setTimeout(() => setCodeSaved(false), 3000)
   }
 
   return (
@@ -215,51 +193,6 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
         </div>
       </div>
 
-      {/* Admin unlock code (super_admin only) */}
-      {profile.role === 'super_admin' && (
-        <div className="card-soft p-6">
-          <h2 className="font-bold text-[15px] mb-1 tracking-tight" style={{ color: '#343434' }}>🔐 Admin kod</h2>
-          <p className="text-[12px] mb-5" style={{ color: '#9C9C9C' }}>
-            Drugi faktor verifikacije za <code className="font-mono">/majmun/prijava</code>.
-            Postojeće admin sesije se nastavljaju, ali sledeća prijava traži novi kod.
-          </p>
-
-          <div className="space-y-3 mb-4">
-            <div className="relative">
-              <input type={showCode ? 'text' : 'password'} value={unlockCode} onChange={e => setUnlockCode(e.target.value)}
-                className="input pr-10" placeholder="Novi admin kod (min. 6 karaktera)" />
-              <button type="button" onClick={() => setShowCode(s => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1" style={{ color: '#9C9C9C' }}>
-                {showCode ? <IconEyeOff size={18} strokeWidth={2} /> : <IconEye size={18} strokeWidth={2} />}
-              </button>
-            </div>
-            <input type={showCode ? 'text' : 'password'} value={unlockCode2} onChange={e => setUnlockCode2(e.target.value)}
-              className="input" placeholder="Ponovi novi admin kod" />
-          </div>
-
-          {codeError && (
-            <div className="rounded-2xl px-4 py-3 mb-3 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>{codeError}</div>
-          )}
-
-          {codeSaved && (
-            <div className="rounded-2xl px-4 py-3 mb-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-              <IconCheck size={16} className="text-[#15803d]" /> Admin kod je promenjen.
-            </div>
-          )}
-
-          <button onClick={saveUnlockCode} disabled={savingCode || !unlockCode || !unlockCode2}
-            className="btn btn-md w-full"
-            style={codeSaved
-              ? { background: '#4CAF50', color: 'white' }
-              : { background: '#609DED', color: 'white' }}>
-            {savingCode ? 'Čuvanje…' : 'Promeni admin kod'}
-          </button>
-
-          <p className="text-[11px] mt-3" style={{ color: '#9C9C9C' }}>
-            Trenutni kod nije prikazan — samo se može zameniti novim. Čuva se u bazi (RLS-zaštićeno, samo super_admin čita).
-          </p>
-        </div>
-      )}
     </>
   )
 }
