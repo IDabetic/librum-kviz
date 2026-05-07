@@ -2,17 +2,20 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/Logo'
 import { IconLock, IconEye, IconEyeOff, IconCheck } from '@/components/icons'
+import { redeemPasswordResetToken } from '@/lib/password-reset'
 
 type Phase = 'loading' | 'ready' | 'invalid' | 'success'
 
-export default function NovaLozinkaPage() {
+function NovaLozinkaInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const token = searchParams.get('reset')
+
   const [pw, setPw] = useState('')
   const [pw2, setPw2] = useState('')
   const [show, setShow] = useState(false)
@@ -21,39 +24,23 @@ export default function NovaLozinkaPage() {
   const [phase, setPhase] = useState<Phase>('loading')
 
   useEffect(() => {
-    const supabase = createClient()
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-
-    async function init() {
-      // If link from email, exchange the recovery code first
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error) {
-          setPhase('ready')
-          // Clean URL so a refresh doesn't try to re-exchange
-          window.history.replaceState({}, '', '/auth/nova-lozinka')
-          return
-        }
-      }
-      // Fallback: maybe an active session is already in place (e.g. logged-in user)
-      const { data: { user } } = await supabase.auth.getUser()
-      setPhase(user ? 'ready' : 'invalid')
-    }
-    init()
-  }, [])
+    if (token) setPhase('ready')
+    else setPhase('invalid')
+  }, [token])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!token) { setPhase('invalid'); return }
     if (pw.length < 6) { setError('Lozinka mora imati najmanje 6 karaktera.'); return }
     if (pw !== pw2) { setError('Lozinke se ne poklapaju.'); return }
+
     setBusy(true)
-    const { error: e1 } = await createClient().auth.updateUser({ password: pw })
+    const res = await redeemPasswordResetToken(token, pw)
     setBusy(false)
-    if (e1) { setError(e1.message); return }
+    if (!res.ok) { setError(res.error); return }
     setPhase('success')
-    setTimeout(() => router.push('/auth/prijava'), 2500)
+    setTimeout(() => router.push('/auth/prijava?potvrdjeno=1'), 2500)
   }
 
   return (
@@ -92,7 +79,7 @@ export default function NovaLozinkaPage() {
           {phase === 'invalid' && (
             <div>
               <div className="rounded-2xl px-4 py-3 text-[13px] font-medium mb-4" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
-                Link je istekao ili je već iskorišćen. Zatraži novi link sa stranice za prijavu.
+                Link je istekao, već je iskorišćen ili je nevalidan. Zatraži novi sa stranice za prijavu.
               </div>
               <Link href="/auth/prijava" className="btn btn-primary btn-md w-full">Idi na prijavu</Link>
             </div>
@@ -105,7 +92,7 @@ export default function NovaLozinkaPage() {
                   <IconLock size={18} strokeWidth={2} />
                 </div>
                 <input type={show ? 'text' : 'password'} required value={pw} onChange={e => setPw(e.target.value)}
-                  className="input pl-11 pr-10" placeholder="Nova lozinka" />
+                  className="input pl-11 pr-10" placeholder="Nova lozinka" autoFocus />
                 <button type="button" onClick={() => setShow(s => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1" style={{ color: '#9C9C9C' }}>
                   {show ? <IconEyeOff size={18} strokeWidth={2} /> : <IconEye size={18} strokeWidth={2} />}
@@ -134,5 +121,13 @@ export default function NovaLozinkaPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NovaLozinkaPage() {
+  return (
+    <Suspense>
+      <NovaLozinkaInner />
+    </Suspense>
   )
 }

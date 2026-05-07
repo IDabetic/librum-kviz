@@ -1,6 +1,7 @@
 'use server'
 
-import { createAdminClient } from '@/lib/supabase/admin'
+import crypto from 'crypto'
+import { createClient } from '@/lib/supabase/server'
 
 type Result = { ok: true } | { ok: false; error: string }
 
@@ -39,30 +40,43 @@ function emailHtml(resetUrl: string): string {
 </body></html>`
 }
 
+function siteUrl(): string {
+  return process.env.NEXT_PUBLIC_SITE_URL || 'https://kviz.librum.club'
+}
+
+function sha256(input: string): string {
+  return crypto.createHash('sha256').update(input).digest('hex')
+}
+
 export async function sendCustomPasswordResetEmail(rawEmail: string): Promise<Result> {
   const email = rawEmail.trim().toLowerCase()
   if (!email) return { ok: false, error: 'Upiši email.' }
 
-  let resetUrl: string
-  try {
-    const admin = createAdminClient()
-    const { data, error } = await admin.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-      options: { redirectTo: 'https://kviz.librum.club/auth/nova-lozinka' },
-    })
-    if (error || !data?.properties?.action_link) {
-      return { ok: true } // be silent — don't reveal whether email exists
-    }
-    resetUrl = data.properties.action_link
-  } catch {
-    return { ok: false, error: 'Servis privremeno nedostupan. Pokušaj ponovo kasnije.' }
+  // Generate raw token (sent in email) and hash (stored in DB)
+  const rawToken = crypto.randomBytes(32).toString('base64url')
+  const tokenHash = sha256(rawToken)
+
+  const supabase = await createClient()
+  const { data: created, error: rpcErr } = await supabase
+    .rpc('request_password_reset', { p_email: email, p_token_hash: tokenHash })
+
+  if (rpcErr) {
+    console.error('request_password_reset error:', rpcErr)
+    return { ok: false, error: 'Greška u sistemu. Pokušaj ponovo.' }
+  }
+
+  // If user doesn't exist, RPC returns false — be silent (don't reveal)
+  if (!created) {
+    return { ok: true }
   }
 
   const resendKey = process.env.RESEND_API_KEY
   if (!resendKey) {
+    console.error('RESEND_API_KEY not configured')
     return { ok: false, error: 'Email servis nije konfigurisan.' }
   }
+
+  const resetUrl = `${siteUrl()}/auth/nova-lozinka?reset=${rawToken}`
 
   try {
     const r = await fetch('https://api.resend.com/emails', {
@@ -89,4 +103,27 @@ export async function sendCustomPasswordResetEmail(rawEmail: string): Promise<Re
   }
 
   return { ok: true }
+}
+
+// Called from /auth/nova-lozinka — exchanges raw reset token for a password change.
+export async function redeemPasswordResetToken(rawToken: string, newPassword: string): Promise<Result & { email?: string }> {
+  if (!rawToken) return { ok: false, error: 'Nevalidan link.' }
+  if (newPassword.length < 6) return { ok: false, error: 'Lozinka mora imati najmanje 6 karaktera.' }
+
+  const tokenHash = sha256(rawToken)
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .rpc('reset_password_with_token', { p_token_hash: tokenHash, p_new_password: newPassword })
+
+  if (error) {
+    console.error('reset_password_with_token error:', error)
+    return { ok: false, error: 'Greška u sistemu. Pokušaj ponovo.' }
+  }
+
+  // Function returns jsonb { ok, error?, email? }
+  const result = data as { ok: boolean; error?: string; email?: string }
+  if (!result?.ok) {
+    return { ok: false, error: result?.error || 'Link je istekao ili nevalidan.' }
+  }
+  return { ok: true, email: result.email }
 }
