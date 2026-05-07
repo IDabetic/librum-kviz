@@ -15,8 +15,8 @@ const PERIODS = [
 ] as const
 type PeriodId = typeof PERIODS[number]['id']
 
-// Top-N options. `null` = no cap (show everyone returned by the loader,
-// up to its 200-row hard limit on the server side).
+// Top-N options. `null` = no cap. Default is Top 10 — the focused
+// view; visitors who want more switch up.
 const TOP_OPTIONS: { id: 'top10' | 'top50' | 'top100' | 'all'; label: string; n: number | null }[] = [
   { id: 'top10',  label: 'Top 10',  n: 10 },
   { id: 'top50',  label: 'Top 50',  n: 50 },
@@ -24,6 +24,7 @@ const TOP_OPTIONS: { id: 'top10' | 'top50' | 'top100' | 'all'; label: string; n:
   { id: 'all',    label: 'Svi',     n: null },
 ]
 type TopId = typeof TOP_OPTIONS[number]['id']
+const DEFAULT_TOP: TopId = 'top10'
 
 // Inner list is bounded so the page itself doesn't grow to 200 rows tall.
 // Tuned to roughly 8 rows visible at once; the rest scrolls inside the card.
@@ -52,8 +53,8 @@ export default function LeaderboardTabs({
 }) {
   const [game, setGame] = useState<GameId>('survivor')
   const [period, setPeriod] = useState<PeriodId>('today')
-  const [topId, setTopId] = useState<TopId>('top50')
-  const top = TOP_OPTIONS.find(t => t.id === topId) ?? TOP_OPTIONS[1]
+  const [topId, setTopId] = useState<TopId>(DEFAULT_TOP)
+  const top = TOP_OPTIONS.find(t => t.id === topId) ?? TOP_OPTIONS[0]
   const limit = top.n
 
   return (
@@ -126,10 +127,23 @@ function Avatar({ name, avatar, size = 40, accent = '#609DED' }: { name: string;
 
 function Rank({ i }: { i: number }) {
   return (
-    <span className="w-7 text-center flex-shrink-0">
-      {i < 3 ? <span className="text-lg">{MEDALS[i]}</span> : <span className="text-[13px] font-bold" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
+    <span className="w-9 text-center flex-shrink-0">
+      {i < 3
+        ? <span className="text-[26px] sm:text-[28px] leading-none">{MEDALS[i]}</span>
+        : <span className="text-[14px] font-black" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
     </span>
   )
+}
+
+// Soft tinted background for top-3 rows so the podium reads at a
+// glance even before the medal glyph registers.
+const TOP_TINTS: Record<number, string> = {
+  0: 'linear-gradient(90deg, #FFF6D6 0%, transparent 60%)',
+  1: 'linear-gradient(90deg, #ECEEF1 0%, transparent 60%)',
+  2: 'linear-gradient(90deg, #FCE7DD 0%, transparent 60%)',
+}
+function rowStyle(i: number): React.CSSProperties {
+  return i < 3 ? { background: TOP_TINTS[i] } : {}
 }
 
 function EmptyBoard({ user, href, label, icon }: { user: boolean; href: string; label: string; icon: string }) {
@@ -165,7 +179,7 @@ function SurvivorBoard({ data, period, user, limit }: { data: SurvivorRow[]; per
       <PeriodHint period={period} />
       <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#609DED" />
             <div className="flex-1 min-w-0">
@@ -193,7 +207,7 @@ function DuelBoard({ data, period, user, limit }: { data: DuelRow[]; period: Per
       <PeriodHint period={period} />
       <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#FFCB46" />
             <div className="flex-1 min-w-0">
@@ -220,7 +234,7 @@ function HangmanBoard({ data, period, user, limit }: { data: HangmanRow[]; perio
       <PeriodHint period={period} />
       <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#4CAF50" />
             <div className="flex-1 min-w-0">
@@ -246,7 +260,7 @@ function QuickBoard({ data, period, user, limit }: { data: QuickRow[]; period: P
       <PeriodHint period={period} />
       <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#E55353" />
             <div className="flex-1 min-w-0">
@@ -272,7 +286,7 @@ function BookBoard({ data, period, user, limit }: { data: BookRow[]; period: Per
       <PeriodHint period={period} />
       <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#9c7a13" />
             <div className="flex-1 min-w-0">
@@ -307,7 +321,7 @@ function KafanaBoard({ data, period, user, limit }: { data: KafanaRow[]; period:
       <PeriodHint period={period} />
       <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#b91c1c" />
             <div className="flex-1 min-w-0">

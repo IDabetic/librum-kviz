@@ -27,6 +27,7 @@ export default function Footer() {
             <ul className="space-y-2 text-[13px]">
               <li><Link href="/igraj" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>PRO kviz</Link></li>
               <li><Link href="/book-kviz" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Book kviz</Link></li>
+              <li><Link href="/kafanski-kviz" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Kafanski kviz</Link></li>
               <li><Link href="/igraj-zajedno" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Trivia duel</Link></li>
               <li><Link href="/vesanje" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Vešanje</Link></li>
               <li><Link href="/brzi-kviz" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Brzi kviz</Link></li>
@@ -73,7 +74,15 @@ export default function Footer() {
 
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] border-t" style={{ borderColor: 'rgba(52,52,52,0.06)', color: '#9C9C9C' }}>
           <span>© {year} Librum Kviz</span>
-          <span className="text-[11px]">kviz.librum.club</span>
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            <Link href="/politika-privatnosti" className="transition-opacity hover:opacity-70" style={{ color: '#9C9C9C' }}>
+              Politika privatnosti
+            </Link>
+            <Link href="/uslovi-koriscenja" className="transition-opacity hover:opacity-70" style={{ color: '#9C9C9C' }}>
+              Uslovi korišćenja
+            </Link>
+            <span className="text-[11px]">kviz.librum.club</span>
+          </div>
         </div>
       </div>
     </footer>
