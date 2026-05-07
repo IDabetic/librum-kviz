@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { IconUsers, IconDiscover, IconHint, IconTime, IconHome, IconSwords, IconTrophy, IconStar } from '@/components/icons'
+import SyncBookCard from './SyncBookCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -134,6 +135,9 @@ export default async function AdminDashboard() {
         <Kpi Icon={IconUsers}    label="Predloga"       value={fmtN(submissions.count ?? 0)} sub="čeka pregled" bg="#FFECBC" fg="#9c7a13" />
         <Kpi Icon={IconTrophy}   label="Najpopularnija" value={mostPopular?.name || '—'}     sub={`${fmtN(mostPopular?.count || 0)} partija`} bg="#FFCB46" fg="#343434" />
       </div>
+
+      {/* ── One-shot maintenance actions ────────────────────────────── */}
+      <SyncBookCard />
 
       {/* ── Top score today + new users ─────────────────────────────── */}
       <div className="grid lg:grid-cols-3 gap-4">
