@@ -16,31 +16,54 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
   if (!profile) notFound()
 
+  // Pull all session rows so play counts, max scores AND avg-time stats
+  // are accurate. Bumped from 50 → 5000: a user with 200 sessions used
+  // to show "50 igara" because the cap was the limit, not their actual
+  // play count. Avg time per correct question = sum(total_time) / sum(correct).
   const [survivor, book, kafana, hangman, quick, duelGames] = await Promise.all([
     supabase.from('survivor_sessions')
-      .select('score, questions_reached, best_combo, accuracy')
-      .eq('user_id', userId).order('score', { ascending: false }).limit(50),
+      .select('score, questions_reached, best_combo, accuracy, correct_answers, total_time_seconds')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(5000),
     supabase.from('book_sessions')
-      .select('score, questions_reached, top_genre, top_genre_pct')
-      .eq('user_id', userId).order('score', { ascending: false }).limit(50),
+      .select('score, questions_reached, top_genre, top_genre_pct, correct_answers, total_time_seconds')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(5000),
     supabase.from('kafana_sessions')
-      .select('score, questions_reached, accuracy, best_combo')
-      .eq('user_id', userId).order('score', { ascending: false }).limit(50),
-    supabase.from('hangman_sessions').select('won, score').eq('user_id', userId).limit(200),
-    supabase.from('quick_sessions').select('score, correct_count, accuracy').eq('user_id', userId).limit(50),
+      .select('score, questions_reached, accuracy, best_combo, correct_answers, total_time_seconds')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(5000),
+    supabase.from('hangman_sessions').select('won, score').eq('user_id', userId).limit(5000),
+    supabase.from('quick_sessions')
+      .select('score, correct_count, accuracy, total_answered, duration_seconds')
+      .eq('user_id', userId).limit(5000),
     supabase.from('game_rooms')
       .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, status')
       .or(`host_id.eq.${userId},guest_id.eq.${userId}`)
       .not('guest_id', 'is', null)
-      .limit(200),
+      .limit(2000),
   ])
+
+  // ── Helper: average time per correct answer (seconds, 1 decimal) ─
+  // Sum of total_time across all sessions divided by sum of correct
+  // answers. Per-correct gives a fairness signal — a player with 2000
+  // bodova in 1 game with avg 0.3s/correct is suspect. Returns null
+  // when there's no data so we don't render "0.0s".
+  function avgTimePerCorrect(rows: { total_time_seconds?: number | null; correct_answers?: number | null }[]): string | null {
+    let totT = 0, totC = 0
+    for (const r of rows) {
+      totT += Number(r.total_time_seconds ?? 0)
+      totC += Number(r.correct_answers ?? 0)
+    }
+    if (totC <= 0) return null
+    return `${(totT / totC).toFixed(1)}s`
+  }
 
   const sSessions = survivor.data || []
   const sBest = sSessions.length ? Math.max(...sSessions.map(s => s.score)) : 0
   const sBestQ = sSessions.length ? Math.max(...sSessions.map(s => s.questions_reached)) : 0
+  const sAvgT = avgTimePerCorrect(sSessions)
 
   const bSessions = book.data || []
   const bBest = bSessions.length ? Math.max(...bSessions.map(s => s.score)) : 0
+  const bAvgT = avgTimePerCorrect(bSessions)
   // Top genre across this user's book sessions: count appearances of top_genre, pick most frequent
   const genreTally: Record<string, number> = {}
   for (const r of bSessions) {
@@ -54,15 +77,28 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
   const qSessions = quick.data || []
   const qBest = qSessions.length ? Math.max(...qSessions.map(s => s.score)) : 0
+  // Brzi kviz tracks duration_seconds + correct_count (not the same
+  // shape as the rest), so compute avg-per-correct inline.
+  const qAvgT: string | null = (() => {
+    let totT = 0, totC = 0
+    for (const r of qSessions) {
+      totT += Number(r.duration_seconds ?? 0)
+      totC += Number(r.correct_count ?? 0)
+    }
+    if (totC <= 0) return null
+    return `${(totT / totC).toFixed(1)}s`
+  })()
 
   const kSessions = kafana.data || []
   const kBest = kSessions.length ? Math.max(...kSessions.map(s => s.score)) : 0
   const kBestQ = kSessions.length ? Math.max(...kSessions.map(s => s.questions_reached)) : 0
+  const kAvgT = avgTimePerCorrect(kSessions)
 
-  let dWins = 0, dLosses = 0, dDraws = 0
+  let dWins = 0, dLosses = 0, dDraws = 0, dPlays = 0
   ;(duelGames.data || []).forEach(g => {
     const isFinished = g.status === 'finished' || (g.host_finished && g.guest_finished)
     if (!isFinished) return
+    dPlays++
     const isHost = g.host_id === userId
     const my = isHost ? (g.host_score ?? 0) : (g.guest_score ?? 0)
     const op = isHost ? (g.guest_score ?? 0) : (g.host_score ?? 0)
@@ -108,24 +144,44 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
         <div className="grid sm:grid-cols-2 gap-3 mb-6">
           <GameCard Icon={IconHome}   label="PRO kviz"    accent="#609DED" bg="#BCD9FF"
             primary={{ value: sBest, label: 'Rekord bodova' }}
-            secondary={[{ value: sSessions.length, label: 'Igara' }, { value: sBestQ, label: 'Max pitanja' }]} />
+            secondary={[
+              { value: sSessions.length, label: 'Partija' },
+              { value: sBestQ, label: 'Max pitanja' },
+              ...(sAvgT ? [{ value: sAvgT, label: 'Vreme/tačno' }] : []),
+            ]} />
           <GameCard Icon={IconStar}   label="Book kviz"   accent="#9c7a13" bg="#FFECBC"
             primary={{ value: bBest, label: 'Rekord bodova' }}
-            secondary={bTopGenre
-              ? [{ value: bSessions.length, label: 'Igara' }, { value: bTopGenre, label: 'Najjači žanr' }]
-              : [{ value: bSessions.length, label: 'Igara' }]} />
+            secondary={[
+              { value: bSessions.length, label: 'Partija' },
+              ...(bTopGenre ? [{ value: bTopGenre, label: 'Najjači žanr' }] : []),
+              ...(bAvgT ? [{ value: bAvgT, label: 'Vreme/tačno' }] : []),
+            ]} />
           <GameCard Icon={IconStar}   label="Kafanski kviz" accent="#b91c1c" bg="#FEE2E2"
             primary={{ value: kBest, label: 'Rekord bodova' }}
-            secondary={[{ value: kSessions.length, label: 'Igara' }, { value: kBestQ, label: 'Max pitanja' }]} />
+            secondary={[
+              { value: kSessions.length, label: 'Partija' },
+              { value: kBestQ, label: 'Max pitanja' },
+              ...(kAvgT ? [{ value: kAvgT, label: 'Vreme/tačno' }] : []),
+            ]} />
           <GameCard Icon={IconSwords} label="Trivia duel" accent="#9c7a13" bg="#FFECBC"
             primary={{ value: dWins, label: 'Pobeda' }}
-            secondary={[{ value: dLosses, label: 'Poraza' }, { value: dDraws, label: 'Nerešeno' }]} />
+            secondary={[
+              { value: dPlays, label: 'Duela' },
+              { value: dLosses, label: 'Poraza' },
+              { value: dDraws, label: 'Nerešeno' },
+            ]} />
           <GameCard Icon={IconHint}   label="Vešanje"     accent="#15803d" bg="#E8F8F0"
             primary={{ value: hWins, label: 'Pobeda' }}
-            secondary={[{ value: hSessions.length, label: 'Igara' }, { value: `${hWinRate}%`, label: 'Uspeh' }]} />
+            secondary={[
+              { value: hSessions.length, label: 'Partija' },
+              { value: `${hWinRate}%`, label: 'Uspeh' },
+            ]} />
           <GameCard Icon={IconTime}   label="Brzi kviz"   accent="#b91c1c" bg="#FEE2E2"
             primary={{ value: qBest, label: 'Rekord bodova' }}
-            secondary={[{ value: qSessions.length, label: 'Rundi' }]} />
+            secondary={[
+              { value: qSessions.length, label: 'Rundi' },
+              ...(qAvgT ? [{ value: qAvgT, label: 'Vreme/tačno' }] : []),
+            ]} />
         </div>
 
         {(sSessions.length + bSessions.length + kSessions.length + hSessions.length + qSessions.length) === 0 && (
