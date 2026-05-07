@@ -93,6 +93,79 @@ export default function HangmanLivePage() {
 
   const savedSessionRef = useRef(false)
 
+  // Mirror live room state in a ref so pagehide / exit handlers can flush
+  // a partial-play hangman_session row without depending on the closure
+  // over `room` (which churns on every realtime update).
+  const liveRef = useRef({
+    roomId: null as string | null,
+    word: '', wordId: null as string | null, hint: '', category: '',
+    score: 0, wrongs: 0, guessed: 0,
+    status: 'waiting' as 'waiting' | 'playing' | 'finished' | 'abandoned',
+    isGuest: false, anyMove: false,
+  })
+  useEffect(() => {
+    liveRef.current = {
+      roomId: room?.id ?? null,
+      word: room?.word ?? '',
+      wordId: null,
+      hint: room?.hint ?? '',
+      category: room?.category ?? '',
+      score: room?.score ?? 0,
+      wrongs: room?.wrong_letters?.length ?? 0,
+      guessed: room?.guessed_letters?.length ?? 0,
+      status: (room?.status ?? 'waiting') as typeof liveRef.current.status,
+      isGuest,
+      anyMove: (room?.guessed_letters?.length ?? 0) + (room?.wrong_letters?.length ?? 0) > 0,
+    }
+  }, [room, isGuest])
+
+  // Save partial play if the guest leaves before the word resolves.
+  // The terminal-state useEffect below catches won/lost; this catches
+  // tab close, app switch, and the explicit Exit button.
+  const persistPartial = useCallback(async (opts: { useBeacon?: boolean } = {}) => {
+    if (savedSessionRef.current || !myId) return
+    const live = liveRef.current
+    if (!live.isGuest || !live.anyMove || live.status !== 'playing' || !live.word) return
+    savedSessionRef.current = true
+    const payload = {
+      user_id: myId,
+      word: live.word,
+      word_length: live.word.replace(/[^\p{L}]/gu, '').length,
+      won: false,
+      wrong_guesses: live.wrongs,
+      letters_used: live.guessed + live.wrongs,
+      time_seconds: 0,
+      hint: live.hint,
+      category: live.category,
+      score: live.score,
+    }
+    if (opts.useBeacon && typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+      try {
+        const blob = new Blob([JSON.stringify({ mode: 'hangman', ...payload })], { type: 'application/json' })
+        navigator.sendBeacon('/api/save-session', blob)
+        return
+      } catch { /* fall through */ }
+    }
+    const supabase = createClient()
+    await supabase.from('hangman_sessions').insert(payload)
+  }, [myId])
+
+  useEffect(() => {
+    function flush() { void persistPartial({ useBeacon: true }) }
+    function onVis() { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [persistPartial])
+
+  async function handleExit() {
+    await persistPartial()
+    router.push('/vesanje')
+  }
+
   // ── Load + realtime ─────────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
@@ -392,11 +465,11 @@ export default function HangmanLivePage() {
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-          <Link href="/vesanje"
+          <button onClick={handleExit}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2] flex-shrink-0"
             style={{ color: '#9C9C9C' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
-          </Link>
+          </button>
 
           <div className="flex items-center gap-2 flex-1 justify-center">
             <Stat label="Životi" value={`${room.lives}/${STARTING_LIVES}`} bg={room.lives <= 2 ? '#FEE2E2' : '#F2F2F2'} fg={room.lives <= 2 ? '#E55353' : '#343434'} />

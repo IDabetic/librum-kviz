@@ -339,11 +339,14 @@ export default function DuelGamePage() {
   // keeps whatever they have. Without this, the row stays in 'playing' and
   // is invisible to leaderboard aggregation (filter: status === 'finished').
   const persistExit = useCallback(async () => {
-    if (savedRef.current || !room) return
+    if (savedRef.current || !room?.id) return
     savedRef.current = true
     const supabase = createClient()
     await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
-  }, [room])
+    // depend on room.id only — `room` itself churns on every realtime update,
+    // which would needlessly rebuild this callback (and any effects depending
+    // on it) every couple seconds during a duel.
+  }, [room?.id])
 
   useEffect(() => {
     if (duelEnded || !room?.id) return

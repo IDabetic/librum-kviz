@@ -71,14 +71,18 @@ export default function BrziKvizStart() {
   const questionStartRef = useRef<number>(Date.now())
 
   // Mirror live game state in a ref so pagehide / exit handlers can flush
-  // the latest score without depending on React render closures.
-  const liveRef = useRef({ score: 0, correct: 0, wrong: 0, anyAnswered: false })
+  // the latest score without depending on React render closures. roundTime
+  // is in here too — keeping it out of persistSession's dep array prevents
+  // the callback (and its pagehide useEffect) from being torn down and
+  // re-registered every single second.
+  const liveRef = useRef({ score: 0, correct: 0, wrong: 0, roundTime: ROUND_SECONDS, anyAnswered: false })
   useEffect(() => {
     liveRef.current.score = score
     liveRef.current.correct = correct
     liveRef.current.wrong = wrong
+    liveRef.current.roundTime = roundTime
     liveRef.current.anyAnswered = correct + wrong > 0
-  }, [score, correct, wrong])
+  }, [score, correct, wrong, roundTime])
 
   // ── Load random batch of questions, excluding ones seen in last 24h ────
   useEffect(() => {
@@ -224,12 +228,12 @@ export default function BrziKvizStart() {
   // via savedRef; only inserts when at least one answer was given.
   const persistSession = useCallback(async (opts: { useBeacon?: boolean } = {}) => {
     if (savedRef.current || !myId) return
-    const { score: s, correct: c, wrong: w, anyAnswered } = liveRef.current
+    const { score: s, correct: c, wrong: w, roundTime: rt, anyAnswered } = liveRef.current
     if (!anyAnswered) return
     savedRef.current = true
     const total = c + w
     const accuracy = total > 0 ? Math.round((c / total) * 10000) / 100 : 0
-    const elapsed = ROUND_SECONDS - roundTime
+    const elapsed = ROUND_SECONDS - rt
     const payload = {
       user_id: myId,
       score: s,
@@ -248,7 +252,7 @@ export default function BrziKvizStart() {
     }
     const supabase = createClient()
     await supabase.from('quick_sessions').insert(payload)
-  }, [myId, roundTime])
+  }, [myId])
 
   async function finishGame() {
     setGameOver(true)

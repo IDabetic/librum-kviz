@@ -94,6 +94,19 @@ function GameInner() {
   const startRef = useRef<number>(Date.now())
   const savedRef = useRef(false)
 
+  // Mirror live game state in a ref so pagehide / exit handlers can flush
+  // the latest score without depending on render closures.
+  const liveRef = useRef({
+    score: 0, wrongs: 0, guessed: 0, status: 'playing' as 'playing' | 'won' | 'lost',
+    anyMove: false,
+  })
+  useEffect(() => {
+    liveRef.current = {
+      score, wrongs: wrongs.size, guessed: guessed.size,
+      status, anyMove: guessed.size + wrongs.size > 0,
+    }
+  }, [score, wrongs, guessed, status])
+
   // ── Load word ──────────────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
@@ -161,6 +174,55 @@ function GameInner() {
       score,
     }).then(() => {})
   }, [status, myId, wordRow, wrongs, guessed, score])
+
+  // Best-effort save when the user leaves before reaching won/lost.
+  // hangman_sessions row carries won=false + whatever score they had,
+  // so the leaderboard counts the partial play (no win, but score).
+  const persistSession = useCallback(async (opts: { useBeacon?: boolean } = {}) => {
+    if (savedRef.current || !myId || !wordRow) return
+    const live = liveRef.current
+    if (!live.anyMove) return
+    if (live.status !== 'playing') return  // terminal-state useEffect already handled it
+    savedRef.current = true
+    const payload = {
+      user_id: myId,
+      word: wordRow.word,
+      word_id: wordRow.id || null,
+      word_length: wordRow.word.replace(/[^\p{L}]/gu, '').length,
+      won: false,
+      wrong_guesses: live.wrongs,
+      letters_used: live.guessed + live.wrongs,
+      time_seconds: Math.floor((Date.now() - startRef.current) / 1000),
+      hint: wordRow.hint,
+      category: wordRow.category,
+      score: live.score,
+    }
+    if (opts.useBeacon && typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+      try {
+        const blob = new Blob([JSON.stringify({ mode: 'hangman', ...payload })], { type: 'application/json' })
+        navigator.sendBeacon('/api/save-session', blob)
+        return
+      } catch { /* fall through */ }
+    }
+    const supabase = createClient()
+    await supabase.from('hangman_sessions').insert(payload)
+  }, [myId, wordRow])
+
+  useEffect(() => {
+    function flush() { void persistSession({ useBeacon: true }) }
+    function onVis() { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [persistSession])
+
+  async function handleExit() {
+    await persistSession()
+    router.push('/vesanje')
+  }
 
   // ── Handle letter click ────────────────────────────────────────────────
   const handleLetter = useCallback((letter: string) => {
@@ -263,11 +325,11 @@ function GameInner() {
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-          <Link href="/vesanje"
+          <button onClick={handleExit}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2] flex-shrink-0"
             style={{ color: '#9C9C9C' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
-          </Link>
+          </button>
 
           <div className="flex items-center gap-2 flex-1 justify-center">
             <Stat label="Životi" value={`${lives}/${STARTING_LIVES}`} bg={lives <= 2 ? '#FEE2E2' : '#F2F2F2'} fg={lives <= 2 ? '#E55353' : '#343434'} />
