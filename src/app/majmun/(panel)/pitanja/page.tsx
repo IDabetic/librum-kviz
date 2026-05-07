@@ -26,10 +26,12 @@ export default async function PitanjaPage({ searchParams }: { searchParams: Prom
     return params.toString()
   }
 
-  // Build query
+  // Build query — hides 'brzi-only' rows since those belong to the
+  // /majmun/brzi-kviz admin and are reserved for the Brzi kviz mode only.
   let query = supabase
     .from('questions')
     .select('id, question_text, options, correct_answer, difficulty, is_active, times_shown, times_correct, created_at', { count: 'exact' })
+    .not('tags', 'cs', '{brzi-only}')
     .range(page * PER_PAGE, page * PER_PAGE + PER_PAGE - 1)
 
   if (sp.q) query = query.ilike('question_text', `%${sp.q}%`)

@@ -75,9 +75,12 @@ export default function IgrajZajednoPage() {
       .gte('created_at', cutoff)
     const seenSet = new Set((seen || []).map(s => s.question_id))
 
-    // Pull random active questions — fetch a bit more to allow for golden tiebreaker rounds
+    // Pull random active questions — fetch a bit more to allow for golden
+    // tiebreaker rounds. Excludes 'brzi-only' (reserved for /brzi-kviz).
     const { data: all } = await supabase
-      .from('questions').select('id').eq('is_active', true).limit(500)
+      .from('questions').select('id').eq('is_active', true)
+      .not('tags', 'cs', '{brzi-only}')
+      .limit(500)
     let pool = (all || []).filter((q: { id: string }) => !seenSet.has(q.id))
     if (pool.length < targetCount + 10) pool = all || []
     const ids = shuffle(pool).map((q: { id: string }) => q.id).slice(0, targetCount + 10)
