@@ -6,34 +6,75 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { IconBack, IconUsers, IconHint } from '@/components/icons'
+import { createClient } from '@/lib/supabase/client'
+import { IconBack, IconUsers, IconHint, IconShare } from '@/components/icons'
 
 const CATEGORIES = ['Sport', 'Geografija', 'Istorija', 'Kultura', 'Priroda', 'Predmeti', 'Drugo']
+
+function generateCode(): string {
+  return Math.random().toString(36).substring(2, 8).toUpperCase()
+}
 
 export default function VesanjeDvojePage() {
   const router = useRouter()
   const [step, setStep] = useState<'enter' | 'handoff'>('enter')
+  const [mode, setMode] = useState<'phone' | 'code'>('phone')
   const [category, setCategory] = useState('Drugo')
   const [word, setWord] = useState('')
   const [hint, setHint] = useState('')
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
   const wordTrim = word.trim()
   const hintTrim = hint.trim()
   const letterCount = wordTrim.replace(/[^\p{L}]/gu, '').length
 
-  function next() {
+  function validate(): boolean {
     setError('')
-    if (letterCount < 4) { setError('Reč mora imati najmanje 4 slova.'); return }
-    if (letterCount > 18) { setError('Maksimum 18 slova.'); return }
-    if (hintTrim.length === 0) { setError('Hint je obavezan.'); return }
-    if (hintTrim.length > 200) { setError('Hint može da ima najviše 200 karaktera.'); return }
+    if (letterCount < 4) { setError('Reč mora imati najmanje 4 slova.'); return false }
+    if (letterCount > 18) { setError('Maksimum 18 slova.'); return false }
+    if (hintTrim.length === 0) { setError('Hint je obavezan.'); return false }
+    if (hintTrim.length > 200) { setError('Hint može da ima najviše 200 karaktera.'); return false }
+    return true
+  }
+
+  async function nextOnPhone() {
+    if (!validate()) return
     sessionStorage.setItem('vesanje-custom', JSON.stringify({
-      word: wordTrim,
-      hint: hintTrim,
-      category,
+      word: wordTrim, hint: hintTrim, category,
     }))
     setStep('handoff')
+  }
+
+  async function nextSendCode() {
+    if (!validate()) return
+    setBusy(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/auth/prijava'); return }
+
+    let code = generateCode()
+    for (let i = 0; i < 5; i++) {
+      const { data: ex } = await supabase.from('hangman_rooms').select('id').eq('code', code).maybeSingle()
+      if (!ex) break
+      code = generateCode()
+    }
+
+    const { data: room, error: e } = await supabase.from('hangman_rooms').insert({
+      code,
+      host_id: user.id,
+      word: wordTrim.toLowerCase(),
+      hint: hintTrim,
+      category,
+      status: 'waiting',
+    }).select('code').single()
+
+    setBusy(false)
+    if (e || !room) {
+      setError('Greška pri kreiranju sobe. Pokušaj ponovo.')
+      return
+    }
+    router.push(`/vesanje/uzivo/${room.code}`)
   }
 
   if (step === 'handoff') {
@@ -84,8 +125,24 @@ export default function VesanjeDvojePage() {
             Smisli reč
           </h1>
           <p className="text-[14px]" style={{ color: '#9C9C9C' }}>
-            Dodaj reč i hint, predaj telefon igraču 2, on pogađa.
+            Dodaj reč i hint — onda biraj kako se igra.
           </p>
+        </div>
+
+        {/* Mode toggle */}
+        <div className="flex p-1 rounded-full mb-5" style={{ background: '#F2F2F2' }}>
+          {([
+            { id: 'phone', label: 'Na ovom telefonu' },
+            { id: 'code',  label: 'Pozovi kodom' },
+          ] as const).map(m => (
+            <button key={m.id} onClick={() => setMode(m.id)}
+              className="flex-1 py-2.5 px-3 rounded-full text-[13px] font-semibold transition-all"
+              style={mode === m.id
+                ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
+                : { color: '#9C9C9C' }}>
+              {m.label}
+            </button>
+          ))}
         </div>
 
         <div className="card-soft p-6 sm:p-7">
@@ -113,8 +170,7 @@ export default function VesanjeDvojePage() {
             <input value={word} onChange={e => setWord(e.target.value)}
               className="input uppercase font-bold tracking-wider"
               placeholder="Tačna reč…"
-              maxLength={30}
-              autoFocus />
+              maxLength={30} autoFocus />
             <div className="flex items-center justify-between mt-2">
               <p className="text-[11px]" style={{ color: '#9C9C9C' }}>
                 Samo na srpskom · 4-18 slova
@@ -131,8 +187,7 @@ export default function VesanjeDvojePage() {
               Hint
             </label>
             <textarea value={hint} onChange={e => setHint(e.target.value)}
-              className="input resize-none"
-              rows={3}
+              className="input resize-none" rows={3}
               placeholder="Opisni nagoveštaj — bez direktnog otkrivanja reči."
               maxLength={200} />
             <div className="flex items-center justify-between mt-2">
@@ -151,9 +206,18 @@ export default function VesanjeDvojePage() {
             </div>
           )}
 
-          <button onClick={next} className="btn btn-primary btn-lg w-full">
-            Dalje
+          <button onClick={mode === 'phone' ? nextOnPhone : nextSendCode}
+            disabled={busy} className="btn btn-primary btn-lg w-full">
+            {busy ? 'Kreiranje…'
+              : mode === 'phone' ? 'Dalje'
+              : <><IconShare size={16} strokeWidth={2.2} /> Generiši kod i podeli</>}
           </button>
+
+          <p className="text-[11px] text-center mt-4" style={{ color: '#9C9C9C' }}>
+            {mode === 'phone'
+              ? 'Igrač 2 igra na istom telefonu — predaš mu nakon što potvrdiš reč.'
+              : 'Igrač 2 otvori link na svom telefonu — pratiš igru u realnom vremenu.'}
+          </p>
         </div>
       </main>
     </div>
