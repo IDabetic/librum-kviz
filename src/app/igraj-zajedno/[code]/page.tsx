@@ -225,12 +225,16 @@ export default function DuelGamePage() {
   // question, flip into the reveal phase. Setting state in this effect is
   // legitimate — the input (myAnswers/opAnswers) comes from the realtime
   // channel, not from props/derived state.
+  // Also reveal when timer hits 0 — otherwise if I answered but partner
+  // never did (especially on the last question), we'd be stuck waiting
+  // forever because the reveal wouldn't fire and the timer effect's
+  // handleAnswer(null) early-returns since I already answered.
   useEffect(() => {
     if (loading || revealed || duelEnded || !room || !questions[current]) return
     const myAnswered = myAnswers[current] !== undefined
     const opAnswered = opAnswers[current] !== undefined
-    if (myAnswered && opAnswered) setRevealed(true) // eslint-disable-line react-hooks/set-state-in-effect
-  }, [myAnswers, opAnswers, current, revealed, loading, duelEnded, room, questions])
+    if ((myAnswered && opAnswered) || timeLeft <= 0) setRevealed(true) // eslint-disable-line react-hooks/set-state-in-effect
+  }, [myAnswers, opAnswers, current, revealed, loading, duelEnded, room, questions, timeLeft])
 
   // ── After reveal: pause 3s then advance ───────────────────────────────────
   useEffect(() => {
