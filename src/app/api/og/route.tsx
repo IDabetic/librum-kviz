@@ -2,8 +2,8 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-// 1200×628 pastel-minimal share card.
-// "Usudi se da budeš bolji od drugih." headline, Librum club logo wordmark.
+// 1200×628 share card. Full-bleed gradient using the brand palette,
+// wordmark + tagline + URL strip. No mascots, no decorative characters.
 export async function GET() {
   return new ImageResponse(
     (
@@ -15,22 +15,16 @@ export async function GET() {
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
-          background: '#FAFAFA',
+          // Bold diagonal gradient blending the four brand pastels
+          background: 'linear-gradient(135deg, #BCD9FF 0%, #E8F8F0 35%, #FFECBC 70%, #FFCB46 100%)',
           fontFamily: 'system-ui, -apple-system, sans-serif',
           overflow: 'hidden',
         }}
       >
-        {/* Pastel ambient blobs */}
+        {/* Soft white veil to keep text legible over the gradient */}
         <div style={{
-          position: 'absolute', top: -180, right: -200, width: 600, height: 600,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, #BCD9FF 0%, rgba(188,217,255,0) 70%)',
-          display: 'flex',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: -200, left: -200, width: 600, height: 600,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, #FFECBC 0%, rgba(255,236,188,0) 70%)',
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse at center, rgba(252,252,252,0.55) 0%, rgba(252,252,252,0) 70%)',
           display: 'flex',
         }} />
 
@@ -48,7 +42,7 @@ export async function GET() {
           <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 60 }}>
             <span style={{
               color: '#343434',
-              fontSize: 56,
+              fontSize: 64,
               fontWeight: 900,
               letterSpacing: -2,
               lineHeight: 1,
@@ -57,18 +51,18 @@ export async function GET() {
             </span>
             <span style={{
               color: '#609DED',
-              fontSize: 56,
+              fontSize: 64,
               fontWeight: 900,
               lineHeight: 1,
             }}>
               .
             </span>
             <span style={{
-              color: '#9C9C9C',
-              fontSize: 22,
-              fontWeight: 600,
-              marginLeft: 14,
-              letterSpacing: 4,
+              color: '#343434',
+              fontSize: 26,
+              fontWeight: 700,
+              marginLeft: 16,
+              letterSpacing: 6,
               textTransform: 'uppercase',
             }}>
               kviz
@@ -92,12 +86,13 @@ export async function GET() {
 
           {/* Sub */}
           <div style={{
-            color: '#9C9C9C',
-            fontSize: 24,
-            fontWeight: 500,
-            marginTop: 32,
+            color: '#343434',
+            fontSize: 26,
+            fontWeight: 600,
+            marginTop: 36,
             letterSpacing: -0.3,
             display: 'flex',
+            opacity: 0.7,
           }}>
             10 života. Hiljade pitanja. Jedna rang lista.
           </div>
@@ -106,20 +101,20 @@ export async function GET() {
         {/* Bottom URL strip */}
         <div style={{
           position: 'absolute',
-          bottom: 32,
+          bottom: 36,
           left: 0,
           right: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 8,
+          gap: 10,
         }}>
-          <div style={{ width: 6, height: 6, borderRadius: 3, background: '#FFCB46', display: 'flex' }} />
+          <div style={{ width: 8, height: 8, borderRadius: 4, background: '#FFCB46', display: 'flex' }} />
           <span style={{
-            color: '#9C9C9C',
-            fontSize: 18,
-            fontWeight: 600,
-            letterSpacing: 2,
+            color: '#343434',
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: 3,
             textTransform: 'uppercase',
           }}>
             kviz.librum.club
