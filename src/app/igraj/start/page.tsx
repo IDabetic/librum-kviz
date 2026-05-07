@@ -176,12 +176,14 @@ export default function SurvivorGame() {
       const seenSet = new Set((seen || []).map(s => s.question_id))
 
       // Pull a random batch large enough that no real session will exhaust
-      // it. Capped to keep payload light on mobile (~70% smaller than
-      // pulling the full 3.5k pool every game start).
+      // it. Capped to keep payload light on mobile. Excludes 'brzi-only' —
+      // that tag is reserved for questions that should appear only in
+      // /brzi-kviz (managed under /majmun/brzi-kviz).
       const { data } = await supabase
         .from('questions')
         .select('id, question_text, options, correct_answer, difficulty, info')
         .eq('is_active', true)
+        .not('tags', 'cs', '{brzi-only}')
         .limit(1200)
 
       if (!data || data.length === 0) { setLoading(false); return }

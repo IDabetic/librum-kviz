@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { Logo } from '@/components/Logo'
 import { createClient } from '@/lib/supabase/client'
 import {
-  IconHome, IconDiscover, IconSwords, IconHint, IconTrophy,
+  IconHome, IconDiscover, IconSwords, IconHint, IconTrophy, IconTime,
   IconUsers, IconSettings, IconLogout, IconMenu, IconClose, IconStar,
 } from '@/components/icons'
 
@@ -20,18 +20,20 @@ type Profile = {
   role: string
 }
 
-// PRO kviz, Brzi kviz and Trivia duel all read from the same `questions`
-// table — pitanja se cure under "Pitanja". The /majmun/trivia-duel link
-// goes to a duel-specific analytics page, not to question CRUD.
+// "Pitanja" curates the shared `questions` table (PRO/Brzi/Duel all read it).
+// "Brzi kviz" is a SEPARATE tag-scoped admin — anything created there carries
+// the 'brzi-only' tag, and the PRO + Duel loaders filter it out so it shows
+// up only in /brzi-kviz.
 const NAV = [
-  { label: 'Dashboard',         href: '/majmun',                Icon: IconHome },
-  { label: 'Pitanja',           href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
-  { label: 'Book kviz',         href: '/majmun/book-kviz',      Icon: IconStar },
-  { label: 'Vešanje',           href: '/majmun/vesanje',        Icon: IconHint },
-  { label: 'Predlozi',          href: '/majmun/predlozi',       Icon: IconUsers },
-  { label: 'Korisnici',         href: '/majmun/korisnici',      Icon: IconUsers },
-  { label: 'Rang lista',        href: '/majmun/rang-lista',     Icon: IconTrophy },
-  { label: 'Trivia duel',       href: '/majmun/trivia-duel',    Icon: IconSwords, hint: 'analitika' },
+  { label: 'Dashboard',   href: '/majmun',                Icon: IconHome },
+  { label: 'Pitanja',     href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
+  { label: 'Brzi kviz',   href: '/majmun/brzi-kviz',      Icon: IconTime,     hint: 'samo Brzi' },
+  { label: 'Book kviz',   href: '/majmun/book-kviz',      Icon: IconStar },
+  { label: 'Vešanje',     href: '/majmun/vesanje',        Icon: IconHint },
+  { label: 'Predlozi',    href: '/majmun/predlozi',       Icon: IconUsers },
+  { label: 'Korisnici',   href: '/majmun/korisnici',      Icon: IconUsers },
+  { label: 'Rang lista',  href: '/majmun/rang-lista',     Icon: IconTrophy },
+  { label: 'Trivia duel', href: '/majmun/trivia-duel',    Icon: IconSwords,   hint: 'analitika' },
 ]
 
 export default function AdminShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
