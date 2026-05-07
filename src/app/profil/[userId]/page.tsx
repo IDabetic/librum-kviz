@@ -3,7 +3,7 @@ import Header from '@/components/Header'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { IconBack, IconHome, IconSwords, IconHint, IconTime } from '@/components/icons'
+import { IconBack, IconHome, IconSwords, IconHint, IconTime, IconStar } from '@/components/icons'
 
 export default async function PublicProfilPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
@@ -14,9 +14,12 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
   if (!profile) notFound()
 
-  const [survivor, hangman, quick, duelGames] = await Promise.all([
+  const [survivor, book, hangman, quick, duelGames] = await Promise.all([
     supabase.from('survivor_sessions')
       .select('score, questions_reached, best_combo, accuracy')
+      .eq('user_id', userId).order('score', { ascending: false }).limit(50),
+    supabase.from('book_sessions')
+      .select('score, questions_reached, top_genre, top_genre_pct')
       .eq('user_id', userId).order('score', { ascending: false }).limit(50),
     supabase.from('hangman_sessions').select('won, score').eq('user_id', userId).limit(200),
     supabase.from('quick_sessions').select('score, correct_count, accuracy').eq('user_id', userId).limit(50),
@@ -30,6 +33,15 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
   const sSessions = survivor.data || []
   const sBest = sSessions.length ? Math.max(...sSessions.map(s => s.score)) : 0
   const sBestQ = sSessions.length ? Math.max(...sSessions.map(s => s.questions_reached)) : 0
+
+  const bSessions = book.data || []
+  const bBest = bSessions.length ? Math.max(...bSessions.map(s => s.score)) : 0
+  // Top genre across this user's book sessions: count appearances of top_genre, pick most frequent
+  const genreTally: Record<string, number> = {}
+  for (const r of bSessions) {
+    if (r.top_genre) genreTally[r.top_genre] = (genreTally[r.top_genre] || 0) + 1
+  }
+  const bTopGenre = Object.entries(genreTally).sort((a, b) => b[1] - a[1])[0]?.[0] || null
 
   const hSessions = hangman.data || []
   const hWins = hSessions.filter(s => s.won).length
@@ -88,6 +100,11 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
           <GameCard Icon={IconHome}   label="PRO kviz"    accent="#609DED" bg="#BCD9FF"
             primary={{ value: sBest, label: 'Rekord bodova' }}
             secondary={[{ value: sSessions.length, label: 'Igara' }, { value: sBestQ, label: 'Max pitanja' }]} />
+          <GameCard Icon={IconStar}   label="Book kviz"   accent="#9c7a13" bg="#FFECBC"
+            primary={{ value: bBest, label: 'Rekord bodova' }}
+            secondary={bTopGenre
+              ? [{ value: bSessions.length, label: 'Igara' }, { value: bTopGenre, label: 'Najjači žanr' }]
+              : [{ value: bSessions.length, label: 'Igara' }]} />
           <GameCard Icon={IconSwords} label="Trivia duel" accent="#9c7a13" bg="#FFECBC"
             primary={{ value: dWins, label: 'Pobeda' }}
             secondary={[{ value: dLosses, label: 'Poraza' }, { value: dDraws, label: 'Nerešeno' }]} />
@@ -99,7 +116,7 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
             secondary={[{ value: qSessions.length, label: 'Rundi' }]} />
         </div>
 
-        {(sSessions.length + hSessions.length + qSessions.length) === 0 && (
+        {(sSessions.length + bSessions.length + hSessions.length + qSessions.length) === 0 && (
           <div className="card-soft py-16 text-center">
             <div className="text-5xl mb-4">🎮</div>
             <p className="font-bold text-[17px]" style={{ color: '#343434' }}>Još nije igrao</p>
