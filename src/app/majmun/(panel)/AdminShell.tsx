@@ -77,7 +77,7 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
 
           {/* Logo block */}
           <div className="px-6 pt-7 pb-6">
-            <Logo height={28} href={null} />
+            <Logo height={36} href={null} />
             <p className="text-[10px] font-bold uppercase tracking-widest mt-1.5" style={{ color: '#9C9C9C' }}>
               Admin panel
             </p>
