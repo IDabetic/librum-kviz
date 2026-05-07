@@ -175,24 +175,30 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 6px 18px rgba(255, 203, 70, 0.45);
 }
 
-/* Inputs */
-.input {
-  width: 100%;
-  padding: 14px 18px;
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  background: #FCFCFC;
-  border: 1.5px solid rgba(52,52,52,0.10);
-  border-radius: 14px;
-  color: #343434;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  outline: none;
-}
-.input::placeholder { color: rgba(52,52,52,0.35); font-weight: 400; }
-.input:focus {
-  border-color: #609DED;
-  box-shadow: 0 0 0 4px rgba(96, 157, 237, 0.12);
+/* Inputs — declared in @layer components so Tailwind utilities like
+   pl-11/pr-10 can override individual padding sides. */
+@layer components {
+  .input {
+    width: 100%;
+    padding-top: 14px;
+    padding-right: 18px;
+    padding-bottom: 14px;
+    padding-left: 18px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    background: #FCFCFC;
+    border: 1.5px solid rgba(52,52,52,0.10);
+    border-radius: 14px;
+    color: #343434;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+  }
+  .input::placeholder { color: rgba(52,52,52,0.35); font-weight: 400; }
+  .input:focus {
+    border-color: #609DED;
+    box-shadow: 0 0 0 4px rgba(96, 157, 237, 0.12);
+  }
 }
 
 /* Chip / tag */

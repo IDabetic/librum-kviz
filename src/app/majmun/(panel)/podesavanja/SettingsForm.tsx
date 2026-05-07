@@ -92,7 +92,7 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
   async function sendResetEmail() {
     setSendingReset(true)
     await createClient().auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/nova-lozinka`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/nova-lozinka`,
     })
     setSendingReset(false)
     setResetSent(true)

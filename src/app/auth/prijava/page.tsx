@@ -41,7 +41,7 @@ function PrijavaForm() {
     setResetLoading(true)
     const supabase = createClient()
     await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/auth/nova-lozinka`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/nova-lozinka`,
     })
     setResetSent(true)
     setResetLoading(false)

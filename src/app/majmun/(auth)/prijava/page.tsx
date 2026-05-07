@@ -23,7 +23,7 @@ export default function MajmunPrijavaPage() {
     if (!resetEmail.trim()) { setResetError('Upiši email.'); return }
     setResetBusy(true)
     const { error } = await createClient().auth.resetPasswordForEmail(resetEmail.trim(), {
-      redirectTo: `${window.location.origin}/auth/nova-lozinka`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/nova-lozinka`,
     })
     setResetBusy(false)
     if (error) { setResetError(error.message); return }
