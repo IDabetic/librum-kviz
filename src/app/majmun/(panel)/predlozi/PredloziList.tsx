@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { IconCheck, IconWrong } from '@/components/icons'
 
-type Profile = { first_name: string; nickname: string }
+type Profile = { first_name: string | null; nickname: string | null }
 type Row = {
   id: string
   question_text: string
@@ -13,7 +13,7 @@ type Row = {
   submitted_by: string | null
   submitter_email: string | null
   created_at: string
-  profiles: Profile | Profile[] | null
+  profile: Profile | null
 }
 
 export default function PredloziList({ rows }: { rows: Row[] }) {
@@ -40,8 +40,7 @@ export default function PredloziList({ rows }: { rows: Row[] }) {
   return (
     <div className="space-y-3">
       {rows.map(r => {
-        const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
-        const submitter = prof?.nickname || prof?.first_name || r.submitter_email || 'Anon'
+        const submitter = r.profile?.nickname || r.profile?.first_name || r.submitter_email || 'Anon'
         const isOpen = openId === r.id
         return (
           <div key={r.id} className="card-soft p-5 sm:p-6">
