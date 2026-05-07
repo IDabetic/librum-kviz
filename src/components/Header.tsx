@@ -5,16 +5,17 @@ import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
-import { IconHome, IconDiscover, IconTrophy, IconSwords, IconHint, IconUsers, IconMenu, IconClose, IconLogout } from './icons'
+import { IconHome, IconDiscover, IconTrophy, IconSwords, IconHint, IconUsers, IconMenu, IconClose, IconLogout, IconTime } from './icons'
 import { Logo } from './Logo'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
 
 const NAV_LINKS = [
-  { href: '/igraj',         label: 'Kviz solo',     Icon: IconHome },
-  { href: '/igraj-zajedno', label: 'Duel',          Icon: IconSwords },
-  { href: '/leaderboard',   label: 'Rang lista',    Icon: IconTrophy },
-  { href: '/vesanje',       label: 'Igra Vešanja',  Icon: IconHint },
+  { href: '/igraj',         label: 'Kviz solo',  Icon: IconHome },
+  { href: '/igraj-zajedno', label: 'Duel',       Icon: IconSwords },
+  { href: '/vesanje',       label: 'Vešanje',    Icon: IconHint },
+  { href: '/brzi-kviz',     label: 'Brzi kviz',  Icon: IconTime },
+  { href: '/leaderboard',   label: 'Rang lista', Icon: IconTrophy },
 ]
 
 function timeAgo(dateStr: string): string {
