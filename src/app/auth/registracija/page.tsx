@@ -65,13 +65,17 @@ export default function RegistracijaPage() {
           <p className="text-[14px] mb-1" style={{ color: '#9C9C9C' }}>Poslali smo link za potvrdu na:</p>
           <p className="font-semibold text-[14px] mb-5" style={{ color: '#343434' }}>{form.email}</p>
 
+          <p className="text-[13px] mb-5" style={{ color: '#9C9C9C' }}>
+            Klikni na link u mejlu i odmah ulaziš u igru — bez ponovne prijave.
+          </p>
+
           <div className="rounded-2xl px-4 py-3 mb-5 text-left text-[13px]" style={{ background: '#FFECBC' }}>
             <p className="font-bold mb-0.5" style={{ color: '#9c7a13' }}>📬 Nije stigao mejl?</p>
             <p style={{ color: '#9c7a13' }}>Proveri <strong>SPAM / Junk</strong> folder.</p>
           </div>
 
-          <Link href="/auth/prijava" className="btn btn-primary btn-lg w-full">
-            Idi na prijavu
+          <Link href="/" className="block text-center text-[13px] font-medium" style={{ color: '#9C9C9C' }}>
+            ← Nazad na sajt
           </Link>
         </div>
       </div>
