@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
 import { IconClose, IconCheck, IconWrong, IconShare } from '@/components/icons'
+import ReportQuestionButton from '@/components/ReportQuestionButton'
 
 const ROUND_SECONDS = 60
 const TIME_PER_QUESTION = 10
@@ -421,6 +422,9 @@ export default function BrziKvizStart() {
                 style={{ color: '#343434', fontSize: 'clamp(20px, 4vw, 28px)' }}>
                 {current.question}
               </p>
+              <div className="mt-3 flex justify-end">
+                <ReportQuestionButton source="questions" questionId={current.id} questionText={current.question} />
+              </div>
             </div>
 
             {/* Divider with "ODGOVOR" label */}

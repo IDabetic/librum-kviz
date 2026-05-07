@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   title: 'Igre – izaberi kviz | Librum',
   description: 'Sve igre u jednom mestu — PRO kviz, Book kviz, Kafanski kviz, Trivia duel, Vešanje i Brzi kviz.',
@@ -118,6 +120,7 @@ export default async function IgrePage() {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

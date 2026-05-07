@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { IconUsers, IconStar, IconTrophy } from '@/components/icons'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   title: 'Vešanje – igra pogađanja reči po kategorijama',
   description: 'Igraj vešanje online. Izaberi kategoriju, pročitaj hint i pogodi skrivenu reč iz sporta, geografije, istorije, kulture, prirode ili predmeta.',
@@ -151,6 +153,7 @@ export default async function VesanjeLanding() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <Footer />
     </div>
   )
 }

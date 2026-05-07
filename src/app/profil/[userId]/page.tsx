@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { IconBack, IconHome, IconSwords, IconHint, IconTime, IconStar } from '@/components/icons'
 
+import Footer from '@/components/Footer'
+
 export default async function PublicProfilPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
   const supabase = await createClient()
@@ -123,6 +125,7 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

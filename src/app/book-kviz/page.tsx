@@ -4,6 +4,8 @@ import Header from '@/components/Header'
 import Link from 'next/link'
 import { IconTime, IconStar, IconTrophy, IconDiscover } from '@/components/icons'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   title: 'Book kviz – kviz znanja iz književnosti',
   description: 'Igraj Book kviz i proveri koliko poznaješ književnost. 10 života, pitanja iz drame, ljubavnog romana, krimića, fantastike i drugih žanrova. Na kraju saznaš u kom žanru si najbolji.',
@@ -141,6 +143,7 @@ export default async function BookKvizLanding() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <Footer />
     </div>
   )
 }

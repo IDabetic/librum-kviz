@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
 import { IconClose } from '@/components/icons'
+import ReportQuestionButton from '@/components/ReportQuestionButton'
 
 // ── Game constants ──────────────────────────────────────────────────────────
 const TIME_PER_QUESTION = 15
@@ -474,6 +475,9 @@ export default function BookKvizStart() {
             <p className="text-[18px] sm:text-[20px] font-bold leading-snug" style={{ color: '#343434' }}>
               {current.question_text}
             </p>
+            <div className="mt-3 flex justify-end">
+              <ReportQuestionButton source="book_questions" questionId={current.id} questionText={current.question_text} />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">

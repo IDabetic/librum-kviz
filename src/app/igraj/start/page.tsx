@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
 import { IconClose, IconCheck, IconWrong } from '@/components/icons'
+import ReportQuestionButton from '@/components/ReportQuestionButton'
 
 // ── Game constants ──────────────────────────────────────────────────────────
 const TIME_PER_QUESTION = 15
@@ -578,9 +579,12 @@ export default function SurvivorGame() {
 
           {/* Question card */}
           <div className="card-soft p-6 sm:p-8 mb-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
-              Pitanje {reached + 1}
-            </p>
+            <div className="flex items-center justify-between mb-3 gap-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
+                Pitanje {reached + 1}
+              </p>
+              <ReportQuestionButton source="questions" questionId={current.id} questionText={current.question_text} />
+            </div>
             <h2 className="font-bold tracking-tight leading-snug mb-7"
               style={{ color: '#343434', fontSize: 'clamp(18px, 3vw, 22px)' }}>
               {current.question_text}

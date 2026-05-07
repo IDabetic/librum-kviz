@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { IconStar, IconTime, IconCheck, IconWrong, IconTrophy } from '@/components/icons'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   title: 'Brzi kviz – tačno ili netačno za 60 sekundi',
   description: 'Igraj Brzi kviz i odgovaraj na tvrdnje sa tačno ili netačno. Imaš 60 sekundi da osvojiš što više bodova i proveriš brzinu znanja.',
@@ -139,6 +141,7 @@ export default async function BrziKvizLanding() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <Footer />
     </div>
   )
 }

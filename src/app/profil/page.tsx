@@ -5,6 +5,8 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { IconSettings, IconHome, IconSwords, IconHint, IconTime, IconStar } from '@/components/icons'
 
+import Footer from '@/components/Footer'
+
 function fmtTime(s: number): string {
   const m = Math.floor(s / 60)
   const sec = s % 60
@@ -213,6 +215,7 @@ export default async function ProfilPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

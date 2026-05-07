@@ -2,11 +2,17 @@
 
 export const dynamic = 'force-dynamic'
 
+
+
+
+
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
+
+import Footer from '@/components/Footer'
 
 // Two flavours of duel today: PRO (questions table, shared with PRO/Brzi)
 // and Kafanski (kafana_questions, music-only). The lobby renders the
@@ -310,6 +316,7 @@ function IgrajZajednoInner() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }
