@@ -89,7 +89,7 @@ export default function PodesavanjaPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user?.email) {
       await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/auth/nova-lozinka`,
+        redirectTo: `${window.location.origin}/auth/nova-lozinka`,
       })
       setEmailSent(true)
     }

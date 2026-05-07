@@ -9,6 +9,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Logo } from '@/components/Logo'
 import { IconLock, IconEye, IconEyeOff, IconCheck } from '@/components/icons'
 
+type Phase = 'loading' | 'ready' | 'invalid' | 'success'
+
 export default function NovaLozinkaPage() {
   const router = useRouter()
   const [pw, setPw] = useState('')
@@ -16,15 +18,29 @@ export default function NovaLozinkaPage() {
   const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
+  const [phase, setPhase] = useState<Phase>('loading')
 
   useEffect(() => {
-    // Verify a session exists (Supabase recovery link auto-signs the user in)
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setAuthenticated(!!user)
-    })
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+
+    async function init() {
+      // If link from email, exchange the recovery code first
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (!error) {
+          setPhase('ready')
+          // Clean URL so a refresh doesn't try to re-exchange
+          window.history.replaceState({}, '', '/auth/nova-lozinka')
+          return
+        }
+      }
+      // Fallback: maybe an active session is already in place (e.g. logged-in user)
+      const { data: { user } } = await supabase.auth.getUser()
+      setPhase(user ? 'ready' : 'invalid')
+    }
+    init()
   }, [])
 
   async function submit(e: React.FormEvent) {
@@ -36,7 +52,7 @@ export default function NovaLozinkaPage() {
     const { error: e1 } = await createClient().auth.updateUser({ password: pw })
     setBusy(false)
     if (e1) { setError(e1.message); return }
-    setSuccess(true)
+    setPhase('success')
     setTimeout(() => router.push('/auth/prijava'), 2500)
   }
 
@@ -56,7 +72,14 @@ export default function NovaLozinkaPage() {
             Postavi novu lozinku za svoj nalog.
           </p>
 
-          {success ? (
+          {phase === 'loading' && (
+            <div className="text-center py-6">
+              <div className="w-8 h-8 rounded-full border-2 animate-spin mx-auto"
+                style={{ borderColor: '#609DED', borderTopColor: 'transparent' }} />
+            </div>
+          )}
+
+          {phase === 'success' && (
             <div className="text-center py-4">
               <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#E8F8F0' }}>
                 <IconCheck size={28} className="text-[#15803d]" />
@@ -64,14 +87,18 @@ export default function NovaLozinkaPage() {
               <p className="font-bold text-[16px] mb-1" style={{ color: '#15803d' }}>Lozinka je promenjena!</p>
               <p className="text-[13px]" style={{ color: '#9C9C9C' }}>Preusmeravam na prijavu…</p>
             </div>
-          ) : authenticated === false ? (
+          )}
+
+          {phase === 'invalid' && (
             <div>
               <div className="rounded-2xl px-4 py-3 text-[13px] font-medium mb-4" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
-                Link je istekao ili nevalidan.
+                Link je istekao ili je već iskorišćen. Zatraži novi link sa stranice za prijavu.
               </div>
               <Link href="/auth/prijava" className="btn btn-primary btn-md w-full">Idi na prijavu</Link>
             </div>
-          ) : (
+          )}
+
+          {phase === 'ready' && (
             <form onSubmit={submit} className="space-y-3">
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
