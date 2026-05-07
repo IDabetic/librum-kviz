@@ -20,14 +20,13 @@ type Profile = {
   role: string
 }
 
-// "Pitanja" curates the shared `questions` table (PRO/Brzi/Duel all read it).
-// "Brzi kviz" is a SEPARATE tag-scoped admin — anything created there carries
-// the 'brzi-only' tag, and the PRO + Duel loaders filter it out so it shows
-// up only in /brzi-kviz.
+// PRO kviz, Brzi kviz and Trivia duel all read from the same `questions`
+// pool. "Pitanja" is the shared CRUD; "Brzi kviz" link is a convenience
+// shortcut that lands on the same pool so admins can always find it.
 const NAV = [
   { label: 'Dashboard',   href: '/majmun',                Icon: IconHome },
   { label: 'Pitanja',     href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
-  { label: 'Brzi kviz',   href: '/majmun/brzi-kviz',      Icon: IconTime,     hint: 'samo Brzi' },
+  { label: 'Brzi kviz',   href: '/majmun/brzi-kviz',      Icon: IconTime,     hint: 'isti pool kao PRO' },
   { label: 'Book kviz',   href: '/majmun/book-kviz',      Icon: IconStar },
   { label: 'Vešanje',     href: '/majmun/vesanje',        Icon: IconHint },
   { label: 'Predlozi',    href: '/majmun/predlozi',       Icon: IconUsers },
