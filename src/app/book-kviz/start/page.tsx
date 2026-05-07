@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { shuffle } from '@/lib/shuffle'
 import { IconClose } from '@/components/icons'
 
 // ── Game constants ──────────────────────────────────────────────────────────
@@ -86,6 +87,16 @@ export default function BookKvizStart() {
   const savingRef = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
 
+  // The big +N / -N overlay only set state, never cleared it — so the
+  // last delta sat in the middle of the screen until the next answer.
+  // Clear ~900ms after each set; cleanup cancels the previous timer if a
+  // newer flash arrives before this one fires.
+  useEffect(() => {
+    if (!scoreFlash) return
+    const t = setTimeout(() => setScoreFlash(null), 900)
+    return () => clearTimeout(t)
+  }, [scoreFlash])
+
   // Mirror live game state in a ref so pagehide / exit handlers can flush
   // the latest stats without depending on React render closures.
   const liveRef = useRef({
@@ -109,6 +120,16 @@ export default function BookKvizStart() {
       if (!user) { router.push('/auth/prijava?redirect=/book-kviz'); return }
       setMyId(user.id)
 
+      // 72h dedupe — exclude questions this user has already answered in
+      // Book kviz recently. Falls back to the whole pool if too few remain.
+      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+      const { data: seen } = await supabase
+        .from('book_answer_log')
+        .select('question_id')
+        .eq('user_id', user.id)
+        .gte('created_at', cutoff)
+      const seenSet = new Set((seen || []).map(s => s.question_id))
+
       const { data } = await supabase
         .from('book_questions')
         .select('id, genre, question_text, options, correct_answer')
@@ -116,7 +137,9 @@ export default function BookKvizStart() {
         .limit(10000)
 
       if (!data || data.length === 0) { setLoading(false); return }
-      const all = (data as Question[]).sort(() => Math.random() - 0.5)
+      let pool = (data as Question[]).filter(q => !seenSet.has(q.id))
+      if (pool.length < 30) pool = data as Question[]
+      const all = shuffle(pool)
       // Seed the first question in the same render commit as the pool so
       // we avoid a setState-in-effect cascade after pool loads.
       const first = all[0]
