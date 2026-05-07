@@ -43,6 +43,10 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
   const [pwSaved, setPwSaved] = useState(false)
   const [pwError, setPwError] = useState('')
 
+  // Reset via email (for OAuth users)
+  const [sendingReset, setSendingReset] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+
   async function saveProfile() {
     setProfileError('')
     setSavingProfile(true)
@@ -74,6 +78,16 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
     setPwSaved(true)
     setNewPw(''); setNewPw2('')
     setTimeout(() => setPwSaved(false), 3000)
+  }
+
+  async function sendResetEmail() {
+    setSendingReset(true)
+    await createClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/nova-lozinka`,
+    })
+    setSendingReset(false)
+    setResetSent(true)
+    setTimeout(() => setResetSent(false), 5000)
   }
 
   return (
@@ -156,12 +170,28 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
         )}
 
         <button onClick={changePassword} disabled={savingPw || !newPw || !newPw2}
-          className="btn btn-md w-full"
+          className="btn btn-md w-full mb-4"
           style={pwSaved
             ? { background: '#4CAF50', color: 'white' }
             : { background: '#609DED', color: 'white' }}>
           {savingPw ? 'Čuvanje…' : 'Promeni lozinku'}
         </button>
+
+        {/* Email reset (works for OAuth-only users without a password) */}
+        <div className="pt-4 border-t" style={{ borderColor: '#F2F2F2' }}>
+          <p className="text-[12px] mb-3" style={{ color: '#9C9C9C' }}>
+            Loguješ se preko GitHub-a i nemaš lozinku? Pošalji link na email i postavi prvu lozinku iz mejla.
+          </p>
+          {resetSent ? (
+            <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
+              <IconCheck size={16} className="text-[#15803d]" /> Email poslat — proveri inbox.
+            </div>
+          ) : (
+            <button onClick={sendResetEmail} disabled={sendingReset} className="btn btn-secondary btn-md w-full">
+              {sendingReset ? 'Slanje…' : 'Pošalji link na email'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Admin codes hint */}
