@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { IconBack, IconEmail, IconLock, IconEye, IconEyeOff, IconCheck } from '@/components/icons'
 import { Logo } from '@/components/Logo'
+import { sendCustomPasswordResetEmail } from '@/lib/password-reset'
 
 function PrijavaForm() {
   const router = useRouter()
@@ -39,10 +40,7 @@ function PrijavaForm() {
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault()
     setResetLoading(true)
-    const supabase = createClient()
-    await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/auth/nova-lozinka`,
-    })
+    await sendCustomPasswordResetEmail(resetEmail)
     setResetSent(true)
     setResetLoading(false)
   }

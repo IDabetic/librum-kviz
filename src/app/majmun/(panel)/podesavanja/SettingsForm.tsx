@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { IconCheck, IconLock, IconEye, IconEyeOff } from '@/components/icons'
 import { changeUnlockCode } from './actions'
+import { sendCustomPasswordResetEmail } from '@/lib/password-reset'
 
 const TOTAL_AVATARS = 26
 const AVATAR_LIST = Array.from({ length: TOTAL_AVATARS }, (_, i) =>
@@ -91,9 +92,7 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
 
   async function sendResetEmail() {
     setSendingReset(true)
-    await createClient().auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/nova-lozinka`,
-    })
+    await sendCustomPasswordResetEmail(email)
     setSendingReset(false)
     setResetSent(true)
     setTimeout(() => setResetSent(false), 5000)

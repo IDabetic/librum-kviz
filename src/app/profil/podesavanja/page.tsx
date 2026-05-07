@@ -88,9 +88,8 @@ export default function PodesavanjaPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user?.email) {
-      await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/auth/nova-lozinka`,
-      })
+      const { sendCustomPasswordResetEmail } = await import('@/lib/password-reset')
+      await sendCustomPasswordResetEmail(user.email)
       setEmailSent(true)
     }
     setSendingReset(false)

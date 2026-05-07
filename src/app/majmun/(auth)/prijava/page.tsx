@@ -3,9 +3,9 @@
 import { useState, useActionState } from 'react'
 import Link from 'next/link'
 import { Logo } from '@/components/Logo'
-import { createClient } from '@/lib/supabase/client'
 import { IconEmail, IconLock, IconEye, IconEyeOff, IconCheck } from '@/components/icons'
 import { adminLoginAction } from './actions'
+import { sendCustomPasswordResetEmail } from '@/lib/password-reset'
 
 export default function MajmunPrijavaPage() {
   const [state, action, pending] = useActionState(adminLoginAction, undefined)
@@ -22,11 +22,9 @@ export default function MajmunPrijavaPage() {
     setResetError('')
     if (!resetEmail.trim()) { setResetError('Upiši email.'); return }
     setResetBusy(true)
-    const { error } = await createClient().auth.resetPasswordForEmail(resetEmail.trim(), {
-      redirectTo: `${window.location.origin}/auth/nova-lozinka`,
-    })
+    const res = await sendCustomPasswordResetEmail(resetEmail)
     setResetBusy(false)
-    if (error) { setResetError(error.message); return }
+    if (!res.ok) { setResetError(res.error); return }
     setResetSent(true)
   }
 
