@@ -31,8 +31,9 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       .select('id, status, host_score, guest_score, host_finished, guest_finished, created_at')
       .eq('guest_id', id).eq('status', 'finished').order('created_at', { ascending: false }).limit(50),
     supabase.from('question_answer_log')
-      .select('was_correct, time_ms, created_at')
-      .eq('user_id', id),
+      .select('question_id, was_correct, time_ms, created_at')
+      .eq('user_id', id)
+      .order('created_at', { ascending: false }),
   ])
 
   const survivorRows = survivor.data || []
@@ -76,6 +77,14 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
     : null
   const logMinMs = logTotal > 0 ? Math.min(...logRows.map(l => l.time_ms)) : null
   const logMaxMs = logTotal > 0 ? Math.max(...logRows.map(l => l.time_ms)) : null
+
+  // Last 10 answers with the actual question text
+  const last10 = logRows.slice(0, 10)
+  const last10Ids = Array.from(new Set(last10.map(l => l.question_id).filter((v): v is string => !!v)))
+  const { data: last10Questions } = last10Ids.length
+    ? await supabase.from('questions').select('id, question_text').in('id', last10Ids)
+    : { data: [] as { id: string; question_text: string }[] }
+  const questionMap = new Map((last10Questions || []).map(q => [q.id, q.question_text]))
 
   // Avg time per question (PRO + Brzi). Hangman is per-letter so we skip.
   const proPerQ = survivorRows.reduce((acc, s) => {
@@ -151,6 +160,45 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
             <Stat label="Prosečno vreme" value={fmtMs(logAvgMs)} tone={logAvgMs != null && logAvgMs < 3000 ? 'bad' : undefined} />
             <Stat label="Najbrže" value={fmtMs(logMinMs)} />
             <Stat label="Najsporije" value={fmtMs(logMaxMs)} />
+          </div>
+        </div>
+      )}
+
+      {/* Last 10 individual answers — text + time + correct/wrong */}
+      {last10.length > 0 && (
+        <div className="card-soft p-5">
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
+            Poslednjih {last10.length} odgovora
+          </p>
+          <div className="space-y-1">
+            {last10.map((l, i) => {
+              const text = l.question_id ? questionMap.get(l.question_id) : null
+              const sec = (l.time_ms / 1000).toFixed(1)
+              const fast = l.time_ms < 3000
+              return (
+                <div key={i} className="flex items-start gap-3 py-2.5 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[12px] font-bold"
+                    style={{
+                      background: l.was_correct ? '#E8F8F0' : '#FEE2E2',
+                      color: l.was_correct ? '#15803d' : '#b91c1c',
+                    }}>
+                    {l.was_correct ? '✓' : '✗'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] leading-snug line-clamp-2" style={{ color: '#343434' }}>
+                      {text || <span style={{ color: '#9C9C9C' }}>(pitanje obrisano)</span>}
+                    </p>
+                    <p className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>
+                      {new Date(l.created_at).toLocaleString('sr', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <div className="font-bold text-[13px] flex-shrink-0 tabular-nums"
+                    style={{ color: fast ? '#E55353' : '#343434' }}>
+                    {sec}s
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
