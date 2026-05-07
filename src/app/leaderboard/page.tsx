@@ -219,28 +219,88 @@ async function loadBook(supabase: SB, since: Date | null): Promise<BookRow[]> {
 }
 
 // ── KAFANSKI KVIZ ────────────────────────────────────────────────────────
+// Combined solo + duel board: a player's record on this list is the
+// max score they've ever scored in any Kafana mode (solo run or
+// finished duel). Duel rows contribute the player's own side's score,
+// not the duel total. Solo rows still drive the secondary stats
+// (questions_reached / accuracy / best_combo) since duels don't track
+// those per-player.
 async function loadKafana(supabase: SB, since: Date | null): Promise<KafanaRow[]> {
-  let q = supabase
+  let solo = supabase
     .from('kafana_sessions')
     .select('user_id, score, questions_reached, accuracy, best_combo, profiles(first_name, last_name, nickname, avatar)')
     .order('score', { ascending: false })
     .limit(500)
-  if (since) q = q.gte('created_at', since.toISOString())
-  const { data } = await q
-  const seen = new Set<string>()
-  const rows: KafanaRow[] = []
-  for (const r of (data || [])) {
-    if (!r.user_id || seen.has(r.user_id)) continue
-    seen.add(r.user_id)
+  if (since) solo = solo.gte('created_at', since.toISOString())
+
+  let duel = supabase
+    .from('game_rooms')
+    .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, status, quiz_type')
+    .eq('quiz_type', 'kafana')
+    .not('guest_id', 'is', null)
+    .limit(1000)
+  if (since) duel = duel.gte('created_at', since.toISOString())
+
+  const [{ data: soloData }, { data: duelData }] = await Promise.all([solo, duel])
+
+  // Walk solo first (already sorted desc by score) so a player's
+  // best solo session populates secondary stats; later duel scores
+  // only bump the headline score if higher.
+  const map: Record<string, KafanaRow> = {}
+  for (const r of (soloData || [])) {
+    if (!r.user_id) continue
     const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
-    rows.push({
-      userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
-      score: r.score, questionsReached: r.questions_reached,
-      accuracy: Number(r.accuracy), bestCombo: r.best_combo,
-    })
-    if (rows.length >= 200) break
+    if (!map[r.user_id]) {
+      map[r.user_id] = {
+        userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
+        score: r.score ?? 0, questionsReached: r.questions_reached ?? 0,
+        accuracy: Number(r.accuracy ?? 0), bestCombo: r.best_combo ?? 0,
+      }
+    } else if ((r.score ?? 0) > map[r.user_id].score) {
+      map[r.user_id].score = r.score ?? 0
+    }
   }
-  return rows
+
+  // Pull profiles for any duel-only players who never played a solo
+  // run (so they don't show as "Igrač" with no avatar).
+  const duelOnlyIds = [...new Set(
+    (duelData || [])
+      .flatMap(g => [g.host_id, g.guest_id])
+      .filter((id): id is string => !!id && !map[id])
+  )]
+  let duelOnlyProf: Record<string, { name: string; avatar: string | null }> = {}
+  if (duelOnlyIds.length) {
+    const { data: profs } = await supabase
+      .from('profiles').select('id, first_name, last_name, nickname, avatar').in('id', duelOnlyIds)
+    duelOnlyProf = Object.fromEntries(
+      (profs || []).map((p: { id: string; first_name: string; last_name: string; nickname: string; avatar: string }) => [
+        p.id, { name: pickName(p), avatar: p.avatar || null },
+      ])
+    )
+  }
+
+  for (const g of (duelData || [])) {
+    const isFinished = g.status === 'finished' || (g.host_finished && g.guest_finished)
+    if (!isFinished || !g.host_id || !g.guest_id) continue
+    function bump(uid: string, score: number) {
+      if (!map[uid]) {
+        const p = duelOnlyProf[uid]
+        map[uid] = {
+          userId: uid, name: p?.name || 'Igrač', avatar: p?.avatar || null,
+          score, questionsReached: 0, accuracy: 0, bestCombo: 0,
+        }
+      } else if (score > map[uid].score) {
+        map[uid].score = score
+      }
+    }
+    bump(g.host_id, g.host_score ?? 0)
+    bump(g.guest_id, g.guest_score ?? 0)
+  }
+
+  return Object.values(map)
+    .filter(r => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 200)
 }
 
 // ── BRZI KVIZ ────────────────────────────────────────────────────────────
