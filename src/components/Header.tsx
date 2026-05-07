@@ -6,30 +6,26 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
 import {
-  IconHome, IconTrophy, IconSwords, IconHint, IconUsers,
-  IconMenu, IconClose, IconLogout, IconTime, IconStar,
+  IconHome, IconTrophy, IconUsers,
+  IconMenu, IconClose, IconLogout, IconStar,
 } from './icons'
 import { Logo } from './Logo'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
 
-// Six game modes. Each gets its own colored card in the "Igre" dropdown.
-const GAMES = [
-  { href: '/igraj',           label: 'PRO kviz',       Icon: IconHome,   accent: '#609DED', tint: 'rgba(96,157,237,0.12)',  desc: 'Klasični kviz, lifelines i niz' },
-  { href: '/book-kviz',       label: 'Book kviz',      Icon: IconStar,   accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)',  desc: 'Pitanja iz književnosti, top žanr' },
-  { href: '/kafanski-kviz',   label: 'Kafanski kviz',  Icon: IconStar,   accent: '#b91c1c', tint: 'rgba(229,83,83,0.12)',   desc: 'Muzika i kafanski hitovi' },
-  { href: '/igraj-zajedno',   label: 'Trivia duel',    Icon: IconSwords, accent: '#E55353', tint: 'rgba(229,83,83,0.10)',   desc: 'Jedan na jedan, isti pitanja' },
-  { href: '/vesanje',         label: 'Vešanje',        Icon: IconHint,   accent: '#15803d', tint: 'rgba(76,175,80,0.12)',   desc: 'Pogađanje slova po kategorijama' },
-  { href: '/brzi-kviz',       label: 'Brzi kviz',      Icon: IconTime,   accent: '#b91c1c', tint: 'rgba(229,83,83,0.08)',   desc: 'Tačno/netačno, 60 sekundi' },
+// Top-level nav. "Igre" is a hub page (/igre) with a colorful card grid;
+// the header itself stays a slim row of plain links — no dropdown.
+const NAV_LINKS = [
+  { href: '/igre',             label: 'Igre',             Icon: IconHome,    accent: '#609DED', tint: 'rgba(96,157,237,0.12)' },
+  { href: '/leaderboard',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
+  { href: '/nagrade',          label: 'Nagrade',          Icon: IconStar,    accent: '#FFCB46', tint: 'rgba(255,203,70,0.18)' },
+  { href: '/predlozi-pitanje', label: 'Pošalji pitanje',  Icon: IconUsers,   accent: '#15803d', tint: 'rgba(76,175,80,0.12)' },
 ]
 
-const TOP_LINKS = [
-  { href: '/leaderboard',     label: 'Rang lista',     Icon: IconTrophy, accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
-]
-
-const MOBILE_EXTRA_LINKS = [
-  { href: '/predlozi-pitanje', label: 'Predloži pitanje', Icon: IconUsers, accent: '#609DED', tint: 'rgba(96,157,237,0.10)' },
-]
+// Game routes the mobile drawer used to surface as a colored grid. Now
+// that /igre is a real page, mobile just sends users there too — the
+// drawer stays slim with the same 4 top links.
+const GAME_ROUTES = ['/igraj', '/book-kviz', '/kafanski-kviz', '/igraj-zajedno', '/vesanje', '/brzi-kviz']
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -52,9 +48,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([])
   const [showRecent, setShowRecent] = useState(false)
-  const [showGames, setShowGames] = useState(false)
   const recentRef = useRef<HTMLDivElement>(null)
-  const gamesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -84,22 +78,20 @@ export default function Header() {
       .then(({ data }) => { if (data) setRecentUsers(data as RecentUser[]) })
   }, [showRecent, mobileOpen])
 
-  // Outside-click for both dropdowns. Single listener handles both.
+  // Outside-click for the recent-members dropdown.
   useEffect(() => {
-    if (!showRecent && !showGames) return
+    if (!showRecent) return
     function handleClick(e: MouseEvent) {
-      if (showRecent && recentRef.current && !recentRef.current.contains(e.target as Node)) setShowRecent(false)
-      if (showGames && gamesRef.current && !gamesRef.current.contains(e.target as Node)) setShowGames(false)
+      if (recentRef.current && !recentRef.current.contains(e.target as Node)) setShowRecent(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [showRecent, showGames])
+  }, [showRecent])
 
-  // Close everything when route changes — pathname comes from the router
-  // (external system), so this is a sync-from-router effect.
+  // Close mobile drawer + recent dropdown when route changes — pathname
+  // comes from the router (external system), so this is a sync effect.
   useEffect(() => {
     setMobileOpen(false) // eslint-disable-line react-hooks/set-state-in-effect
-    setShowGames(false)
     setShowRecent(false)
   }, [pathname])
 
@@ -109,9 +101,10 @@ export default function Header() {
     router.refresh()
   }
 
-  // Active when current path matches any game route (so the "Igre"
-  // trigger pill highlights when the user is inside any game).
-  const inGame = GAMES.some(g => pathname === g.href || pathname.startsWith(g.href + '/'))
+  // "Igre" pill should also light up when the user is inside any specific
+  // game route (e.g. /igraj/start) — feels more right than only matching
+  // /igre exactly.
+  const inGameSection = GAME_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
 
   return (
     <>
@@ -121,54 +114,13 @@ export default function Header() {
           {/* Logo */}
           <Logo height={28} priority />
 
-          {/* Desktop nav — Igre dropdown + Rang lista */}
+          {/* Desktop nav — four flat links */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-            {/* Igre trigger */}
-            <div ref={gamesRef} className="relative">
-              <button onClick={() => setShowGames(o => !o)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all"
-                style={inGame || showGames
-                  ? { background: '#343434', color: 'white' }
-                  : { color: '#343434' }}
-                onMouseEnter={e => { if (!(inGame || showGames)) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(52,52,52,0.06)' }}
-                onMouseLeave={e => { if (!(inGame || showGames)) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}>
-                <span>Igre</span>
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ transform: showGames ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.15s' }}>
-                  <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-
-              {showGames && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[min(680px,90vw)] card-soft overflow-hidden z-50 animate-pop-in p-3">
-                  <p className="px-3 pt-1 pb-3 text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
-                    Izaberi igru
-                  </p>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                    {GAMES.map(g => {
-                      const active = pathname === g.href || pathname.startsWith(g.href + '/')
-                      return (
-                        <Link key={g.href} href={g.href} onClick={() => setShowGames(false)}
-                          className="flex items-start gap-3 p-3 rounded-2xl transition-all hover:scale-[1.02]"
-                          style={{ background: g.tint, border: active ? `2px solid ${g.accent}` : '2px solid transparent' }}>
-                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: g.accent, color: 'white' }}>
-                            <g.Icon size={18} strokeWidth={2.2} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-[14px] truncate" style={{ color: g.accent }}>{g.label}</p>
-                            <p className="text-[11px] leading-snug mt-0.5" style={{ color: '#343434', opacity: 0.7 }}>{g.desc}</p>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Top-level links beside Igre */}
-            {TOP_LINKS.map(({ href, label, Icon, accent, tint }) => {
-              const active = pathname === href || pathname.startsWith(href + '/')
+            {NAV_LINKS.map(({ href, label, Icon, accent, tint }) => {
+              const active =
+                pathname === href ||
+                pathname.startsWith(href + '/') ||
+                (href === '/igre' && inGameSection)
               return (
                 <Link key={href} href={href} title={label}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all"
@@ -286,33 +238,14 @@ export default function Header() {
                 </Link>
               )}
 
-              {/* Igre cards — same grid as desktop dropdown */}
-              <div>
-                <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
-                  Igre
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {GAMES.map(g => {
-                    const active = pathname === g.href || pathname.startsWith(g.href + '/')
-                    return (
-                      <Link key={g.href} href={g.href}
-                        className="flex flex-col gap-1.5 p-3 rounded-2xl transition-all"
-                        style={{ background: g.tint, border: active ? `2px solid ${g.accent}` : '2px solid transparent' }}>
-                        <div className="w-9 h-9 rounded-2xl flex items-center justify-center"
-                          style={{ background: g.accent, color: 'white' }}>
-                          <g.Icon size={16} strokeWidth={2.2} />
-                        </div>
-                        <p className="font-bold text-[13px] tracking-tight" style={{ color: g.accent }}>{g.label}</p>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Top links + extras */}
-              <div className="space-y-1 pt-2 border-t border-[#F2F2F2]">
-                {[...TOP_LINKS, ...MOBILE_EXTRA_LINKS].map(({ href, label, Icon, accent, tint }) => {
-                  const active = pathname === href || pathname.startsWith(href + '/')
+              {/* Same flat link list as desktop nav. "Igre" leads to the
+                  /igre hub page where the colored cards live. */}
+              <div className="space-y-1">
+                {NAV_LINKS.map(({ href, label, Icon, accent, tint }) => {
+                  const active =
+                    pathname === href ||
+                    pathname.startsWith(href + '/') ||
+                    (href === '/igre' && inGameSection)
                   return (
                     <Link key={href} href={href}
                       className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"
