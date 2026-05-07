@@ -17,11 +17,12 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
 
   // Aggregate stats
   const [survivor, hangman, quick] = await Promise.all([
-    supabase.from('survivor_sessions').select('score, questions_reached, best_combo, created_at')
+    supabase.from('survivor_sessions')
+      .select('score, questions_reached, best_combo, total_time_seconds, accuracy, created_at')
       .eq('user_id', id).order('created_at', { ascending: false }).limit(20),
-    supabase.from('hangman_sessions').select('won, score, created_at')
+    supabase.from('hangman_sessions').select('won, score, time_seconds, created_at')
       .eq('user_id', id).order('created_at', { ascending: false }).limit(20),
-    supabase.from('quick_sessions').select('score, correct_count, accuracy, created_at')
+    supabase.from('quick_sessions').select('score, correct_count, total_answered, accuracy, duration_seconds, created_at')
       .eq('user_id', id).order('created_at', { ascending: false }).limit(20),
   ])
 
@@ -31,6 +32,24 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   const hTotal = (hangman.data || []).length
   const qBest = (quick.data || []).length ? Math.max(...(quick.data || []).map(q => q.score)) : 0
   const qTotal = (quick.data || []).length
+
+  // Avg time per question (PRO + Brzi). Hangman is per-letter so we skip.
+  const proPerQ = (survivor.data || []).reduce((acc, s) => {
+    if (s.questions_reached > 0) { acc.sum += s.total_time_seconds / s.questions_reached; acc.n += 1 }
+    return acc
+  }, { sum: 0, n: 0 })
+  const proAvgSecPerQ = proPerQ.n ? proPerQ.sum / proPerQ.n : null
+
+  const quickPerQ = (quick.data || []).reduce((acc, q) => {
+    if (q.total_answered > 0) { acc.sum += q.duration_seconds / q.total_answered; acc.n += 1 }
+    return acc
+  }, { sum: 0, n: 0 })
+  const quickAvgSecPerQ = quickPerQ.n ? quickPerQ.sum / quickPerQ.n : null
+
+  function fmtSec(v: number | null): string {
+    if (v == null) return '—'
+    return `${v.toFixed(1)}s`
+  }
 
   const name = u.nickname || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Igrač'
 
@@ -61,9 +80,11 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
-        <StatCard label="PRO kviz" total={sTotal} primary={sBest} primaryLabel="Rekord" accent="#609DED" bg="#BCD9FF" />
+        <StatCard label="PRO kviz" total={sTotal} primary={sBest} primaryLabel="Rekord" accent="#609DED" bg="#BCD9FF"
+          extra={proAvgSecPerQ != null ? `Prosek ${fmtSec(proAvgSecPerQ)} po pitanju` : undefined} />
         <StatCard label="Vešanje" total={hTotal} primary={hWins} primaryLabel="Pobeda" accent="#15803d" bg="#E8F8F0" />
-        <StatCard label="Brzi kviz" total={qTotal} primary={qBest} primaryLabel="Rekord" accent="#b91c1c" bg="#FEE2E2" />
+        <StatCard label="Brzi kviz" total={qTotal} primary={qBest} primaryLabel="Rekord" accent="#b91c1c" bg="#FEE2E2"
+          extra={quickAvgSecPerQ != null ? `Prosek ${fmtSec(quickAvgSecPerQ)} po pitanju` : undefined} />
         <StatCard label="Ukupno" total={sTotal + hTotal + qTotal} primary={sTotal + hTotal + qTotal} primaryLabel="Igara" accent="#343434" bg="#F2F2F2" />
       </div>
 
@@ -72,12 +93,21 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
         <div className="card-soft p-5">
           <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>Skorašnje PRO partije</p>
           <div className="space-y-1">
-            {(survivor.data || []).slice(0, 5).map((s, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
-                <div className="text-[13px]" style={{ color: '#343434' }}>{s.questions_reached} pitanja · niz {s.best_combo}</div>
-                <div className="font-bold text-[14px]" style={{ color: '#609DED' }}>{s.score}</div>
-              </div>
-            ))}
+            {(survivor.data || []).slice(0, 8).map((s, i) => {
+              const secPerQ = s.questions_reached > 0 ? s.total_time_seconds / s.questions_reached : null
+              const fast = secPerQ != null && secPerQ < 5
+              return (
+                <div key={i} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+                  <div className="text-[13px] flex-1 min-w-0" style={{ color: '#343434' }}>
+                    {s.questions_reached} pitanja · niz {s.best_combo} · {Number(s.accuracy).toFixed(0)}% tačnih
+                  </div>
+                  <div className="text-[12px] flex-shrink-0" style={{ color: fast ? '#E55353' : '#9C9C9C' }}>
+                    {secPerQ != null ? `${secPerQ.toFixed(1)}s/pit` : '—'}
+                  </div>
+                  <div className="font-bold text-[14px] w-12 text-right" style={{ color: '#609DED' }}>{s.score}</div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -85,8 +115,8 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   )
 }
 
-function StatCard({ label, total, primary, primaryLabel, accent, bg }: {
-  label: string; total: number; primary: number; primaryLabel: string; accent: string; bg: string
+function StatCard({ label, total, primary, primaryLabel, accent, bg, extra }: {
+  label: string; total: number; primary: number; primaryLabel: string; accent: string; bg: string; extra?: string
 }) {
   return (
     <div className="card-soft p-5">
@@ -96,6 +126,7 @@ function StatCard({ label, total, primary, primaryLabel, accent, bg }: {
       </div>
       <p className="font-black tracking-tight leading-none" style={{ color: accent, fontSize: 'clamp(22px, 4vw, 28px)' }}>{primary}</p>
       <p className="text-[11px] mt-1" style={{ color: '#9C9C9C' }}>{primaryLabel} · {total} sesija</p>
+      {extra && <p className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>{extra}</p>}
       <div className="mt-3 h-1 rounded-full" style={{ background: bg }} />
     </div>
   )

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
@@ -5,6 +6,18 @@ import LeaderboardTabs from './LeaderboardTabs'
 import { Logo } from '@/components/Logo'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Rang lista – najbolji igrači Librum kviza',
+  description: 'Pogledaj rang-listu Librum kviza. Prati najbolje rezultate u PRO kvizu, trivia duelu, vešanju i Brzom kvizu.',
+  alternates: { canonical: '/leaderboard' },
+  openGraph: {
+    title: 'Rang lista – Librum Kviz',
+    description: 'Najbolji rezultati u svim igrama Librum kviza.',
+    url: 'https://kviz.librum.club/leaderboard',
+    type: 'website',
+  },
+}
 
 export type SurvivorRow = {
   userId: string; name: string; avatar: string | null

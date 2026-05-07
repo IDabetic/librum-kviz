@@ -1,8 +1,14 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminShell from './AdminShell'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Admin panel',
+  robots: { index: false, follow: false, nocache: true },
+}
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()

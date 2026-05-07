@@ -5,13 +5,26 @@ import PitanjaList from './PitanjaList'
 
 export const dynamic = 'force-dynamic'
 
-type SP = { q?: string; diff?: string; status?: string; page?: string }
+type SP = { q?: string; diff?: string; status?: string; page?: string; per?: string }
+
+const PER_OPTIONS = [25, 50, 100]
 
 export default async function PitanjaPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams
   const supabase = await createClient()
-  const PER_PAGE = 30
+  const PER_PAGE = PER_OPTIONS.includes(parseInt(sp.per || '50', 10))
+    ? parseInt(sp.per!, 10)
+    : 50
   const page = Math.max(0, parseInt(sp.page || '0', 10))
+
+  function buildQS(override: Partial<SP>): string {
+    const params = new URLSearchParams()
+    const merged = { q: sp.q, diff: sp.diff, status: sp.status, per: String(PER_PAGE), ...override }
+    for (const [k, v] of Object.entries(merged)) {
+      if (v !== undefined && v !== '' && v !== null) params.set(k, String(v))
+    }
+    return params.toString()
+  }
 
   // Build query
   let query = supabase
@@ -68,6 +81,10 @@ export default async function PitanjaPage({ searchParams }: { searchParams: Prom
           <option value="active">Aktivno</option>
           <option value="inactive">Neaktivno</option>
         </select>
+        <select name="per" defaultValue={String(PER_PAGE)}
+          className="input flex-shrink-0" style={{ width: 'auto', minWidth: 90 }}>
+          {PER_OPTIONS.map(n => <option key={n} value={n}>{n}/str.</option>)}
+        </select>
         <button type="submit" className="btn btn-primary btn-md">Pretraži</button>
       </form>
 
@@ -81,11 +98,11 @@ export default async function PitanjaPage({ searchParams }: { searchParams: Prom
           </p>
           <div className="flex gap-2">
             {page > 0 && (
-              <Link href={`/majmun/pitanja?page=${page - 1}${sp.q ? `&q=${sp.q}` : ''}${sp.diff ? `&diff=${sp.diff}` : ''}${sp.status ? `&status=${sp.status}` : ''}`}
+              <Link href={`/majmun/pitanja?${buildQS({ page: String(page - 1) })}`}
                 className="btn btn-secondary btn-sm">← Prethodna</Link>
             )}
             {page < totalPages - 1 && (
-              <Link href={`/majmun/pitanja?page=${page + 1}${sp.q ? `&q=${sp.q}` : ''}${sp.diff ? `&diff=${sp.diff}` : ''}${sp.status ? `&status=${sp.status}` : ''}`}
+              <Link href={`/majmun/pitanja?${buildQS({ page: String(page + 1) })}`}
                 className="btn btn-primary btn-sm">Sledeća →</Link>
             )}
           </div>
