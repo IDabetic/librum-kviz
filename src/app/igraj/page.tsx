@@ -7,12 +7,18 @@ import { IconHint, IconTime, IconStar, IconTrophy, IconSwords } from '@/componen
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'PRO kviz – survival igra znanja sa 10 života',
-  description: 'Igraj PRO kviz i proveri koliko daleko možeš da doguraš. Dobijaš 10 života, odgovaraš na pitanja iz različitih oblasti i osvajaš bodove za rang-listu.',
+  title: 'PRO kviz – survival kviz znanja sa rang-listom',
+  description: 'Igraj PRO kviz – survival kviz znanja sa 10 života. Najteži kviz opšteg znanja na srpskom, pitanja iz književnosti, istorije, geografije i sporta. Penji se rang-listom i takmiči se sa drugima.',
+  keywords: [
+    'PRO kviz', 'survival kviz', 'kviz sa životima', 'najteži kviz znanja',
+    'kviz opšteg znanja', 'online kviz znanja', 'kviz sa rang-listom',
+    'kviz za takmičenje', 'kviz izazov', 'kviz za pametne',
+    'besplatan online kviz', 'kviz znanja na srpskom', 'Librum kviz',
+  ],
   alternates: { canonical: '/igraj' },
   openGraph: {
     title: 'PRO kviz – survival igra znanja | Librum Kviz',
-    description: 'Odgovaraj na pitanja, čuvaj živote i pokušaj da doguraš što dalje.',
+    description: '10 života, kombo bonus i rang-lista. Najteži kviz opšteg znanja na srpskom.',
     url: 'https://kviz.librum.club/igraj',
     type: 'website',
     images: ['/og-share.jpg?v=6'],

@@ -8,12 +8,18 @@ import { IconStar, IconTime, IconCheck, IconWrong, IconTrophy } from '@/componen
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Brzi kviz – tačno ili netačno za 60 sekundi',
-  description: 'Igraj Brzi kviz i odgovaraj na tvrdnje sa tačno ili netačno. Imaš 60 sekundi da osvojiš što više bodova i proveriš brzinu znanja.',
+  title: 'Brzi kviz – tačno netačno kviz za 60 sekundi',
+  description: 'Brzi kviz – online tačno netačno kviz na srpskom. Imaš 60 sekundi da osvojiš što više bodova kroz brzinske tvrdnje. Idealan brzinski kviz za pauzu — kratki kviz za telefon i zabavu.',
+  keywords: [
+    'brzi kviz', 'kviz 60 sekundi', 'tačno netačno kviz', 'brzinski kviz',
+    'kratki kviz', 'online tačno netačno', 'kviz za minut', 'kviz za pauzu',
+    'zabavni brzi kviz', 'kviz za telefon', 'kviz od 60 sekundi',
+    'Librum kviz',
+  ],
   alternates: { canonical: '/brzi-kviz' },
   openGraph: {
-    title: 'Brzi kviz – tačno ili netačno | Librum Kviz',
-    description: 'Tvrdnje, 60 sekundi, koliko stigneš.',
+    title: 'Brzi kviz – tačno netačno za 60 sekundi | Librum Kviz',
+    description: 'Tvrdnje, 60 sekundi, koliko stigneš. Brzinski kviz za pauzu.',
     url: 'https://kviz.librum.club/brzi-kviz',
     type: 'website',
     images: ['/og-share.jpg?v=6'],

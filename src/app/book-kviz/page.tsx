@@ -7,12 +7,20 @@ import { IconTime, IconStar, IconTrophy, IconDiscover } from '@/components/icons
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Book kviz – kviz znanja iz književnosti',
-  description: 'Igraj Book kviz i proveri koliko poznaješ književnost. 10 života, pitanja iz drame, ljubavnog romana, krimića, fantastike i drugih žanrova. Na kraju saznaš u kom žanru si najbolji.',
+  title: 'Book kviz – kviz iz književnosti, kviz o knjigama i piscima',
+  description: 'Book kviz – online kviz iz književnosti na srpskom. Pitanja o knjigama, piscima, romanima i književnim žanrovima. Saznaj koji književni žanr najbolje poznaješ — kviz za ljubitelje knjiga i čitaoce.',
+  keywords: [
+    'Book kviz', 'književni kviz', 'kviz iz književnosti', 'književnost kviz',
+    'kviz o knjigama', 'kviz o piscima', 'kviz o romanima',
+    'kviz o književnim likovima', 'kviz o žanrovima',
+    'proveri znanje iz književnosti', 'koji književni žanr najbolje poznaješ',
+    'test znanja iz književnosti', 'ljubitelji knjiga kviz', 'kviz za čitaoce',
+    'Librum kviz',
+  ],
   alternates: { canonical: '/book-kviz' },
   openGraph: {
     title: 'Book kviz – kviz iz književnosti | Librum Kviz',
-    description: 'Pitanja iz svih književnih žanrova. Saznaj u kom si najbolji.',
+    description: 'Pitanja iz svih književnih žanrova. Saznaj koji žanr najbolje poznaješ.',
     url: 'https://kviz.librum.club/book-kviz',
     type: 'website',
     images: ['/og-share.jpg?v=6'],

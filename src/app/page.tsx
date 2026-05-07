@@ -325,16 +325,50 @@ export default async function Home() {
         </section>
       )}
 
-      {/* SEO intro paragraph */}
-      <section className="py-12 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-[14px] leading-relaxed text-center" style={{ color: '#9C9C9C' }}>
+      {/* SEO content — multiple paragraphs covering core keyword clusters
+          (online kviz, kafanski kviz, kviz iz književnosti, trivia duel,
+          igra vešanja). Plain text + internal links so search engines
+          have something substantial to index per landing visit. */}
+      <section className="py-14 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto text-[14px] leading-relaxed space-y-5" style={{ color: '#5a5a5a' }}>
+          <h2 className="font-black tracking-tight text-center mb-2" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
+            Besplatan online kviz znanja na srpskom
+          </h2>
           <p>
-            Librum kviz je besplatna platforma za igre znanja na srpskom. PRO kviz, Brzi kviz,
-            Trivia duel, Vešanje, Book kviz i Kafanski kviz — testiraj se kroz hiljade pitanja iz književnosti,
-            istorije, geografije, sporta, muzike i opšte kulture. Igraj sam ili pozovi prijatelja na duel u realnom vremenu,
-            a ako imaš zanimljivo pitanje — možeš ga{' '}
-            <Link href="/predlozi-pitanje" className="underline" style={{ color: '#609DED' }}>predložiti</Link>{' '}
-            i ono može završiti u sledećem kvizu.
+            <strong>Librum kviz</strong> je besplatna platforma za igre znanja na srpskom — online kviz koji
+            spaja kviz opšte kulture, muzički kviz, kviz iz književnosti i klasičnu igru pogađanja
+            reči na jednom mestu. Bez instalacije, bez reklama u igri — otvoriš sajt, registruješ se za
+            10 sekundi i kreneš da igraš.
+          </p>
+          <p>
+            <Link href="/igraj" className="font-semibold underline" style={{ color: '#609DED' }}>PRO kviz</Link>{' '}
+            je naš survival kviz znanja sa 10 života i rang-listom — najteži kviz opšteg znanja i najbolji
+            izazov za one koji žele da se takmiče.{' '}
+            <Link href="/book-kviz" className="font-semibold underline" style={{ color: '#9c7a13' }}>Book kviz</Link>{' '}
+            je kviz iz književnosti za ljubitelje knjiga: pitanja o piscima, romanima i žanrovima, a na
+            kraju saznaš koji književni žanr najbolje poznaješ.
+          </p>
+          <p>
+            <Link href="/kafanski-kviz" className="font-semibold underline" style={{ color: '#b91c1c' }}>Kafanski kviz</Link>{' '}
+            je naš pub kviz i muzički kviz — preko 1000 pitanja o domaćoj i ex YU muzici, pevačima i
+            pesmama. Idealan kviz za društvo, kafanu i kućno druženje.{' '}
+            <Link href="/igraj-zajedno" className="font-semibold underline" style={{ color: '#9c7a13' }}>Trivia duel</Link>{' '}
+            je multiplayer kviz protiv prijatelja u realnom vremenu — pošalji kod, pridruži se i odmerite
+            znanje na istim pitanjima.
+          </p>
+          <p>
+            <Link href="/vesanje" className="font-semibold underline" style={{ color: '#15803d' }}>Igra vešanja</Link>{' '}
+            je klasična online igra pogađanja reči po kategorijama — sport, geografija, istorija,
+            kultura, priroda i predmeti, sa hintom za teže reči.{' '}
+            <Link href="/brzi-kviz" className="font-semibold underline" style={{ color: '#b91c1c' }}>Brzi kviz</Link>{' '}
+            je tačno-netačno kviz od 60 sekundi — kratki kviz za pauzu, brzinski test znanja iz svih
+            oblasti.
+          </p>
+          <p>
+            Sve igre koriste isti sistem rang-liste, profila i bodova. Imaš zanimljivo pitanje? Pošalji
+            ga preko{' '}
+            <Link href="/predlozi-pitanje" className="underline" style={{ color: '#609DED' }}>predloga pitanja</Link>{' '}
+            — ako prođe pregled, ulazi u sledeći kviz.
           </p>
         </div>
       </section>

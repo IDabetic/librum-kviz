@@ -6,8 +6,15 @@ import Link from 'next/link'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Igre – izaberi kviz | Librum',
-  description: 'Sve igre u jednom mestu — PRO kviz, Book kviz, Kafanski kviz, Trivia duel, Vešanje i Brzi kviz.',
+  title: 'Igre znanja – izaberi kviz, online kviz na srpskom',
+  description: 'Sve igre znanja u jednom mestu — PRO kviz, Book kviz, Kafanski kviz, Trivia duel, Vešanje i Brzi kviz. Besplatan online kviz na srpskom za društvo, kafanu i pauzu.',
+  keywords: [
+    'igre znanja', 'online igre znanja', 'igre znanja online',
+    'besplatne igre znanja', 'edukativne igre online', 'igre za mozak',
+    'kviz', 'online kviz', 'kviz online', 'kviz na srpskom',
+    'PRO kviz', 'Book kviz', 'kafanski kviz', 'trivia duel',
+    'igra vešanja', 'brzi kviz', 'Librum kviz',
+  ],
   alternates: { canonical: '/igre' },
 }
 
