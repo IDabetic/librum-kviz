@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { signUnlockToken, getAdminUnlockCode } from '@/lib/admin-auth'
+import { signUnlockToken } from '@/lib/admin-auth'
 
 type ActionState = { error?: string } | undefined
 
@@ -16,15 +16,15 @@ export async function adminLoginAction(_prev: ActionState, formData: FormData): 
     return { error: 'Sva polja su obavezna.' }
   }
 
-  // Step 1: validate admin code (constant-time-ish)
-  const expected = getAdminUnlockCode()
-  if (code !== expected) {
-    // Avoid leaking which factor failed
+  // Step 1: validate admin code via SECURITY DEFINER RPC (code never leaves DB)
+  const supabaseAnon = await createClient()
+  const { data: validCode } = await supabaseAnon.rpc('verify_unlock_code', { candidate: code })
+  if (!validCode) {
     return { error: 'Pogrešni podaci.' }
   }
 
   // Step 2: sign in via Supabase
-  const supabase = await createClient()
+  const supabase = supabaseAnon
   const { data: signIn, error: signErr } = await supabase.auth.signInWithPassword({ email, password })
   if (signErr || !signIn.user) {
     return { error: 'Pogrešni podaci.' }
