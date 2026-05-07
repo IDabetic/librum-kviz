@@ -6,12 +6,14 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
 import { IconHome, IconDiscover, IconTrophy, IconSwords, IconHint, IconUsers, IconMenu, IconClose, IconLogout, IconTime } from './icons'
+// Note: IconDiscover serves Book kviz
 import { Logo } from './Logo'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
 
 const NAV_LINKS = [
   { href: '/igraj',            label: 'PRO kviz',         Icon: IconHome },
+  { href: '/book-kviz',        label: 'Book kviz',        Icon: IconDiscover },
   { href: '/igraj-zajedno',    label: 'Trivia duel',      Icon: IconSwords },
   { href: '/vesanje',          label: 'Vešanje',          Icon: IconHint },
   { href: '/brzi-kviz',        label: 'Brzi kviz',        Icon: IconTime },

@@ -16,6 +16,8 @@ export default function robots(): MetadataRoute.Robots {
           '/profil/podesavanja',
           '/igraj/start',
           '/igraj/kraj',
+          '/book-kviz/start',
+          '/book-kviz/kraj',
           '/brzi-kviz/start',
           '/vesanje/dvoje',
           '/igraj-zajedno/sobu',

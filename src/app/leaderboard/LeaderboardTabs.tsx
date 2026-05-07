@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { SurvivorRow, DuelRow, HangmanRow, QuickRow, AllPeriods } from './page'
-import { IconHome, IconSwords, IconHint, IconTime } from '@/components/icons'
+import type { SurvivorRow, DuelRow, HangmanRow, QuickRow, BookRow, AllPeriods } from './page'
+import { IconHome, IconSwords, IconHint, IconTime, IconDiscover } from '@/components/icons'
 
 const MEDALS = ['🥇', '🥈', '🥉']
 const PERIODS = [
@@ -16,10 +16,11 @@ const PERIODS = [
 type PeriodId = typeof PERIODS[number]['id']
 
 const GAMES = [
-  { id: 'survivor', label: 'PRO kviz',    Icon: IconHome,   accent: '#609DED' },
-  { id: 'duel',     label: 'Trivia duel', Icon: IconSwords, accent: '#FFCB46' },
-  { id: 'hangman',  label: 'Vešanje',     Icon: IconHint,   accent: '#4CAF50' },
-  { id: 'quick',    label: 'Brzi kviz',   Icon: IconTime,   accent: '#E55353' },
+  { id: 'survivor', label: 'PRO kviz',    Icon: IconHome,     accent: '#609DED' },
+  { id: 'book',     label: 'Book kviz',   Icon: IconDiscover, accent: '#9c7a13' },
+  { id: 'duel',     label: 'Trivia duel', Icon: IconSwords,   accent: '#FFCB46' },
+  { id: 'hangman',  label: 'Vešanje',     Icon: IconHint,     accent: '#4CAF50' },
+  { id: 'quick',    label: 'Brzi kviz',   Icon: IconTime,     accent: '#E55353' },
 ] as const
 type GameId = typeof GAMES[number]['id']
 
@@ -33,12 +34,13 @@ const DEMO_NAMES = [
 ]
 
 export default function LeaderboardTabs({
-  survivor, duel, hangman, quick, user,
+  survivor, duel, hangman, quick, book, user,
 }: {
   survivor: AllPeriods<SurvivorRow>
   duel: AllPeriods<DuelRow>
   hangman: AllPeriods<HangmanRow>
   quick: AllPeriods<QuickRow>
+  book: AllPeriods<BookRow>
   user: boolean
 }) {
   const [game, setGame] = useState<GameId>('survivor')
@@ -47,7 +49,7 @@ export default function LeaderboardTabs({
   return (
     <>
       {/* Game mode pills */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-3">
         {GAMES.map(g => {
           const active = game === g.id
           return (
@@ -78,6 +80,7 @@ export default function LeaderboardTabs({
       </div>
 
       {game === 'survivor' && <SurvivorBoard data={survivor[period]} period={period} user={user} />}
+      {game === 'book'     && <BookBoard     data={book[period]}     period={period} user={user} />}
       {game === 'duel'     && <DuelBoard     data={duel[period]}     period={period} user={user} />}
       {game === 'hangman'  && <HangmanBoard  data={hangman[period]}  period={period} user={user} />}
       {game === 'quick'    && <QuickBoard    data={quick[period]}    period={period} user={user} />}
@@ -232,6 +235,41 @@ function QuickBoard({ data, period, user }: { data: QuickRow[]; period: PeriodId
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
               <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.correct} tačno · {Math.round(p.accuracy)}%</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
+              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── BOOK KVIZ ───────────────────────────────────────────────────────────
+function BookBoard({ data, period, user }: { data: BookRow[]; period: PeriodId; user: boolean }) {
+  if (data.length === 0) return <EmptyBoard user={user} href="/book-kviz" label="Igraj Book kviz" icon="📚" />
+  return (
+    <div className="card-soft overflow-hidden">
+      <PeriodHint period={period} />
+      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, 50).map((p, i) => (
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+            <Rank i={i} />
+            <Avatar name={p.name} avatar={p.avatar} accent="#9c7a13" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+                {p.topGenre && (
+                  <span className="chip" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                    {p.topGenre}
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+                {p.questionsReached} pit. · {Math.round(p.accuracy)}% tačnih
+              </p>
             </div>
             <div className="text-right flex-shrink-0">
               <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
