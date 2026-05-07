@@ -69,7 +69,7 @@ export default function BrziKvizStart() {
 
   const savedRef = useRef(false)
 
-  // ── Load random batch of questions ──────────────────────────────────────
+  // ── Load random batch of questions, excluding ones seen in last 24h ────
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -77,14 +77,29 @@ export default function BrziKvizStart() {
       if (!user) { router.push('/auth/prijava?redirect=/brzi-kviz'); return }
       setMyId(user.id)
 
+      // Fetch question IDs seen in last 24h
+      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const { data: seen } = await supabase
+        .from('quick_seen')
+        .select('question_id')
+        .eq('user_id', user.id)
+        .gte('seen_at', dayAgo)
+      const seenSet = new Set((seen || []).map(s => s.question_id))
+
       // Pull a chunk and shuffle client-side
       const { data } = await supabase
         .from('questions')
         .select('id, question_text, options, correct_answer')
         .eq('is_active', true)
-        .limit(500)
+        .limit(800)
       if (!data || data.length === 0) { setLoading(false); return }
-      const shuffled = (data as QuestionRow[]).sort(() => Math.random() - 0.5)
+
+      // Exclude recently seen
+      let fresh = (data as QuestionRow[]).filter(q => !seenSet.has(q.id))
+      // Fallback: if pool too small, allow seen ones too (rare, <100 fresh)
+      if (fresh.length < 30) fresh = data as QuestionRow[]
+
+      const shuffled = fresh.sort(() => Math.random() - 0.5)
       setPool(shuffled)
       setLoading(false)
     }
@@ -153,6 +168,17 @@ export default function BrziKvizStart() {
       setWrong(w => w + 1)
       setScoreFlash({ delta: -POINTS_WRONG, key: Date.now() })
     }
+
+    // Mark this question as seen (upsert so seen_at refreshes if already there)
+    if (myId && current.id) {
+      const supabase = createClient()
+      supabase.from('quick_seen').upsert({
+        user_id: myId,
+        question_id: current.id,
+        seen_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,question_id' }).then(() => {})
+    }
+
     setTimeout(() => goNext(), 1800)
   }
 
