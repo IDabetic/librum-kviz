@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { IconDiscover, IconSwords, IconTrophy, IconStar } from '@/components/icons'
 import { Logo } from '@/components/Logo'
+import Footer from '@/components/Footer'
 
 const features = [
   { Icon: IconDiscover, title: 'Bogata baza pitanja',  desc: 'Hiljade pitanja iz svih oblasti — od književnosti do sporta.' },
@@ -166,15 +167,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────────── */}
-      <footer className="py-8 px-4 sm:px-6 border-t" style={{ borderColor: 'rgba(52,52,52,0.06)' }}>
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-[13px]" style={{ color: '#9C9C9C' }}>
-          <span>© {new Date().getFullYear()} Librum Kviz</span>
-          <a href="https://www.librum.club" className="hover:opacity-70 transition-opacity">
-            librum.club ↗
-          </a>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
