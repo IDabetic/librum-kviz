@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-type Row = {
+export type Row = {
   id: string
   question_text: string
   options: string[]
@@ -15,6 +15,10 @@ type Row = {
   times_shown: number
   times_correct: number
   created_at: string
+  log_count: number
+  avg_time_ms: number | null
+  accuracy_pct: number | null
+  flags: ('prelako' | 'preteško' | 'sporo' | 'problematično')[]
 }
 
 const DIFF_LABEL: Record<string, string> = {
@@ -25,6 +29,12 @@ const DIFF_COLOR: Record<string, { bg: string; fg: string }> = {
   medium:     { bg: '#BCD9FF', fg: '#1e5fa4' },
   hard:       { bg: '#FFECBC', fg: '#9c7a13' },
   impossible: { bg: '#FEE2E2', fg: '#b91c1c' },
+}
+const FLAG_STYLE: Record<string, { label: string; bg: string; fg: string }> = {
+  'prelako':       { label: '⚠ Prelako',     bg: '#FFECBC', fg: '#9c7a13' },
+  'preteško':      { label: '⚠ Preteško',    bg: '#FEE2E2', fg: '#b91c1c' },
+  'sporo':         { label: '⏱ Sporo',       bg: '#BCD9FF', fg: '#1e5fa4' },
+  'problematično': { label: '🚩 Problemat.', bg: '#FEE2E2', fg: '#b91c1c' },
 }
 
 export default function PitanjaList({ rows }: { rows: Row[] }) {
@@ -52,8 +62,8 @@ export default function PitanjaList({ rows }: { rows: Row[] }) {
     <div className="card-soft overflow-hidden">
       <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
         {rows.map(r => {
-          const accuracy = r.times_shown > 0 ? Math.round((r.times_correct / r.times_shown) * 100) : null
           const diffStyle = DIFF_COLOR[r.difficulty] || { bg: '#F2F2F2', fg: '#9C9C9C' }
+          const avgSec = r.avg_time_ms != null ? (r.avg_time_ms / 1000).toFixed(1) : null
           return (
             <div key={r.id} className="px-5 py-4 hover:bg-[#F2F2F2] transition-colors flex items-start gap-3">
               <div className="flex-1 min-w-0">
@@ -66,11 +76,21 @@ export default function PitanjaList({ rows }: { rows: Row[] }) {
                       Neaktivno
                     </span>
                   )}
-                  {r.times_shown > 0 && (
+                  {r.flags.map(f => {
+                    const fs = FLAG_STYLE[f]
+                    return <span key={f} className="chip" style={{ background: fs.bg, color: fs.fg }}>{fs.label}</span>
+                  })}
+                  {r.log_count > 0 ? (
                     <span className="text-[11px]" style={{ color: '#9C9C9C' }}>
-                      {r.times_shown} prikaza · {accuracy}% tačnih
+                      {r.log_count} odgovora
+                      {r.accuracy_pct !== null && ` · ${r.accuracy_pct}% tačnih`}
+                      {avgSec && ` · prosek ${avgSec}s`}
                     </span>
-                  )}
+                  ) : r.times_shown > 0 ? (
+                    <span className="text-[11px]" style={{ color: '#9C9C9C' }}>
+                      {r.times_shown} prikaza · {r.accuracy_pct}% tačnih
+                    </span>
+                  ) : null}
                 </div>
                 <p className="text-[14px] font-semibold leading-snug mb-1" style={{ color: '#343434' }}>
                   {r.question_text}

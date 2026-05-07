@@ -1,27 +1,77 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import Image from 'next/image'
 import { IconSearch } from '@/components/icons'
+import KorisniciList from './KorisniciList'
 
 export const dynamic = 'force-dynamic'
 
-type SP = { q?: string; role?: string; page?: string }
+type SP = { q?: string; role?: string; page?: string; per?: string }
+
+const PER_OPTIONS = [25, 50, 100]
 
 export default async function KorisniciPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams
   const supabase = await createClient()
-  const PER = 50
+
+  const per = PER_OPTIONS.includes(parseInt(sp.per || '50', 10))
+    ? parseInt(sp.per!, 10)
+    : 50
   const page = Math.max(0, parseInt(sp.page || '0', 10))
 
   let query = supabase.from('profiles')
     .select('id, first_name, last_name, nickname, avatar, email, city, role, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .range(page * PER, page * PER + PER - 1)
+    .range(page * per, page * per + per - 1)
   if (sp.q) query = query.or(`first_name.ilike.%${sp.q}%,last_name.ilike.%${sp.q}%,nickname.ilike.%${sp.q}%,email.ilike.%${sp.q}%`)
   if (sp.role && sp.role !== 'all') query = query.eq('role', sp.role)
 
-  const { data, count } = await query
-  const totalPages = Math.ceil((count ?? 0) / PER)
+  const { data: profiles, count } = await query
+  const totalPages = Math.ceil((count ?? 0) / per)
+
+  // PRO sessions for the visible users — aggregate avg sec/question + games + best
+  const userIds = (profiles || []).map(p => p.id)
+  const { data: sessions } = userIds.length
+    ? await supabase.from('survivor_sessions')
+        .select('user_id, score, total_time_seconds, questions_reached')
+        .in('user_id', userIds)
+    : { data: [] as { user_id: string; score: number; total_time_seconds: number; questions_reached: number }[] }
+
+  type Stat = { games: number; bestScore: number; secSum: number; secCount: number }
+  const statMap = new Map<string, Stat>()
+  for (const id of userIds) statMap.set(id, { games: 0, bestScore: 0, secSum: 0, secCount: 0 })
+  for (const s of sessions || []) {
+    const stat = statMap.get(s.user_id)
+    if (!stat) continue
+    stat.games += 1
+    if (s.score > stat.bestScore) stat.bestScore = s.score
+    if (s.questions_reached > 0) {
+      stat.secSum += s.total_time_seconds / s.questions_reached
+      stat.secCount += 1
+    }
+  }
+
+  const rows = (profiles || []).map(p => {
+    const stat = statMap.get(p.id)!
+    return {
+      ...p,
+      pro_games: stat.games,
+      pro_best: stat.bestScore,
+      pro_avg_sec_per_q: stat.secCount ? stat.secSum / stat.secCount : null,
+    }
+  })
+
+  // Currently signed-in admin (so they can't bulk-delete themselves accidentally)
+  const { data: { user } } = await supabase.auth.getUser()
+  const myId = user?.id || ''
+
+  const baseQuery = (override: Partial<SP>) => {
+    const params = new URLSearchParams()
+    const merged = { q: sp.q, role: sp.role, per: String(per), ...override }
+    for (const [k, v] of Object.entries(merged)) {
+      if (v !== undefined && v !== '' && v !== null) params.set(k, String(v))
+    }
+    return params.toString()
+  }
 
   return (
     <div className="space-y-5">
@@ -45,48 +95,20 @@ export default async function KorisniciPage({ searchParams }: { searchParams: Pr
           <option value="moderator">Moderator</option>
           <option value="super_admin">Super admin</option>
         </select>
+        <select name="per" defaultValue={String(per)} className="input flex-shrink-0" style={{ width: 'auto', minWidth: 90 }}>
+          {PER_OPTIONS.map(n => <option key={n} value={n}>{n}/str.</option>)}
+        </select>
         <button type="submit" className="btn btn-primary btn-md">Pretraži</button>
       </form>
 
-      <div className="card-soft overflow-hidden">
-        <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
-          {(data || []).map(u => {
-            const name = u.nickname || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Igrač'
-            const isAdmin = ['urednik', 'moderator', 'super_admin'].includes(u.role)
-            return (
-              <Link key={u.id} href={`/majmun/korisnici/${u.id}`}
-                className="px-5 py-4 hover:bg-[#F2F2F2] transition-colors flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
-                  {u.avatar
-                    ? <Image src={`/avatars/${u.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-[13px] font-bold text-white" style={{ background: '#609DED' }}>{name[0]}</div>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{name}</p>
-                    {isAdmin && (
-                      <span className="chip" style={{ background: '#FFCB46', color: '#343434' }}>{u.role.replace('_', ' ')}</span>
-                    )}
-                  </div>
-                  <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
-                    {u.email}{u.city ? ` · ${u.city}` : ''}
-                  </p>
-                </div>
-                <div className="text-[11px] flex-shrink-0" style={{ color: '#9C9C9C' }}>
-                  {new Date(u.created_at).toLocaleDateString('sr')}
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      </div>
+      <KorisniciList rows={rows} myId={myId} />
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-[12px]" style={{ color: '#9C9C9C' }}>Strana {page + 1} od {totalPages}</p>
           <div className="flex gap-2">
-            {page > 0 && <Link href={`/majmun/korisnici?page=${page - 1}`} className="btn btn-secondary btn-sm">← Prethodna</Link>}
-            {page < totalPages - 1 && <Link href={`/majmun/korisnici?page=${page + 1}`} className="btn btn-primary btn-sm">Sledeća →</Link>}
+            {page > 0 && <Link href={`/majmun/korisnici?${baseQuery({ page: String(page - 1) })}`} className="btn btn-secondary btn-sm">← Prethodna</Link>}
+            {page < totalPages - 1 && <Link href={`/majmun/korisnici?${baseQuery({ page: String(page + 1) })}`} className="btn btn-primary btn-sm">Sledeća →</Link>}
           </div>
         </div>
       )}

@@ -1,7 +1,44 @@
 import Link from 'next/link'
+import Script from 'next/script'
 import { IconDiscover, IconSwords, IconTrophy, IconStar } from '@/components/icons'
 import { Logo } from '@/components/Logo'
 import Footer from '@/components/Footer'
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Šta je Librum kviz?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Librum kviz je besplatna platforma za kratke igre znanja na srpskom — PRO kviz, Trivia duel, Vešanje i Brzi kviz. Pitanja pokrivaju književnost, istoriju, geografiju, sport, kulturu, prirodu i opšte znanje.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Kako se igra PRO kviz?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove, svaka greška skida život. Igra traje dok imaš živote.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Da li je Librum kviz besplatan?',
+      acceptedAnswer: { '@type': 'Answer', text: 'Da, Librum kviz je besplatan za igranje.' },
+    },
+    {
+      '@type': 'Question',
+      name: 'Mogu li da igram protiv prijatelja?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Možeš. Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ link prijatelju i odmerite znanje na istim pitanjima.',
+      },
+    },
+  ],
+}
 
 const features = [
   { Icon: IconDiscover, title: 'Bogata baza pitanja',  desc: 'Hiljade pitanja iz svih oblasti — od književnosti do sporta.' },
@@ -167,7 +204,36 @@ export default function Home() {
         </div>
       </section>
 
+      {/* SEO intro paragraph */}
+      <section className="py-12 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="font-bold text-[18px] mb-4 tracking-tight" style={{ color: '#343434' }}>
+            Igre znanja iz svih oblasti
+          </h2>
+          <div className="space-y-3 text-[14px] leading-relaxed" style={{ color: '#9C9C9C' }}>
+            <p>
+              Librum kviz je besplatna platforma za kratke igre znanja na srpskom jeziku. Namenjen je svima koji vole
+              književnost, istoriju, geografiju, sport, kulturu, prirodu i opšte znanje.
+            </p>
+            <p>
+              Možeš da igraš <strong>PRO kviz</strong> i proveriš koliko daleko možeš da doguraš sa 10 života, da
+              izazoveš prijatelja u <strong>Trivia duelu</strong>, da pogađaš skrivene reči u igri <strong>Vešanje</strong> ili
+              da testiraš brzinu kroz <strong>Brzi kviz</strong> sa tvrdnjama tačno/netačno.
+            </p>
+            <p>
+              Svaka runda traje kratko, ali svako pitanje donosi priliku da naučiš nešto novo. Rezultati se beleže na
+              zajedničkoj <Link href="/leaderboard" style={{ color: '#609DED' }}>rang-listi</Link>, a ako imaš zanimljivo
+              pitanje — možeš ga <Link href="/predlozi-pitanje" style={{ color: '#609DED' }}>predložiti</Link> i postati
+              deo baze.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <Footer />
+
+      <Script id="ld-faq" type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
     </div>
   )
 }

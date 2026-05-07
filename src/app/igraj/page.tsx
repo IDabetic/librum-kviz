@@ -1,25 +1,39 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { IconHint, IconTime, IconStar, IconTrophy, IconSwords } from '@/components/icons'
+
+export const metadata: Metadata = {
+  title: 'PRO kviz – survival igra znanja sa 10 života',
+  description: 'Igraj PRO kviz i proveri koliko daleko možeš da doguraš. Dobijaš 10 života, odgovaraš na pitanja iz različitih oblasti i osvajaš bodove za rang-listu.',
+  alternates: { canonical: '/igraj' },
+  openGraph: {
+    title: 'PRO kviz – survival igra znanja | Librum Kviz',
+    description: 'Odgovaraj na pitanja, čuvaj živote i pokušaj da doguraš što dalje.',
+    url: 'https://kviz.librum.club/igraj',
+    type: 'website',
+  },
+}
 
 export default async function IgrajLandingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/prijava?redirect=/igraj')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('first_name').eq('id', user.id).single()
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('first_name').eq('id', user.id).single()
+    : { data: null as { first_name: string | null } | null }
 
   // user's best survivor session
-  const { data: best } = await supabase
-    .from('survivor_sessions')
-    .select('score, questions_reached, best_combo, accuracy')
-    .eq('user_id', user.id)
-    .order('score', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const { data: best } = user
+    ? await supabase
+        .from('survivor_sessions')
+        .select('score, questions_reached, best_combo, accuracy')
+        .eq('user_id', user.id)
+        .order('score', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null as { score: number; questions_reached: number; best_combo: number; accuracy: number } | null }
 
   // today's top score (across all users)
   const startOfDay = new Date()
@@ -171,9 +185,15 @@ export default async function IgrajLandingPage() {
           Tvoj cilj: preživi <strong>50 pitanja</strong> i osvoji novih <strong>5 života</strong>.
         </p>
 
-        <Link href="/igraj/start" className="btn btn-primary btn-lg w-full">
-          Kreni — imaš 10 života
-        </Link>
+        {user ? (
+          <Link href="/igraj/start" className="btn btn-primary btn-lg w-full">
+            Kreni — imaš 10 života
+          </Link>
+        ) : (
+          <Link href="/auth/prijava?redirect=/igraj" className="btn btn-primary btn-lg w-full">
+            Prijavi se da igraš
+          </Link>
+        )}
 
         {/* Duel CTA */}
         <Link href="/igraj-zajedno" className="mt-5 flex items-center justify-center gap-2 text-[13px] font-semibold transition-opacity hover:opacity-70"

@@ -1,8 +1,21 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { IconHint, IconUsers, IconStar, IconTrophy } from '@/components/icons'
+
+export const metadata: Metadata = {
+  title: 'Vešanje – igra pogađanja reči po kategorijama',
+  description: 'Igraj vešanje online. Izaberi kategoriju, pročitaj hint i pogodi skrivenu reč iz sporta, geografije, istorije, kulture, prirode ili predmeta.',
+  alternates: { canonical: '/vesanje' },
+  openGraph: {
+    title: 'Vešanje – pogodi skrivenu reč | Librum Kviz',
+    description: 'Klasična igra pogađanja reči po kategorijama.',
+    url: 'https://kviz.librum.club/vesanje',
+    type: 'website',
+  },
+}
 
 const CATEGORIES = [
   { id: 'Sport',      label: 'Sport',      bg: '#BCD9FF', fg: '#1e5fa4', emoji: '⚽' },

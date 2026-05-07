@@ -1,8 +1,21 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { IconStar, IconTime, IconCheck, IconWrong, IconTrophy } from '@/components/icons'
+
+export const metadata: Metadata = {
+  title: 'Brzi kviz – tačno ili netačno za 60 sekundi',
+  description: 'Igraj Brzi kviz i odgovaraj na tvrdnje sa tačno ili netačno. Imaš 60 sekundi da osvojiš što više bodova i proveriš brzinu znanja.',
+  alternates: { canonical: '/brzi-kviz' },
+  openGraph: {
+    title: 'Brzi kviz – tačno ili netačno | Librum Kviz',
+    description: 'Tvrdnje, 60 sekundi, koliko stigneš.',
+    url: 'https://kviz.librum.club/brzi-kviz',
+    type: 'website',
+  },
+}
 
 export default async function BrziKvizLanding() {
   const supabase = await createClient()
