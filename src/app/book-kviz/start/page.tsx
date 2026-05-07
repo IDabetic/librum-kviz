@@ -87,6 +87,16 @@ export default function BookKvizStart() {
   const savingRef = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
 
+  // The big +N / -N overlay only set state, never cleared it — so the
+  // last delta sat in the middle of the screen until the next answer.
+  // Clear ~900ms after each set; cleanup cancels the previous timer if a
+  // newer flash arrives before this one fires.
+  useEffect(() => {
+    if (!scoreFlash) return
+    const t = setTimeout(() => setScoreFlash(null), 900)
+    return () => clearTimeout(t)
+  }, [scoreFlash])
+
   // Mirror live game state in a ref so pagehide / exit handlers can flush
   // the latest stats without depending on React render closures.
   const liveRef = useRef({

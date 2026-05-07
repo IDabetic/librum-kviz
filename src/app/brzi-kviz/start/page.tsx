@@ -326,7 +326,11 @@ export default function BrziKvizStart() {
                 <Stat label="Tačnost" value={`${accuracy}%`} accent="#343434" />
               </div>
               <div className="grid grid-cols-2 gap-3 mb-3">
-                <Link href="/brzi-kviz/start" className="btn btn-primary btn-lg">Igraj ponovo</Link>
+                {/* End screen lives in /brzi-kviz/start. Next.js Link to the
+                    same route does client-side nav with no re-mount, so the
+                    component would stay in gameOver=true forever. A real
+                    anchor forces a full reload → fresh state, fresh pool. */}
+                <a href="/brzi-kviz/start" className="btn btn-primary btn-lg">Igraj ponovo</a>
                 <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
               </div>
               <button onClick={handleShare} className="btn btn-md w-full"
