@@ -111,6 +111,26 @@ export default function DuelEndPage() {
     return () => { supabase.removeChannel(channel) }
   }, [room?.id])
 
+  // Realtime can drop events on flaky mobile connections — fall back to a
+  // 2s poll on the same row so the partner ALWAYS sees "X traži revanš"
+  // within a couple seconds even if the WebSocket doesn't deliver. We stop
+  // polling the moment a rematch_room_code lands (everyone navigates).
+  useEffect(() => {
+    if (!room?.id || room.rematch_room_code) return
+    const supabase = createClient()
+    const id = room.id
+    const t = setInterval(async () => {
+      const { data } = await supabase
+        .from('game_rooms')
+        .select('host_rematch, guest_rematch, rematch_room_code')
+        .eq('id', id)
+        .single()
+      if (!data) return
+      setRoom(prev => prev ? { ...prev, ...data } : prev)
+    }, 2000)
+    return () => clearInterval(t)
+  }, [room?.id, room?.rematch_room_code])
+
   useEffect(() => {
     if (!r) router.push('/igraj-zajedno')
   }, [r, router])
