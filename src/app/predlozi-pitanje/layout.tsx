@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: 'Tvoj predlog može postati deo kviza.',
     url: 'https://kviz.librum.club/predlozi-pitanje',
     type: 'website',
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
 }
 

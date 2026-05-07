@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description: 'Pitanja iz svih književnih žanrova. Saznaj u kom si najbolji.',
     url: 'https://kviz.librum.club/book-kviz',
     type: 'website',
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
 }
 

@@ -101,6 +101,16 @@ export async function GET() {
         </div>
       </div>
     ),
-    { width: 1200, height: 628 }
+    {
+      width: 1200,
+      height: 628,
+      // The URL is versioned (?v=N) so the rendered bytes never change for a
+      // given URL — cache aggressively at every layer (browser, CDN, social
+      // platform crawlers). Bump the ?v= param in metadata when the design
+      // changes; that's the cache bust.
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+      },
+    }
   )
 }

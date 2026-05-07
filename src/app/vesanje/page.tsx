@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     description: 'Klasična igra pogađanja reči po kategorijama.',
     url: 'https://kviz.librum.club/vesanje',
     type: 'website',
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
 }
 

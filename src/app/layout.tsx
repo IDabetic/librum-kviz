@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     description: DEFAULT_DESC,
     url: SITE_URL,
     siteName: SITE_NAME,
-    images: [{ url: '/api/og?v=3', width: 1200, height: 628, alt: 'Librum Kviz' }],
+    images: [{ url: '/og-share.jpg?v=6', width: 1200, height: 628, alt: 'Librum Kviz', type: 'image/jpeg' }],
     locale: 'sr_RS',
     type: 'website',
   },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: DEFAULT_TITLE,
     description: DEFAULT_DESC,
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
   robots: {
     index: true,
