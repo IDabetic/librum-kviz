@@ -3,7 +3,7 @@ import Header from '@/components/Header'
 import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
-import { IconSettings, IconHome, IconSwords, IconHint, IconTime, IconStar, IconTrophy } from '@/components/icons'
+import { IconSettings, IconHome, IconSwords, IconHint, IconTime, IconStar } from '@/components/icons'
 
 function fmtTime(s: number): string {
   const m = Math.floor(s / 60)

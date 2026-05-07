@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: 'Igra za dva igrača, ista pitanja, brzi rezultat.',
     url: 'https://kviz.librum.club/igraj-zajedno',
     type: 'website',
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
 }
 

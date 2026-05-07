@@ -13,16 +13,19 @@ type RecentUser = { id: string; first_name: string; last_name: string; nickname:
 // Primary nav: shown as icon+label on xl, icon-only on md/lg.
 // "Predloži pitanje" lives only in the mobile drawer + footer; it
 // doesn't earn a header slot.
+// Per-category accent. Subtle in inactive state (icon + soft tint on hover),
+// solid pill on active. Keeps the header monochrome at a glance but lets
+// each game mode read distinctly when scanning the bar.
 const NAV_LINKS = [
-  { href: '/igraj',         label: 'PRO kviz',    Icon: IconHome },
-  { href: '/book-kviz',     label: 'Book kviz',   Icon: IconStar },
-  { href: '/igraj-zajedno', label: 'Trivia duel', Icon: IconSwords },
-  { href: '/vesanje',       label: 'Vešanje',     Icon: IconHint },
-  { href: '/brzi-kviz',     label: 'Brzi kviz',   Icon: IconTime },
-  { href: '/leaderboard',   label: 'Rang lista',  Icon: IconTrophy },
+  { href: '/igraj',         label: 'PRO kviz',    Icon: IconHome,   accent: '#609DED', tint: 'rgba(96,157,237,0.10)' },
+  { href: '/book-kviz',     label: 'Book kviz',   Icon: IconStar,   accent: '#9c7a13', tint: 'rgba(255,203,70,0.16)' },
+  { href: '/igraj-zajedno', label: 'Trivia duel', Icon: IconSwords, accent: '#E55353', tint: 'rgba(229,83,83,0.10)' },
+  { href: '/vesanje',       label: 'Vešanje',     Icon: IconHint,   accent: '#15803d', tint: 'rgba(76,175,80,0.10)' },
+  { href: '/brzi-kviz',     label: 'Brzi kviz',   Icon: IconTime,   accent: '#b91c1c', tint: 'rgba(229,83,83,0.08)' },
+  { href: '/leaderboard',   label: 'Rang lista',  Icon: IconTrophy, accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
 ]
 const MOBILE_EXTRA_LINKS = [
-  { href: '/predlozi-pitanje', label: 'Predloži pitanje', Icon: IconUsers },
+  { href: '/predlozi-pitanje', label: 'Predloži pitanje', Icon: IconUsers, accent: '#609DED', tint: 'rgba(96,157,237,0.10)' },
 ]
 
 function timeAgo(dateStr: string): string {
@@ -64,18 +67,20 @@ export default function Header() {
 
   // Defer the recent-users fetch until the dropdown actually opens or the
   // mobile drawer is opened. Saves ~5-15kb on first paint and one round
-  // trip for users who never click that button.
-  const [recentLoaded, setRecentLoaded] = useState(false)
+  // trip for users who never click that button. The "loaded" flag is a ref
+  // — we only need to remember "did we already fetch?", we don't need a
+  // re-render when it flips.
+  const recentLoadedRef = useRef(false)
   useEffect(() => {
     if (!showRecent && !mobileOpen) return
-    if (recentLoaded) return
-    setRecentLoaded(true)
+    if (recentLoadedRef.current) return
+    recentLoadedRef.current = true
     createClient().from('profiles')
       .select('id, first_name, last_name, nickname, avatar, created_at')
       .order('created_at', { ascending: false })
       .limit(15)
       .then(({ data }) => { if (data) setRecentUsers(data as RecentUser[]) })
-  }, [showRecent, mobileOpen, recentLoaded])
+  }, [showRecent, mobileOpen])
 
   useEffect(() => {
     if (!showRecent) return
@@ -86,6 +91,10 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [showRecent])
 
+  // Close the mobile drawer whenever the route changes — pathname comes from
+  // the router (external system), so this is a legitimate sync-from-router
+  // effect, not derived state.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
   async function handleLogout() {
@@ -104,7 +113,7 @@ export default function Header() {
 
           {/* Desktop nav — icon-only on md/lg, full label on xl */}
           <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-center">
-            {NAV_LINKS.map(({ href, label, Icon }) => {
+            {NAV_LINKS.map(({ href, label, Icon, accent, tint }) => {
               // Exact match OR /href/* — prevents "/igraj-zajedno" from
               // marking "/igraj" active because of the prefix overlap.
               const active = pathname === href || pathname.startsWith(href + '/')
@@ -115,13 +124,13 @@ export default function Header() {
                   title={label}
                   className="flex items-center gap-2 px-2.5 xl:px-3.5 py-2 rounded-full text-[13px] font-medium transition-all"
                   style={active
-                    ? { background: '#609DED', color: 'white' }
+                    ? { background: accent, color: 'white' }
                     : { color: '#343434' }
                   }
-                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(52,52,52,0.06)' }}
+                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = tint }}
                   onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}
                 >
-                  <Icon size={16} strokeWidth={2.2} />
+                  <Icon size={16} strokeWidth={2.2} style={active ? undefined : { color: accent }} />
                   <span className="hidden xl:inline">{label}</span>
                 </Link>
               )
@@ -241,16 +250,16 @@ export default function Header() {
                 </Link>
               )}
 
-              {[...NAV_LINKS, ...MOBILE_EXTRA_LINKS].map(({ href, label, Icon }) => {
+              {[...NAV_LINKS, ...MOBILE_EXTRA_LINKS].map(({ href, label, Icon, accent, tint }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 return (
                   <Link key={href} href={href}
                     className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"
                     style={active
-                      ? { background: '#609DED', color: 'white' }
-                      : { color: '#343434' }
+                      ? { background: accent, color: 'white' }
+                      : { color: '#343434', background: tint }
                     }>
-                    <Icon size={18} strokeWidth={2.2} />
+                    <Icon size={18} strokeWidth={2.2} style={active ? undefined : { color: accent }} />
                     {label}
                   </Link>
                 )

@@ -37,14 +37,19 @@ export default function DuelEndPage() {
   const params = useParams()
   const router = useRouter()
   const code = params.code as string
-  const [r, setR] = useState<DuelResult | null>(null)
+  // Lazy initialiser — sessionStorage is read once on mount and stays there
+  // for the whole page lifetime, so a setState-in-effect would just churn.
+  const [r] = useState<DuelResult | null>(() => {
+    if (typeof window === 'undefined') return null
+    const stored = sessionStorage.getItem(`duel-result-${code}`)
+    if (!stored) return null
+    try { return JSON.parse(stored) as DuelResult } catch { return null }
+  })
   const [shared, setShared] = useState(false)
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(`duel-result-${code}`)
-    if (!stored) { router.push('/igraj-zajedno'); return }
-    setR(JSON.parse(stored))
-  }, [code, router])
+    if (!r) router.push('/igraj-zajedno')
+  }, [r, router])
 
   if (!r) return null
 

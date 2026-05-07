@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { IconHint, IconUsers, IconStar, IconTrophy } from '@/components/icons'
+import { IconUsers, IconStar, IconTrophy } from '@/components/icons'
 
 export const metadata: Metadata = {
   title: 'Vešanje – igra pogađanja reči po kategorijama',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     description: 'Klasična igra pogađanja reči po kategorijama.',
     url: 'https://kviz.librum.club/vesanje',
     type: 'website',
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
 }
 

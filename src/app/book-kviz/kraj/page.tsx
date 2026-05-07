@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { IconTrophy, IconStar, IconDiscover } from '@/components/icons'
+import { IconTrophy } from '@/components/icons'
 
 type GenreBreakdown = Record<string, { correct: number; total: number }>
 
@@ -41,13 +41,18 @@ function fmtTime(s: number): string {
 
 export default function BookKvizEnd() {
   const router = useRouter()
-  const [r, setR] = useState<Result | null>(null)
+  // Lazy initialiser — read & parse sessionStorage once on mount, no extra
+  // render through the loading branch.
+  const [r] = useState<Result | null>(() => {
+    if (typeof window === 'undefined') return null
+    const raw = sessionStorage.getItem('book-result')
+    if (!raw) return null
+    try { return JSON.parse(raw) as Result } catch { return null }
+  })
 
   useEffect(() => {
-    const raw = sessionStorage.getItem('book-result')
-    if (!raw) { router.push('/book-kviz'); return }
-    try { setR(JSON.parse(raw)) } catch { router.push('/book-kviz') }
-  }, [router])
+    if (!r) router.push('/book-kviz')
+  }, [r, router])
 
   if (!r) {
     return (
@@ -59,7 +64,7 @@ export default function BookKvizEnd() {
   }
 
   const breakdownEntries = Object.entries(r.breakdown)
-    .filter(([_, s]) => s.total > 0)
+    .filter(([, s]) => s.total > 0)
     .map(([g, s]) => ({ genre: g, correct: s.correct, total: s.total, pct: (s.correct / s.total) * 100 }))
     .sort((a, b) => b.pct - a.pct || b.correct - a.correct)
 

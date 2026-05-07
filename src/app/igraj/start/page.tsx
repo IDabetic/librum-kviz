@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { IconClose, IconHint, IconCheck, IconWrong } from '@/components/icons'
+import { IconClose, IconCheck, IconWrong } from '@/components/icons'
 
 // ── Game constants ──────────────────────────────────────────────────────────
 const TIME_PER_QUESTION = 15
@@ -137,6 +137,24 @@ export default function SurvivorGame() {
   const savingRef = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
 
+  // Mirror live game state so pagehide / exit handlers can flush the latest
+  // result to leaderboard without depending on React render closures.
+  const liveRef = useRef({
+    score: 0, reached: 0, correct: 0, wrong: 0, skipped: 0, bestCombo: 0,
+    usedLifelines: { fiftyFifty: 0, skip: 0, extraTime: 0 } as Lifelines,
+    riskA: 0, riskC: 0, riskW: 0,
+    anyAnswered: false,
+  })
+  useEffect(() => {
+    liveRef.current = {
+      score, reached, correct, wrong, skipped, bestCombo,
+      usedLifelines: usedLifelinesTotal,
+      riskA: riskAttempts, riskC: riskCorrect, riskW: riskWrong,
+      anyAnswered: correct + wrong + skipped > 0,
+    }
+  }, [score, reached, correct, wrong, skipped, bestCombo, usedLifelinesTotal,
+      riskAttempts, riskCorrect, riskWrong])
+
   // ── Load questions ─────────────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
@@ -163,8 +181,30 @@ export default function SurvivorGame() {
       const byDiff: Record<string, Question[]> = { easy: [], medium: [], hard: [], impossible: [] }
       all.forEach(q => { (byDiff[q.difficulty] ?? byDiff.medium).push(q) })
 
+      // Seed the first question now so we don't need a follow-up effect
+      // that calls setState during render. The first round is reached=0,
+      // so pickDifficulty heavily favours easy → medium.
+      const wantedDiff = pickDifficulty(0)
+      const order = ['easy', 'medium', 'hard', 'impossible']
+      const cIdx = order.indexOf(wantedDiff)
+      const candidates: string[] = [wantedDiff]
+      for (let d = 1; d < order.length; d++) {
+        if (cIdx - d >= 0) candidates.push(order[cIdx - d])
+        if (cIdx + d < order.length) candidates.push(order[cIdx + d])
+      }
+      let firstQ: Question | null = null
+      outer: for (const diff of candidates) {
+        for (const q of byDiff[diff] ?? []) { firstQ = q; break outer }
+      }
+      if (!firstQ) firstQ = all[0] ?? null
+
       setPool(all)
       setPoolByDiff(byDiff)
+      if (firstQ) {
+        setCurrent(shuffleOptions(firstQ))
+        setUsedIds(new Set([firstQ.id]))
+        questionStartRef.current = Date.now()
+      }
       setLoading(false)
     }
     load()
@@ -192,17 +232,6 @@ export default function SurvivorGame() {
     for (const q of pool) if (!used.has(q.id)) return shuffleOptions(q)
     return null
   }, [pool, poolByDiff])
-
-  // ── Start first question ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (loading || current || gameOver || pool.length === 0) return
-    const q = nextQuestion(0, new Set())
-    if (q) {
-      setCurrent(q)
-      setUsedIds(prev => new Set(prev).add(q.id))
-      questionStartRef.current = Date.now()
-    }
-  }, [loading, current, gameOver, pool.length, nextQuestion])
 
   // ── Tick timer ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -426,6 +455,58 @@ export default function SurvivorGame() {
   // ── Confirm exit ───────────────────────────────────────────────────────────
   const [showExitConfirm, setShowExitConfirm] = useState(false)
 
+  // Best-effort save used by exit button + pagehide. Skipped when no answer
+  // was given, or when the normal end-of-game saveSession() already ran.
+  const persistSession = useCallback(async (opts: { useBeacon?: boolean } = {}) => {
+    if (savingRef.current || !myId || !liveRef.current.anyAnswered) return
+    savingRef.current = true
+    const live = liveRef.current
+    const totalAnswered = live.correct + live.wrong
+    const accuracy = totalAnswered > 0 ? Math.round((live.correct / totalAnswered) * 10000) / 100 : 0
+    const totalTime = Math.floor((Date.now() - startTime) / 1000)
+    const payload = {
+      user_id: myId,
+      score: live.score,
+      questions_reached: live.reached,
+      correct_answers: live.correct,
+      wrong_answers: live.wrong,
+      skipped_questions: live.skipped,
+      accuracy,
+      best_combo: live.bestCombo,
+      total_time_seconds: totalTime,
+      used_lifelines: live.usedLifelines,
+      risk_attempts: live.riskA,
+      risk_correct: live.riskC,
+      risk_wrong: live.riskW,
+    }
+    if (opts.useBeacon && typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+      try {
+        const blob = new Blob([JSON.stringify({ mode: 'survivor', ...payload })], { type: 'application/json' })
+        navigator.sendBeacon('/api/save-session', blob)
+        return
+      } catch { /* fall through */ }
+    }
+    const supabase = createClient()
+    await supabase.from('survivor_sessions').insert(payload)
+  }, [myId, startTime])
+
+  useEffect(() => {
+    if (gameOver) return
+    function flush() { void persistSession({ useBeacon: true }) }
+    function onVis() { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [gameOver, persistSession])
+
+  async function confirmExit() {
+    await persistSession()
+    router.push('/igraj')
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
   if (loading || !current) {
     return (
@@ -590,12 +671,12 @@ export default function SurvivorGame() {
           style={{ background: 'rgba(52,52,52,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
             <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#343434' }}>Izađi iz igre?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se NEĆE upisati.</p>
+            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se upisuje na rang listu.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi
               </button>
-              <button onClick={() => router.push('/igraj')} className="btn btn-md flex-1"
+              <button onClick={confirmExit} className="btn btn-md flex-1"
                 style={{ background: '#E55353', color: 'white' }}>
                 Izađi
               </button>

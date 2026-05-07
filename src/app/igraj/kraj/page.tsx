@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { IconShare, IconTrophy, IconStar, IconDiscover } from '@/components/icons'
+import { IconShare } from '@/components/icons'
 
 type Result = {
   score: number
@@ -25,14 +25,20 @@ function fmtTime(s: number): string {
 
 export default function KrajIgrePage() {
   const router = useRouter()
-  const [result, setResult] = useState<Result | null>(null)
+  // Read sessionStorage lazily on first render. Parsing in a setState-in-
+  // effect would trigger an extra render with `result === null`, which
+  // would also flicker through the empty branch below.
+  const [result] = useState<Result | null>(() => {
+    if (typeof window === 'undefined') return null
+    const stored = sessionStorage.getItem('survivor-result')
+    if (!stored) return null
+    try { return JSON.parse(stored) as Result } catch { return null }
+  })
   const [shared, setShared] = useState(false)
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('survivor-result')
-    if (!stored) { router.push('/igraj'); return }
-    setResult(JSON.parse(stored))
-  }, [router])
+    if (!result) router.push('/igraj')
+  }, [result, router])
 
   if (!result) return null
 

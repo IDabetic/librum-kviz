@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     description: 'Tvrdnje, 60 sekundi, koliko stigneš.',
     url: 'https://kviz.librum.club/brzi-kviz',
     type: 'website',
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
 }
 

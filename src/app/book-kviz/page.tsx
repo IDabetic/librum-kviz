@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
-import { IconHint, IconTime, IconStar, IconTrophy, IconDiscover } from '@/components/icons'
+import { IconTime, IconStar, IconTrophy, IconDiscover } from '@/components/icons'
 
 export const metadata: Metadata = {
   title: 'Book kviz – kviz znanja iz književnosti',
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description: 'Pitanja iz svih književnih žanrova. Saznaj u kom si najbolji.',
     url: 'https://kviz.librum.club/book-kviz',
     type: 'website',
-    images: ['/api/og?v=3'],
+    images: ['/og-share.jpg?v=6'],
   },
 }
 

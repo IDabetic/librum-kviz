@@ -99,10 +99,8 @@ export default function DuelGamePage() {
 
   // Per-question state
   const [current, setCurrent] = useState(0)            // index into question_ids
-  const [selected, setSelected] = useState<number | null>(null)   // shuffled index
   const [revealed, setRevealed] = useState(false)
   const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION)
-  const [questionStartedAt, setQuestionStartedAt] = useState<number>(Date.now())
 
   // Local copies (mirror DB but updated optimistically)
   const [myScore, setMyScore] = useState(0)
@@ -170,7 +168,6 @@ export default function DuelGamePage() {
         // Resume to next unanswered question
         const myA = roomData.host_id === user.id ? (roomData.host_answers ?? []) : (roomData.guest_answers ?? [])
         setCurrent(myA.length)
-        setQuestionStartedAt(Date.now())
         setTimeLeft(TIME_PER_QUESTION)
       } finally {
         setLoading(false)
@@ -213,13 +210,15 @@ export default function DuelGamePage() {
 
   // ── Detect both answered or timeout — reveal & advance ────────────────────
   // Watch revealed: when both answers exist for current question OR timeout, show reveal
+  // Sync from realtime: when both players have an answer for the current
+  // question, flip into the reveal phase. Setting state in this effect is
+  // legitimate — the input (myAnswers/opAnswers) comes from the realtime
+  // channel, not from props/derived state.
   useEffect(() => {
     if (loading || revealed || duelEnded || !room || !questions[current]) return
     const myAnswered = myAnswers[current] !== undefined
     const opAnswered = opAnswers[current] !== undefined
-    if (myAnswered && opAnswered) {
-      setRevealed(true)
-    }
+    if (myAnswered && opAnswered) setRevealed(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [myAnswers, opAnswers, current, revealed, loading, duelEnded, room, questions])
 
   // ── After reveal: pause 3s then advance ───────────────────────────────────
@@ -242,7 +241,6 @@ export default function DuelGamePage() {
     const newAnswers = [...myAnswers]
     newAnswers[current] = shuffledIdx
 
-    setSelected(shuffledIdx)
     setMyScore(newScore)
     setMyAnswers(newAnswers)
 
@@ -265,10 +263,8 @@ export default function DuelGamePage() {
       if (myScore === opScore && questions[nextIdx]) {
         // Continue with golden question
         setCurrent(nextIdx)
-        setSelected(null)
         setRevealed(false)
         setTimeLeft(TIME_PER_QUESTION)
-        setQuestionStartedAt(Date.now())
         setGoldenRound(g => g + 1)
         return
       }
@@ -278,10 +274,8 @@ export default function DuelGamePage() {
     }
 
     setCurrent(nextIdx)
-    setSelected(null)
     setRevealed(false)
     setTimeLeft(TIME_PER_QUESTION)
-    setQuestionStartedAt(Date.now())
   }
 
   async function endDuel() {
@@ -333,6 +327,40 @@ export default function DuelGamePage() {
 
   // ── Confirm exit ──────────────────────────────────────────────────────────
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+
+  // Exit mid-duel: mark the room as finished so the current scores count on
+  // the leaderboard. The exiter forfeits any remaining questions; opponent
+  // keeps whatever they have. Without this, the row stays in 'playing' and
+  // is invisible to leaderboard aggregation (filter: status === 'finished').
+  const persistExit = useCallback(async () => {
+    if (savedRef.current || !room?.id) return
+    savedRef.current = true
+    const supabase = createClient()
+    await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
+    // depend on room.id only — `room` itself churns on every realtime update,
+    // which would needlessly rebuild this callback (and any effects depending
+    // on it) every couple seconds during a duel.
+  }, [room?.id])
+
+  useEffect(() => {
+    if (duelEnded || !room?.id) return
+    const roomId = room.id
+    function flush() {
+      if (savedRef.current) return
+      savedRef.current = true
+      try {
+        const blob = new Blob([JSON.stringify({ room_id: roomId })], { type: 'application/json' })
+        navigator.sendBeacon('/api/duel-finalize', blob)
+      } catch { /* best effort */ }
+    }
+    function onVis() { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [duelEnded, room?.id])
 
   // ── Render ───────────────────────────────────────────────────────────────
   if (loading) {
@@ -534,12 +562,14 @@ export default function DuelGamePage() {
           style={{ background: 'rgba(52,52,52,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
             <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#343434' }}>Izađi iz duela?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se NEĆE upisati.</p>
+            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se upisuje na rang listu — predaješ duel.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi
               </button>
-              <button onClick={() => router.push('/igraj-zajedno')} className="btn btn-md flex-1"
+              <button
+                onClick={async () => { await persistExit(); router.push('/igraj-zajedno') }}
+                className="btn btn-md flex-1"
                 style={{ background: '#E55353', color: 'white' }}>
                 Izađi
               </button>
