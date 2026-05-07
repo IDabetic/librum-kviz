@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     description: 'Odgovaraj na pitanja, čuvaj živote i pokušaj da doguraš što dalje.',
     url: 'https://kviz.librum.club/igraj',
     type: 'website',
+    images: ['/api/og?v=3'],
   },
 }
 
