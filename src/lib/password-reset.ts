@@ -70,38 +70,46 @@ export async function sendCustomPasswordResetEmail(rawEmail: string): Promise<Re
     return { ok: true }
   }
 
+  const resetUrl = `${siteUrl()}/auth/nova-lozinka?reset=${rawToken}`
   const resendKey = process.env.RESEND_API_KEY
-  if (!resendKey) {
-    console.error('RESEND_API_KEY not configured')
-    return { ok: false, error: 'Email servis nije konfigurisan.' }
+
+  // Preferred path: send via Resend with our branded template
+  if (resendKey) {
+    try {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: FROM,
+          to: email,
+          subject: 'Resetuj lozinku — Librum Kviz',
+          html: emailHtml(resetUrl),
+        }),
+      })
+      if (r.ok) return { ok: true }
+      const text = await r.text()
+      console.error('Resend error, falling back to Supabase email:', r.status, text)
+      // fall through to Supabase fallback
+    } catch (e) {
+      console.error('Resend fetch error, falling back to Supabase email:', e)
+    }
   }
 
-  const resetUrl = `${siteUrl()}/auth/nova-lozinka?reset=${rawToken}`
-
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: FROM,
-        to: email,
-        subject: 'Resetuj lozinku — Librum Kviz',
-        html: emailHtml(resetUrl),
-      }),
-    })
-    if (!r.ok) {
-      const text = await r.text()
-      console.error('Resend error:', r.status, text)
-      return { ok: false, error: 'Slanje emaila nije uspelo.' }
-    }
-  } catch (e) {
-    console.error('Resend fetch error:', e)
+  // Fallback: use Supabase's built-in mailer. We can't customize the
+  // template here, but it ships as soon as it works. The link in the
+  // Supabase email goes through their /verify endpoint and then
+  // redirects to redirectTo, which carries our raw reset token.
+  // /auth/nova-lozinka picks it up the same way as the Resend path.
+  const { error: supaErr } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: resetUrl,
+  })
+  if (supaErr) {
+    console.error('Supabase resetPasswordForEmail error:', supaErr)
     return { ok: false, error: 'Slanje emaila nije uspelo.' }
   }
-
   return { ok: true }
 }
 
