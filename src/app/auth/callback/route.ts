@@ -8,20 +8,20 @@ export async function GET(request: Request) {
   const type = searchParams.get('type')
   const next = searchParams.get('next')
 
-  const supabase = await createClient()
+  // If `next` is set, the caller wants the user to land somewhere with an
+  // active session (e.g. password recovery → /auth/nova-lozinka). Otherwise
+  // this is an email-confirm flow and we sign the user out so they log in
+  // manually.
+  const keepSession = !!next || type === 'recovery'
 
-  // ── Password recovery ─────────────────────────────────────────────────
-  // Keep the session active and route the user to the new-password screen
-  // so they can immediately set a password.
-  const isRecovery = type === 'recovery'
+  const supabase = await createClient()
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      if (isRecovery) {
+      if (keepSession) {
         return NextResponse.redirect(`${origin}${next || '/auth/nova-lozinka'}`)
       }
-      // Email confirmation: sign out so user logs in manually
       await supabase.auth.signOut()
       return NextResponse.redirect(`${origin}/auth/prijava?potvrdjeno=1`)
     }
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       type: type as 'email' | 'signup' | 'magiclink' | 'recovery' | 'invite',
     })
     if (!error) {
-      if (isRecovery) {
+      if (keepSession) {
         return NextResponse.redirect(`${origin}${next || '/auth/nova-lozinka'}`)
       }
       await supabase.auth.signOut()
