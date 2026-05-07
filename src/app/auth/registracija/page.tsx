@@ -33,7 +33,7 @@ export default function RegistracijaPage() {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/igraj`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           first_name: form.ime,
           last_name: form.prezime,
