@@ -43,17 +43,34 @@ export default async function AdminDashboard() {
   ])
 
   // Recent activity
-  const [recentSurvivor, recentSubmissions, recentUsers] = await Promise.all([
+  const [recentSurvivor, recentSubmissionsRaw, recentUsers] = await Promise.all([
     supabase.from('survivor_sessions')
       .select('score, questions_reached, profiles(first_name, nickname), created_at')
       .order('created_at', { ascending: false }).limit(5),
+    // FK on submitted_by points at auth.users not profiles, so PostgREST
+    // can't embed the relationship. Fetch submissions then look up profiles
+    // separately.
     supabase.from('question_submissions')
-      .select('question_text, created_at, profiles!question_submissions_submitted_by_fkey(first_name, nickname)')
+      .select('question_text, submitted_by, submitter_email, created_at')
       .order('created_at', { ascending: false }).limit(5),
     supabase.from('profiles')
       .select('id, first_name, nickname, created_at')
       .order('created_at', { ascending: false }).limit(5),
   ])
+
+  const submitterIds = (recentSubmissionsRaw.data || [])
+    .map(s => s.submitted_by)
+    .filter((v): v is string => !!v)
+  const { data: submitterProfiles } = submitterIds.length
+    ? await supabase.from('profiles').select('id, first_name, nickname').in('id', submitterIds)
+    : { data: [] as { id: string; first_name: string | null; nickname: string | null }[] }
+  const submitterMap = new Map((submitterProfiles || []).map(p => [p.id, p]))
+  const recentSubmissions = (recentSubmissionsRaw.data || []).map(s => ({
+    question_text: s.question_text,
+    submitter_email: s.submitter_email,
+    created_at: s.created_at,
+    profile: s.submitted_by ? submitterMap.get(s.submitted_by) ?? null : null,
+  }))
 
   // Top score today (PRO kviz)
   const { data: topToday } = await supabase
@@ -198,9 +215,8 @@ export default async function AdminDashboard() {
             </Link>
           </div>
           <div className="space-y-1">
-            {(recentSubmissions.data || []).map((s, i) => {
-              const p = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles as { first_name: string; nickname: string } | null
-              const name = p?.nickname || p?.first_name || 'Anon'
+            {recentSubmissions.map((s, i) => {
+              const name = s.profile?.nickname || s.profile?.first_name || s.submitter_email || 'Anon'
               return (
                 <div key={i} className="py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
                   <p className="text-[13px] line-clamp-2" style={{ color: '#343434' }}>{s.question_text}</p>
@@ -210,7 +226,7 @@ export default async function AdminDashboard() {
                 </div>
               )
             })}
-            {(!recentSubmissions.data || recentSubmissions.data.length === 0) && (
+            {recentSubmissions.length === 0 && (
               <p className="text-[12px]" style={{ color: '#9C9C9C' }}>—</p>
             )}
           </div>
