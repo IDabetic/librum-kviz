@@ -22,12 +22,14 @@ export default async function AdminDashboard() {
     usersAll, usersToday, usersWeek,
     surTotal, surToday,
     bookTotal, bookToday,
+    kafanaTotal, kafanaToday,
     duelTotal, duelToday,
     hangmanTotal, hangmanToday,
     quickTotal, quickToday,
     questActive, questInactive,
     bookActive, bookInactive,
-    submissions,
+    kafanaActive, kafanaInactive,
+    submissions, reportsPending,
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', startOfDay.toISOString()),
@@ -36,6 +38,8 @@ export default async function AdminDashboard() {
     supabase.from('survivor_sessions').select('*', { count: 'exact', head: true }).gte('created_at', startOfDay.toISOString()),
     supabase.from('book_sessions').select('*', { count: 'exact', head: true }),
     supabase.from('book_sessions').select('*', { count: 'exact', head: true }).gte('created_at', startOfDay.toISOString()),
+    supabase.from('kafana_sessions').select('*', { count: 'exact', head: true }),
+    supabase.from('kafana_sessions').select('*', { count: 'exact', head: true }).gte('created_at', startOfDay.toISOString()),
     supabase.from('game_rooms').select('*', { count: 'exact', head: true }).eq('status', 'finished'),
     supabase.from('game_rooms').select('*', { count: 'exact', head: true }).eq('status', 'finished').gte('created_at', startOfDay.toISOString()),
     supabase.from('hangman_sessions').select('*', { count: 'exact', head: true }),
@@ -46,7 +50,10 @@ export default async function AdminDashboard() {
     supabase.from('questions').select('*', { count: 'exact', head: true }).eq('is_active', false),
     supabase.from('book_questions').select('*', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('book_questions').select('*', { count: 'exact', head: true }).eq('is_active', false),
+    supabase.from('kafana_questions').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('kafana_questions').select('*', { count: 'exact', head: true }).eq('is_active', false),
     supabase.from('question_submissions').select('*', { count: 'exact', head: true }),
+    supabase.from('question_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
   ])
 
   // Recent activity
@@ -98,6 +105,7 @@ export default async function AdminDashboard() {
   const games = [
     { name: 'PRO kviz',     count: surTotal.count ?? 0 },
     { name: 'Book kviz',    count: bookTotal.count ?? 0 },
+    { name: 'Kafanski kviz', count: kafanaTotal.count ?? 0 },
     { name: 'Trivia duel',  count: duelTotal.count ?? 0 },
     { name: 'Vešanje',      count: hangmanTotal.count ?? 0 },
     { name: 'Brzi kviz',    count: quickTotal.count ?? 0 },
@@ -124,16 +132,19 @@ export default async function AdminDashboard() {
 
       {/* ── KPI cards ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Kpi Icon={IconUsers}    label="Korisnika"      value={fmtN(usersAll.count ?? 0)}    sub={`+${usersToday.count ?? 0} danas`}  bg="#BCD9FF" fg="#1e5fa4" />
-        <Kpi Icon={IconHome}     label="PRO partija"    value={fmtN(surTotal.count ?? 0)}    sub={`+${surToday.count ?? 0} danas`}    bg="#E8F8F0" fg="#15803d" />
-        <Kpi Icon={IconStar}     label="Book partija"   value={fmtN(bookTotal.count ?? 0)}   sub={`+${bookToday.count ?? 0} danas`}    bg="#FFECBC" fg="#9c7a13" />
-        <Kpi Icon={IconHint}     label="Vešanje partija" value={fmtN(hangmanTotal.count ?? 0)} sub={`+${hangmanToday.count ?? 0} danas`} bg="#FFECBC" fg="#9c7a13" />
-        <Kpi Icon={IconTime}     label="Brzi kviz partija" value={fmtN(quickTotal.count ?? 0)} sub={`+${quickToday.count ?? 0} danas`}  bg="#FEE2E2" fg="#b91c1c" />
-        <Kpi Icon={IconSwords}   label="Duela"          value={fmtN(duelTotal.count ?? 0)}   sub={`+${duelToday.count ?? 0} danas`}   bg="#F2F2F2" fg="#343434" />
+        <Kpi Icon={IconUsers}    label="Korisnika"           value={fmtN(usersAll.count ?? 0)}     sub={`+${usersToday.count ?? 0} danas`}   bg="#BCD9FF" fg="#1e5fa4" />
+        <Kpi Icon={IconHome}     label="PRO partija"         value={fmtN(surTotal.count ?? 0)}     sub={`+${surToday.count ?? 0} danas`}     bg="#E8F8F0" fg="#15803d" />
+        <Kpi Icon={IconStar}     label="Book partija"        value={fmtN(bookTotal.count ?? 0)}    sub={`+${bookToday.count ?? 0} danas`}    bg="#FFECBC" fg="#9c7a13" />
+        <Kpi Icon={IconStar}     label="Kafanski partija"    value={fmtN(kafanaTotal.count ?? 0)}  sub={`+${kafanaToday.count ?? 0} danas`}  bg="#FEE2E2" fg="#b91c1c" />
+        <Kpi Icon={IconHint}     label="Vešanje partija"     value={fmtN(hangmanTotal.count ?? 0)} sub={`+${hangmanToday.count ?? 0} danas`} bg="#E8F8F0" fg="#15803d" />
+        <Kpi Icon={IconTime}     label="Brzi kviz partija"   value={fmtN(quickTotal.count ?? 0)}   sub={`+${quickToday.count ?? 0} danas`}   bg="#FEE2E2" fg="#b91c1c" />
+        <Kpi Icon={IconSwords}   label="Duela"               value={fmtN(duelTotal.count ?? 0)}    sub={`+${duelToday.count ?? 0} danas`}    bg="#F2F2F2" fg="#343434" />
         <Kpi Icon={IconDiscover} label="Aktivnih PRO pitanja" value={fmtN(questActive.count ?? 0)} sub={`${fmtN(questInactive.count ?? 0)} neaktivnih`} bg="#BCD9FF" fg="#1e5fa4" />
         <Kpi Icon={IconStar}     label="Aktivnih Book pitanja" value={fmtN(bookActive.count ?? 0)} sub={`${fmtN(bookInactive.count ?? 0)} neaktivnih`} bg="#FFECBC" fg="#9c7a13" />
-        <Kpi Icon={IconUsers}    label="Predloga"       value={fmtN(submissions.count ?? 0)} sub="čeka pregled" bg="#FFECBC" fg="#9c7a13" />
-        <Kpi Icon={IconTrophy}   label="Najpopularnija" value={mostPopular?.name || '—'}     sub={`${fmtN(mostPopular?.count || 0)} partija`} bg="#FFCB46" fg="#343434" />
+        <Kpi Icon={IconStar}     label="Aktivnih Kafanski"   value={fmtN(kafanaActive.count ?? 0)} sub={`${fmtN(kafanaInactive.count ?? 0)} neaktivnih`} bg="#FEE2E2" fg="#b91c1c" />
+        <Kpi Icon={IconUsers}    label="Predloga"            value={fmtN(submissions.count ?? 0)}  sub="čeka pregled" bg="#FFECBC" fg="#9c7a13" />
+        <Kpi Icon={IconUsers}    label="Prijava pitanja"     value={fmtN(reportsPending.count ?? 0)} sub="na čekanju" bg="#FEE2E2" fg="#b91c1c" />
+        <Kpi Icon={IconTrophy}   label="Najpopularnija"      value={mostPopular?.name || '—'}      sub={`${fmtN(mostPopular?.count || 0)} partija`} bg="#FFCB46" fg="#343434" />
       </div>
 
       {/* ── One-shot maintenance actions ────────────────────────────── */}

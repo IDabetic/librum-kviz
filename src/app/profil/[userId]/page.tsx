@@ -16,12 +16,15 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
   if (!profile) notFound()
 
-  const [survivor, book, hangman, quick, duelGames] = await Promise.all([
+  const [survivor, book, kafana, hangman, quick, duelGames] = await Promise.all([
     supabase.from('survivor_sessions')
       .select('score, questions_reached, best_combo, accuracy')
       .eq('user_id', userId).order('score', { ascending: false }).limit(50),
     supabase.from('book_sessions')
       .select('score, questions_reached, top_genre, top_genre_pct')
+      .eq('user_id', userId).order('score', { ascending: false }).limit(50),
+    supabase.from('kafana_sessions')
+      .select('score, questions_reached, accuracy, best_combo')
       .eq('user_id', userId).order('score', { ascending: false }).limit(50),
     supabase.from('hangman_sessions').select('won, score').eq('user_id', userId).limit(200),
     supabase.from('quick_sessions').select('score, correct_count, accuracy').eq('user_id', userId).limit(50),
@@ -51,6 +54,10 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
   const qSessions = quick.data || []
   const qBest = qSessions.length ? Math.max(...qSessions.map(s => s.score)) : 0
+
+  const kSessions = kafana.data || []
+  const kBest = kSessions.length ? Math.max(...kSessions.map(s => s.score)) : 0
+  const kBestQ = kSessions.length ? Math.max(...kSessions.map(s => s.questions_reached)) : 0
 
   let dWins = 0, dLosses = 0, dDraws = 0
   ;(duelGames.data || []).forEach(g => {
@@ -107,6 +114,9 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
             secondary={bTopGenre
               ? [{ value: bSessions.length, label: 'Igara' }, { value: bTopGenre, label: 'Najjači žanr' }]
               : [{ value: bSessions.length, label: 'Igara' }]} />
+          <GameCard Icon={IconStar}   label="Kafanski kviz" accent="#b91c1c" bg="#FEE2E2"
+            primary={{ value: kBest, label: 'Rekord bodova' }}
+            secondary={[{ value: kSessions.length, label: 'Igara' }, { value: kBestQ, label: 'Max pitanja' }]} />
           <GameCard Icon={IconSwords} label="Trivia duel" accent="#9c7a13" bg="#FFECBC"
             primary={{ value: dWins, label: 'Pobeda' }}
             secondary={[{ value: dLosses, label: 'Poraza' }, { value: dDraws, label: 'Nerešeno' }]} />
@@ -118,7 +128,7 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
             secondary={[{ value: qSessions.length, label: 'Rundi' }]} />
         </div>
 
-        {(sSessions.length + bSessions.length + hSessions.length + qSessions.length) === 0 && (
+        {(sSessions.length + bSessions.length + kSessions.length + hSessions.length + qSessions.length) === 0 && (
           <div className="card-soft py-16 text-center">
             <div className="text-5xl mb-4">🎮</div>
             <p className="font-bold text-[17px]" style={{ color: '#343434' }}>Još nije igrao</p>
