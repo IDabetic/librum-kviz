@@ -25,9 +25,12 @@ export default async function KorisniciPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>Korisnici</h1>
-        <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>{count ?? 0} ukupno</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>Korisnici</h1>
+          <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>{count ?? 0} ukupno</p>
+        </div>
+        <Link href="/majmun/korisnici/dodaj" className="btn btn-primary btn-md">+ Dodaj admina</Link>
       </div>
 
       <form className="card-soft p-4 flex items-center gap-2 flex-wrap" action="/majmun/korisnici">
