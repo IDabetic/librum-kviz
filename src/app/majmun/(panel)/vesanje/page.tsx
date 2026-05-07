@@ -12,7 +12,8 @@ const PER_OPTIONS = [25, 50, 100]
 export default async function VesanjeAdminPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams
   const supabase = await createClient()
-  const PER = PER_OPTIONS.includes(parseInt(sp.per || '50', 10)) ? parseInt(sp.per!, 10) : 50
+  const parsedPer = parseInt(sp.per || '50', 10)
+  const PER = PER_OPTIONS.includes(parsedPer) ? parsedPer : 50
   const page = Math.max(0, parseInt(sp.page || '0', 10))
 
   let query = supabase.from('hangman_words').select('*', { count: 'exact' })
