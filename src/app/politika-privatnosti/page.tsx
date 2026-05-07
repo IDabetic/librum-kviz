@@ -23,7 +23,7 @@ export default async function PolitikaPrivatnosti() {
         <nav className="sticky top-0 z-40 backdrop-blur-xl"
           style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Logo height={28} />
+            <Logo height={36} />
             <Link href="/auth/prijava" className="btn btn-primary btn-sm">Prijava</Link>
           </div>
         </nav>

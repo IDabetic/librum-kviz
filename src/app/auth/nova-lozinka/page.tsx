@@ -44,7 +44,7 @@ function NovaLozinkaInner() {
       <div className="w-full max-w-md">
 
         <div className="text-center mb-8">
-          <Logo height={28} />
+          <Logo height={36} />
         </div>
 
         <div className="card-soft p-7 sm:p-8">

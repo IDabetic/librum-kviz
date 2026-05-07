@@ -133,6 +133,22 @@ h1, h2, h3, h4, h5, h6 {
 .btn:active:not(:disabled) { transform: scale(0.97); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Global pointer cursor for interactive elements. Buttons in some
+   browsers default to the text or arrow cursor — explicitly opt every
+   clickable thing into the pointing-hand cursor (X, "Prijavi pitanje",
+   recent users, logout, avatars, anchors, etc.). */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+summary {
+  cursor: pointer;
+}
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 .btn-sm { padding: 8px 18px; font-size: 13px; }
 .btn-md { padding: 12px 24px; font-size: 14px; }
 .btn-lg { padding: 16px 32px; font-size: 16px; }

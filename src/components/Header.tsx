@@ -112,7 +112,7 @@ export default function Header() {
         style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Logo height={28} priority />
+          <Logo height={36} priority />
 
           {/* Desktop nav — four flat links */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
