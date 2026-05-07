@@ -92,7 +92,7 @@ export default async function KafanskiKvizLanding() {
           style={{ background: '#b91c1c' }}>
           Pokreni kviz
         </Link>
-        <Link href="/igraj-zajedno?type=kafana"
+        <Link href="/kafanski-kviz/duel"
           className="btn btn-md w-full mb-2"
           style={{ background: '#FEE2E2', color: '#b91c1c' }}>
           <IconSwords size={16} strokeWidth={2.2} />
