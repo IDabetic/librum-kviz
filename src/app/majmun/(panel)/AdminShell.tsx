@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { Logo } from '@/components/Logo'
 import { createClient } from '@/lib/supabase/client'
 import {
-  IconHome, IconDiscover, IconSwords, IconHint, IconTime, IconTrophy,
+  IconHome, IconDiscover, IconSwords, IconHint, IconTrophy,
   IconUsers, IconSettings, IconLogout, IconMenu, IconClose, IconStar,
 } from '@/components/icons'
 
@@ -20,11 +20,13 @@ type Profile = {
   role: string
 }
 
+// Brzi kviz, PRO kviz and Trivia duel all read from the `questions` table,
+// which is curated under "PRO pitanja". There is no separate Brzi admin —
+// adding a question there makes it eligible for all three modes.
 const NAV = [
   { label: 'Dashboard',   href: '/majmun',                Icon: IconHome },
   { label: 'PRO pitanja', href: '/majmun/pitanja',        Icon: IconDiscover },
   { label: 'Book kviz',   href: '/majmun/book-kviz',      Icon: IconStar },
-  { label: 'Brzi kviz',   href: '/majmun/brzi-kviz',      Icon: IconTime },
   { label: 'Vešanje',     href: '/majmun/vesanje',        Icon: IconHint },
   { label: 'Predlozi',    href: '/majmun/predlozi',       Icon: IconUsers },
   { label: 'Korisnici',   href: '/majmun/korisnici',      Icon: IconUsers },
