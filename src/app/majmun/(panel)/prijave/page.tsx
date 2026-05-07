@@ -22,9 +22,14 @@ export default async function PrijavePage({ searchParams }: { searchParams: Prom
   const sp = await searchParams
   const supabase = await createClient()
 
+  // We pull profiles separately rather than as an embedded select.
+  // question_reports.user_id has its FK on auth.users (not profiles),
+  // and PostgREST's `profiles!user_id(...)` syntax silently fails when
+  // the relationship doesn't resolve — that's why the badge counter
+  // showed "(1)" but the list was empty.
   let q = supabase
     .from('question_reports')
-    .select('id, source, question_id, question_text, reason, status, created_at, resolved_at, profiles!user_id(first_name, nickname)')
+    .select('id, source, question_id, question_text, reason, status, created_at, resolved_at, user_id')
     .order('created_at', { ascending: false })
     .limit(500)
   const filter = sp.status ?? 'pending'
@@ -39,6 +44,17 @@ export default async function PrijavePage({ searchParams }: { searchParams: Prom
   const statusCounts: Record<string, number> = {}
   for (const r of counts ?? []) statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1
 
+  // Resolve reporter names with a single profiles lookup.
+  const reporterIds = [...new Set((data ?? []).map(r => r.user_id).filter(Boolean) as string[])]
+  const profMap: Record<string, { first_name?: string; nickname?: string }> = {}
+  if (reporterIds.length) {
+    const { data: profs } = await supabase
+      .from('profiles').select('id, first_name, nickname').in('id', reporterIds)
+    for (const p of profs ?? []) {
+      profMap[p.id as string] = { first_name: p.first_name as string, nickname: p.nickname as string }
+    }
+  }
+
   const rows = (data ?? []).map(r => ({
     id: r.id as string,
     source: r.source as string,
@@ -51,9 +67,8 @@ export default async function PrijavePage({ searchParams }: { searchParams: Prom
     createdAt: r.created_at as string,
     resolvedAt: (r.resolved_at as string) ?? null,
     reporterName: (() => {
-      const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
-      const pp = p as { first_name?: string; nickname?: string } | null
-      return pp?.nickname || pp?.first_name || 'Anoniman'
+      const p = profMap[r.user_id as string]
+      return p?.nickname || p?.first_name || 'Anoniman'
     })(),
   }))
 
