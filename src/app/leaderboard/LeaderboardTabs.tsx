@@ -3,167 +3,242 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { SurvivorRow } from './page'
+import type { SurvivorRow, DuelRow, HangmanRow, QuickRow, AllPeriods } from './page'
+import { IconHome, IconSwords, IconHint, IconTime } from '@/components/icons'
 
 const MEDALS = ['🥇', '🥈', '🥉']
-const VIEW_OPTIONS = [
-  { label: 'Top 10',  value: 10 },
-  { label: 'Top 50',  value: 50 },
-  { label: 'Top 100', value: 100 },
-  { label: 'Svi',     value: 0 },
-] as const
-type ViewOption = typeof VIEW_OPTIONS[number]['value']
-
-const PERIOD_OPTIONS = [
+const PERIODS = [
   { id: 'today', label: 'Danas' },
   { id: 'week',  label: 'Nedelja' },
   { id: 'month', label: 'Mesec' },
   { id: 'all',   label: 'Sve vreme' },
 ] as const
-type PeriodId = typeof PERIOD_OPTIONS[number]['id']
+type PeriodId = typeof PERIODS[number]['id']
 
-const DEMO: SurvivorRow[] = [
-  { userId: '', name: 'Marko Petrović',   avatar: 'avatar_03.jpg', score: 1450, questionsReached: 142, correctAnswers: 121, wrongAnswers: 21, accuracy: 85, bestCombo: 32, totalTime: 1820, createdAt: '' },
-  { userId: '', name: 'Jovana Nikolić',   avatar: 'avatar_07.jpg', score: 1120, questionsReached: 118, correctAnswers: 95,  wrongAnswers: 23, accuracy: 80, bestCombo: 24, totalTime: 1620, createdAt: '' },
-  { userId: '', name: 'Stefan Đorđević',  avatar: 'avatar_12.jpg', score: 980,  questionsReached: 102, correctAnswers: 84,  wrongAnswers: 18, accuracy: 82, bestCombo: 21, totalTime: 1480, createdAt: '' },
-  { userId: '', name: 'Milica Stanković', avatar: 'avatar_18.jpg', score: 760,  questionsReached: 88,  correctAnswers: 70,  wrongAnswers: 18, accuracy: 79, bestCombo: 17, totalTime: 1290, createdAt: '' },
-  { userId: '', name: 'Nikola Ilić',      avatar: 'avatar_21.jpg', score: 580,  questionsReached: 71,  correctAnswers: 56,  wrongAnswers: 15, accuracy: 78, bestCombo: 12, totalTime: 1080, createdAt: '' },
-  { userId: '', name: 'Teodora Vasić',    avatar: 'avatar_05.jpg', score: 420,  questionsReached: 58,  correctAnswers: 44,  wrongAnswers: 14, accuracy: 75, bestCombo: 10, totalTime: 920,  createdAt: '' },
-  { userId: '', name: 'Aleksa Marinović', avatar: 'avatar_14.jpg', score: 290,  questionsReached: 46,  correctAnswers: 33,  wrongAnswers: 13, accuracy: 71, bestCombo: 8,  totalTime: 740,  createdAt: '' },
+const GAMES = [
+  { id: 'survivor', label: 'PRO kviz',    Icon: IconHome,   accent: '#609DED' },
+  { id: 'duel',     label: 'Trivia duel', Icon: IconSwords, accent: '#FFCB46' },
+  { id: 'hangman',  label: 'Vešanje',     Icon: IconHint,   accent: '#4CAF50' },
+  { id: 'quick',    label: 'Brzi kviz',   Icon: IconTime,   accent: '#E55353' },
+] as const
+type GameId = typeof GAMES[number]['id']
+
+// Demo placeholders for empty boards
+const DEMO_NAMES = [
+  { name: 'Marko Petrović',   avatar: 'avatar_03.jpg' },
+  { name: 'Jovana Nikolić',   avatar: 'avatar_07.jpg' },
+  { name: 'Stefan Đorđević',  avatar: 'avatar_12.jpg' },
+  { name: 'Milica Stanković', avatar: 'avatar_18.jpg' },
+  { name: 'Nikola Ilić',      avatar: 'avatar_21.jpg' },
 ]
 
-export default function LeaderboardTabs({ today, week, month, all, user }: {
-  today: SurvivorRow[]; week: SurvivorRow[]; month: SurvivorRow[]; all: SurvivorRow[]; user: boolean
+export default function LeaderboardTabs({
+  survivor, duel, hangman, quick, user,
+}: {
+  survivor: AllPeriods<SurvivorRow>
+  duel: AllPeriods<DuelRow>
+  hangman: AllPeriods<HangmanRow>
+  quick: AllPeriods<QuickRow>
+  user: boolean
 }) {
+  const [game, setGame] = useState<GameId>('survivor')
   const [period, setPeriod] = useState<PeriodId>('today')
-  const dataMap: Record<PeriodId, SurvivorRow[]> = { today, week, month, all }
-  const data = dataMap[period]
 
   return (
     <>
-      {/* Period switcher */}
+      {/* Game mode pills */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+        {GAMES.map(g => {
+          const active = game === g.id
+          return (
+            <button key={g.id} onClick={() => setGame(g.id)}
+              className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-bold transition-all"
+              style={active
+                ? { background: g.accent, color: g.id === 'duel' ? '#343434' : 'white' }
+                : { background: '#F2F2F2', color: '#9C9C9C' }
+              }>
+              <g.Icon size={14} strokeWidth={2.2} />
+              {g.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Period pills */}
       <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto overflow-x-auto" style={{ background: '#F2F2F2' }}>
-        {PERIOD_OPTIONS.map(opt => (
-          <button key={opt.id} onClick={() => setPeriod(opt.id)}
-            className="flex-1 py-2.5 px-3 rounded-full text-[13px] font-semibold transition-all whitespace-nowrap"
-            style={period === opt.id
+        {PERIODS.map(p => (
+          <button key={p.id} onClick={() => setPeriod(p.id)}
+            className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
+            style={period === p.id
               ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
               : { color: '#9C9C9C' }}>
-            {opt.label}
+            {p.label}
           </button>
         ))}
       </div>
 
-      <Board data={data.length > 0 ? data : DEMO} isDemo={data.length === 0} user={user} />
+      {game === 'survivor' && <SurvivorBoard data={survivor[period]} period={period} user={user} />}
+      {game === 'duel'     && <DuelBoard     data={duel[period]}     period={period} user={user} />}
+      {game === 'hangman'  && <HangmanBoard  data={hangman[period]}  period={period} user={user} />}
+      {game === 'quick'    && <QuickBoard    data={quick[period]}    period={period} user={user} />}
     </>
   )
 }
 
-function ViewTabs({ view, onChange, total }: { view: ViewOption; onChange: (v: ViewOption) => void; total: number }) {
+// ── Shared helpers ──────────────────────────────────────────────────────
+function Avatar({ name, avatar, size = 40, accent = '#609DED' }: { name: string; avatar: string | null; size?: number; accent?: string }) {
   return (
-    <div className="flex items-center gap-1.5 px-5 py-3.5 border-b overflow-x-auto" style={{ borderColor: '#F2F2F2' }}>
-      {VIEW_OPTIONS.map(opt => {
-        const count = opt.value === 0 ? total : Math.min(opt.value, total)
-        const active = view === opt.value
-        return (
-          <button key={opt.value} onClick={() => onChange(opt.value)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all"
-            style={active
-              ? { background: '#343434', color: '#FCFCFC' }
-              : { background: 'transparent', color: '#9C9C9C' }}>
-            {opt.label}<span className="ml-1 opacity-60">({count})</span>
-          </button>
-        )
-      })}
+    <div className="rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]" style={{ width: size, height: size }}>
+      {avatar
+        ? <Image src={`/avatars/${avatar}`} alt={name} width={size} height={size} className="w-full h-full object-cover" />
+        : <div className="w-full h-full flex items-center justify-center font-bold text-white" style={{ background: accent, fontSize: size * 0.4 }}>{name[0]}</div>}
     </div>
   )
 }
 
-function Podium({ data }: { data: SurvivorRow[] }) {
-  const heights = [40, 28, 22]
+function Rank({ i }: { i: number }) {
   return (
-    <div className="px-6 pt-8 pb-6" style={{ background: 'linear-gradient(135deg, #BCD9FF 0%, #FFECBC 100%)' }}>
-      <div className="flex items-end justify-center gap-3 sm:gap-5 max-w-md mx-auto">
-        {[1, 0, 2].map(i => {
-          const p = data[i]; if (!p) return null
-          return (
-            <div key={i} className="text-center flex-1 min-w-0">
-              <div className="text-2xl mb-1">{MEDALS[i]}</div>
-              <div className="w-14 h-14 mx-auto mb-2 rounded-2xl overflow-hidden bg-white shadow-md">
-                {p.avatar
-                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={56} height={56} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center font-bold text-[18px]" style={{ background: '#609DED', color: 'white' }}>{p.name[0]}</div>}
-              </div>
-              <div className="font-bold text-[13px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name.split(' ')[0]}</div>
-              <div className="text-[11px] font-medium" style={{ color: '#343434', opacity: 0.6 }}>{p.score} bod.</div>
-              <div className="rounded-t-2xl mt-2 flex items-end justify-center pb-2"
-                style={{ height: heights[i] * 2.5, background: '#FCFCFC', opacity: 0.85 }}>
-                <span className="font-black text-[16px]" style={{ color: '#343434' }}>{i + 1}</span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+    <span className="w-7 text-center flex-shrink-0">
+      {i < 3 ? <span className="text-lg">{MEDALS[i]}</span> : <span className="text-[13px] font-bold" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
+    </span>
+  )
+}
+
+function EmptyBoard({ user, href, label, icon }: { user: boolean; href: string; label: string; icon: string }) {
+  return (
+    <div className="card-soft py-16 text-center px-6">
+      <div className="text-5xl mb-4">{icon}</div>
+      <p className="font-bold text-[16px] mb-1" style={{ color: '#343434' }}>Nema rezultata u ovom periodu</p>
+      <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Probaj drugi period ili budi prvi koji će igrati.</p>
+      <Link href={user ? href : '/auth/registracija'} className="btn btn-primary btn-md">
+        {user ? label : 'Registruj se'}
+      </Link>
     </div>
   )
 }
 
-function Board({ data, isDemo, user }: { data: SurvivorRow[]; isDemo: boolean; user: boolean }) {
-  const [view, setView] = useState<ViewOption>(10)
-
-  if (data.length === 0) {
-    return (
-      <div className="card-soft py-20 text-center px-6">
-        <div className="text-5xl mb-4">🎯</div>
-        <p className="font-bold text-[17px] mb-1" style={{ color: '#343434' }}>Rang lista je prazna</p>
-        <p className="text-[14px] mb-6" style={{ color: '#9C9C9C' }}>Budi prvi koji će igrati!</p>
-        <Link href={user ? '/igraj' : '/auth/registracija'} className="btn btn-primary btn-md">
-          {user ? 'Kreni' : 'Registruj se'}
-        </Link>
-      </div>
-    )
+function PeriodHint({ period }: { period: PeriodId }) {
+  const map: Record<PeriodId, string> = {
+    today: 'Najbolji rezultati danas',
+    week: 'Najbolji rezultati u poslednjih 7 dana',
+    month: 'Najbolji rezultati u poslednjih 30 dana',
+    all: 'Najbolji rezultati svih vremena',
   }
+  return (
+    <p className="text-center text-[12px] mb-3" style={{ color: '#9C9C9C' }}>{map[period]}</p>
+  )
+}
 
-  const displayed = view === 0 ? data : data.slice(0, view)
-  const isScroll = view === 0 && data.length > 10
+function DemoStrip() {
+  return (
+    <div className="mx-5 mt-3 px-4 py-2.5 rounded-2xl text-[12px] text-center font-medium" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+      Primer kako izgleda rang lista
+    </div>
+  )
+}
 
+// ── SURVIVOR ────────────────────────────────────────────────────────────
+function SurvivorBoard({ data, period, user }: { data: SurvivorRow[]; period: PeriodId; user: boolean }) {
+  if (data.length === 0) return <EmptyBoard user={user} href="/igraj" label="Igraj PRO kviz" icon="🎯" />
   return (
     <div className="card-soft overflow-hidden">
-      {data.length >= 3 && <Podium data={data} />}
-      {isDemo && (
-        <div className="mx-5 mt-3 px-4 py-2.5 rounded-2xl text-[12px] text-center font-medium" style={{ background: '#FFECBC', color: '#9c7a13' }}>
-          Primer kako izgleda rang lista
-        </div>
-      )}
-      <ViewTabs view={view} onChange={setView} total={data.length} />
-      <div className={isScroll ? 'max-h-[520px] overflow-y-auto' : ''}>
-        {displayed.map((p, i) => {
-          const row = (
-            <>
-              <span className="w-7 text-center flex-shrink-0">
-                {i < 3 ? <span className="text-lg">{MEDALS[i]}</span> : <span className="text-[13px] font-bold" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
-              </span>
-              <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
-                {p.avatar
-                  ? <Image src={`/avatars/${p.avatar}`} alt={p.name} width={40} height={40} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-[14px] font-bold text-white" style={{ background: '#609DED' }}>{p.name[0]}</div>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
-                <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
-                  {p.questionsReached} pit. · {Math.round(p.accuracy)}% · niz {p.bestCombo}
-                </p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
-                <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
-              </div>
-            </>
-          )
-          return p.userId
-            ? <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 border-b last:border-0 hover:bg-[#F2F2F2] transition-colors" style={{ borderColor: '#F2F2F2' }}>{row}</Link>
-            : <div key={i} className="flex items-center gap-3 px-5 py-3.5 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>{row}</div>
-        })}
+      <PeriodHint period={period} />
+      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, 50).map((p, i) => (
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+            <Rank i={i} />
+            <Avatar name={p.name} avatar={p.avatar} accent="#609DED" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+                {p.questionsReached} pit. · {Math.round(p.accuracy)}% · niz {p.bestCombo}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
+              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── DUEL ────────────────────────────────────────────────────────────────
+function DuelBoard({ data, period, user }: { data: DuelRow[]; period: PeriodId; user: boolean }) {
+  if (data.length === 0) return <EmptyBoard user={user} href="/igraj-zajedno" label="Igraj duel" icon="⚔️" />
+  return (
+    <div className="card-soft overflow-hidden">
+      <PeriodHint period={period} />
+      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, 50).map((p, i) => (
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+            <Rank i={i} />
+            <Avatar name={p.name} avatar={p.avatar} accent="#FFCB46" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.plays} {p.plays === 1 ? 'duel' : 'duela'}</p>
+            </div>
+            <div className="flex gap-2.5 text-center flex-shrink-0">
+              <div><div className="font-bold text-[15px]" style={{ color: '#4CAF50' }}>{p.wins}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>W</div></div>
+              <div><div className="font-bold text-[15px]" style={{ color: '#9C9C9C' }}>{p.draws}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>D</div></div>
+              <div><div className="font-bold text-[15px]" style={{ color: '#E55353' }}>{p.losses}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>L</div></div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── HANGMAN ─────────────────────────────────────────────────────────────
+function HangmanBoard({ data, period, user }: { data: HangmanRow[]; period: PeriodId; user: boolean }) {
+  if (data.length === 0) return <EmptyBoard user={user} href="/vesanje" label="Igraj Vešanje" icon="🎯" />
+  return (
+    <div className="card-soft overflow-hidden">
+      <PeriodHint period={period} />
+      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, 50).map((p, i) => (
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+            <Rank i={i} />
+            <Avatar name={p.name} avatar={p.avatar} accent="#4CAF50" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.total} {p.total === 1 ? 'igra' : 'igara'} · {p.winRate}%</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#4CAF50' }}>{p.wins}</div>
+              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>{p.wins === 1 ? 'pobeda' : 'pobeda'}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── BRZI KVIZ ───────────────────────────────────────────────────────────
+function QuickBoard({ data, period, user }: { data: QuickRow[]; period: PeriodId; user: boolean }) {
+  if (data.length === 0) return <EmptyBoard user={user} href="/brzi-kviz" label="Igraj Brzi kviz" icon="⚡" />
+  return (
+    <div className="card-soft overflow-hidden">
+      <PeriodHint period={period} />
+      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, 50).map((p, i) => (
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
+            <Rank i={i} />
+            <Avatar name={p.name} avatar={p.avatar} accent="#E55353" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.correct} tačno · {Math.round(p.accuracy)}%</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
+              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   )

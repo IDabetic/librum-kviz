@@ -3,13 +3,7 @@ import Header from '@/components/Header'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { IconBack, IconTrophy, IconStar, IconDiscover, IconTime } from '@/components/icons'
-
-function fmtTime(s: number): string {
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
-}
+import { IconBack, IconHome, IconSwords, IconHint, IconTime } from '@/components/icons'
 
 export default async function PublicProfilPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
@@ -20,22 +14,41 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
   if (!profile) notFound()
 
-  const { data: sessions } = await supabase
-    .from('survivor_sessions')
-    .select('score, questions_reached, correct_answers, wrong_answers, accuracy, best_combo, total_time_seconds, created_at')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const [survivor, hangman, quick, duelGames] = await Promise.all([
+    supabase.from('survivor_sessions')
+      .select('score, questions_reached, best_combo, accuracy')
+      .eq('user_id', userId).order('score', { ascending: false }).limit(50),
+    supabase.from('hangman_sessions').select('won, score').eq('user_id', userId).limit(200),
+    supabase.from('quick_sessions').select('score, correct_count, accuracy').eq('user_id', userId).limit(50),
+    supabase.from('game_rooms')
+      .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished')
+      .or(`host_id.eq.${userId},guest_id.eq.${userId}`)
+      .or('host_finished.eq.true,guest_finished.eq.true')
+      .not('guest_id', 'is', null)
+      .limit(200),
+  ])
 
-  const totalGames = sessions?.length || 0
-  const bestScore = totalGames > 0 ? Math.max(...sessions!.map(s => s.score)) : 0
-  const bestQuestions = totalGames > 0 ? Math.max(...sessions!.map(s => s.questions_reached)) : 0
-  const bestCombo = totalGames > 0 ? Math.max(...sessions!.map(s => s.best_combo)) : 0
-  const totalCorrect = (sessions || []).reduce((s, r) => s + r.correct_answers, 0)
-  const totalWrong = (sessions || []).reduce((s, r) => s + r.wrong_answers, 0)
-  const totalAnswered = totalCorrect + totalWrong
-  const avgAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0
-  const totalTimePlayed = (sessions || []).reduce((s, r) => s + r.total_time_seconds, 0)
+  const sSessions = survivor.data || []
+  const sBest = sSessions.length ? Math.max(...sSessions.map(s => s.score)) : 0
+  const sBestQ = sSessions.length ? Math.max(...sSessions.map(s => s.questions_reached)) : 0
+
+  const hSessions = hangman.data || []
+  const hWins = hSessions.filter(s => s.won).length
+  const hWinRate = hSessions.length ? Math.round((hWins / hSessions.length) * 100) : 0
+
+  const qSessions = quick.data || []
+  const qBest = qSessions.length ? Math.max(...qSessions.map(s => s.score)) : 0
+
+  let dWins = 0, dLosses = 0, dDraws = 0
+  ;(duelGames.data || []).forEach(g => {
+    if (!g.host_finished || !g.guest_finished) return
+    const isHost = g.host_id === userId
+    const my = isHost ? (g.host_score ?? 0) : (g.guest_score ?? 0)
+    const op = isHost ? (g.guest_score ?? 0) : (g.host_score ?? 0)
+    if (my > op) dWins++
+    else if (my < op) dLosses++
+    else dDraws++
+  })
 
   const displayName = profile.nickname || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Igrač'
   const initials = (profile.first_name?.[0] || '') + (profile.last_name?.[0] || '') || displayName[0]
@@ -53,7 +66,7 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
         </Link>
 
         <div className="card-soft p-6 sm:p-8 mb-6">
-          <div className="flex items-center gap-4 sm:gap-5 mb-6">
+          <div className="flex items-center gap-4 sm:gap-5">
             <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
               {profile.avatar
                 ? <Image src={`/avatars/${profile.avatar}`} alt={displayName} width={80} height={80} className="w-full h-full object-cover" />
@@ -69,72 +82,60 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
               {profile.city && <p className="text-[12px] truncate mt-0.5" style={{ color: '#9C9C9C' }}>📍 {profile.city}</p>}
             </div>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { Icon: IconDiscover, label: 'Igara',         value: totalGames,    bg: '#BCD9FF', fg: '#1e5fa4' },
-              { Icon: IconStar,     label: 'Rekord bod.',   value: bestScore,     bg: '#FFECBC', fg: '#9c7a13' },
-              { Icon: IconTrophy,   label: 'Max pitanja',   value: bestQuestions, bg: '#E8F8F0', fg: '#15803d' },
-              { Icon: IconTime,     label: 'Najduži niz',   value: bestCombo,     bg: '#F2F2F2', fg: '#343434' },
-            ].map(({ Icon, label, value, bg, fg }) => (
-              <div key={label} className="rounded-2xl p-4" style={{ background: bg }}>
-                <Icon size={16} strokeWidth={2.2} style={{ color: fg, opacity: 0.7 }} />
-                <div className="font-black tracking-tight mt-2" style={{ color: fg, fontSize: 'clamp(20px, 3.5vw, 26px)' }}>{value}</div>
-                <div className="text-[11px] font-medium mt-0.5" style={{ color: fg, opacity: 0.7 }}>{label}</div>
-              </div>
-            ))}
-          </div>
-
-          {totalGames > 0 && (
-            <div className="grid grid-cols-3 gap-3 mt-3">
-              {[
-                { label: 'Tačnost',    value: `${avgAccuracy}%` },
-                { label: 'Tačnih',     value: totalCorrect },
-                { label: 'Igrano',     value: fmtTime(totalTimePlayed) },
-              ].map(({ label, value }) => (
-                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: '#F2F2F2' }}>
-                  <div className="font-bold text-[15px] tracking-tight" style={{ color: '#343434' }}>{value}</div>
-                  <div className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>{label}</div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
-        {sessions && sessions.length > 0 ? (
-          <div className="card-soft p-6 sm:p-8">
-            <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#343434' }}>
-              Poslednje igre
-            </h2>
-            <div className="space-y-1">
-              {sessions.slice(0, 10).map((r, i) => {
-                const accent = r.score >= 1000 ? '#4CAF50' : r.score >= 500 ? '#FFCB46' : '#609DED'
-                return (
-                  <div key={i} className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
-                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-[12px] flex-shrink-0"
-                      style={{ background: accent, color: 'white' }}>
-                      {r.score}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[14px] tracking-tight" style={{ color: '#343434' }}>
-                        {r.questions_reached} pitanja
-                      </p>
-                      <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
-                        {Math.round(Number(r.accuracy))}% · niz {r.best_combo} · {fmtTime(r.total_time_seconds)} · {new Date(r.created_at).toLocaleDateString('sr')}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : (
+        <div className="grid sm:grid-cols-2 gap-3 mb-6">
+          <GameCard Icon={IconHome}   label="PRO kviz"    accent="#609DED" bg="#BCD9FF"
+            primary={{ value: sBest, label: 'Rekord bodova' }}
+            secondary={[{ value: sSessions.length, label: 'Igara' }, { value: sBestQ, label: 'Max pitanja' }]} />
+          <GameCard Icon={IconSwords} label="Trivia duel" accent="#9c7a13" bg="#FFECBC"
+            primary={{ value: dWins, label: 'Pobeda' }}
+            secondary={[{ value: dLosses, label: 'Poraza' }, { value: dDraws, label: 'Nerešeno' }]} />
+          <GameCard Icon={IconHint}   label="Vešanje"     accent="#15803d" bg="#E8F8F0"
+            primary={{ value: hWins, label: 'Pobeda' }}
+            secondary={[{ value: hSessions.length, label: 'Igara' }, { value: `${hWinRate}%`, label: 'Uspeh' }]} />
+          <GameCard Icon={IconTime}   label="Brzi kviz"   accent="#b91c1c" bg="#FEE2E2"
+            primary={{ value: qBest, label: 'Rekord bodova' }}
+            secondary={[{ value: qSessions.length, label: 'Rundi' }]} />
+        </div>
+
+        {(sSessions.length + hSessions.length + qSessions.length) === 0 && (
           <div className="card-soft py-16 text-center">
             <div className="text-5xl mb-4">🎮</div>
             <p className="font-bold text-[17px]" style={{ color: '#343434' }}>Još nije igrao</p>
           </div>
         )}
       </main>
+    </div>
+  )
+}
+
+function GameCard({ Icon, label, accent, bg, primary, secondary }: {
+  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
+  label: string; accent: string; bg: string
+  primary: { value: number | string; label: string }
+  secondary: { value: number | string; label: string }[]
+}) {
+  return (
+    <div className="card-soft p-5 sm:p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
+          <Icon size={18} className={`text-[${accent}]`} strokeWidth={2.2} />
+        </div>
+        <p className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>{label}</p>
+      </div>
+      <div className="font-black tracking-tight leading-none mb-1" style={{ color: accent, fontSize: 'clamp(28px, 5vw, 36px)' }}>
+        {primary.value}
+      </div>
+      <p className="text-[11px] font-medium mb-4" style={{ color: '#9C9C9C' }}>{primary.label}</p>
+      <div className="grid gap-2 pt-3 border-t" style={{ borderColor: '#F2F2F2', gridTemplateColumns: `repeat(${secondary.length}, 1fr)` }}>
+        {secondary.map((s, i) => (
+          <div key={i}>
+            <div className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>{s.value}</div>
+            <div className="text-[10px]" style={{ color: '#9C9C9C' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
