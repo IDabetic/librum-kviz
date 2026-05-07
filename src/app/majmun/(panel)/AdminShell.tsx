@@ -8,7 +8,7 @@ import { Logo } from '@/components/Logo'
 import { createClient } from '@/lib/supabase/client'
 import {
   IconHome, IconDiscover, IconSwords, IconHint, IconTime, IconTrophy,
-  IconUsers, IconSettings, IconLogout, IconMenu, IconClose,
+  IconUsers, IconSettings, IconLogout, IconMenu, IconClose, IconStar,
 } from '@/components/icons'
 
 type Profile = {
@@ -23,6 +23,7 @@ type Profile = {
 const NAV = [
   { label: 'Dashboard',   href: '/majmun',                Icon: IconHome },
   { label: 'PRO pitanja', href: '/majmun/pitanja',        Icon: IconDiscover },
+  { label: 'Book kviz',   href: '/majmun/book-kviz',      Icon: IconStar },
   { label: 'Brzi kviz',   href: '/majmun/brzi-kviz',      Icon: IconTime },
   { label: 'Vešanje',     href: '/majmun/vesanje',        Icon: IconHint },
   { label: 'Predlozi',    href: '/majmun/predlozi',       Icon: IconUsers },

@@ -15,10 +15,13 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
     .eq('id', id).single()
   if (!u) notFound()
 
-  // Aggregate stats — pull all sessions for this user across all 4 games + answer log
-  const [survivor, hangman, quick, duelHost, duelGuest, answerLog] = await Promise.all([
+  // Aggregate stats — pull all sessions for this user across all games + answer log
+  const [survivor, book, hangman, quick, duelHost, duelGuest, answerLog] = await Promise.all([
     supabase.from('survivor_sessions')
       .select('score, questions_reached, best_combo, total_time_seconds, accuracy, correct_answers, wrong_answers, created_at')
+      .eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+    supabase.from('book_sessions')
+      .select('score, questions_reached, best_combo, total_time_seconds, accuracy, top_genre, top_genre_pct, created_at')
       .eq('user_id', id).order('created_at', { ascending: false }).limit(50),
     supabase.from('hangman_sessions').select('won, score, time_seconds, category, created_at')
       .eq('user_id', id).order('created_at', { ascending: false }).limit(50),
@@ -37,11 +40,20 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   ])
 
   const survivorRows = survivor.data || []
+  const bookRows = book.data || []
   const hangmanRows = hangman.data || []
   const quickRows = quick.data || []
 
   const sBest = survivorRows.length ? Math.max(...survivorRows.map(s => s.score)) : 0
   const sTotal = survivorRows.length
+  const bBest = bookRows.length ? Math.max(...bookRows.map(b => b.score)) : 0
+  const bTotal = bookRows.length
+  // Top genre across this user's book sessions: count appearances of top_genre, pick most frequent
+  const genreTally: Record<string, number> = {}
+  for (const r of bookRows) {
+    if (r.top_genre) genreTally[r.top_genre] = (genreTally[r.top_genre] || 0) + 1
+  }
+  const bTopGenre = Object.entries(genreTally).sort((a, b) => b[1] - a[1])[0]?.[0] || null
   const hWins = hangmanRows.filter(h => h.won).length
   const hTotal = hangmanRows.length
   const qBest = quickRows.length ? Math.max(...quickRows.map(q => q.score)) : 0
@@ -61,6 +73,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   // Last activity = most recent timestamp across any session
   const allDates = [
     ...survivorRows.map(s => s.created_at),
+    ...bookRows.map(b => b.created_at),
     ...hangmanRows.map(h => h.created_at),
     ...quickRows.map(q => q.created_at),
     ...duels.map(d => d.created_at),
@@ -217,6 +230,8 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       <div className="grid sm:grid-cols-2 gap-3">
         <StatCard label="PRO kviz" total={sTotal} primary={sBest} primaryLabel="Rekord" accent="#609DED" bg="#BCD9FF"
           extra={proAvgSecPerQ != null ? `Prosek ${fmtSec(proAvgSecPerQ)} po pitanju` : undefined} />
+        <StatCard label="Book kviz" total={bTotal} primary={bBest} primaryLabel="Rekord" accent="#9c7a13" bg="#FFECBC"
+          extra={bTopGenre ? `Najjači žanr: ${bTopGenre}` : undefined} />
         <StatCard label="Trivia duel" total={duelTotal}
           primary={duelWinPct != null ? `${duelWinPct}%` : '—'}
           primaryLabel={`${duelWins}W · ${duelLosses}L · ${duelTies}T`}
