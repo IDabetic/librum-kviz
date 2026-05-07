@@ -19,10 +19,13 @@ export default async function ProfilPage() {
   const { data: profile } = await supabase
     .from('profiles').select('*').eq('id', user.id).single()
 
-  // Pull stats for all 4 games in parallel
-  const [survivor, hangman, quick, duelGames] = await Promise.all([
+  // Pull stats for all games in parallel
+  const [survivor, book, hangman, quick, duelGames] = await Promise.all([
     supabase.from('survivor_sessions')
       .select('score, questions_reached, correct_answers, wrong_answers, best_combo, total_time_seconds, created_at')
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+    supabase.from('book_sessions')
+      .select('score, questions_reached, best_combo, accuracy, top_genre, top_genre_pct, total_time_seconds, created_at')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
     supabase.from('hangman_sessions')
       .select('won, score, word, category, wrong_guesses, created_at')
@@ -43,6 +46,17 @@ export default async function ProfilPage() {
   const sBest = sTotal ? Math.max(...sSessions.map(s => s.score)) : 0
   const sBestQ = sTotal ? Math.max(...sSessions.map(s => s.questions_reached)) : 0
   const sBestCombo = sTotal ? Math.max(...sSessions.map(s => s.best_combo)) : 0
+
+  // Book kviz stats
+  const bSessions = book.data || []
+  const bTotal = bSessions.length
+  const bBest = bTotal ? Math.max(...bSessions.map(s => s.score)) : 0
+  const bBestQ = bTotal ? Math.max(...bSessions.map(s => s.questions_reached)) : 0
+  const bGenreTally: Record<string, number> = {}
+  for (const r of bSessions) {
+    if (r.top_genre) bGenreTally[r.top_genre] = (bGenreTally[r.top_genre] || 0) + 1
+  }
+  const bTopGenre = Object.entries(bGenreTally).sort((a, b) => b[1] - a[1])[0]?.[0] || null
 
   // Hangman stats
   const hSessions = hangman.data || []
@@ -121,6 +135,22 @@ export default async function ProfilPage() {
             ]}
             href="/igraj"
           />
+          {/* Book kviz */}
+          <GameCard
+            Icon={IconStar} label="Book kviz" accent="#9c7a13" bg="#FFECBC"
+            primary={{ value: bBest, label: 'Rekord bodova' }}
+            secondary={bTopGenre
+              ? [
+                  { value: bTotal, label: 'Igara' },
+                  { value: bBestQ, label: 'Max pitanja' },
+                  { value: bTopGenre, label: 'Najjači žanr' },
+                ]
+              : [
+                  { value: bTotal, label: 'Igara' },
+                  { value: bBestQ, label: 'Max pitanja' },
+                ]}
+            href="/book-kviz"
+          />
           {/* Trivia duel */}
           <GameCard
             Icon={IconSwords} label="Trivia duel" accent="#9c7a13" bg="#FFECBC"
@@ -157,25 +187,26 @@ export default async function ProfilPage() {
         </div>
 
         {/* ─ Recent activity (mixed) ────────────────────────────────── */}
-        {(sTotal + hTotal + qTotal) > 0 && (
+        {(sTotal + bTotal + hTotal + qTotal) > 0 && (
           <div className="card-soft p-6 sm:p-7">
             <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#343434' }}>
               Skorašnja aktivnost
             </h2>
             <div className="space-y-1">
-              {recentMix(sSessions, hSessions, qSessions).map((entry, i) => (
+              {recentMix(sSessions, bSessions, hSessions, qSessions).map((entry, i) => (
                 <ActivityRow key={i} entry={entry} />
               ))}
             </div>
           </div>
         )}
 
-        {(sTotal + hTotal + qTotal + dTotal) === 0 && (
+        {(sTotal + bTotal + hTotal + qTotal + dTotal) === 0 && (
           <div className="card-soft p-10 text-center">
             <p className="font-bold text-[17px] mb-2" style={{ color: '#343434' }}>Još nisi igrao</p>
             <p className="text-[14px] mb-6" style={{ color: '#9C9C9C' }}>Izaberi mod i kreni.</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <Link href="/igraj" className="btn btn-primary btn-md">PRO kviz</Link>
+              <Link href="/book-kviz" className="btn btn-secondary btn-md">Book kviz</Link>
               <Link href="/vesanje" className="btn btn-secondary btn-md">Vešanje</Link>
               <Link href="/brzi-kviz" className="btn btn-secondary btn-md">Brzi kviz</Link>
             </div>
@@ -220,7 +251,7 @@ function GameCard({ Icon, label, accent, bg, primary, secondary, href }: {
 
 // ── Activity row ────────────────────────────────────────────────────────
 type Activity = {
-  type: 'survivor' | 'hangman' | 'quick'
+  type: 'survivor' | 'book' | 'hangman' | 'quick'
   title: string
   detail: string
   score: number | string
@@ -228,7 +259,7 @@ type Activity = {
   date: Date
 }
 
-function recentMix(survivor: SurvivorSession[], hangman: HangmanSession[], quick: QuickSession[]): Activity[] {
+function recentMix(survivor: SurvivorSession[], book: BookSession[], hangman: HangmanSession[], quick: QuickSession[]): Activity[] {
   const mix: Activity[] = []
   survivor.forEach(s => {
     const accent = s.score >= 1000 ? '#4CAF50' : s.score >= 500 ? '#FFCB46' : '#609DED'
@@ -239,6 +270,20 @@ function recentMix(survivor: SurvivorSession[], hangman: HangmanSession[], quick
       score: s.score,
       scoreColor: accent,
       date: new Date(s.created_at),
+    })
+  })
+  book.forEach(b => {
+    const accent = b.score >= 500 ? '#4CAF50' : b.score >= 200 ? '#FFCB46' : '#9c7a13'
+    const detail = b.top_genre
+      ? `${b.questions_reached} pit. · najjači: ${b.top_genre}`
+      : `${b.questions_reached} pit. · ${fmtTime(b.total_time_seconds)}`
+    mix.push({
+      type: 'book',
+      title: 'Book kviz',
+      detail,
+      score: b.score,
+      scoreColor: accent,
+      date: new Date(b.created_at),
     })
   })
   hangman.forEach(h => {
@@ -265,6 +310,7 @@ function recentMix(survivor: SurvivorSession[], hangman: HangmanSession[], quick
 }
 
 type SurvivorSession = { score: number; questions_reached: number; correct_answers: number; wrong_answers: number; best_combo: number; total_time_seconds: number; created_at: string }
+type BookSession = { score: number; questions_reached: number; best_combo: number; accuracy: number | string; top_genre: string | null; top_genre_pct: number | string | null; total_time_seconds: number; created_at: string }
 type HangmanSession = { won: boolean; score: number; word: string; category: string | null; wrong_guesses: number; created_at: string }
 type QuickSession = { score: number; correct_count: number; wrong_count: number; accuracy: number | string; total_answered: number; created_at: string }
 
