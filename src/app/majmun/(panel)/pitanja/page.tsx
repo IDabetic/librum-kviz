@@ -101,7 +101,7 @@ export default async function PitanjaPage({ searchParams }: { searchParams: Prom
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
-            PRO pitanja
+            Pitanja
           </h1>
           <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>
             {fmtN(count ?? 0)} ukupno · {sp.q ? `pretraga "${sp.q}"` : 'svi rezultati'}
@@ -110,6 +110,18 @@ export default async function PitanjaPage({ searchParams }: { searchParams: Prom
         <Link href="/majmun/pitanja/novo" className="btn btn-primary btn-md">
           + Novo pitanje
         </Link>
+      </div>
+
+      {/* Reminder that this single pool feeds three game modes — earlier
+          we had a separate "Brzi kviz" admin section that managed an unused
+          table, which made admins think Brzi had its own (much smaller) pool. */}
+      <div className="rounded-2xl px-4 py-3 text-[12px] font-medium flex items-start gap-2"
+        style={{ background: '#BCD9FF', color: '#1e5fa4' }}>
+        <span className="text-[14px] leading-none mt-px">ℹ️</span>
+        <span>
+          Ova pitanja se koriste u <strong>PRO kvizu</strong>, <strong>Brzom kvizu</strong> i u <strong>Trivia duelu</strong>.
+          Sve što ovde dodaš odmah je dostupno u sva tri moda.
+        </span>
       </div>
 
       {/* Filters */}

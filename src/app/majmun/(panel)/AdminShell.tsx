@@ -20,18 +20,18 @@ type Profile = {
   role: string
 }
 
-// Brzi kviz, PRO kviz and Trivia duel all read from the `questions` table,
-// which is curated under "PRO pitanja". There is no separate Brzi admin —
-// adding a question there makes it eligible for all three modes.
+// PRO kviz, Brzi kviz and Trivia duel all read from the same `questions`
+// table — pitanja se cure under "Pitanja". The /majmun/trivia-duel link
+// goes to a duel-specific analytics page, not to question CRUD.
 const NAV = [
-  { label: 'Dashboard',   href: '/majmun',                Icon: IconHome },
-  { label: 'PRO pitanja', href: '/majmun/pitanja',        Icon: IconDiscover },
-  { label: 'Book kviz',   href: '/majmun/book-kviz',      Icon: IconStar },
-  { label: 'Vešanje',     href: '/majmun/vesanje',        Icon: IconHint },
-  { label: 'Predlozi',    href: '/majmun/predlozi',       Icon: IconUsers },
-  { label: 'Korisnici',   href: '/majmun/korisnici',      Icon: IconUsers },
-  { label: 'Rang lista',  href: '/majmun/rang-lista',     Icon: IconTrophy },
-  { label: 'Trivia duel', href: '/majmun/trivia-duel',    Icon: IconSwords },
+  { label: 'Dashboard',         href: '/majmun',                Icon: IconHome },
+  { label: 'Pitanja',           href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
+  { label: 'Book kviz',         href: '/majmun/book-kviz',      Icon: IconStar },
+  { label: 'Vešanje',           href: '/majmun/vesanje',        Icon: IconHint },
+  { label: 'Predlozi',          href: '/majmun/predlozi',       Icon: IconUsers },
+  { label: 'Korisnici',         href: '/majmun/korisnici',      Icon: IconUsers },
+  { label: 'Rang lista',        href: '/majmun/rang-lista',     Icon: IconTrophy },
+  { label: 'Trivia duel',       href: '/majmun/trivia-duel',    Icon: IconSwords, hint: 'analitika' },
 ]
 
 export default function AdminShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
@@ -96,7 +96,9 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
 
           {/* Nav */}
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-            {NAV.map(({ label, href, Icon }) => {
+            {NAV.map(item => {
+              const { label, href, Icon } = item
+              const hint = 'hint' in item ? item.hint : undefined
               const active = isActive(href)
               return (
                 <Link key={href} href={href} onClick={() => setOpen(false)}
@@ -107,7 +109,13 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
                   onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = '#F2F2F2' }}
                   onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}>
                   <Icon size={16} strokeWidth={2.2} />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {hint && (
+                    <span className="text-[10px] font-medium uppercase tracking-wider"
+                      style={{ color: active ? 'rgba(252,252,252,0.55)' : '#9C9C9C' }}>
+                      {hint}
+                    </span>
+                  )}
                 </Link>
               )
             })}
