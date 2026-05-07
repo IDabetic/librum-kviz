@@ -128,16 +128,28 @@ function GameInner() {
         return
       }
 
+      // 72h dedupe — exclude words this user already played in vešanje
+      // recently. Falls back to the full pool if too few unseen remain.
+      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+      const { data: seen } = await supabase
+        .from('hangman_sessions')
+        .select('word_id')
+        .eq('user_id', user.id)
+        .gte('created_at', cutoff)
+      const seenSet = new Set((seen || []).map(s => s.word_id).filter(Boolean))
+
       // System words: pull from DB
       let q = supabase.from('hangman_words').select('id, word, hint, category').eq('is_active', true)
       if (cat !== 'random') q = q.eq('category', cat)
-      const { data, error } = await q.limit(80)
+      const { data, error } = await q.limit(200)
       if (error || !data || data.length === 0) {
         setError('Nema reči u toj kategoriji.')
         setLoading(false)
         return
       }
-      const r = data[Math.floor(Math.random() * data.length)] as WordRow
+      let pool = (data as WordRow[]).filter(w => !seenSet.has(w.id))
+      if (pool.length < 5) pool = data as WordRow[]
+      const r = pool[Math.floor(Math.random() * pool.length)]
       setWordRow(r)
       setLoading(false)
     }
