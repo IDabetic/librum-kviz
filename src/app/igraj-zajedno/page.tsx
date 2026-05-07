@@ -2,11 +2,16 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
+
+// Two flavours of duel today: PRO (questions table, shared with PRO/Brzi)
+// and Kafanski (kafana_questions, music-only). The lobby renders the
+// same UI for both — only the source pool + accent + heading differ.
+type QuizType = 'pro' | 'kafana'
 
 function generateCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
@@ -19,7 +24,25 @@ const DUEL_LENGTHS = [
 ] as const
 
 export default function IgrajZajednoPage() {
+  return (
+    <Suspense fallback={null}>
+      <IgrajZajednoInner />
+    </Suspense>
+  )
+}
+
+function IgrajZajednoInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const quizType: QuizType = searchParams.get('type') === 'kafana' ? 'kafana' : 'pro'
+  const isKafana = quizType === 'kafana'
+  const heroAccent = isKafana ? '#b91c1c' : '#609DED'
+  const heroLabel = isKafana ? 'Multiplayer · muzika' : 'Multiplayer'
+  const heroTitle = isKafana ? 'Kafanski duel' : 'Duel'
+  const heroSub = isKafana
+    ? 'Izazovi prijatelja u znanju kafanskih hitova.'
+    : 'Izazovi prijatelja jedan na jedan.'
+
   const [tab, setTab] = useState<'create' | 'join'>('create')
 
   const [selectedFormat, setSelectedFormat] = useState<typeof DUEL_LENGTHS[number]['id']>('q25')
@@ -64,20 +87,22 @@ export default function IgrajZajednoPage() {
     const fmt = DUEL_LENGTHS.find(f => f.id === selectedFormat)!
     const targetCount = fmt.count
 
-    // 72h dedupe — questions this user already encountered in PRO/Brzi/
-    // Duel. Falls back to the full pool if filtering would leave too few
-    // for a duel of the requested length.
+    // 72h dedupe — questions this user already encountered in the same
+    // pool. PRO duel reads question_answer_log (shared with PRO + Brzi);
+    // Kafanski duel reads kafana_answer_log (its own pool).
     const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+    const logTable = isKafana ? 'kafana_answer_log' : 'question_answer_log'
     const { data: seen } = await supabase
-      .from('question_answer_log')
+      .from(logTable)
       .select('question_id')
       .eq('user_id', user.id)
       .gte('created_at', cutoff)
     const seenSet = new Set((seen || []).map(s => s.question_id))
 
     // Pull random active questions — fetch a bit more to allow for golden tiebreaker rounds
+    const poolTable = isKafana ? 'kafana_questions' : 'questions'
     const { data: all } = await supabase
-      .from('questions').select('id').eq('is_active', true).limit(500)
+      .from(poolTable).select('id').eq('is_active', true).limit(500)
     let pool = (all || []).filter((q: { id: string }) => !seenSet.has(q.id))
     if (pool.length < targetCount + 10) pool = all || []
     const ids = shuffle(pool).map((q: { id: string }) => q.id).slice(0, targetCount + 10)
@@ -97,6 +122,7 @@ export default function IgrajZajednoPage() {
       total_questions: targetCount,
       status: 'waiting',
       game_format: selectedFormat,
+      quiz_type: quizType,
       target_wins: null,
       time_limit_seconds: null,
     })
@@ -153,15 +179,15 @@ export default function IgrajZajednoPage() {
       <Header />
       <main className="max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="text-center mb-10">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
-            Multiplayer
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: heroAccent }}>
+            {heroLabel}
           </p>
           <h1 className="font-black tracking-tight leading-[1.1] mb-3"
             style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
-            Duel
+            {heroTitle}
           </h1>
           <p className="text-[14px] sm:text-[15px]" style={{ color: '#9C9C9C' }}>
-            Izazovi prijatelja jedan na jedan.
+            {heroSub}
           </p>
         </div>
 

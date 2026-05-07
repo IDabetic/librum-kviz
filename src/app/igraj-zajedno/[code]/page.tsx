@@ -30,6 +30,7 @@ type GameRoom = {
   total_questions: number
   game_format: string
   game_start_time: string | null
+  quiz_type: 'pro' | 'kafana'
 }
 
 type Question = {
@@ -143,12 +144,15 @@ export default function DuelGamePage() {
         if (!roomData) { router.push('/igraj-zajedno'); return }
         setRoom(roomData as GameRoom)
 
+        // Pull from the right pool — Kafanski duels use kafana_questions,
+        // everything else (PRO) uses the shared questions table.
+        const poolTable = roomData.quiz_type === 'kafana' ? 'kafana_questions' : 'questions'
         const ids = roomData.question_ids as string[]
         const chunkSize = 50
         const all: Question[] = []
         for (let i = 0; i < ids.length; i += chunkSize) {
           const { data } = await supabase
-            .from('questions').select('id, question_text, options, correct_answer, info')
+            .from(poolTable).select('id, question_text, options, correct_answer, info')
             .in('id', ids.slice(i, i + chunkSize))
           if (data) all.push(...(data as Question[]))
         }
@@ -272,12 +276,14 @@ export default function DuelGamePage() {
       : { guest_answers: newAnswers, guest_score: newScore }
     await supabase.from('game_rooms').update(update).eq('id', room.id)
 
-    // Log to the shared answer log so the 72h dedupe in PRO/Brzi/Duel
-    // sees this question as recently played for this user.
+    // Log to the right answer log so the 72h dedupe matches the pool
+    // this duel actually drew from. PRO/Brzi/PRO duel share
+    // question_answer_log; Kafanski duel uses kafana_answer_log.
     const pickedOriginalIdx = shuffledIdx == null
       ? null
       : (q.shuffleMap[shuffledIdx] ?? null)
-    supabase.from('question_answer_log').insert({
+    const logTable = room.quiz_type === 'kafana' ? 'kafana_answer_log' : 'question_answer_log'
+    supabase.from(logTable).insert({
       question_id: q.id,
       user_id: myId,
       was_correct: isCorrect,

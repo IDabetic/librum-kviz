@@ -42,6 +42,10 @@ export type BookRow = {
   score: number; questionsReached: number; accuracy: number
   topGenre: string | null; topGenrePct: number | null
 }
+export type KafanaRow = {
+  userId: string; name: string; avatar: string | null
+  score: number; questionsReached: number; accuracy: number; bestCombo: number
+}
 
 type Period = 'today' | 'week' | 'month' | 'all'
 type SB = Awaited<ReturnType<typeof createClient>>
@@ -186,6 +190,31 @@ async function loadBook(supabase: SB, since: Date | null): Promise<BookRow[]> {
   return rows
 }
 
+// ── KAFANSKI KVIZ ────────────────────────────────────────────────────────
+async function loadKafana(supabase: SB, since: Date | null): Promise<KafanaRow[]> {
+  let q = supabase
+    .from('kafana_sessions')
+    .select('user_id, score, questions_reached, accuracy, best_combo, profiles(first_name, last_name, nickname, avatar)')
+    .order('score', { ascending: false })
+    .limit(500)
+  if (since) q = q.gte('created_at', since.toISOString())
+  const { data } = await q
+  const seen = new Set<string>()
+  const rows: KafanaRow[] = []
+  for (const r of (data || [])) {
+    if (!r.user_id || seen.has(r.user_id)) continue
+    seen.add(r.user_id)
+    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
+    rows.push({
+      userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
+      score: r.score, questionsReached: r.questions_reached,
+      accuracy: Number(r.accuracy), bestCombo: r.best_combo,
+    })
+    if (rows.length >= 200) break
+  }
+  return rows
+}
+
 // ── BRZI KVIZ ────────────────────────────────────────────────────────────
 async function loadQuick(supabase: SB, since: Date | null): Promise<QuickRow[]> {
   let q = supabase
@@ -228,12 +257,13 @@ export default async function LeaderboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [survivor, duel, hangman, quick, book] = await Promise.all([
+  const [survivor, duel, hangman, quick, book, kafana] = await Promise.all([
     loadAllPeriods(loadSurvivor, supabase),
     loadAllPeriods(loadDuel, supabase),
     loadAllPeriods(loadHangman, supabase),
     loadAllPeriods(loadQuick, supabase),
     loadAllPeriods(loadBook, supabase),
+    loadAllPeriods(loadKafana, supabase),
   ])
 
   return (
@@ -257,7 +287,7 @@ export default async function LeaderboardPage() {
             Rang lista
           </h1>
         </div>
-        <LeaderboardTabs survivor={survivor} duel={duel} hangman={hangman} quick={quick} book={book} user={!!user} />
+        <LeaderboardTabs survivor={survivor} duel={duel} hangman={hangman} quick={quick} book={book} kafana={kafana} user={!!user} />
       </main>
     </div>
   )

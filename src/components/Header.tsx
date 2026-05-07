@@ -17,12 +17,13 @@ type RecentUser = { id: string; first_name: string; last_name: string; nickname:
 // solid pill on active. Keeps the header monochrome at a glance but lets
 // each game mode read distinctly when scanning the bar.
 const NAV_LINKS = [
-  { href: '/igraj',         label: 'PRO kviz',    Icon: IconHome,   accent: '#609DED', tint: 'rgba(96,157,237,0.10)' },
-  { href: '/book-kviz',     label: 'Book kviz',   Icon: IconStar,   accent: '#9c7a13', tint: 'rgba(255,203,70,0.16)' },
-  { href: '/igraj-zajedno', label: 'Trivia duel', Icon: IconSwords, accent: '#E55353', tint: 'rgba(229,83,83,0.10)' },
-  { href: '/vesanje',       label: 'Vešanje',     Icon: IconHint,   accent: '#15803d', tint: 'rgba(76,175,80,0.10)' },
-  { href: '/brzi-kviz',     label: 'Brzi kviz',   Icon: IconTime,   accent: '#b91c1c', tint: 'rgba(229,83,83,0.08)' },
-  { href: '/leaderboard',   label: 'Rang lista',  Icon: IconTrophy, accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
+  { href: '/igraj',          label: 'PRO kviz',       Icon: IconHome,   accent: '#609DED', tint: 'rgba(96,157,237,0.10)' },
+  { href: '/book-kviz',      label: 'Book kviz',      Icon: IconStar,   accent: '#9c7a13', tint: 'rgba(255,203,70,0.16)' },
+  { href: '/kafanski-kviz',  label: 'Kafanski kviz',  Icon: IconStar,   accent: '#b91c1c', tint: 'rgba(229,83,83,0.10)' },
+  { href: '/igraj-zajedno',  label: 'Trivia duel',    Icon: IconSwords, accent: '#E55353', tint: 'rgba(229,83,83,0.10)' },
+  { href: '/vesanje',        label: 'Vešanje',        Icon: IconHint,   accent: '#15803d', tint: 'rgba(76,175,80,0.10)' },
+  { href: '/brzi-kviz',      label: 'Brzi kviz',      Icon: IconTime,   accent: '#b91c1c', tint: 'rgba(229,83,83,0.08)' },
+  { href: '/leaderboard',    label: 'Rang lista',     Icon: IconTrophy, accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
 ]
 const MOBILE_EXTRA_LINKS = [
   { href: '/predlozi-pitanje', label: 'Predloži pitanje', Icon: IconUsers, accent: '#609DED', tint: 'rgba(96,157,237,0.10)' },

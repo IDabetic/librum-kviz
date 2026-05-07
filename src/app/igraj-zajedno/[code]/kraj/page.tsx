@@ -38,6 +38,7 @@ type RoomRematchState = {
   host_id: string
   guest_id: string | null
   game_format: string
+  quiz_type: 'pro' | 'kafana'
   host_rematch: boolean
   guest_rematch: boolean
   rematch_room_code: string | null
@@ -85,7 +86,7 @@ export default function DuelEndPage() {
     async function load() {
       const { data } = await supabase
         .from('game_rooms')
-        .select('id, host_id, guest_id, game_format, host_rematch, guest_rematch, rematch_room_code')
+        .select('id, host_id, guest_id, game_format, quiz_type, host_rematch, guest_rematch, rematch_room_code')
         .eq('room_code', code)
         .single()
       if (cancelled) return
@@ -154,18 +155,24 @@ export default function DuelEndPage() {
     const supabase = createClient()
     const targetCount = DUEL_LENGTHS[room.game_format] ?? 25
 
-    // 72h dedupe scan against the host's recent answers — keeps the rematch
-    // pool fresh just like the create-room flow does.
+    // 72h dedupe scan + question pull from the same pool the original
+    // duel used. PRO duels read from `questions`/`question_answer_log`;
+    // Kafanski duels from kafana_*. The new room inherits quiz_type so
+    // the [code]/page.tsx loads from the right pool too.
+    const isKafana = room.quiz_type === 'kafana'
+    const logTable = isKafana ? 'kafana_answer_log' : 'question_answer_log'
+    const poolTable = isKafana ? 'kafana_questions' : 'questions'
+
     const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
     const { data: seen } = await supabase
-      .from('question_answer_log')
+      .from(logTable)
       .select('question_id')
       .eq('user_id', room.host_id)
       .gte('created_at', cutoff)
     const seenSet = new Set((seen || []).map(s => s.question_id))
 
     const { data: all } = await supabase
-      .from('questions').select('id').eq('is_active', true).limit(500)
+      .from(poolTable).select('id').eq('is_active', true).limit(500)
     let pool = (all || []).filter((q: { id: string }) => !seenSet.has(q.id))
     if (pool.length < targetCount + 10) pool = all || []
     const ids = shuffle(pool).map((q: { id: string }) => q.id).slice(0, targetCount + 10)
@@ -189,6 +196,7 @@ export default function DuelEndPage() {
       // into 'playing' so the [code] page doesn't show a waiting screen.
       status: 'playing',
       game_format: room.game_format,
+      quiz_type: room.quiz_type,
       target_wins: null,
       time_limit_seconds: null,
     })

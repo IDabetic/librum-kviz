@@ -10,13 +10,14 @@ import { createClient } from '@/lib/supabase/server'
 // per-mode duplicate-suppression heuristics. The only required field is
 // `user_id`; we recompute it from the auth cookie, never trust the body.
 
-type Mode = 'quick' | 'book' | 'survivor' | 'hangman'
+type Mode = 'quick' | 'book' | 'survivor' | 'hangman' | 'kafana'
 
 const TABLE: Record<Mode, string> = {
   quick: 'quick_sessions',
   book: 'book_sessions',
   survivor: 'survivor_sessions',
   hangman: 'hangman_sessions',
+  kafana: 'kafana_sessions',
 }
 
 export async function POST(req: Request) {
