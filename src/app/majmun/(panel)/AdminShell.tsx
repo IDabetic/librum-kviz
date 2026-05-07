@@ -21,18 +21,20 @@ type Profile = {
 }
 
 // PRO kviz, Brzi kviz and Trivia duel all read from the same `questions`
-// pool. "Pitanja" is the shared CRUD; "Brzi kviz" link is a convenience
-// shortcut that lands on the same pool so admins can always find it.
+// pool. "Pitanja" is the shared CRUD; "Brzi kviz" is a convenience
+// shortcut that lands on the same pool. Book kviz and Kafanski kviz each
+// have their own dedicated pool tables.
 const NAV = [
-  { label: 'Dashboard',   href: '/majmun',                Icon: IconHome },
-  { label: 'Pitanja',     href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
-  { label: 'Brzi kviz',   href: '/majmun/brzi-kviz',      Icon: IconTime,     hint: 'isti pool kao PRO' },
-  { label: 'Book kviz',   href: '/majmun/book-kviz',      Icon: IconStar },
-  { label: 'Vešanje',     href: '/majmun/vesanje',        Icon: IconHint },
-  { label: 'Predlozi',    href: '/majmun/predlozi',       Icon: IconUsers },
-  { label: 'Korisnici',   href: '/majmun/korisnici',      Icon: IconUsers },
-  { label: 'Rang lista',  href: '/majmun/rang-lista',     Icon: IconTrophy },
-  { label: 'Trivia duel', href: '/majmun/trivia-duel',    Icon: IconSwords,   hint: 'analitika' },
+  { label: 'Dashboard',      href: '/majmun',                Icon: IconHome },
+  { label: 'Pitanja',        href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
+  { label: 'Brzi kviz',      href: '/majmun/brzi-kviz',      Icon: IconTime,     hint: 'isti pool kao PRO' },
+  { label: 'Book kviz',      href: '/majmun/book-kviz',      Icon: IconStar },
+  { label: 'Kafanski kviz',  href: '/majmun/kafana',         Icon: IconStar,     hint: 'muzika' },
+  { label: 'Vešanje',        href: '/majmun/vesanje',        Icon: IconHint },
+  { label: 'Predlozi',       href: '/majmun/predlozi',       Icon: IconUsers },
+  { label: 'Korisnici',      href: '/majmun/korisnici',      Icon: IconUsers },
+  { label: 'Rang lista',     href: '/majmun/rang-lista',     Icon: IconTrophy },
+  { label: 'Trivia duel',    href: '/majmun/trivia-duel',    Icon: IconSwords,   hint: 'analitika' },
 ]
 
 export default function AdminShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed:book": "node scripts/seed-book.mjs",
+    "seed:kafana": "node scripts/seed-kafana.mjs",
     "sync:book-to-questions": "node scripts/sync-book-to-questions.mjs"
   },
   "dependencies": {
