@@ -10,10 +10,11 @@ import { createClient } from '@/lib/supabase/client'
 import Header from '@/components/Header'
 import { IconBack, IconCheck, IconLock } from '@/components/icons'
 
-const TOTAL_AVATARS = 26
+const TOTAL_AVATARS = 50
 const AVATAR_LIST = Array.from({ length: TOTAL_AVATARS }, (_, i) =>
-  `avatar_${String(i + 1).padStart(2, '0')}.jpg`
+  `animal_${String(i + 1).padStart(2, '0')}.png`
 )
+const DEFAULT_AVATAR = 'animal_01.png'
 
 export default function PodesavanjaPage() {
   const router = useRouter()
@@ -47,7 +48,7 @@ export default function PodesavanjaPage() {
           nickname: profile.nickname || '',
           city: profile.city || '',
         })
-        setAvatar(profile.avatar || 'avatar_01.jpg')
+        setAvatar(profile.avatar || DEFAULT_AVATAR)
       }
       setLoading(false)
     }

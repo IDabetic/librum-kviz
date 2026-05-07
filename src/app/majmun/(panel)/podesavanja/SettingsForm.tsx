@@ -7,10 +7,11 @@ import { createClient } from '@/lib/supabase/client'
 import { IconCheck, IconLock } from '@/components/icons'
 import { sendCustomPasswordResetEmail } from '@/lib/password-reset'
 
-const TOTAL_AVATARS = 26
+const TOTAL_AVATARS = 50
 const AVATAR_LIST = Array.from({ length: TOTAL_AVATARS }, (_, i) =>
-  `avatar_${String(i + 1).padStart(2, '0')}.jpg`
+  `animal_${String(i + 1).padStart(2, '0')}.png`
 )
+const DEFAULT_AVATAR = 'animal_01.png'
 
 type Profile = {
   id: string
@@ -32,7 +33,7 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
     nickname: profile.nickname || '',
     city: profile.city || '',
   })
-  const [avatar, setAvatar] = useState(profile.avatar || 'avatar_01.jpg')
+  const [avatar, setAvatar] = useState(profile.avatar || DEFAULT_AVATAR)
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileError, setProfileError] = useState('')
