@@ -21,29 +21,43 @@ export default async function ProfilPage() {
   const { data: profile } = await supabase
     .from('profiles').select('*').eq('id', user.id).single()
 
-  // Pull stats for all games in parallel
+  // Pull stats for all games in parallel. Limits bumped from 20 → 5000
+  // so play counts and avg-time stats are accurate (a user with 200
+  // sessions used to show "20 igara" on their own profile).
   const [survivor, book, kafana, hangman, quick, duelGames] = await Promise.all([
     supabase.from('survivor_sessions')
       .select('score, questions_reached, correct_answers, wrong_answers, best_combo, total_time_seconds, created_at')
-      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5000),
     supabase.from('book_sessions')
-      .select('score, questions_reached, best_combo, accuracy, top_genre, top_genre_pct, total_time_seconds, created_at')
-      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      .select('score, questions_reached, correct_answers, best_combo, accuracy, top_genre, top_genre_pct, total_time_seconds, created_at')
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5000),
     supabase.from('kafana_sessions')
       .select('score, questions_reached, correct_answers, wrong_answers, best_combo, accuracy, total_time_seconds, created_at')
-      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5000),
     supabase.from('hangman_sessions')
       .select('won, score, word, category, wrong_guesses, created_at')
-      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5000),
     supabase.from('quick_sessions')
-      .select('score, correct_count, wrong_count, accuracy, total_answered, created_at')
-      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      .select('score, correct_count, wrong_count, accuracy, total_answered, duration_seconds, created_at')
+      .eq('user_id', user.id).order('created_at', { ascending: false }).limit(5000),
     supabase.from('game_rooms')
       .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, status, created_at')
       .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`)
       .not('guest_id', 'is', null)
-      .order('created_at', { ascending: false }).limit(50),
+      .order('created_at', { ascending: false }).limit(2000),
   ])
+
+  // Avg seconds per correct answer — flags suspect scores. Returns
+  // null when there's nothing to divide so we skip rendering.
+  function avgPerCorrect(rows: { total_time_seconds?: number | null; correct_answers?: number | null }[]): string | null {
+    let totT = 0, totC = 0
+    for (const r of rows) {
+      totT += Number(r.total_time_seconds ?? 0)
+      totC += Number(r.correct_answers ?? 0)
+    }
+    if (totC <= 0) return null
+    return `${(totT / totC).toFixed(1)}s`
+  }
 
   // Survivor stats
   const sSessions = survivor.data || []
@@ -51,12 +65,14 @@ export default async function ProfilPage() {
   const sBest = sTotal ? Math.max(...sSessions.map(s => s.score)) : 0
   const sBestQ = sTotal ? Math.max(...sSessions.map(s => s.questions_reached)) : 0
   const sBestCombo = sTotal ? Math.max(...sSessions.map(s => s.best_combo)) : 0
+  const sAvgT = avgPerCorrect(sSessions)
 
   // Book kviz stats
   const bSessions = book.data || []
   const bTotal = bSessions.length
   const bBest = bTotal ? Math.max(...bSessions.map(s => s.score)) : 0
   const bBestQ = bTotal ? Math.max(...bSessions.map(s => s.questions_reached)) : 0
+  const bAvgT = avgPerCorrect(bSessions as { total_time_seconds?: number | null; correct_answers?: number | null }[])
   const bGenreTally: Record<string, number> = {}
   for (const r of bSessions) {
     if (r.top_genre) bGenreTally[r.top_genre] = (bGenreTally[r.top_genre] || 0) + 1
@@ -70,12 +86,21 @@ export default async function ProfilPage() {
   const hWinRate = hTotal ? Math.round((hWins / hTotal) * 100) : 0
   const hScore = hSessions.reduce((s, r) => s + (r.score ?? 0), 0)
 
-  // Quick stats
+  // Quick stats — schema differs (duration_seconds + correct_count)
   const qSessions = quick.data || []
   const qTotal = qSessions.length
   const qBest = qTotal ? Math.max(...qSessions.map(s => s.score)) : 0
   const qCorrect = qSessions.reduce((s, r) => s + (r.correct_count ?? 0), 0)
   const qAccuracy = qTotal ? Math.round((qSessions.reduce((s, r) => s + Number(r.accuracy), 0) / qTotal)) : 0
+  const qAvgT: string | null = (() => {
+    let totT = 0, totC = 0
+    for (const r of qSessions) {
+      totT += Number(r.duration_seconds ?? 0)
+      totC += Number(r.correct_count ?? 0)
+    }
+    if (totC <= 0) return null
+    return `${(totT / totC).toFixed(1)}s`
+  })()
 
   // Kafanski kviz stats
   const kSessions = kafana.data || []
@@ -83,6 +108,7 @@ export default async function ProfilPage() {
   const kBest = kTotal ? Math.max(...kSessions.map(s => s.score)) : 0
   const kBestQ = kTotal ? Math.max(...kSessions.map(s => s.questions_reached)) : 0
   const kBestCombo = kTotal ? Math.max(...kSessions.map(s => s.best_combo)) : 0
+  const kAvgT = avgPerCorrect(kSessions)
 
   // Duel stats
   const dGames = duelGames.data || []
@@ -141,9 +167,10 @@ export default async function ProfilPage() {
             Icon={IconHome} label="PRO kviz" accent="#609DED" bg="#BCD9FF"
             primary={{ value: sBest, label: 'Rekord bodova' }}
             secondary={[
-              { value: sTotal, label: 'Igara' },
+              { value: sTotal, label: 'Partija' },
               { value: sBestQ, label: 'Max pitanja' },
               { value: sBestCombo, label: 'Najduži niz' },
+              ...(sAvgT ? [{ value: sAvgT, label: 'Vreme/tačno' }] : []),
             ]}
             href="/igraj"
           />
@@ -151,16 +178,12 @@ export default async function ProfilPage() {
           <GameCard
             Icon={IconStar} label="Book kviz" accent="#9c7a13" bg="#FFECBC"
             primary={{ value: bBest, label: 'Rekord bodova' }}
-            secondary={bTopGenre
-              ? [
-                  { value: bTotal, label: 'Igara' },
-                  { value: bBestQ, label: 'Max pitanja' },
-                  { value: bTopGenre, label: 'Najjači žanr' },
-                ]
-              : [
-                  { value: bTotal, label: 'Igara' },
-                  { value: bBestQ, label: 'Max pitanja' },
-                ]}
+            secondary={[
+              { value: bTotal, label: 'Partija' },
+              { value: bBestQ, label: 'Max pitanja' },
+              ...(bTopGenre ? [{ value: bTopGenre, label: 'Najjači žanr' }] : []),
+              ...(bAvgT ? [{ value: bAvgT, label: 'Vreme/tačno' }] : []),
+            ]}
             href="/book-kviz"
           />
           {/* Kafanski kviz */}
@@ -168,9 +191,10 @@ export default async function ProfilPage() {
             Icon={IconStar} label="Kafanski kviz" accent="#b91c1c" bg="#FEE2E2"
             primary={{ value: kBest, label: 'Rekord bodova' }}
             secondary={[
-              { value: kTotal, label: 'Igara' },
+              { value: kTotal, label: 'Partija' },
               { value: kBestQ, label: 'Max pitanja' },
               { value: kBestCombo, label: 'Najduži niz' },
+              ...(kAvgT ? [{ value: kAvgT, label: 'Vreme/tačno' }] : []),
             ]}
             href="/kafanski-kviz"
           />
@@ -190,7 +214,7 @@ export default async function ProfilPage() {
             Icon={IconHint} label="Vešanje" accent="#15803d" bg="#E8F8F0"
             primary={{ value: hWins, label: 'Pobeda' }}
             secondary={[
-              { value: hTotal, label: 'Igara' },
+              { value: hTotal, label: 'Partija' },
               { value: `${hWinRate}%`, label: 'Uspeh' },
               { value: hScore, label: 'Bodovi' },
             ]}
@@ -204,6 +228,7 @@ export default async function ProfilPage() {
               { value: qTotal, label: 'Rundi' },
               { value: qCorrect, label: 'Tačnih' },
               { value: `${qAccuracy}%`, label: 'Tačnost' },
+              ...(qAvgT ? [{ value: qAvgT, label: 'Vreme/tačno' }] : []),
             ]}
             href="/brzi-kviz"
           />
@@ -262,7 +287,7 @@ function GameCard({ Icon, label, accent, bg, primary, secondary, href }: {
         {primary.value}
       </div>
       <p className="text-[11px] font-medium mb-4" style={{ color: '#9C9C9C' }}>{primary.label}</p>
-      <div className="grid grid-cols-3 gap-2 pt-3 border-t" style={{ borderColor: '#F2F2F2' }}>
+      <div className="grid gap-2 pt-3 border-t" style={{ borderColor: '#F2F2F2', gridTemplateColumns: `repeat(${Math.max(secondary.length, 1)}, 1fr)` }}>
         {secondary.map((s, i) => (
           <div key={i}>
             <div className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>{s.value}</div>
