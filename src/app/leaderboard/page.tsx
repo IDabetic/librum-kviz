@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     description: 'Najbolji rezultati u svim igrama Librum kviza.',
     url: 'https://kviz.librum.club/leaderboard',
     type: 'website',
+    images: ['/api/og?v=3'],
   },
 }
 
