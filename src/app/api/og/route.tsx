@@ -38,36 +38,15 @@ export async function GET() {
           padding: '0 80px',
           zIndex: 2,
         }}>
-          {/* Logo wordmark */}
-          <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 60 }}>
-            <span style={{
-              color: '#343434',
-              fontSize: 64,
-              fontWeight: 900,
-              letterSpacing: -2,
-              lineHeight: 1,
-            }}>
-              Librum
-            </span>
-            <span style={{
-              color: '#609DED',
-              fontSize: 64,
-              fontWeight: 900,
-              lineHeight: 1,
-            }}>
-              .
-            </span>
-            <span style={{
-              color: '#343434',
-              fontSize: 26,
-              fontWeight: 700,
-              marginLeft: 16,
-              letterSpacing: 6,
-              textTransform: 'uppercase',
-            }}>
-              kviz
-            </span>
-          </div>
+          {/* Brand logo (Librum club) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://kviz.librum.club/og-logo.png"
+            alt="Librum club"
+            width={420}
+            height={120}
+            style={{ marginBottom: 56, objectFit: 'contain' }}
+          />
 
           {/* Headline */}
           <div style={{
