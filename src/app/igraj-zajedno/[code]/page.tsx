@@ -12,6 +12,9 @@ import { IconClose, IconCheck, IconWrong } from '@/components/icons'
 const TIME_PER_QUESTION = 15
 const POINTS_CORRECT = 10
 const POINTS_WRONG = 5
+// Forfeit: when one player walks out mid-duel, the other gets a flat
+// bonus on top of whatever score they already had.
+const FORFEIT_BONUS = 50
 
 type GameRoom = {
   id: string
@@ -315,10 +318,21 @@ export default function DuelGamePage() {
     savedRef.current = true
     setDuelEnded(true)
 
+    let finalMyScore = myScore
+    let finalOpScore = opScore
+
     if (room && myId) {
       const supabase = createClient()
-      // Mark as finished
+      // Mark as finished, then read scores back fresh — the partner's
+      // persistExit may have just stamped a +FORFEIT_BONUS on our row,
+      // and our local myScore wouldn't see that without a refetch.
       await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
+      const { data: fresh } = await supabase
+        .from('game_rooms').select('host_score, guest_score').eq('id', room.id).single()
+      if (fresh) {
+        finalMyScore = isHost ? (fresh.host_score ?? 0) : (fresh.guest_score ?? 0)
+        finalOpScore = isHost ? (fresh.guest_score ?? 0) : (fresh.host_score ?? 0)
+      }
     }
 
     // Persist result for end screen
@@ -335,7 +349,7 @@ export default function DuelGamePage() {
     const opId = isHost ? room?.guest_id : room?.host_id
 
     sessionStorage.setItem(`duel-result-${code}`, JSON.stringify({
-      myScore, opScore,
+      myScore: finalMyScore, opScore: finalOpScore,
       myCorrect, opCorrect,
       myWrong: totalAnswered - myCorrect,
       opWrong: totalAnswered - opCorrect,
@@ -349,8 +363,8 @@ export default function DuelGamePage() {
       opName: opId ? profiles[opId]?.name : 'Protivnik',
       myAvatar: myId ? profiles[myId]?.avatar : null,
       opAvatar: opId ? profiles[opId]?.avatar : null,
-      iWon: myScore > opScore,
-      isDraw: myScore === opScore,
+      iWon: finalMyScore > finalOpScore,
+      isDraw: finalMyScore === finalOpScore,
     }))
 
     setNavigatingToEnd(true)
@@ -361,18 +375,27 @@ export default function DuelGamePage() {
   const [showExitConfirm, setShowExitConfirm] = useState(false)
 
   // Exit mid-duel: mark the room as finished so the current scores count on
-  // the leaderboard. The exiter forfeits any remaining questions; opponent
-  // keeps whatever they have. Without this, the row stays in 'playing' and
-  // is invisible to leaderboard aggregation (filter: status === 'finished').
+  // the leaderboard. The exiter forfeits any remaining questions; the
+  // partner gets a +FORFEIT_BONUS bump so abandoning a losing duel isn't
+  // a free escape. Reads fresh state right before the write so we don't
+  // race with the partner's last-second answer.
   const persistExit = useCallback(async () => {
     if (savedRef.current || !room?.id) return
     savedRef.current = true
     const supabase = createClient()
-    await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
-    // depend on room.id only — `room` itself churns on every realtime update,
-    // which would needlessly rebuild this callback (and any effects depending
-    // on it) every couple seconds during a duel.
-  }, [room?.id])
+    const { data: fresh } = await supabase
+      .from('game_rooms')
+      .select('host_id, host_score, guest_score, status')
+      .eq('id', room.id)
+      .single()
+    if (!fresh || fresh.status === 'finished') return  // partner already closed it
+    const leaverIsHost = !!myId && myId === fresh.host_id
+    const oppScore = leaverIsHost ? (fresh.guest_score ?? 0) : (fresh.host_score ?? 0)
+    const update: Record<string, unknown> = { status: 'finished' }
+    if (leaverIsHost) update.guest_score = oppScore + FORFEIT_BONUS
+    else update.host_score = oppScore + FORFEIT_BONUS
+    await supabase.from('game_rooms').update(update).eq('id', room.id)
+  }, [room?.id, myId])
 
   useEffect(() => {
     if (duelEnded || !room?.id) return
