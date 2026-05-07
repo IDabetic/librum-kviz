@@ -15,6 +15,20 @@ const PERIODS = [
 ] as const
 type PeriodId = typeof PERIODS[number]['id']
 
+// Top-N options. `null` = no cap (show everyone returned by the loader,
+// up to its 200-row hard limit on the server side).
+const TOP_OPTIONS: { id: 'top10' | 'top50' | 'top100' | 'all'; label: string; n: number | null }[] = [
+  { id: 'top10',  label: 'Top 10',  n: 10 },
+  { id: 'top50',  label: 'Top 50',  n: 50 },
+  { id: 'top100', label: 'Top 100', n: 100 },
+  { id: 'all',    label: 'Svi',     n: null },
+]
+type TopId = typeof TOP_OPTIONS[number]['id']
+
+// Inner list is bounded so the page itself doesn't grow to 200 rows tall.
+// Tuned to roughly 8 rows visible at once; the rest scrolls inside the card.
+const LIST_MAX_HEIGHT = 'max-h-[520px] overflow-y-auto'
+
 const GAMES = [
   { id: 'survivor', label: 'PRO kviz',    Icon: IconHome,     accent: '#609DED' },
   { id: 'book',     label: 'Book kviz',   Icon: IconDiscover, accent: '#9c7a13' },
@@ -36,6 +50,9 @@ export default function LeaderboardTabs({
 }) {
   const [game, setGame] = useState<GameId>('survivor')
   const [period, setPeriod] = useState<PeriodId>('today')
+  const [topId, setTopId] = useState<TopId>('top50')
+  const top = TOP_OPTIONS.find(t => t.id === topId) ?? TOP_OPTIONS[1]
+  const limit = top.n
 
   return (
     <>
@@ -58,7 +75,7 @@ export default function LeaderboardTabs({
       </div>
 
       {/* Period pills */}
-      <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto overflow-x-auto" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full mb-3 max-w-md mx-auto overflow-x-auto" style={{ background: '#F2F2F2' }}>
         {PERIODS.map(p => (
           <button key={p.id} onClick={() => setPeriod(p.id)}
             className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
@@ -70,11 +87,25 @@ export default function LeaderboardTabs({
         ))}
       </div>
 
-      {game === 'survivor' && <SurvivorBoard data={survivor[period]} period={period} user={user} />}
-      {game === 'book'     && <BookBoard     data={book[period]}     period={period} user={user} />}
-      {game === 'duel'     && <DuelBoard     data={duel[period]}     period={period} user={user} />}
-      {game === 'hangman'  && <HangmanBoard  data={hangman[period]}  period={period} user={user} />}
-      {game === 'quick'    && <QuickBoard    data={quick[period]}    period={period} user={user} />}
+      {/* Top-N selector — caps how many rows show, plus the list itself
+          scrolls inside its card so the page doesn't grow to 200 rows tall. */}
+      <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto overflow-x-auto" style={{ background: '#F2F2F2' }}>
+        {TOP_OPTIONS.map(t => (
+          <button key={t.id} onClick={() => setTopId(t.id)}
+            className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
+            style={topId === t.id
+              ? { background: '#609DED', color: '#FCFCFC' }
+              : { color: '#9C9C9C' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {game === 'survivor' && <SurvivorBoard data={survivor[period]} period={period} user={user} limit={limit} />}
+      {game === 'book'     && <BookBoard     data={book[period]}     period={period} user={user} limit={limit} />}
+      {game === 'duel'     && <DuelBoard     data={duel[period]}     period={period} user={user} limit={limit} />}
+      {game === 'hangman'  && <HangmanBoard  data={hangman[period]}  period={period} user={user} limit={limit} />}
+      {game === 'quick'    && <QuickBoard    data={quick[period]}    period={period} user={user} limit={limit} />}
     </>
   )
 }
@@ -124,13 +155,13 @@ function PeriodHint({ period }: { period: PeriodId }) {
 }
 
 // ── SURVIVOR ────────────────────────────────────────────────────────────
-function SurvivorBoard({ data, period, user }: { data: SurvivorRow[]; period: PeriodId; user: boolean }) {
+function SurvivorBoard({ data, period, user, limit }: { data: SurvivorRow[]; period: PeriodId; user: boolean; limit: number | null }) {
   if (data.length === 0) return <EmptyBoard user={user} href="/igraj" label="Igraj PRO kviz" icon="🎯" />
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
-        {data.slice(0, 50).map((p, i) => (
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, limit ?? data.length).map((p, i) => (
           <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#609DED" />
@@ -152,13 +183,13 @@ function SurvivorBoard({ data, period, user }: { data: SurvivorRow[]; period: Pe
 }
 
 // ── DUEL ────────────────────────────────────────────────────────────────
-function DuelBoard({ data, period, user }: { data: DuelRow[]; period: PeriodId; user: boolean }) {
+function DuelBoard({ data, period, user, limit }: { data: DuelRow[]; period: PeriodId; user: boolean; limit: number | null }) {
   if (data.length === 0) return <EmptyBoard user={user} href="/igraj-zajedno" label="Igraj duel" icon="⚔️" />
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
-        {data.slice(0, 50).map((p, i) => (
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, limit ?? data.length).map((p, i) => (
           <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#FFCB46" />
@@ -179,13 +210,13 @@ function DuelBoard({ data, period, user }: { data: DuelRow[]; period: PeriodId; 
 }
 
 // ── HANGMAN ─────────────────────────────────────────────────────────────
-function HangmanBoard({ data, period, user }: { data: HangmanRow[]; period: PeriodId; user: boolean }) {
+function HangmanBoard({ data, period, user, limit }: { data: HangmanRow[]; period: PeriodId; user: boolean; limit: number | null }) {
   if (data.length === 0) return <EmptyBoard user={user} href="/vesanje" label="Igraj Vešanje" icon="🎯" />
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
-        {data.slice(0, 50).map((p, i) => (
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, limit ?? data.length).map((p, i) => (
           <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#4CAF50" />
@@ -205,13 +236,13 @@ function HangmanBoard({ data, period, user }: { data: HangmanRow[]; period: Peri
 }
 
 // ── BRZI KVIZ ───────────────────────────────────────────────────────────
-function QuickBoard({ data, period, user }: { data: QuickRow[]; period: PeriodId; user: boolean }) {
+function QuickBoard({ data, period, user, limit }: { data: QuickRow[]; period: PeriodId; user: boolean; limit: number | null }) {
   if (data.length === 0) return <EmptyBoard user={user} href="/brzi-kviz" label="Igraj Brzi kviz" icon="⚡" />
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
-        {data.slice(0, 50).map((p, i) => (
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, limit ?? data.length).map((p, i) => (
           <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#E55353" />
@@ -231,13 +262,13 @@ function QuickBoard({ data, period, user }: { data: QuickRow[]; period: PeriodId
 }
 
 // ── BOOK KVIZ ───────────────────────────────────────────────────────────
-function BookBoard({ data, period, user }: { data: BookRow[]; period: PeriodId; user: boolean }) {
+function BookBoard({ data, period, user, limit }: { data: BookRow[]; period: PeriodId; user: boolean; limit: number | null }) {
   if (data.length === 0) return <EmptyBoard user={user} href="/book-kviz" label="Igraj Book kviz" icon="📚" />
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
-        {data.slice(0, 50).map((p, i) => (
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+        {data.slice(0, limit ?? data.length).map((p, i) => (
           <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors">
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#9c7a13" />
