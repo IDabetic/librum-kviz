@@ -114,6 +114,9 @@ export default function DuelGamePage() {
 
   // Result page navigation
   const [navigatingToEnd, setNavigatingToEnd] = useState(false)
+  // Set when realtime tells us status flipped to 'finished' WITHOUT us
+  // running endDuel ourselves — i.e. the other player exited mid-duel.
+  const [opponentLeft, setOpponentLeft] = useState(false)
 
   const savedRef = useRef(false)
   const startTimeRef = useRef<number>(Date.now())
@@ -228,6 +231,22 @@ export default function DuelGamePage() {
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealed, duelEnded])
+
+  // ── Detect opponent-left ─────────────────────────────────────────────────
+  // If realtime delivers status='finished' but we haven't called endDuel
+  // ourselves (savedRef + duelEnded), the other player exited via the
+  // confirm-modal Exit (which calls persistExit → status='finished'). Show
+  // a banner, then auto-end so this side gets a /kraj page with their
+  // current score instead of being stuck on "čekamo protivnika".
+  useEffect(() => {
+    if (!room || savedRef.current || duelEnded || opponentLeft) return
+    if (room.status !== 'finished') return
+    // Sync from realtime — partner exited externally, so we react.
+    setOpponentLeft(true) // eslint-disable-line react-hooks/set-state-in-effect
+    const t = setTimeout(() => endDuel(), 2200)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.status, duelEnded, opponentLeft])
 
   // ── Answer ───────────────────────────────────────────────────────────────
   async function handleAnswer(shuffledIdx: number | null) {
@@ -565,6 +584,24 @@ export default function DuelGamePage() {
             <div className="text-5xl mb-4">🏁</div>
             <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#343434' }}>Kraj duela</h3>
             <p className="text-[13px]" style={{ color: '#9C9C9C' }}>Računamo rezultat…</p>
+          </div>
+        </div>
+      )}
+
+      {/* Opponent-left overlay — covers the in-game UI so the player isn't
+          stuck on "Čekamo protivnika..." after the partner exited. Auto-
+          ends to /kraj after 2.2s so the score still gets recorded. */}
+      {opponentLeft && !navigatingToEnd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
+          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
+            <div className="text-5xl mb-4">🚪</div>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#343434' }}>
+              {opProf?.name?.split(' ')[0] || 'Protivnik'} je napustio kviz
+            </h3>
+            <p className="text-[13px]" style={{ color: '#9C9C9C' }}>
+              Tvoj rezultat se upisuje na rang listu.
+            </p>
           </div>
         </div>
       )}
