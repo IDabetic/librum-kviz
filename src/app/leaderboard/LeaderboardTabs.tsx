@@ -24,15 +24,6 @@ const GAMES = [
 ] as const
 type GameId = typeof GAMES[number]['id']
 
-// Demo placeholders for empty boards
-const DEMO_NAMES = [
-  { name: 'Marko Petrović',   avatar: 'avatar_03.jpg' },
-  { name: 'Jovana Nikolić',   avatar: 'avatar_07.jpg' },
-  { name: 'Stefan Đorđević',  avatar: 'avatar_12.jpg' },
-  { name: 'Milica Stanković', avatar: 'avatar_18.jpg' },
-  { name: 'Nikola Ilić',      avatar: 'avatar_21.jpg' },
-]
-
 export default function LeaderboardTabs({
   survivor, duel, hangman, quick, book, user,
 }: {
@@ -129,14 +120,6 @@ function PeriodHint({ period }: { period: PeriodId }) {
   }
   return (
     <p className="text-center text-[12px] mb-3" style={{ color: '#9C9C9C' }}>{map[period]}</p>
-  )
-}
-
-function DemoStrip() {
-  return (
-    <div className="mx-5 mt-3 px-4 py-2.5 rounded-2xl text-[12px] text-center font-medium" style={{ background: '#FFECBC', color: '#9c7a13' }}>
-      Primer kako izgleda rang lista
-    </div>
   )
 }
 

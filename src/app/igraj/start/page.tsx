@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { IconClose, IconHint, IconCheck, IconWrong } from '@/components/icons'
+import { IconClose, IconCheck, IconWrong } from '@/components/icons'
 
 // ── Game constants ──────────────────────────────────────────────────────────
 const TIME_PER_QUESTION = 15
@@ -181,8 +181,30 @@ export default function SurvivorGame() {
       const byDiff: Record<string, Question[]> = { easy: [], medium: [], hard: [], impossible: [] }
       all.forEach(q => { (byDiff[q.difficulty] ?? byDiff.medium).push(q) })
 
+      // Seed the first question now so we don't need a follow-up effect
+      // that calls setState during render. The first round is reached=0,
+      // so pickDifficulty heavily favours easy → medium.
+      const wantedDiff = pickDifficulty(0)
+      const order = ['easy', 'medium', 'hard', 'impossible']
+      const cIdx = order.indexOf(wantedDiff)
+      const candidates: string[] = [wantedDiff]
+      for (let d = 1; d < order.length; d++) {
+        if (cIdx - d >= 0) candidates.push(order[cIdx - d])
+        if (cIdx + d < order.length) candidates.push(order[cIdx + d])
+      }
+      let firstQ: Question | null = null
+      outer: for (const diff of candidates) {
+        for (const q of byDiff[diff] ?? []) { firstQ = q; break outer }
+      }
+      if (!firstQ) firstQ = all[0] ?? null
+
       setPool(all)
       setPoolByDiff(byDiff)
+      if (firstQ) {
+        setCurrent(shuffleOptions(firstQ))
+        setUsedIds(new Set([firstQ.id]))
+        questionStartRef.current = Date.now()
+      }
       setLoading(false)
     }
     load()
@@ -210,17 +232,6 @@ export default function SurvivorGame() {
     for (const q of pool) if (!used.has(q.id)) return shuffleOptions(q)
     return null
   }, [pool, poolByDiff])
-
-  // ── Start first question ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (loading || current || gameOver || pool.length === 0) return
-    const q = nextQuestion(0, new Set())
-    if (q) {
-      setCurrent(q)
-      setUsedIds(prev => new Set(prev).add(q.id))
-      questionStartRef.current = Date.now()
-    }
-  }, [loading, current, gameOver, pool.length, nextQuestion])
 
   // ── Tick timer ────────────────────────────────────────────────────────────
   useEffect(() => {

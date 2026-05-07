@@ -37,8 +37,11 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ ok: false, error: 'unauth' }, { status: 401 })
 
-  // Strip mode + override user_id with the authenticated id.
-  const { mode: _ignored, user_id: _u, ...rest } = body as { mode?: string; user_id?: string } & Record<string, unknown>
+  // Strip mode + override user_id with the authenticated id (server-derived,
+  // never trust the body for identity).
+  const rest = { ...body }
+  delete rest.mode
+  delete rest.user_id
   const payload = { ...rest, user_id: user.id }
 
   const { error } = await supabase.from(TABLE[mode]).insert(payload)

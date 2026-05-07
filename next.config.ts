@@ -25,6 +25,12 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
+        // The static share card. URL is versioned (?v=N) in metadata, so
+        // immutable cache is safe — bump the param when you re-render.
+        source: '/og-share.jpg',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
         source: '/api/og',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=604800' }],
       },

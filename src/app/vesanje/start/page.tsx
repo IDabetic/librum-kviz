@@ -91,8 +91,11 @@ function GameInner() {
   const [wordGuess, setWordGuess] = useState('')
   const [wordGuessError, setWordGuessError] = useState('')
   const [scoreFlash, setScoreFlash] = useState<{ delta: number; key: number } | null>(null)
-  const startRef = useRef<number>(Date.now())
+  // Initialised lazily on mount instead of in the useRef call — keeps the
+  // component pure during render (Date.now is non-deterministic).
+  const startRef = useRef<number>(0)
   const savedRef = useRef(false)
+  useEffect(() => { startRef.current = Date.now() }, [])
 
   // Mirror live game state in a ref so pagehide / exit handlers can flush
   // the latest score without depending on render closures.

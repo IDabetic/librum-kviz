@@ -120,8 +120,14 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
     if (v == null) return '—'
     return `${(v / 1000).toFixed(1)}s`
   }
+  // This is a server component — Date.now() executes once per HTTP request,
+  // which is fine. The purity rule fires defensively because it can't tell
+  // server from client; pinning the timestamp here also makes "X ago"
+  // labels consistent across all rows on the page.
+  // eslint-disable-next-line react-hooks/purity
+  const renderedAt = Date.now()
   function fmtAgo(d: Date): string {
-    const diffMs = Date.now() - d.getTime()
+    const diffMs = renderedAt - d.getTime()
     const mins = Math.floor(diffMs / 60000)
     if (mins < 1) return 'upravo'
     if (mins < 60) return `pre ${mins} min`

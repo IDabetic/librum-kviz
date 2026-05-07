@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/Logo'
@@ -21,12 +21,8 @@ function NovaLozinkaInner() {
   const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [phase, setPhase] = useState<Phase>('loading')
-
-  useEffect(() => {
-    if (token) setPhase('ready')
-    else setPhase('invalid')
-  }, [token])
+  // Phase derives directly from the URL token — no need for state + effect.
+  const [phase, setPhase] = useState<Phase>(token ? 'ready' : 'invalid')
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

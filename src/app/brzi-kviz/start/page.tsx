@@ -115,7 +115,16 @@ export default function BrziKvizStart() {
       if (fresh.length < 30) fresh = data as QuestionRow[]
 
       const shuffled = fresh.sort(() => Math.random() - 0.5)
+      // Seed the very first statement here so we don't need a follow-up
+      // effect that calls setState during render — the pool and the first
+      // statement land in the same render commit.
+      const first = shuffled[0]
       setPool(shuffled)
+      if (first) {
+        setCurrent(buildStatement(first))
+        setUsedIds(new Set([first.id]))
+        questionStartRef.current = Date.now()
+      }
       setLoading(false)
     }
     load()
@@ -128,20 +137,6 @@ export default function BrziKvizStart() {
     }
     return null
   }, [pool, usedIds])
-
-  // ── Initial first statement ─────────────────────────────────────────────
-  useEffect(() => {
-    if (loading || current || gameOver || pool.length === 0) return
-    const q = pickNext()
-    if (q) {
-      setCurrent(buildStatement(q))
-      setUsedIds(prev => new Set(prev).add(q.id))
-      setQuestionTime(TIME_PER_QUESTION)
-      setShowResult(false)
-      setAnswered(null)
-      questionStartRef.current = Date.now()
-    }
-  }, [loading, current, gameOver, pool.length, pickNext])
 
   // ── Round timer ─────────────────────────────────────────────────────────
   useEffect(() => {

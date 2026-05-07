@@ -99,10 +99,8 @@ export default function DuelGamePage() {
 
   // Per-question state
   const [current, setCurrent] = useState(0)            // index into question_ids
-  const [selected, setSelected] = useState<number | null>(null)   // shuffled index
   const [revealed, setRevealed] = useState(false)
   const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION)
-  const [questionStartedAt, setQuestionStartedAt] = useState<number>(Date.now())
 
   // Local copies (mirror DB but updated optimistically)
   const [myScore, setMyScore] = useState(0)
@@ -170,7 +168,6 @@ export default function DuelGamePage() {
         // Resume to next unanswered question
         const myA = roomData.host_id === user.id ? (roomData.host_answers ?? []) : (roomData.guest_answers ?? [])
         setCurrent(myA.length)
-        setQuestionStartedAt(Date.now())
         setTimeLeft(TIME_PER_QUESTION)
       } finally {
         setLoading(false)
@@ -213,13 +210,15 @@ export default function DuelGamePage() {
 
   // ── Detect both answered or timeout — reveal & advance ────────────────────
   // Watch revealed: when both answers exist for current question OR timeout, show reveal
+  // Sync from realtime: when both players have an answer for the current
+  // question, flip into the reveal phase. Setting state in this effect is
+  // legitimate — the input (myAnswers/opAnswers) comes from the realtime
+  // channel, not from props/derived state.
   useEffect(() => {
     if (loading || revealed || duelEnded || !room || !questions[current]) return
     const myAnswered = myAnswers[current] !== undefined
     const opAnswered = opAnswers[current] !== undefined
-    if (myAnswered && opAnswered) {
-      setRevealed(true)
-    }
+    if (myAnswered && opAnswered) setRevealed(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [myAnswers, opAnswers, current, revealed, loading, duelEnded, room, questions])
 
   // ── After reveal: pause 3s then advance ───────────────────────────────────
@@ -242,7 +241,6 @@ export default function DuelGamePage() {
     const newAnswers = [...myAnswers]
     newAnswers[current] = shuffledIdx
 
-    setSelected(shuffledIdx)
     setMyScore(newScore)
     setMyAnswers(newAnswers)
 
@@ -265,10 +263,8 @@ export default function DuelGamePage() {
       if (myScore === opScore && questions[nextIdx]) {
         // Continue with golden question
         setCurrent(nextIdx)
-        setSelected(null)
         setRevealed(false)
         setTimeLeft(TIME_PER_QUESTION)
-        setQuestionStartedAt(Date.now())
         setGoldenRound(g => g + 1)
         return
       }
@@ -278,10 +274,8 @@ export default function DuelGamePage() {
     }
 
     setCurrent(nextIdx)
-    setSelected(null)
     setRevealed(false)
     setTimeLeft(TIME_PER_QUESTION)
-    setQuestionStartedAt(Date.now())
   }
 
   async function endDuel() {

@@ -67,18 +67,20 @@ export default function Header() {
 
   // Defer the recent-users fetch until the dropdown actually opens or the
   // mobile drawer is opened. Saves ~5-15kb on first paint and one round
-  // trip for users who never click that button.
-  const [recentLoaded, setRecentLoaded] = useState(false)
+  // trip for users who never click that button. The "loaded" flag is a ref
+  // — we only need to remember "did we already fetch?", we don't need a
+  // re-render when it flips.
+  const recentLoadedRef = useRef(false)
   useEffect(() => {
     if (!showRecent && !mobileOpen) return
-    if (recentLoaded) return
-    setRecentLoaded(true)
+    if (recentLoadedRef.current) return
+    recentLoadedRef.current = true
     createClient().from('profiles')
       .select('id, first_name, last_name, nickname, avatar, created_at')
       .order('created_at', { ascending: false })
       .limit(15)
       .then(({ data }) => { if (data) setRecentUsers(data as RecentUser[]) })
-  }, [showRecent, mobileOpen, recentLoaded])
+  }, [showRecent, mobileOpen])
 
   useEffect(() => {
     if (!showRecent) return
@@ -89,6 +91,10 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [showRecent])
 
+  // Close the mobile drawer whenever the route changes — pathname comes from
+  // the router (external system), so this is a legitimate sync-from-router
+  // effect, not derived state.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
   async function handleLogout() {

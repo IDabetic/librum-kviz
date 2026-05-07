@@ -117,7 +117,15 @@ export default function BookKvizStart() {
 
       if (!data || data.length === 0) { setLoading(false); return }
       const all = (data as Question[]).sort(() => Math.random() - 0.5)
+      // Seed the first question in the same render commit as the pool so
+      // we avoid a setState-in-effect cascade after pool loads.
+      const first = all[0]
       setPool(all)
+      if (first) {
+        setCurrent(shuffleOptions(first))
+        setUsedIds(new Set([first.id]))
+        questionStartRef.current = Date.now()
+      }
       setLoading(false)
     }
     load()
@@ -127,17 +135,6 @@ export default function BookKvizStart() {
     for (const q of pool) if (!used.has(q.id)) return shuffleOptions(q)
     return null
   }, [pool])
-
-  // First question
-  useEffect(() => {
-    if (loading || current || gameOver || pool.length === 0) return
-    const q = nextQuestion(new Set())
-    if (q) {
-      setCurrent(q)
-      setUsedIds(prev => new Set(prev).add(q.id))
-      questionStartRef.current = Date.now()
-    }
-  }, [loading, current, gameOver, pool.length, nextQuestion])
 
   // Per-question countdown
   useEffect(() => {
