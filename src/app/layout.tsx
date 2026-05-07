@@ -13,6 +13,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'Librum Kviz — Usudi se da budeš bolji od drugih',
   description: '10 života. Hiljade pitanja. Jedna rang lista. Survivor kviz na srpskom.',
+  verification: {
+    google: '50PGHmNccA_FvcvkxDlb57G1FrqBAlbZtnHSV7CnUc4',
+  },
   openGraph: {
     title: 'Librum Kviz — Usudi se da budeš bolji od drugih',
     description: '10 života. Hiljade pitanja. Jedna rang lista.',
