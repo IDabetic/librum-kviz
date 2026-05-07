@@ -250,15 +250,23 @@ export default function DuelGamePage() {
   // confirm-modal Exit (which calls persistExit → status='finished'). Show
   // a banner, then auto-end so this side gets a /kraj page with their
   // current score instead of being stuck on "čekamo protivnika".
+  //
+  // We use a ref-based guard instead of `opponentLeft` in the dep array.
+  // Putting `opponentLeft` in deps was the bug: setOpponentLeft(true)
+  // triggered an immediate re-render, the effect re-ran, and the cleanup
+  // cleared the 2.2s timer before it could fire — so endDuel never
+  // executed and the player was stuck on "Joca je napustio kviz" forever.
+  const opLeftHandledRef = useRef(false)
   useEffect(() => {
-    if (!room || savedRef.current || duelEnded || opponentLeft) return
+    if (!room || savedRef.current || duelEnded || opLeftHandledRef.current) return
     if (room.status !== 'finished') return
+    opLeftHandledRef.current = true
     // Sync from realtime — partner exited externally, so we react.
     setOpponentLeft(true) // eslint-disable-line react-hooks/set-state-in-effect
     const t = setTimeout(() => endDuel(), 2200)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room?.status, duelEnded, opponentLeft])
+  }, [room?.status, duelEnded])
 
   // ── Answer ───────────────────────────────────────────────────────────────
   async function handleAnswer(shuffledIdx: number | null) {
