@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   const { data: room } = await supabase
     .from('game_rooms')
-    .select('id, host_id, guest_id, status')
+    .select('id, host_id, guest_id, host_score, guest_score, status')
     .eq('id', body.room_id)
     .single()
 
@@ -35,6 +35,15 @@ export async function POST(req: Request) {
   }
   if (room.status === 'finished') return NextResponse.json({ ok: true, already: true })
 
-  await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', body.room_id)
+  // Forfeit: bump the partner's score by FORFEIT_BONUS so closing the tab
+  // isn't a free escape from a losing duel. Mirrors the in-game persistExit.
+  const FORFEIT_BONUS = 50
+  const leaverIsHost = room.host_id === user.id
+  const oppScore = leaverIsHost ? (room.guest_score ?? 0) : (room.host_score ?? 0)
+  const update: Record<string, unknown> = { status: 'finished' }
+  if (leaverIsHost) update.guest_score = oppScore + FORFEIT_BONUS
+  else update.host_score = oppScore + FORFEIT_BONUS
+
+  await supabase.from('game_rooms').update(update).eq('id', body.room_id)
   return NextResponse.json({ ok: true })
 }

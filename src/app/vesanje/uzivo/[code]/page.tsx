@@ -162,7 +162,16 @@ export default function HangmanLivePage() {
   }, [persistPartial])
 
   async function handleExit() {
-    await persistPartial()
+    // Host abandoning a live game forfeits — flip the room to 'abandoned'
+    // so the guest's client picks it up and auto-wins with the bonus.
+    // Guest abandoning runs the existing partial-save path (won=false,
+    // current score). Either way we always navigate after.
+    if (isHost && room?.status === 'playing') {
+      const supabase = createClient()
+      await supabase.from('hangman_rooms').update({ status: 'abandoned' }).eq('id', room.id)
+    } else {
+      await persistPartial()
+    }
     router.push('/vesanje')
   }
 
@@ -241,6 +250,31 @@ export default function HangmanLivePage() {
       score: room.score,
     }).then(() => {})
   }, [room, isGuest, myId])
+
+  // Host abandoned a live game: guest auto-wins with a +50 bonus on top
+  // of whatever score they had so far. Mirrors the duel forfeit rule.
+  const [hostLeft, setHostLeft] = useState(false)
+  useEffect(() => {
+    if (!room || room.status !== 'abandoned' || !isGuest || savedSessionRef.current) return
+    savedSessionRef.current = true
+    setHostLeft(true)
+    const FORFEIT_BONUS = 50
+    const supabase = createClient()
+    supabase.from('hangman_sessions').insert({
+      user_id: myId,
+      word: room.word,
+      word_length: room.word.replace(/[^\p{L}]/gu, '').length,
+      won: true,
+      wrong_guesses: room.wrong_letters.length,
+      letters_used: room.guessed_letters.length + room.wrong_letters.length,
+      time_seconds: 0,
+      hint: room.hint,
+      category: room.category,
+      score: (room.score ?? 0) + FORFEIT_BONUS,
+    }).then(() => {})
+    const t = setTimeout(() => router.push('/vesanje'), 2500)
+    return () => clearTimeout(t)
+  }, [room, isGuest, myId, router])
 
   // ── Join room (guest) ───────────────────────────────────────────────────
   async function handleJoin() {
@@ -616,6 +650,24 @@ export default function HangmanLivePage() {
           )}
         </div>
       </main>
+
+      {/* Host-abandoned overlay — covers the whole game UI so the guest
+          isn't left wondering what happened. The session row + bonus is
+          already inserted; we just announce and redirect. */}
+      {hostLeft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
+          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
+            <div className="text-5xl mb-4">🚪</div>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#343434' }}>
+              {hostName || 'Domaćin'} je napustio
+            </h3>
+            <p className="text-[13px]" style={{ color: '#9C9C9C' }}>
+              Pobedio/la si — bonus +50 bodova upisan na rang listu.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
