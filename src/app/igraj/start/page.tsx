@@ -37,6 +37,7 @@ type Question = {
 type DisplayQuestion = Question & {
   shuffled: string[]           // randomized order
   correctIdx: number           // index of correct in shuffled
+  shuffleMap: number[]         // shuffleMap[shuffled_idx] = original DB option index
 }
 
 // Difficulty weights per progression bucket — see spec section 7
@@ -63,7 +64,7 @@ function shuffleOptions(q: Question): DisplayQuestion {
   const indices = [0, 1, 2, 3].sort(() => Math.random() - 0.5)
   const shuffled = indices.map(i => q.options[i])
   const correctIdx = indices.indexOf(q.correct_answer)
-  return { ...q, shuffled, correctIdx }
+  return { ...q, shuffled, correctIdx, shuffleMap: indices }
 }
 
 function fmtTime(seconds: number): string {
@@ -134,6 +135,7 @@ export default function SurvivorGame() {
   const [gameOver, setGameOver] = useState(false)
 
   const savingRef = useRef(false)
+  const questionStartRef = useRef<number>(Date.now())
 
   // ── Load questions ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -143,12 +145,12 @@ export default function SurvivorGame() {
       if (!user) { router.push('/auth/prijava'); return }
       setMyId(user.id)
 
-      // Pull a chunk of random questions (cap at 1500 for memory)
+      // Pull every active question — players can keep going until the DB is exhausted
       const { data } = await supabase
         .from('questions')
         .select('id, question_text, options, correct_answer, difficulty, info')
         .eq('is_active', true)
-        .limit(1500)
+        .limit(10000)
 
       if (!data || data.length === 0) { setLoading(false); return }
 
@@ -196,6 +198,7 @@ export default function SurvivorGame() {
     if (q) {
       setCurrent(q)
       setUsedIds(prev => new Set(prev).add(q.id))
+      questionStartRef.current = Date.now()
     }
   }, [loading, current, gameOver, pool.length, nextQuestion])
 
@@ -263,6 +266,25 @@ export default function SurvivorGame() {
 
     const isCorrect = idx === current.correctIdx
     const newReached = reached + 1
+    const elapsedMs = Date.now() - questionStartRef.current
+
+    // Map shuffled-index back to the original DB option index so analytics
+    // know which actual answer the user picked. picked = null on timeout.
+    const pickedOriginalIdx = idx == null ? null : (current.shuffleMap[idx] ?? null)
+
+    // Fire-and-forget log; failure here must never block the game.
+    if (myId) {
+      const supabase = createClient()
+      supabase.from('question_answer_log').insert({
+        question_id: current.id,
+        user_id: myId,
+        was_correct: isCorrect,
+        picked_idx: pickedOriginalIdx,
+        time_ms: elapsedMs,
+      }).then(({ error }) => {
+        if (error) console.error('answer log insert failed', error)
+      })
+    }
 
     if (isCorrect) {
       const baseDelta = riskActive ? POINTS_CORRECT + RISK_BONUS : POINTS_CORRECT
@@ -355,6 +377,7 @@ export default function SurvivorGame() {
     }
     setCurrent(q)
     setUsedIds(prev => new Set(prev).add(q.id))
+    questionStartRef.current = Date.now()
   }
 
   // ── Lifelines ─────────────────────────────────────────────────────────────

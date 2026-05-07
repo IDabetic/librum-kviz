@@ -15,32 +15,76 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
     .eq('id', id).single()
   if (!u) notFound()
 
-  // Aggregate stats
-  const [survivor, hangman, quick] = await Promise.all([
+  // Aggregate stats — pull all sessions for this user across all 4 games + answer log
+  const [survivor, hangman, quick, duelHost, duelGuest, answerLog] = await Promise.all([
     supabase.from('survivor_sessions')
-      .select('score, questions_reached, best_combo, total_time_seconds, accuracy, created_at')
-      .eq('user_id', id).order('created_at', { ascending: false }).limit(20),
-    supabase.from('hangman_sessions').select('won, score, time_seconds, created_at')
-      .eq('user_id', id).order('created_at', { ascending: false }).limit(20),
-    supabase.from('quick_sessions').select('score, correct_count, total_answered, accuracy, duration_seconds, created_at')
-      .eq('user_id', id).order('created_at', { ascending: false }).limit(20),
+      .select('score, questions_reached, best_combo, total_time_seconds, accuracy, correct_answers, wrong_answers, created_at')
+      .eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+    supabase.from('hangman_sessions').select('won, score, time_seconds, category, created_at')
+      .eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+    supabase.from('quick_sessions').select('score, correct_count, wrong_count, total_answered, accuracy, duration_seconds, created_at')
+      .eq('user_id', id).order('created_at', { ascending: false }).limit(50),
+    supabase.from('game_rooms')
+      .select('id, status, host_score, guest_score, host_finished, guest_finished, created_at')
+      .eq('host_id', id).eq('status', 'finished').order('created_at', { ascending: false }).limit(50),
+    supabase.from('game_rooms')
+      .select('id, status, host_score, guest_score, host_finished, guest_finished, created_at')
+      .eq('guest_id', id).eq('status', 'finished').order('created_at', { ascending: false }).limit(50),
+    supabase.from('question_answer_log')
+      .select('was_correct, time_ms, created_at')
+      .eq('user_id', id),
   ])
 
-  const sBest = (survivor.data || []).length ? Math.max(...(survivor.data || []).map(s => s.score)) : 0
-  const sTotal = (survivor.data || []).length
-  const hWins = (hangman.data || []).filter(h => h.won).length
-  const hTotal = (hangman.data || []).length
-  const qBest = (quick.data || []).length ? Math.max(...(quick.data || []).map(q => q.score)) : 0
-  const qTotal = (quick.data || []).length
+  const survivorRows = survivor.data || []
+  const hangmanRows = hangman.data || []
+  const quickRows = quick.data || []
+
+  const sBest = survivorRows.length ? Math.max(...survivorRows.map(s => s.score)) : 0
+  const sTotal = survivorRows.length
+  const hWins = hangmanRows.filter(h => h.won).length
+  const hTotal = hangmanRows.length
+  const qBest = quickRows.length ? Math.max(...quickRows.map(q => q.score)) : 0
+  const qTotal = quickRows.length
+
+  // Trivia duel: combine host + guest games, count wins
+  const duels = [
+    ...(duelHost.data || []).map(r => ({ ...r, mine: r.host_score, theirs: r.guest_score })),
+    ...(duelGuest.data || []).map(r => ({ ...r, mine: r.guest_score, theirs: r.host_score })),
+  ]
+  const duelTotal = duels.length
+  const duelWins = duels.filter(d => (d.mine ?? 0) > (d.theirs ?? 0)).length
+  const duelLosses = duels.filter(d => (d.mine ?? 0) < (d.theirs ?? 0)).length
+  const duelTies = duels.filter(d => (d.mine ?? 0) === (d.theirs ?? 0)).length
+  const duelWinPct = duelTotal > 0 ? Math.round((duelWins / duelTotal) * 100) : null
+
+  // Last activity = most recent timestamp across any session
+  const allDates = [
+    ...survivorRows.map(s => s.created_at),
+    ...hangmanRows.map(h => h.created_at),
+    ...quickRows.map(q => q.created_at),
+    ...duels.map(d => d.created_at),
+  ].filter(Boolean)
+  const lastActivity = allDates.length ? new Date(Math.max(...allDates.map(d => new Date(d).getTime()))) : null
+
+  // Aggregate from per-answer log (more precise than session-level avg)
+  const logRows = answerLog.data || []
+  const logTotal = logRows.length
+  const logCorrect = logRows.filter(l => l.was_correct).length
+  const logAccuracy = logTotal > 0 ? Math.round((logCorrect / logTotal) * 100) : null
+  const logAvgMs = logTotal > 0
+    ? logRows.reduce((s, l) => s + l.time_ms, 0) / logTotal
+    : null
+  const logMinMs = logTotal > 0 ? Math.min(...logRows.map(l => l.time_ms)) : null
+  const logMaxMs = logTotal > 0 ? Math.max(...logRows.map(l => l.time_ms)) : null
 
   // Avg time per question (PRO + Brzi). Hangman is per-letter so we skip.
-  const proPerQ = (survivor.data || []).reduce((acc, s) => {
+  const proPerQ = survivorRows.reduce((acc, s) => {
     if (s.questions_reached > 0) { acc.sum += s.total_time_seconds / s.questions_reached; acc.n += 1 }
     return acc
   }, { sum: 0, n: 0 })
   const proAvgSecPerQ = proPerQ.n ? proPerQ.sum / proPerQ.n : null
 
-  const quickPerQ = (quick.data || []).reduce((acc, q) => {
+  const quickPerQ = quickRows.reduce((acc, q) => {
     if (q.total_answered > 0) { acc.sum += q.duration_seconds / q.total_answered; acc.n += 1 }
     return acc
   }, { sum: 0, n: 0 })
@@ -49,6 +93,21 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   function fmtSec(v: number | null): string {
     if (v == null) return '—'
     return `${v.toFixed(1)}s`
+  }
+  function fmtMs(v: number | null): string {
+    if (v == null) return '—'
+    return `${(v / 1000).toFixed(1)}s`
+  }
+  function fmtAgo(d: Date): string {
+    const diffMs = Date.now() - d.getTime()
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'upravo'
+    if (mins < 60) return `pre ${mins} min`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `pre ${hours}h`
+    const days = Math.floor(hours / 24)
+    if (days < 7) return `pre ${days} dan${days > 1 ? 'a' : ''}`
+    return d.toLocaleDateString('sr')
   }
 
   const name = u.nickname || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Igrač'
@@ -69,9 +128,10 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="font-black tracking-tight truncate" style={{ color: '#343434', fontSize: 'clamp(20px, 4vw, 26px)' }}>{name}</h1>
-            <p className="text-[13px] truncate" style={{ color: '#9C9C9C' }}>{u.email}</p>
+            <p className="text-[13px] truncate" style={{ color: '#9C9C9C' }}>{u.email}{u.city ? ` · ${u.city}` : ''}</p>
             <p className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>
               ID: {u.id.substring(0, 8)}… · Pridružio se {new Date(u.created_at).toLocaleDateString('sr')}
+              {lastActivity && ` · Poslednja aktivnost ${fmtAgo(lastActivity)}`}
             </p>
           </div>
         </div>
@@ -79,21 +139,40 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
         <RoleEditor userId={u.id} currentRole={u.role} />
       </div>
 
+      {/* Per-answer log overview (most precise time data) */}
+      {logTotal > 0 && (
+        <div className="card-soft p-5">
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
+            Pojedinačni odgovori (PRO + Brzi)
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Stat label="Ukupno odgovora" value={logTotal} />
+            <Stat label="Tačnost" value={`${logAccuracy}%`} tone={logAccuracy != null && logAccuracy > 90 ? 'warn' : undefined} />
+            <Stat label="Prosečno vreme" value={fmtMs(logAvgMs)} tone={logAvgMs != null && logAvgMs < 3000 ? 'bad' : undefined} />
+            <Stat label="Najbrže" value={fmtMs(logMinMs)} />
+            <Stat label="Najsporije" value={fmtMs(logMaxMs)} />
+          </div>
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-2 gap-3">
         <StatCard label="PRO kviz" total={sTotal} primary={sBest} primaryLabel="Rekord" accent="#609DED" bg="#BCD9FF"
           extra={proAvgSecPerQ != null ? `Prosek ${fmtSec(proAvgSecPerQ)} po pitanju` : undefined} />
+        <StatCard label="Trivia duel" total={duelTotal}
+          primary={duelWinPct != null ? `${duelWinPct}%` : '—'}
+          primaryLabel={`${duelWins}W · ${duelLosses}L · ${duelTies}T`}
+          accent="#9c7a13" bg="#FFECBC" />
         <StatCard label="Vešanje" total={hTotal} primary={hWins} primaryLabel="Pobeda" accent="#15803d" bg="#E8F8F0" />
         <StatCard label="Brzi kviz" total={qTotal} primary={qBest} primaryLabel="Rekord" accent="#b91c1c" bg="#FEE2E2"
           extra={quickAvgSecPerQ != null ? `Prosek ${fmtSec(quickAvgSecPerQ)} po pitanju` : undefined} />
-        <StatCard label="Ukupno" total={sTotal + hTotal + qTotal} primary={sTotal + hTotal + qTotal} primaryLabel="Igara" accent="#343434" bg="#F2F2F2" />
       </div>
 
-      {/* Recent sessions */}
-      {(survivor.data || []).length > 0 && (
+      {/* Recent PRO sessions */}
+      {survivorRows.length > 0 && (
         <div className="card-soft p-5">
           <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>Skorašnje PRO partije</p>
           <div className="space-y-1">
-            {(survivor.data || []).slice(0, 8).map((s, i) => {
+            {survivorRows.slice(0, 8).map((s, i) => {
               const secPerQ = s.questions_reached > 0 ? s.total_time_seconds / s.questions_reached : null
               const fast = secPerQ != null && secPerQ < 5
               return (
@@ -111,12 +190,51 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
           </div>
         </div>
       )}
+
+      {/* Recent duels */}
+      {duels.length > 0 && (
+        <div className="card-soft p-5">
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>Skorašnji dueli</p>
+          <div className="space-y-1">
+            {duels.slice(0, 8).map((d, i) => {
+              const result = (d.mine ?? 0) > (d.theirs ?? 0) ? { l: 'Pobeda', c: '#15803d' }
+                          : (d.mine ?? 0) < (d.theirs ?? 0) ? { l: 'Poraz',  c: '#b91c1c' }
+                          : { l: 'Nereš.', c: '#9C9C9C' }
+              return (
+                <div key={d.id || i} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+                  <div className="text-[13px] flex-1 min-w-0" style={{ color: '#343434' }}>
+                    {new Date(d.created_at!).toLocaleDateString('sr')}
+                  </div>
+                  <div className="text-[12px] flex-shrink-0 font-semibold" style={{ color: result.c }}>{result.l}</div>
+                  <div className="font-bold text-[14px] w-20 text-right" style={{ color: '#343434' }}>{d.mine ?? 0} : {d.theirs ?? 0}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Stat({ label, value, tone }: {
+  label: string; value: number | string; tone?: 'ok' | 'warn' | 'bad'
+}) {
+  const color =
+    tone === 'ok'   ? '#15803d' :
+    tone === 'warn' ? '#9c7a13' :
+    tone === 'bad'  ? '#b91c1c' :
+                      '#343434'
+  return (
+    <div className="rounded-2xl p-3 text-center" style={{ background: '#F2F2F2' }}>
+      <div className="font-black text-[16px] tracking-tight" style={{ color }}>{value}</div>
+      <div className="text-[10px] mt-0.5" style={{ color: '#9C9C9C' }}>{label}</div>
     </div>
   )
 }
 
 function StatCard({ label, total, primary, primaryLabel, accent, bg, extra }: {
-  label: string; total: number; primary: number; primaryLabel: string; accent: string; bg: string; extra?: string
+  label: string; total: number; primary: number | string; primaryLabel: string; accent: string; bg: string; extra?: string
 }) {
   return (
     <div className="card-soft p-5">

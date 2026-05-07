@@ -68,6 +68,7 @@ export default function BrziKvizStart() {
   const [shared, setShared] = useState(false)
 
   const savedRef = useRef(false)
+  const questionStartRef = useRef<number>(Date.now())
 
   // ── Load random batch of questions, excluding ones seen in last 24h ────
   useEffect(() => {
@@ -124,6 +125,7 @@ export default function BrziKvizStart() {
       setQuestionTime(TIME_PER_QUESTION)
       setShowResult(false)
       setAnswered(null)
+      questionStartRef.current = Date.now()
     }
   }, [loading, current, gameOver, pool.length, pickNext])
 
@@ -157,6 +159,7 @@ export default function BrziKvizStart() {
     setShowResult(true)
 
     const isUserCorrect = answer !== null && answer === current.isShownCorrect
+    const elapsedMs = Date.now() - questionStartRef.current
     if (isUserCorrect) {
       const newScore = score + POINTS_CORRECT
       setScore(newScore)
@@ -177,6 +180,18 @@ export default function BrziKvizStart() {
         question_id: current.id,
         seen_at: new Date().toISOString(),
       }, { onConflict: 'user_id,question_id' }).then(() => {})
+
+      // Log per-answer for analytics (powers admin /pitanja stats panel).
+      // Brzi kviz reuses PRO question pool, so this lands in the same table.
+      supabase.from('question_answer_log').insert({
+        question_id: current.id,
+        user_id: myId,
+        was_correct: isUserCorrect,
+        picked_idx: null,                     // brzi kviz is true/false; option pick is N/A
+        time_ms: elapsedMs,
+      }).then(({ error }) => {
+        if (error) console.error('answer log insert failed', error)
+      })
     }
 
     setTimeout(() => goNext(), 1800)
@@ -191,6 +206,7 @@ export default function BrziKvizStart() {
     setQuestionTime(TIME_PER_QUESTION)
     setShowResult(false)
     setAnswered(null)
+    questionStartRef.current = Date.now()
   }
 
   async function finishGame() {
