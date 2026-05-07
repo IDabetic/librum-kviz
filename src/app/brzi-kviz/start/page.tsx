@@ -70,6 +70,16 @@ export default function BrziKvizStart() {
   const savedRef = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
 
+  // Mirror live game state in a ref so pagehide / exit handlers can flush
+  // the latest score without depending on React render closures.
+  const liveRef = useRef({ score: 0, correct: 0, wrong: 0, anyAnswered: false })
+  useEffect(() => {
+    liveRef.current.score = score
+    liveRef.current.correct = correct
+    liveRef.current.wrong = wrong
+    liveRef.current.anyAnswered = correct + wrong > 0
+  }, [score, correct, wrong])
+
   // ── Load random batch of questions, excluding ones seen in last 24h ────
   useEffect(() => {
     async function load() {
@@ -209,24 +219,58 @@ export default function BrziKvizStart() {
     questionStartRef.current = Date.now()
   }
 
-  async function finishGame() {
-    if (savedRef.current) return
+  // Persist current score to leaderboard. Called from: round timer expires,
+  // user closes the tab (pagehide), or user taps the exit button. Idempotent
+  // via savedRef; only inserts when at least one answer was given.
+  const persistSession = useCallback(async (opts: { useBeacon?: boolean } = {}) => {
+    if (savedRef.current || !myId) return
+    const { score: s, correct: c, wrong: w, anyAnswered } = liveRef.current
+    if (!anyAnswered) return
     savedRef.current = true
-    setGameOver(true)
-    if (myId) {
-      const supabase = createClient()
-      const total = correct + wrong
-      const accuracy = total > 0 ? Math.round((correct / total) * 10000) / 100 : 0
-      await supabase.from('quick_sessions').insert({
-        user_id: myId,
-        score,
-        correct_count: correct,
-        wrong_count: wrong,
-        total_answered: total,
-        accuracy,
-        duration_seconds: ROUND_SECONDS,
-      })
+    const total = c + w
+    const accuracy = total > 0 ? Math.round((c / total) * 10000) / 100 : 0
+    const elapsed = ROUND_SECONDS - roundTime
+    const payload = {
+      user_id: myId,
+      score: s,
+      correct_count: c,
+      wrong_count: w,
+      total_answered: total,
+      accuracy,
+      duration_seconds: elapsed > 0 && elapsed <= ROUND_SECONDS ? elapsed : ROUND_SECONDS,
     }
+    if (opts.useBeacon && typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+      try {
+        const blob = new Blob([JSON.stringify({ mode: 'quick', ...payload })], { type: 'application/json' })
+        navigator.sendBeacon('/api/save-session', blob)
+        return
+      } catch { /* fall through to fetch */ }
+    }
+    const supabase = createClient()
+    await supabase.from('quick_sessions').insert(payload)
+  }, [myId, roundTime])
+
+  async function finishGame() {
+    setGameOver(true)
+    await persistSession()
+  }
+
+  // Save when the user backgrounds or closes the tab (mobile reliable signal).
+  useEffect(() => {
+    if (gameOver) return
+    function flush() { void persistSession({ useBeacon: true }) }
+    function onVis() { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [gameOver, persistSession])
+
+  async function handleExit() {
+    await persistSession()
+    router.push('/brzi-kviz')
   }
 
   async function handleShare() {
@@ -319,11 +363,11 @@ export default function BrziKvizStart() {
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-          <Link href="/brzi-kviz"
+          <button onClick={handleExit}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2] flex-shrink-0"
             style={{ color: '#9C9C9C' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
-          </Link>
+          </button>
 
           <div className="flex items-center gap-2 flex-1 justify-center">
             <Stat label="Vreme"  value={`${roundTime}s`} bg={roundTime <= 10 ? '#FEE2E2' : '#F2F2F2'} fg={roundTime <= 10 ? '#E55353' : '#343434'} />

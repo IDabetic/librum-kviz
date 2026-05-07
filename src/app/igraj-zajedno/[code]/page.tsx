@@ -334,6 +334,37 @@ export default function DuelGamePage() {
   // ── Confirm exit ──────────────────────────────────────────────────────────
   const [showExitConfirm, setShowExitConfirm] = useState(false)
 
+  // Exit mid-duel: mark the room as finished so the current scores count on
+  // the leaderboard. The exiter forfeits any remaining questions; opponent
+  // keeps whatever they have. Without this, the row stays in 'playing' and
+  // is invisible to leaderboard aggregation (filter: status === 'finished').
+  const persistExit = useCallback(async () => {
+    if (savedRef.current || !room) return
+    savedRef.current = true
+    const supabase = createClient()
+    await supabase.from('game_rooms').update({ status: 'finished' }).eq('id', room.id)
+  }, [room])
+
+  useEffect(() => {
+    if (duelEnded || !room?.id) return
+    const roomId = room.id
+    function flush() {
+      if (savedRef.current) return
+      savedRef.current = true
+      try {
+        const blob = new Blob([JSON.stringify({ room_id: roomId })], { type: 'application/json' })
+        navigator.sendBeacon('/api/duel-finalize', blob)
+      } catch { /* best effort */ }
+    }
+    function onVis() { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [duelEnded, room?.id])
+
   // ── Render ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -534,12 +565,14 @@ export default function DuelGamePage() {
           style={{ background: 'rgba(52,52,52,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
             <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#343434' }}>Izađi iz duela?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se NEĆE upisati.</p>
+            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se upisuje na rang listu — predaješ duel.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi
               </button>
-              <button onClick={() => router.push('/igraj-zajedno')} className="btn btn-md flex-1"
+              <button
+                onClick={async () => { await persistExit(); router.push('/igraj-zajedno') }}
+                className="btn btn-md flex-1"
                 style={{ background: '#E55353', color: 'white' }}>
                 Izađi
               </button>

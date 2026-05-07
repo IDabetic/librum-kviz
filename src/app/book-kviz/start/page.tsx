@@ -86,6 +86,21 @@ export default function BookKvizStart() {
   const savingRef = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
 
+  // Mirror live game state in a ref so pagehide / exit handlers can flush
+  // the latest stats without depending on React render closures.
+  const liveRef = useRef({
+    score: 0, reached: 0, correct: 0, wrong: 0, skipped: 0, bestCombo: 0,
+    usedLifelines: { fiftyFifty: 0, skip: 0, extraTime: 0 } as Lifelines,
+    anyAnswered: false,
+  })
+  useEffect(() => {
+    liveRef.current = {
+      score, reached, correct, wrong, skipped, bestCombo,
+      usedLifelines: usedLifelinesTotal,
+      anyAnswered: correct + wrong + skipped > 0,
+    }
+  }, [score, reached, correct, wrong, skipped, bestCombo, usedLifelinesTotal])
+
   // ── Load questions ─────────────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
@@ -304,11 +319,79 @@ export default function BookKvizStart() {
     setUsedLifelinesTotal(t => ({ ...t, extraTime: t.extraTime + 1 }))
   }
 
-  function exitGame() {
-    if (confirm('Sigurno želiš da prekineš igru? Rezultat se neće sačuvati.')) {
-      router.push('/book-kviz')
+  // Build the row we'd insert into book_sessions from current live state.
+  function buildPayload() {
+    const live = liveRef.current
+    const totalAnswered = live.correct + live.wrong
+    const accuracy = totalAnswered > 0 ? Math.round((live.correct / totalAnswered) * 10000) / 100 : 0
+    const totalTime = Math.floor((Date.now() - startTime) / 1000)
+
+    const breakdown = genreStatsRef.current
+    let topGenre: string | null = null
+    let topPct: number | null = null
+    let topCorrect = -1
+    for (const [g, s] of Object.entries(breakdown)) {
+      if (s.total === 0) continue
+      const pct = (s.correct / s.total) * 100
+      if (s.correct > topCorrect || (s.correct === topCorrect && (topPct ?? 0) < pct)) {
+        topGenre = g; topPct = Math.round(pct * 100) / 100; topCorrect = s.correct
+      }
+    }
+
+    return {
+      user_id: myId,
+      score: live.score,
+      questions_reached: live.reached,
+      correct_answers: live.correct,
+      wrong_answers: live.wrong,
+      skipped_questions: live.skipped,
+      accuracy,
+      best_combo: live.bestCombo,
+      total_time_seconds: totalTime,
+      used_lifelines: live.usedLifelines,
+      top_genre: topGenre,
+      top_genre_pct: topPct,
+      genre_breakdown: breakdown,
     }
   }
+
+  // Best-effort save used by exit button + pagehide. Skipped if the user
+  // didn't actually answer anything, or if saveSession() already ran.
+  const persistSession = useCallback(async (opts: { useBeacon?: boolean } = {}) => {
+    if (savingRef.current || !myId || !liveRef.current.anyAnswered) return
+    savingRef.current = true
+    const payload = buildPayload()
+    if (opts.useBeacon && typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+      try {
+        const blob = new Blob([JSON.stringify({ mode: 'book', ...payload })], { type: 'application/json' })
+        navigator.sendBeacon('/api/save-session', blob)
+        return
+      } catch { /* fall through */ }
+    }
+    const supabase = createClient()
+    await supabase.from('book_sessions').insert(payload)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myId])
+
+  // Mobile-safe lifecycle hooks — fire when tab is backgrounded or closed.
+  useEffect(() => {
+    if (gameOver) return
+    function flush() { void persistSession({ useBeacon: true }) }
+    function onVis() { if (document.visibilityState === 'hidden') flush() }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [gameOver, persistSession])
+
+  function exitGame() { setShowExitConfirm(true) }
+  async function confirmExit() {
+    await persistSession()
+    router.push('/book-kviz')
+  }
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
 
   // ── Render ──────────────────────────────────────────────────────────────
   if (loading) {
@@ -441,6 +524,25 @@ export default function BookKvizStart() {
           <div className="card-soft p-8 text-center" style={{ background: '#FCFCFC' }}>
             <p className="font-black text-[24px] mb-2" style={{ color: '#343434' }}>Kraj igre!</p>
             <p className="text-[14px]" style={{ color: '#9C9C9C' }}>Računam rezultat…</p>
+          </div>
+        </div>
+      )}
+
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
+          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          <div className="card-soft p-7 text-center max-w-sm w-full">
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#343434' }}>Izađi iz igre?</h3>
+            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se upisuje na rang listu.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
+                Nastavi
+              </button>
+              <button onClick={confirmExit} className="btn btn-md flex-1"
+                style={{ background: '#E55353', color: 'white' }}>
+                Izađi
+              </button>
+            </div>
           </div>
         </div>
       )}
