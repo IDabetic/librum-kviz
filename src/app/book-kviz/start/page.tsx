@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { IconClose, IconHint, IconCheck, IconWrong } from '@/components/icons'
+import { IconClose } from '@/components/icons'
 
 // ── Game constants ──────────────────────────────────────────────────────────
 const TIME_PER_QUESTION = 15
@@ -335,33 +335,32 @@ export default function BookKvizStart() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
 
-      {/* HUD */}
-      <div className="sticky top-0 z-40 backdrop-blur-xl"
+      {/* ── Top HUD ────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-          <button onClick={exitGame} className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: '#F2F2F2', color: '#9C9C9C' }}>
-            <IconClose size={16} strokeWidth={2.2} />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+          <button onClick={exitGame}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2] flex-shrink-0"
+            style={{ color: '#9C9C9C' }} aria-label="Izađi">
+            <IconClose size={20} strokeWidth={2.2} />
           </button>
-          <div className="flex items-center gap-3 text-[13px]" style={{ color: '#343434' }}>
-            <span>❤️ {lives}</span>
-            <span className="font-bold tabular-nums">{score}</span>
-            <span style={{ color: '#9C9C9C' }}>{fmtTime(totalElapsed)}</span>
+
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-center">
+            <Stat label="Životi"  value={lives} color={lives <= 3 ? '#E55353' : '#343434'} bg={lives <= 3 ? '#FEE2E2' : '#F2F2F2'} />
+            <Stat label="Bodovi"  value={score} color="#343434" bg="#FFECBC" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
+            <Stat label="Pitanje" value={reached} color="#1e5fa4" bg="#BCD9FF" />
+            <Stat label="Niz"     value={combo} color="#15803d" bg="#E8F8F0" />
           </div>
-          <div className="text-[11px] tabular-nums" style={{ color: '#9C9C9C' }}>
-            #{reached + 1}
-          </div>
+
+          <Timer left={timeLeft} total={TIME_PER_QUESTION} />
         </div>
-        {/* Per-question time bar */}
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-2">
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#F2F2F2' }}>
-            <div className="h-full transition-all" style={{
-              width: `${(timeLeft / TIME_PER_QUESTION) * 100}%`,
-              background: timeLeft <= 5 ? '#E55353' : '#9c7a13',
-            }} />
-          </div>
+        {/* Total elapsed clock — small, under the HUD row */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2 flex justify-center">
+          <span className="text-[11px] tabular-nums" style={{ color: '#9C9C9C' }}>
+            {fmtTime(totalElapsed)}
+          </span>
         </div>
-      </div>
+      </header>
 
       {current && (
         <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full">
@@ -445,6 +444,49 @@ export default function BookKvizStart() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function Timer({ left, total }: { left: number; total: number }) {
+  const r = 22
+  const circ = 2 * Math.PI * r
+  const progress = left / total
+  const offset = circ * (1 - progress)
+  const color = progress > 0.4 ? '#4CAF50' : progress > 0.2 ? '#FFCB46' : '#E55353'
+  const pulse = left <= 5 ? 'animate-pulse' : ''
+  return (
+    <div className={`relative flex items-center justify-center ${pulse}`} style={{ width: 56, height: 56 }}>
+      <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(52,52,52,0.10)" strokeWidth="3.5" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="3.5"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.95s linear, stroke 0.3s' }} />
+      </svg>
+      <span className="absolute font-black text-[15px]" style={{ color }}>{left}</span>
+    </div>
+  )
+}
+
+function Stat({ label, value, color, bg, highlight, highlightKey }: {
+  label: string; value: number; color: string; bg: string; highlight?: number; highlightKey?: number
+}) {
+  return (
+    <div className="relative px-3 sm:px-4 py-2 rounded-2xl flex-1 sm:flex-initial sm:min-w-[80px] text-center" style={{ background: bg }}>
+      <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color, opacity: 0.65 }}>{label}</div>
+      <div className="font-black text-[22px] sm:text-[26px] tracking-tight leading-none mt-0.5" style={{ color }}>{value}</div>
+      {highlight !== undefined && (
+        <span key={highlightKey} className="absolute -top-2 left-1/2 -translate-x-1/2 font-black text-[13px] whitespace-nowrap"
+          style={{ color: highlight > 0 ? '#4CAF50' : '#E55353', animation: 'floatUp 0.9s ease-out forwards' }}>
+          {highlight > 0 ? `+${highlight}` : highlight}
+        </span>
+      )}
+      <style jsx>{`
+        @keyframes floatUp {
+          0%   { opacity: 1; transform: translate(-50%, 0); }
+          100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+      `}</style>
     </div>
   )
 }

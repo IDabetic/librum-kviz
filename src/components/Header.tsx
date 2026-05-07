@@ -5,19 +5,23 @@ import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
-import { IconHome, IconDiscover, IconTrophy, IconSwords, IconHint, IconUsers, IconMenu, IconClose, IconLogout, IconTime } from './icons'
-// Note: IconDiscover serves Book kviz
+import { IconHome, IconTrophy, IconSwords, IconHint, IconUsers, IconMenu, IconClose, IconLogout, IconTime, IconStar } from './icons'
 import { Logo } from './Logo'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
 
+// Primary nav: shown as icon+label on xl, icon-only on md/lg.
+// "Predloži pitanje" lives only in the mobile drawer + footer; it
+// doesn't earn a header slot.
 const NAV_LINKS = [
-  { href: '/igraj',            label: 'PRO kviz',         Icon: IconHome },
-  { href: '/book-kviz',        label: 'Book kviz',        Icon: IconDiscover },
-  { href: '/igraj-zajedno',    label: 'Trivia duel',      Icon: IconSwords },
-  { href: '/vesanje',          label: 'Vešanje',          Icon: IconHint },
-  { href: '/brzi-kviz',        label: 'Brzi kviz',        Icon: IconTime },
-  { href: '/leaderboard',      label: 'Rang lista',       Icon: IconTrophy },
+  { href: '/igraj',         label: 'PRO kviz',    Icon: IconHome },
+  { href: '/book-kviz',     label: 'Book kviz',   Icon: IconStar },
+  { href: '/igraj-zajedno', label: 'Trivia duel', Icon: IconSwords },
+  { href: '/vesanje',       label: 'Vešanje',     Icon: IconHint },
+  { href: '/brzi-kviz',     label: 'Brzi kviz',   Icon: IconTime },
+  { href: '/leaderboard',   label: 'Rang lista',  Icon: IconTrophy },
+]
+const MOBILE_EXTRA_LINKS = [
   { href: '/predlozi-pitanje', label: 'Predloži pitanje', Icon: IconUsers },
 ]
 
@@ -98,8 +102,8 @@ export default function Header() {
           {/* Logo */}
           <Logo height={28} priority />
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+          {/* Desktop nav — icon-only on md/lg, full label on xl */}
+          <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-center">
             {NAV_LINKS.map(({ href, label, Icon }) => {
               // Exact match OR /href/* — prevents "/igraj-zajedno" from
               // marking "/igraj" active because of the prefix overlap.
@@ -108,7 +112,8 @@ export default function Header() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-medium transition-all"
+                  title={label}
+                  className="flex items-center gap-2 px-2.5 xl:px-3.5 py-2 rounded-full text-[13px] font-medium transition-all"
                   style={active
                     ? { background: '#609DED', color: 'white' }
                     : { color: '#343434' }
@@ -117,7 +122,7 @@ export default function Header() {
                   onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}
                 >
                   <Icon size={16} strokeWidth={2.2} />
-                  {label}
+                  <span className="hidden xl:inline">{label}</span>
                 </Link>
               )
             })}
@@ -236,10 +241,8 @@ export default function Header() {
                 </Link>
               )}
 
-              {NAV_LINKS.map(({ href, label, Icon }) => {
-                // Exact match OR /href/* — prevents "/igraj-zajedno" from
-              // marking "/igraj" active because of the prefix overlap.
-              const active = pathname === href || pathname.startsWith(href + '/')
+              {[...NAV_LINKS, ...MOBILE_EXTRA_LINKS].map(({ href, label, Icon }) => {
+                const active = pathname === href || pathname.startsWith(href + '/')
                 return (
                   <Link key={href} href={href}
                     className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"
