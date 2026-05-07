@@ -13,17 +13,43 @@ const TIME_PER_QUESTION = 10
 const POINTS_CORRECT = 10
 const POINTS_WRONG = 5
 
+// Raw question pulled from DB
+type QuestionRow = {
+  id: string
+  question_text: string
+  options: string[]
+  correct_answer: number
+}
+
+// Statement we present in the game
 type Statement = {
   id: string
-  statement: string
-  correct_answer: boolean
-  explanation: string | null
-  category: string | null
+  question: string
+  shownAnswer: string
+  isShownCorrect: boolean
+  correctAnswer: string
+}
+
+function buildStatement(q: QuestionRow): Statement {
+  const correctIdx = q.correct_answer ?? 0
+  const correct = q.options[correctIdx] ?? ''
+  const wrongs = q.options.filter((_, i) => i !== correctIdx)
+  const showCorrect = Math.random() < 0.5
+  const shown = showCorrect
+    ? correct
+    : (wrongs[Math.floor(Math.random() * wrongs.length)] ?? correct)
+  return {
+    id: q.id,
+    question: q.question_text,
+    shownAnswer: shown,
+    isShownCorrect: shown === correct,
+    correctAnswer: correct,
+  }
 }
 
 export default function BrziKvizStart() {
   const router = useRouter()
-  const [pool, setPool] = useState<Statement[]>([])
+  const [pool, setPool] = useState<QuestionRow[]>([])
   const [usedIds, setUsedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [myId, setMyId] = useState<string | null>(null)
@@ -42,9 +68,8 @@ export default function BrziKvizStart() {
   const [shared, setShared] = useState(false)
 
   const savedRef = useRef(false)
-  const startTimeRef = useRef<number>(Date.now())
 
-  // ── Load statements ─────────────────────────────────────────────────────
+  // ── Load random batch of questions ──────────────────────────────────────
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -52,24 +77,24 @@ export default function BrziKvizStart() {
       if (!user) { router.push('/auth/prijava?redirect=/brzi-kviz'); return }
       setMyId(user.id)
 
+      // Pull a chunk and shuffle client-side
       const { data } = await supabase
-        .from('quick_statements')
-        .select('id, statement, correct_answer, explanation, category')
+        .from('questions')
+        .select('id, question_text, options, correct_answer')
         .eq('is_active', true)
         .limit(500)
       if (!data || data.length === 0) { setLoading(false); return }
-      const shuffled = (data as Statement[]).sort(() => Math.random() - 0.5)
+      const shuffled = (data as QuestionRow[]).sort(() => Math.random() - 0.5)
       setPool(shuffled)
       setLoading(false)
-      startTimeRef.current = Date.now()
     }
     load()
   }, [router])
 
-  // ── Pick next statement ─────────────────────────────────────────────────
-  const nextStatement = useCallback(() => {
-    for (const s of pool) {
-      if (!usedIds.has(s.id)) return s
+  // ── Pick next question (no repeats) ─────────────────────────────────────
+  const pickNext = useCallback(() => {
+    for (const q of pool) {
+      if (!usedIds.has(q.id)) return q
     }
     return null
   }, [pool, usedIds])
@@ -77,17 +102,17 @@ export default function BrziKvizStart() {
   // ── Initial first statement ─────────────────────────────────────────────
   useEffect(() => {
     if (loading || current || gameOver || pool.length === 0) return
-    const s = nextStatement()
-    if (s) {
-      setCurrent(s)
-      setUsedIds(prev => new Set(prev).add(s.id))
+    const q = pickNext()
+    if (q) {
+      setCurrent(buildStatement(q))
+      setUsedIds(prev => new Set(prev).add(q.id))
       setQuestionTime(TIME_PER_QUESTION)
       setShowResult(false)
       setAnswered(null)
     }
-  }, [loading, current, gameOver, pool.length, nextStatement])
+  }, [loading, current, gameOver, pool.length, pickNext])
 
-  // ── Round timer (counts down 60→0) ──────────────────────────────────────
+  // ── Round timer ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (gameOver || loading) return
     if (roundTime <= 0) {
@@ -99,7 +124,7 @@ export default function BrziKvizStart() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundTime, gameOver, loading])
 
-  // ── Per-question timer (10s) ────────────────────────────────────────────
+  // ── Per-question timer ──────────────────────────────────────────────────
   useEffect(() => {
     if (gameOver || loading || showResult || !current) return
     if (questionTime <= 0) {
@@ -116,8 +141,8 @@ export default function BrziKvizStart() {
     setAnswered(answer)
     setShowResult(true)
 
-    const isCorrect = answer !== null && answer === current.correct_answer
-    if (isCorrect) {
+    const isUserCorrect = answer !== null && answer === current.isShownCorrect
+    if (isUserCorrect) {
       const newScore = score + POINTS_CORRECT
       setScore(newScore)
       setCorrect(c => c + 1)
@@ -128,21 +153,15 @@ export default function BrziKvizStart() {
       setWrong(w => w + 1)
       setScoreFlash({ delta: -POINTS_WRONG, key: Date.now() })
     }
-
-    // Auto-advance after ~1.6s
-    setTimeout(() => goNext(), 1600)
+    setTimeout(() => goNext(), 1800)
   }
 
   function goNext() {
     if (gameOver) return
-    const s = nextStatement()
-    if (!s) {
-      // Pool exhausted
-      finishGame()
-      return
-    }
-    setCurrent(s)
-    setUsedIds(prev => new Set(prev).add(s.id))
+    const q = pickNext()
+    if (!q) { finishGame(); return }
+    setCurrent(buildStatement(q))
+    setUsedIds(prev => new Set(prev).add(q.id))
     setQuestionTime(TIME_PER_QUESTION)
     setShowResult(false)
     setAnswered(null)
@@ -194,7 +213,7 @@ export default function BrziKvizStart() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#FAFAFA' }}>
         <div className="card-soft p-8 max-w-sm text-center">
-          <p className="font-bold text-[16px] mb-3" style={{ color: '#343434' }}>Nema dostupnih tvrdnji.</p>
+          <p className="font-bold text-[16px] mb-3" style={{ color: '#343434' }}>Nema dostupnih pitanja.</p>
           <Link href="/brzi-kviz" className="btn btn-primary btn-md">Nazad</Link>
         </div>
       </div>
@@ -248,9 +267,8 @@ export default function BrziKvizStart() {
 
   const roundProgress = roundTime / ROUND_SECONDS
   const qProgress = questionTime / TIME_PER_QUESTION
-  const isCorrect = answered !== null && answered === current.correct_answer
+  const isUserCorrect = answered !== null && answered === current.isShownCorrect
   const isTimeout = showResult && answered === null
-  const showWrong = showResult && !isCorrect && !isTimeout
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
@@ -274,7 +292,6 @@ export default function BrziKvizStart() {
 
           <div className="w-10 flex-shrink-0" />
         </div>
-        {/* Round progress bar */}
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-2.5">
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(52,52,52,0.10)' }}>
             <div className="h-full rounded-full transition-all" style={{
@@ -288,10 +305,10 @@ export default function BrziKvizStart() {
       <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-6">
         <div className="w-full max-w-2xl">
 
-          {/* Statement */}
-          <div className="card-soft p-8 sm:p-10 mb-5 text-center min-h-[200px] flex flex-col justify-center" key={current.id}>
-            {/* Question timer dot */}
-            <div className="flex justify-center mb-4">
+          {/* Question card */}
+          <div className="card-soft p-7 sm:p-9 mb-5 text-center" key={current.id}>
+            {/* Question timer */}
+            <div className="flex justify-center mb-5">
               <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-[16px]"
                 style={{
                   background: qProgress > 0.5 ? '#E8F8F0' : qProgress > 0.2 ? '#FFECBC' : '#FEE2E2',
@@ -300,24 +317,40 @@ export default function BrziKvizStart() {
                 {questionTime}
               </div>
             </div>
-            <p className="text-[18px] sm:text-[22px] font-bold leading-snug tracking-tight"
-              style={{ color: '#343434' }}>
-              {current.statement}
+
+            {/* Question */}
+            <p className="text-[14px] sm:text-[15px] font-medium leading-snug mb-5" style={{ color: '#9C9C9C' }}>
+              {current.question}
             </p>
+
+            {/* Shown answer (the assertion) */}
+            <div className="rounded-2xl px-5 py-5 mb-2"
+              style={{ background: showResult
+                ? (isUserCorrect ? '#E8F8F0' : '#FEE2E2')
+                : '#F2F2F2'
+              }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-2"
+                style={{ color: showResult ? (isUserCorrect ? '#15803d' : '#b91c1c') : '#9C9C9C' }}>
+                Predloženi odgovor
+              </p>
+              <p className="font-black tracking-tight"
+                style={{ color: '#343434', fontSize: 'clamp(20px, 4vw, 28px)' }}>
+                {current.shownAnswer}
+              </p>
+            </div>
 
             {/* Result reveal */}
             {showResult && (
               <div className="mt-5">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  {isCorrect && (
+                  {isUserCorrect ? (
                     <>
                       <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#4CAF50' }}>
                         <IconCheck size={16} className="text-white" />
                       </div>
                       <span className="font-black text-[16px]" style={{ color: '#15803d' }}>Tačno! +10</span>
                     </>
-                  )}
-                  {(showWrong || isTimeout) && (
+                  ) : (
                     <>
                       <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#E55353' }}>
                         <IconWrong size={16} className="text-white" />
@@ -328,9 +361,14 @@ export default function BrziKvizStart() {
                     </>
                   )}
                 </div>
-                {current.explanation && (
+                {!current.isShownCorrect && (
                   <p className="text-[13px] leading-relaxed mt-2" style={{ color: '#9C9C9C' }}>
-                    {current.explanation}
+                    Tačan odgovor je: <strong style={{ color: '#343434' }}>{current.correctAnswer}</strong>
+                  </p>
+                )}
+                {current.isShownCorrect && (
+                  <p className="text-[13px] leading-relaxed mt-2" style={{ color: '#9C9C9C' }}>
+                    Da, to je tačan odgovor.
                   </p>
                 )}
               </div>
@@ -363,7 +401,6 @@ function Stat({ label, value, bg, fg, accent, highlight, highlightKey }: {
   bg?: string; fg?: string; accent?: string
   highlight?: number; highlightKey?: number
 }) {
-  // Two modes: HUD tile (bg+fg) or end-card tile (accent only)
   if (accent) {
     return (
       <div className="rounded-2xl p-3 text-center" style={{ background: '#F2F2F2' }}>
