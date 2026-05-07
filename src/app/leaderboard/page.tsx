@@ -52,13 +52,39 @@ export type KafanaRow = {
 type Period = 'today' | 'week' | 'month' | 'all'
 type SB = Awaited<ReturnType<typeof createClient>>
 
-function startOf(period: Period): Date | null {
+// "Danas" must mean midnight in the user's timezone (Belgrade). Vercel
+// runs the server in UTC, so a naive setHours(0,0,0,0) would cut the
+// day at UTC midnight (01:00 or 02:00 Belgrade depending on DST). This
+// helper formats today's calendar date in Belgrade, computes the
+// running offset (handles DST automatically), and returns the UTC
+// instant that corresponds to 00:00 in Belgrade.
+const TZ = 'Europe/Belgrade'
+
+function startOfTodayInTZ(): Date {
   const now = new Date()
+  const day = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now)
+  const beoHour = parseInt(new Intl.DateTimeFormat('en-US', {
+    timeZone: TZ, hour: '2-digit', hour12: false,
+  }).format(now), 10)
+  let offsetH = beoHour - now.getUTCHours()
+  if (offsetH > 12) offsetH -= 24
+  if (offsetH < -12) offsetH += 24
+  const sign = offsetH >= 0 ? '+' : '-'
+  const offsetStr = `${sign}${String(Math.abs(offsetH)).padStart(2, '0')}:00`
+  return new Date(`${day}T00:00:00${offsetStr}`)
+}
+
+function startOf(period: Period): Date | null {
   if (period === 'all') return null
-  const d = new Date(now)
-  if (period === 'today') d.setHours(0, 0, 0, 0)
-  if (period === 'week') d.setDate(now.getDate() - 7)
-  if (period === 'month') d.setDate(now.getDate() - 30)
+  if (period === 'today') return startOfTodayInTZ()
+  // Rolling 7- / 30-day windows from now (UTC arithmetic is fine here —
+  // the comparison is against created_at as an instant, no calendar
+  // boundary).
+  const d = new Date()
+  if (period === 'week') d.setUTCDate(d.getUTCDate() - 7)
+  if (period === 'month') d.setUTCDate(d.getUTCDate() - 30)
   return d
 }
 
