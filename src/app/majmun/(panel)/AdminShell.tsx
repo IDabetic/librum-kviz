@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Logo } from '@/components/Logo'
-import { adminLogoutAction } from '../(auth)/prijava/actions'
+import { createClient } from '@/lib/supabase/client'
 import {
   IconHome, IconDiscover, IconSwords, IconHint, IconTime, IconTrophy,
   IconUsers, IconSettings, IconLogout, IconMenu, IconClose,
@@ -33,11 +33,18 @@ const NAV = [
 
 export default function AdminShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [open, setOpen] = useState(false)
 
   function isActive(href: string): boolean {
     if (href === '/majmun') return pathname === '/majmun'
     return pathname.startsWith(href)
+  }
+
+  async function handleLogout() {
+    await createClient().auth.signOut()
+    router.push('/')
+    router.refresh()
   }
 
   const displayName = profile.nickname || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Admin'
@@ -113,16 +120,14 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
               <IconSettings size={16} strokeWidth={2.2} />
               Podešavanja
             </Link>
-            <form action={adminLogoutAction}>
-              <button type="submit"
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-[14px] font-semibold transition-colors"
-                style={{ color: '#E55353' }}
-                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = '#FEE2E2'}
-                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}>
-                <IconLogout size={16} strokeWidth={2.2} />
-                Odjava
-              </button>
-            </form>
+            <button type="button" onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-[14px] font-semibold transition-colors"
+              style={{ color: '#E55353' }}
+              onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = '#FEE2E2'}
+              onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}>
+              <IconLogout size={16} strokeWidth={2.2} />
+              Odjava
+            </button>
             <Link href="/" className="block text-center text-[11px] mt-3 transition-opacity hover:opacity-70" style={{ color: '#9C9C9C' }}>
               ← Nazad na sajt
             </Link>
