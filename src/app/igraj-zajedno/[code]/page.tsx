@@ -249,6 +249,19 @@ export default function DuelGamePage() {
       ? { host_answers: newAnswers, host_score: newScore }
       : { guest_answers: newAnswers, guest_score: newScore }
     await supabase.from('game_rooms').update(update).eq('id', room.id)
+
+    // Log to the shared answer log so the 72h dedupe in PRO/Brzi/Duel
+    // sees this question as recently played for this user.
+    const pickedOriginalIdx = shuffledIdx == null
+      ? null
+      : (q.shuffleMap[shuffledIdx] ?? null)
+    supabase.from('question_answer_log').insert({
+      question_id: q.id,
+      user_id: myId,
+      was_correct: isCorrect,
+      picked_idx: pickedOriginalIdx,
+      time_ms: 0,
+    }).then(({ error }) => { if (error) console.error('duel answer log failed', error) })
   }
 
   // ── Advance to next question (or golden round, or end) ────────────────────

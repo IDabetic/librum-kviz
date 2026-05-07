@@ -6,6 +6,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { shuffle } from '@/lib/shuffle'
 import { IconClose, IconCheck, IconWrong, IconShare } from '@/components/icons'
 
 const ROUND_SECONDS = 60
@@ -92,13 +93,15 @@ export default function BrziKvizStart() {
       if (!user) { router.push('/auth/prijava?redirect=/brzi-kviz'); return }
       setMyId(user.id)
 
-      // Fetch question IDs seen in last 24h
-      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      // Fetch question IDs the user already saw in the last 72h — across
+      // any mode that uses the `questions` pool (PRO, Brzi, Trivia duel),
+      // so we don't keep recycling the same questions across rounds.
+      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
       const { data: seen } = await supabase
-        .from('quick_seen')
+        .from('question_answer_log')
         .select('question_id')
         .eq('user_id', user.id)
-        .gte('seen_at', dayAgo)
+        .gte('created_at', cutoff)
       const seenSet = new Set((seen || []).map(s => s.question_id))
 
       // Pull a chunk and shuffle client-side
@@ -114,7 +117,7 @@ export default function BrziKvizStart() {
       // Fallback: if pool too small, allow seen ones too (rare, <100 fresh)
       if (fresh.length < 30) fresh = data as QuestionRow[]
 
-      const shuffled = fresh.sort(() => Math.random() - 0.5)
+      const shuffled = shuffle(fresh)
       // Seed the very first statement here so we don't need a follow-up
       // effect that calls setState during render — the pool and the first
       // statement land in the same render commit.
@@ -181,17 +184,11 @@ export default function BrziKvizStart() {
       setScoreFlash({ delta: -POINTS_WRONG, key: Date.now() })
     }
 
-    // Mark this question as seen (upsert so seen_at refreshes if already there)
+    // Log per-answer for analytics + the 72h dedupe scan on the next
+    // round. Brzi kviz reuses PRO question pool, so this is the single
+    // source of truth for "user saw this question recently".
     if (myId && current.id) {
       const supabase = createClient()
-      supabase.from('quick_seen').upsert({
-        user_id: myId,
-        question_id: current.id,
-        seen_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,question_id' }).then(() => {})
-
-      // Log per-answer for analytics (powers admin /pitanja stats panel).
-      // Brzi kviz reuses PRO question pool, so this lands in the same table.
       supabase.from('question_answer_log').insert({
         question_id: current.id,
         user_id: myId,

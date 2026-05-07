@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/client'
+import { shuffle } from '@/lib/shuffle'
 
 function generateCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
@@ -63,10 +64,23 @@ export default function IgrajZajednoPage() {
     const fmt = DUEL_LENGTHS.find(f => f.id === selectedFormat)!
     const targetCount = fmt.count
 
+    // 72h dedupe — questions this user already encountered in PRO/Brzi/
+    // Duel. Falls back to the full pool if filtering would leave too few
+    // for a duel of the requested length.
+    const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+    const { data: seen } = await supabase
+      .from('question_answer_log')
+      .select('question_id')
+      .eq('user_id', user.id)
+      .gte('created_at', cutoff)
+    const seenSet = new Set((seen || []).map(s => s.question_id))
+
     // Pull random active questions — fetch a bit more to allow for golden tiebreaker rounds
     const { data: all } = await supabase
       .from('questions').select('id').eq('is_active', true).limit(500)
-    const ids = (all || []).sort(() => Math.random() - 0.5).map((q: { id: string }) => q.id).slice(0, targetCount + 10)
+    let pool = (all || []).filter((q: { id: string }) => !seenSet.has(q.id))
+    if (pool.length < targetCount + 10) pool = all || []
+    const ids = shuffle(pool).map((q: { id: string }) => q.id).slice(0, targetCount + 10)
 
     let code = generateCode()
     for (let i = 0; i < 5; i++) {

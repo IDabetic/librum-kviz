@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { shuffle } from '@/lib/shuffle'
 import { IconClose, IconCheck, IconWrong } from '@/components/icons'
 
 // ── Game constants ──────────────────────────────────────────────────────────
@@ -163,6 +164,17 @@ export default function SurvivorGame() {
       if (!user) { router.push('/auth/prijava'); return }
       setMyId(user.id)
 
+      // 72h dedupe — questions the user already encountered in PRO/Brzi/
+      // Duel. Falls back to the full pool if nothing new is left, so a
+      // marathon session never dead-ends.
+      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+      const { data: seen } = await supabase
+        .from('question_answer_log')
+        .select('question_id')
+        .eq('user_id', user.id)
+        .gte('created_at', cutoff)
+      const seenSet = new Set((seen || []).map(s => s.question_id))
+
       // Pull a random batch large enough that no real session will exhaust
       // it. Capped to keep payload light on mobile (~70% smaller than
       // pulling the full 3.5k pool every game start).
@@ -174,9 +186,12 @@ export default function SurvivorGame() {
 
       if (!data || data.length === 0) { setLoading(false); return }
 
-      const all = (data as Question[])
-      // Shuffle once at session start
-      all.sort(() => Math.random() - 0.5)
+      // Prefer fresh questions; fall back to the whole pool only if very
+      // few unseen are left (heavy player who exhausted the rotation).
+      let all = (data as Question[]).filter(q => !seenSet.has(q.id))
+      if (all.length < 100) all = data as Question[]
+      // Shuffle once at session start (Fisher–Yates, uniform).
+      all = shuffle(all)
 
       const byDiff: Record<string, Question[]> = { easy: [], medium: [], hard: [], impossible: [] }
       all.forEach(q => { (byDiff[q.difficulty] ?? byDiff.medium).push(q) })
