@@ -5,6 +5,8 @@ import Link from 'next/link'
 import LeaderboardTabs from './LeaderboardTabs'
 import { Logo } from '@/components/Logo'
 
+import Footer from '@/components/Footer'
+
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
@@ -289,6 +291,7 @@ export default async function LeaderboardPage() {
         </div>
         <LeaderboardTabs survivor={survivor} duel={duel} hangman={hangman} quick={quick} book={book} kafana={kafana} user={!!user} />
       </main>
+      <Footer />
     </div>
   )
 }

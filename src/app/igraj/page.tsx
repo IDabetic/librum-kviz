@@ -4,6 +4,8 @@ import Header from '@/components/Header'
 import Link from 'next/link'
 import { IconHint, IconTime, IconStar, IconTrophy, IconSwords } from '@/components/icons'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   title: 'PRO kviz – survival igra znanja sa 10 života',
   description: 'Igraj PRO kviz i proveri koliko daleko možeš da doguraš. Dobijaš 10 života, odgovaraš na pitanja iz različitih oblasti i osvajaš bodove za rang-listu.',
@@ -207,6 +209,7 @@ export default async function IgrajLandingPage() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <Footer />
     </div>
   )
 }

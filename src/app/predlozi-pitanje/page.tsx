@@ -1,9 +1,13 @@
 'use client'
 
+
+
 import { useState } from 'react'
 import Header from '@/components/Header'
 import Link from 'next/link'
 import { IconBack, IconHint, IconCheck } from '@/components/icons'
+
+import Footer from '@/components/Footer'
 
 export default function PredloziPitanjePage() {
   const [question, setQuestion] = useState('')
@@ -127,6 +131,7 @@ export default function PredloziPitanjePage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Header from '@/components/Header'
 import Link from 'next/link'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   title: 'Nagrade – uskoro | Librum Kviz',
   description: 'Sistem nagrada za najbolje igrače stiže uskoro.',
@@ -41,6 +43,7 @@ export default function NagradePage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

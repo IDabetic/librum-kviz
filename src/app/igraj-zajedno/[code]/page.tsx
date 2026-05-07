@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import Link from 'next/link'
 import { IconClose, IconCheck, IconWrong } from '@/components/icons'
+import ReportQuestionButton from '@/components/ReportQuestionButton'
 
 const TIME_PER_QUESTION = 15
 const POINTS_CORRECT = 10
@@ -518,10 +519,17 @@ export default function DuelGamePage() {
           )}
 
           <div className="card-soft p-6 sm:p-8 mb-4">
-            <h2 className="font-bold tracking-tight leading-snug mb-7"
-              style={{ color: '#343434', fontSize: 'clamp(18px, 3vw, 22px)' }}>
-              {q.question_text}
-            </h2>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h2 className="font-bold tracking-tight leading-snug flex-1"
+                style={{ color: '#343434', fontSize: 'clamp(18px, 3vw, 22px)' }}>
+                {q.question_text}
+              </h2>
+              <ReportQuestionButton
+                source={room?.quiz_type === 'kafana' ? 'kafana_questions' : 'questions'}
+                questionId={q.id}
+                questionText={q.question_text} />
+            </div>
+            <div className="mb-4" />
 
             <div className="space-y-2.5">
               {q.shuffled.map((opt, i) => {

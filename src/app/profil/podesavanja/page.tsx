@@ -2,6 +2,10 @@
 
 export const dynamic = 'force-dynamic'
 
+
+
+
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -9,6 +13,8 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import Header from '@/components/Header'
 import { IconBack, IconCheck, IconLock } from '@/components/icons'
+
+import Footer from '@/components/Footer'
 
 const TOTAL_AVATARS = 50
 const AVATAR_LIST = Array.from({ length: TOTAL_AVATARS }, (_, i) =>
@@ -260,6 +266,7 @@ export default function PodesavanjaPage() {
           )}
         </section>
       </main>
+      <Footer />
     </div>
   )
 }

@@ -2,11 +2,17 @@
 
 export const dynamic = 'force-dynamic'
 
+
+
+
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
+
+import Footer from '@/components/Footer'
 
 // Standalone lobby for the Kafanski duel — same shape as /igraj-zajedno
 // but locked to quiz_type='kafana' and themed in red/yellow. Once the
@@ -279,6 +285,7 @@ export default function KafanaDuelLobby() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

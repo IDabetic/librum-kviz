@@ -4,6 +4,8 @@ import Header from '@/components/Header'
 import Link from 'next/link'
 import { IconTime, IconTrophy, IconSwords } from '@/components/icons'
 
+import Footer from '@/components/Footer'
+
 export const metadata: Metadata = {
   title: 'Kafanski kviz – pitanja o muzici i kafanskim hitovima',
   description: 'Igraj Kafanski kviz – pitanja o domaćoj muzici, narodnjacima, pop i rock klasicima. 15 sekundi po pitanju, bez pomoći.',
@@ -99,6 +101,7 @@ export default async function KafanskiKvizLanding() {
           Pozovi prijatelja na duel
         </Link>
       </main>
+      <Footer />
     </div>
   )
 }
