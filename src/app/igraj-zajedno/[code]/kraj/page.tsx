@@ -1,10 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { IconShare } from '@/components/icons'
+import { createClient } from '@/lib/supabase/client'
+import { shuffle } from '@/lib/shuffle'
+
+// Mirrors src/app/igraj-zajedno/page.tsx — kept in sync manually so the
+// rematch creates a room with the same length the players just played.
+const DUEL_LENGTHS: Record<string, number> = { q10: 10, q25: 25, q50: 50 }
 
 type DuelResult = {
   myScore: number
@@ -27,16 +33,31 @@ type DuelResult = {
   isDraw: boolean
 }
 
+type RoomRematchState = {
+  id: string
+  host_id: string
+  guest_id: string | null
+  game_format: string
+  host_rematch: boolean
+  guest_rematch: boolean
+  rematch_room_code: string | null
+}
+
 function fmtTime(s: number): string {
   const m = Math.floor(s / 60)
   const sec = s % 60
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
 }
 
+function generateCode(): string {
+  return Math.random().toString(36).substring(2, 8).toUpperCase()
+}
+
 export default function DuelEndPage() {
   const params = useParams()
   const router = useRouter()
   const code = params.code as string
+
   // Lazy initialiser — sessionStorage is read once on mount and stays there
   // for the whole page lifetime, so a setState-in-effect would just churn.
   const [r] = useState<DuelResult | null>(() => {
@@ -46,10 +67,153 @@ export default function DuelEndPage() {
     try { return JSON.parse(stored) as DuelResult } catch { return null }
   })
   const [shared, setShared] = useState(false)
+  const [room, setRoom] = useState<RoomRematchState | null>(null)
+  const [rematchBusy, setRematchBusy] = useState(false)
+  const [rematchError, setRematchError] = useState('')
+
+  // Track whether we already started the redirect — sometimes realtime
+  // delivers the same `rematch_room_code` twice and we don't want to push
+  // navigation twice.
+  const navigatedRef = useRef(false)
+
+  // ── Load + subscribe to game_rooms ────────────────────────────────────────
+  useEffect(() => {
+    if (!r) return
+    const supabase = createClient()
+    let cancelled = false
+
+    async function load() {
+      const { data } = await supabase
+        .from('game_rooms')
+        .select('id, host_id, guest_id, game_format, host_rematch, guest_rematch, rematch_room_code')
+        .eq('room_code', code)
+        .single()
+      if (cancelled) return
+      if (data) setRoom(data as RoomRematchState)
+    }
+    load()
+
+    return () => { cancelled = true }
+  }, [code, r])
+
+  useEffect(() => {
+    if (!room?.id) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`duel-end-${room.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'game_rooms', filter: `id=eq.${room.id}`,
+      }, payload => {
+        const next = payload.new as RoomRematchState
+        setRoom(prev => prev ? { ...prev, ...next } : next)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [room?.id])
 
   useEffect(() => {
     if (!r) router.push('/igraj-zajedno')
   }, [r, router])
+
+  // ── Derived rematch state ─────────────────────────────────────────────────
+  const isHost = !!r && !!room && r.myId === room.host_id
+  const myReady = !!room && (isHost ? room.host_rematch : room.guest_rematch)
+  const opReady = !!room && (isHost ? room.guest_rematch : room.host_rematch)
+  const bothReady = !!room && room.host_rematch && room.guest_rematch
+  const rematchCode = room?.rematch_room_code ?? null
+
+  // ── If the host is "us" and both clicked rematch, mint the new room ───────
+  // Guest waits for the room_code to land and just navigates.
+  const mintingRef = useRef(false)
+  const mintRematchRoom = useCallback(async () => {
+    if (mintingRef.current || !room || !isHost || rematchCode) return
+    if (!room.guest_id) return
+    mintingRef.current = true
+    setRematchBusy(true)
+
+    const supabase = createClient()
+    const targetCount = DUEL_LENGTHS[room.game_format] ?? 25
+
+    // 72h dedupe scan against the host's recent answers — keeps the rematch
+    // pool fresh just like the create-room flow does.
+    const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+    const { data: seen } = await supabase
+      .from('question_answer_log')
+      .select('question_id')
+      .eq('user_id', room.host_id)
+      .gte('created_at', cutoff)
+    const seenSet = new Set((seen || []).map(s => s.question_id))
+
+    const { data: all } = await supabase
+      .from('questions').select('id').eq('is_active', true).limit(500)
+    let pool = (all || []).filter((q: { id: string }) => !seenSet.has(q.id))
+    if (pool.length < targetCount + 10) pool = all || []
+    const ids = shuffle(pool).map((q: { id: string }) => q.id).slice(0, targetCount + 10)
+
+    // Find a fresh room code that isn't taken yet.
+    let newCode = generateCode()
+    for (let i = 0; i < 5; i++) {
+      const { data: ex } = await supabase.from('game_rooms').select('id').eq('room_code', newCode).maybeSingle()
+      if (!ex) break
+      newCode = generateCode()
+    }
+
+    const { error: insertErr } = await supabase.from('game_rooms').insert({
+      room_code: newCode,
+      quiz_id: null,
+      host_id: room.host_id,
+      guest_id: room.guest_id,
+      question_ids: ids,
+      total_questions: targetCount,
+      // Skip the lobby — both players are already paired; jump straight
+      // into 'playing' so the [code] page doesn't show a waiting screen.
+      status: 'playing',
+      game_format: room.game_format,
+      target_wins: null,
+      time_limit_seconds: null,
+    })
+    if (insertErr) {
+      mintingRef.current = false
+      setRematchBusy(false)
+      setRematchError('Greška pri pokretanju revanša. Pokušaj ponovo.')
+      return
+    }
+
+    // Stamp the old room so the guest's realtime subscription fires and
+    // both clients can navigate.
+    await supabase.from('game_rooms')
+      .update({ rematch_room_code: newCode })
+      .eq('id', room.id)
+  }, [room, isHost, rematchCode])
+
+  useEffect(() => {
+    // mintRematchRoom does its own busy/idempotency check via mintingRef;
+    // calling it here is the right "react to realtime data" pattern even
+    // though the effect kicks off setState chains downstream.
+    if (bothReady && !rematchCode && isHost) void mintRematchRoom() // eslint-disable-line react-hooks/set-state-in-effect
+  }, [bothReady, rematchCode, isHost, mintRematchRoom])
+
+  // ── Both clients navigate when the new room code is published ─────────────
+  useEffect(() => {
+    if (!rematchCode || navigatedRef.current) return
+    navigatedRef.current = true
+    router.push(`/igraj-zajedno/${rematchCode}`)
+  }, [rematchCode, router])
+
+  // ── Click handler ─────────────────────────────────────────────────────────
+  async function clickRematch() {
+    if (!room || myReady || rematchBusy) return
+    setRematchBusy(true)
+    setRematchError('')
+    const supabase = createClient()
+    const update = isHost ? { host_rematch: true } : { guest_rematch: true }
+    const { error } = await supabase.from('game_rooms').update(update).eq('id', room.id)
+    setRematchBusy(false)
+    if (error) setRematchError(error.message)
+    // Optimistic local update so the UI flips immediately even before the
+    // realtime echo arrives.
+    if (!error) setRoom(prev => prev ? { ...prev, ...update } as RoomRematchState : prev)
+  }
 
   if (!r) return null
 
@@ -77,6 +241,24 @@ export default function DuelEndPage() {
       setShared(true)
       setTimeout(() => setShared(false), 2500)
     }
+  }
+
+  // Pick the rematch button label based on the joint state.
+  let rematchLabel: string
+  let rematchDisabled = false
+  if (rematchCode) {
+    rematchLabel = 'Pokrećemo revanš…'
+    rematchDisabled = true
+  } else if (bothReady) {
+    rematchLabel = 'Pokrećemo revanš…'
+    rematchDisabled = true
+  } else if (myReady && !opReady) {
+    rematchLabel = `Čekaš ${r.opName.split(' ')[0]}…`
+    rematchDisabled = true
+  } else if (!myReady && opReady) {
+    rematchLabel = `${r.opName.split(' ')[0]} traži revanš · prihvati`
+  } else {
+    rematchLabel = 'Revanš'
   }
 
   return (
@@ -127,9 +309,25 @@ export default function DuelEndPage() {
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Link href="/igraj-zajedno" className="btn btn-primary btn-lg">Revanš</Link>
+          <button
+            onClick={clickRematch}
+            disabled={rematchDisabled || rematchBusy || !room}
+            className="btn btn-primary btn-lg"
+            style={rematchDisabled ? { opacity: 0.7, cursor: 'not-allowed' } : undefined}>
+            {rematchLabel}
+          </button>
           <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
         </div>
+        {opReady && !myReady && (
+          <p className="text-center text-[12px] font-semibold mb-3" style={{ color: '#9c7a13' }}>
+            ⚡ {r.opName.split(' ')[0]} čeka revanš
+          </p>
+        )}
+        {rematchError && (
+          <p className="text-center text-[12px] font-medium mb-3" style={{ color: '#E55353' }}>
+            {rematchError}
+          </p>
+        )}
         <button onClick={handleShare} className="btn btn-md w-full"
           style={shared ? { background: '#E8F8F0', color: '#15803d' } : { background: '#BCD9FF', color: '#1e5fa4' }}>
           <IconShare size={16} strokeWidth={2.2} />
