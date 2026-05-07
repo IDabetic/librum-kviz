@@ -70,10 +70,11 @@ async function loadSurvivor(supabase: SB, since: Date | null): Promise<SurvivorR
 
 // ── DUEL ─────────────────────────────────────────────────────────────────
 async function loadDuel(supabase: SB, since: Date | null): Promise<DuelRow[]> {
+  // New spec: a duel is finished when status='finished'. Older rooms may
+  // only have host_finished/guest_finished — keep them for back-compat.
   let q = supabase
     .from('game_rooms')
-    .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, game_format')
-    .or('status.eq.finished,host_finished.eq.true,guest_finished.eq.true')
+    .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, status')
     .not('guest_id', 'is', null)
     .limit(1000)
   if (since) q = q.gte('created_at', since.toISOString())
@@ -101,7 +102,9 @@ async function loadDuel(supabase: SB, since: Date | null): Promise<DuelRow[]> {
   }
   ;(games || []).forEach(g => {
     if (!g.host_id || !g.guest_id) return
-    if (!g.host_finished || !g.guest_finished) return
+    // Accept either: new-flow (status=finished) OR old-flow (both finished flags)
+    const isFinished = g.status === 'finished' || (g.host_finished && g.guest_finished)
+    if (!isFinished) return
     record(g.host_id, g.host_score ?? 0, g.guest_score ?? 0)
     record(g.guest_id, g.guest_score ?? 0, g.host_score ?? 0)
   })

@@ -21,9 +21,8 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
     supabase.from('hangman_sessions').select('won, score').eq('user_id', userId).limit(200),
     supabase.from('quick_sessions').select('score, correct_count, accuracy').eq('user_id', userId).limit(50),
     supabase.from('game_rooms')
-      .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished')
+      .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, status')
       .or(`host_id.eq.${userId},guest_id.eq.${userId}`)
-      .or('host_finished.eq.true,guest_finished.eq.true')
       .not('guest_id', 'is', null)
       .limit(200),
   ])
@@ -41,7 +40,8 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
 
   let dWins = 0, dLosses = 0, dDraws = 0
   ;(duelGames.data || []).forEach(g => {
-    if (!g.host_finished || !g.guest_finished) return
+    const isFinished = g.status === 'finished' || (g.host_finished && g.guest_finished)
+    if (!isFinished) return
     const isHost = g.host_id === userId
     const my = isHost ? (g.host_score ?? 0) : (g.guest_score ?? 0)
     const op = isHost ? (g.guest_score ?? 0) : (g.host_score ?? 0)

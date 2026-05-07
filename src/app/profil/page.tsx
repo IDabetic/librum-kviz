@@ -31,9 +31,8 @@ export default async function ProfilPage() {
       .select('score, correct_count, wrong_count, accuracy, total_answered, created_at')
       .eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
     supabase.from('game_rooms')
-      .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, created_at')
+      .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, status, created_at')
       .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`)
-      .or('host_finished.eq.true,guest_finished.eq.true')
       .not('guest_id', 'is', null)
       .order('created_at', { ascending: false }).limit(50),
   ])
@@ -63,7 +62,8 @@ export default async function ProfilPage() {
   const dGames = duelGames.data || []
   let dWins = 0, dLosses = 0, dDraws = 0
   dGames.forEach(g => {
-    if (!g.host_finished || !g.guest_finished) return
+    const isFinished = g.status === 'finished' || (g.host_finished && g.guest_finished)
+    if (!isFinished) return
     const isHost = g.host_id === user.id
     const my = isHost ? (g.host_score ?? 0) : (g.guest_score ?? 0)
     const op = isHost ? (g.guest_score ?? 0) : (g.host_score ?? 0)
