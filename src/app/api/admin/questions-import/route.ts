@@ -24,12 +24,33 @@ import * as XLSX from 'xlsx'
 const ADMIN_ROLES = new Set(['urednik', 'moderator', 'super_admin'])
 const MAX_BYTES = 10 * 1024 * 1024  // 10 MB, plenty for ~10k rows
 
-type Row = {
-  Pitanje?: string
-  'Tačan odgovor'?: string
-  'Netačno'?: string
-  'Netačno_1'?: string
-  'Netačno_2'?: string
+// XLSX preserves Excel cell types — a year answer like 1945 comes
+// through as `number`, not `string`. We accept anything stringifiable
+// and coerce with String() in the loop.
+type Row = Record<string, unknown>
+
+// Normalize a header to its canonical key by stripping whitespace
+// and unifying common Serbian variants the user might type into
+// the Excel header row. Lets us match "Tačan odgovor", "tacan odgovor",
+// or " Tačan Odgovor " to the same canonical column.
+function pickKey(row: Row, ...candidates: string[]): unknown {
+  // Exact-match first (cheap path).
+  for (const k of candidates) {
+    if (k in row) return row[k]
+  }
+  // Fallback: case-insensitive + trimmed lookup over all keys.
+  const keys = Object.keys(row)
+  for (const c of candidates) {
+    const target = c.trim().toLowerCase()
+    const hit = keys.find(k => k.trim().toLowerCase() === target)
+    if (hit) return row[hit]
+  }
+  return undefined
+}
+
+function asTrimmed(v: unknown): string {
+  if (v == null) return ''
+  return String(v).trim()
 }
 
 export async function POST(req: Request) {
@@ -78,27 +99,37 @@ export async function POST(req: Request) {
   }
 
   // ── Normalize + validate ────────────────────────────────────────
+  // Per-row try/catch so a single weird cell (e.g. an embedded
+  // formula or formatting object) doesn't 500 the whole request.
   type Candidate = { question_text: string; options: string[]; correct_answer: 0 }
   const candidates: Candidate[] = []
   const invalidRows: { rowNum: number; reason: string }[] = []
   for (let i = 0; i < rows.length; i++) {
-    const r = rows[i]
-    const q = (r.Pitanje ?? '').trim()
-    const correct = (r['Tačan odgovor'] ?? '').trim()
-    const w1 = (r.Netačno ?? '').trim()
-    const w2 = (r.Netačno_1 ?? '').trim()
-    const w3 = (r.Netačno_2 ?? '').trim()
-    if (!q) { invalidRows.push({ rowNum: i + 2, reason: 'prazno pitanje' }); continue }
-    if (!correct || !w1 || !w2 || !w3) {
-      invalidRows.push({ rowNum: i + 2, reason: 'fali odgovor' })
-      continue
+    try {
+      const r = rows[i] as Row
+      const q       = asTrimmed(pickKey(r, 'Pitanje', 'pitanje'))
+      const correct = asTrimmed(pickKey(r, 'Tačan odgovor', 'Tacan odgovor', 'Tačan_odgovor', 'tacan odgovor'))
+      const w1      = asTrimmed(pickKey(r, 'Netačno', 'Netacno', 'netacno'))
+      const w2      = asTrimmed(pickKey(r, 'Netačno_1', 'Netacno_1', 'Netačno 1', 'netacno_1'))
+      const w3      = asTrimmed(pickKey(r, 'Netačno_2', 'Netacno_2', 'Netačno 2', 'netacno_2'))
+
+      if (!q) { invalidRows.push({ rowNum: i + 2, reason: 'prazno pitanje' }); continue }
+      if (!correct || !w1 || !w2 || !w3) {
+        invalidRows.push({ rowNum: i + 2, reason: 'fali odgovor' })
+        continue
+      }
+      const opts = [correct, w1, w2, w3]
+      if (new Set(opts.map(o => o.toLowerCase())).size !== 4) {
+        invalidRows.push({ rowNum: i + 2, reason: 'duplikati odgovora' })
+        continue
+      }
+      candidates.push({ question_text: q, options: opts, correct_answer: 0 })
+    } catch (e) {
+      invalidRows.push({
+        rowNum: i + 2,
+        reason: `parse error: ${e instanceof Error ? e.message : 'unknown'}`,
+      })
     }
-    const opts = [correct, w1, w2, w3]
-    if (new Set(opts.map(o => o.toLowerCase())).size !== 4) {
-      invalidRows.push({ rowNum: i + 2, reason: 'duplikati odgovora' })
-      continue
-    }
-    candidates.push({ question_text: q, options: opts, correct_answer: 0 })
   }
 
   if (candidates.length === 0) {
