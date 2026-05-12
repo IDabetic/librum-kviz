@@ -1,0 +1,11 @@
+# Security disclosure policy for kviz.librum.club
+# RFC 9116 — https://www.rfc-editor.org/rfc/rfc9116.html
+#
+# Found a vulnerability? Please email us — we appreciate responsible
+# disclosure. We don't (yet) run a paid bug bounty, but credit will
+# be given for valid reports.
+
+Contact: mailto:info@librum.club
+Expires: 2027-05-12T00:00:00.000Z
+Preferred-Languages: sr, en
+Canonical: https://kviz.librum.club/.well-known/security.txt
