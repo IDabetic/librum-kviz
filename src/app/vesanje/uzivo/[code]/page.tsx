@@ -8,6 +8,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { IconClose, IconCheck, IconWrong, IconHint, IconShare, IconUsers } from '@/components/icons'
+import ShareResultButton from '@/components/ShareResultButton'
 
 const ALPHABET = ['A','B','C','Č','Ć','D','Đ','E','F','G','H','I','J','K','L','M','N','O','P','R','S','Š','T','U','V','Z','Ž']
 
@@ -709,12 +710,21 @@ function EndCard({ room, isHost, isGuest }: { room: Room; isHost: boolean; isGue
           <div className="text-[10px]" style={{ color: '#9C9C9C' }}>Kategorija</div>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 mb-2">
         <Link href={isHost ? '/vesanje/dvoje' : '/vesanje'} className="btn btn-primary btn-md flex-1">
           {isHost ? 'Nova soba' : 'Igraj sam'}
         </Link>
         <Link href="/vesanje" className="btn btn-secondary btn-md flex-1">Početna</Link>
       </div>
+      <ShareResultButton
+        gameLabel="Vešanju za dvoje"
+        score={room.score}
+        extra={won
+          ? `Pogodili smo reč „${room.word.toUpperCase()}” iz kategorije ${room.category}.`
+          : `Reč je bila „${room.word.toUpperCase()}” iz kategorije ${room.category}.`}
+        accent={won ? 'green' : 'red'}
+        className="w-full"
+      />
     </div>
   )
 }

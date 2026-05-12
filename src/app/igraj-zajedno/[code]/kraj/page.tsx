@@ -4,9 +4,9 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { IconShare } from '@/components/icons'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
+import ShareResultButton from '@/components/ShareResultButton'
 
 // Mirrors src/app/igraj-zajedno/page.tsx — kept in sync manually so the
 // rematch creates a room with the same length the players just played.
@@ -67,7 +67,6 @@ export default function DuelEndPage() {
     if (!stored) return null
     try { return JSON.parse(stored) as DuelResult } catch { return null }
   })
-  const [shared, setShared] = useState(false)
   const [room, setRoom] = useState<RoomRematchState | null>(null)
   const [rematchBusy, setRematchBusy] = useState(false)
   const [rematchError, setRematchError] = useState('')
@@ -253,24 +252,6 @@ export default function DuelEndPage() {
   const heroFg = r.isDraw ? '#9c7a13' : r.iWon ? '#15803d' : '#b91c1c'
   const headline = r.isDraw ? 'Nerešeno!' : r.iWon ? 'Pobedio/la si!' : 'Izgubio/la si!'
 
-  async function handleShare() {
-    if (!r) return
-    const shareUrl = `${window.location.origin}/igraj-zajedno`
-    const text = r.iWon
-      ? `Pobedio/la sam u Librum duelu ${r.myScore}-${r.opScore} protiv ${r.opName}!`
-      : r.isDraw
-        ? `Nerešeno ${r.myScore}-${r.opScore} u Librum duelu protiv ${r.opName}.`
-        : `Igrao/la sam Librum duel protiv ${r.opName}: ${r.myScore}-${r.opScore}`
-    if (typeof navigator.share === 'function') {
-      try { await navigator.share({ title: 'Librum duel', text, url: shareUrl }) }
-      catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(`${text} ${shareUrl}`)
-      setShared(true)
-      setTimeout(() => setShared(false), 2500)
-    }
-  }
-
   // Pick the rematch button label based on the joint state.
   let rematchLabel: string
   let rematchDisabled = false
@@ -356,11 +337,17 @@ export default function DuelEndPage() {
             {rematchError}
           </p>
         )}
-        <button onClick={handleShare} className="btn btn-md w-full"
-          style={shared ? { background: '#E8F8F0', color: '#15803d' } : { background: '#BCD9FF', color: '#1e5fa4' }}>
-          <IconShare size={16} strokeWidth={2.2} />
-          {shared ? 'Link kopiran' : 'Podeli rezultat'}
-        </button>
+        <ShareResultButton
+          gameLabel="Trivia duelu"
+          score={r.myScore}
+          extra={r.iWon
+            ? `Pobedio/la sam ${r.opName} sa ${r.myScore}:${r.opScore}!`
+            : r.isDraw
+              ? `Nerešeno ${r.myScore}:${r.opScore} protiv ${r.opName}.`
+              : `Igrao/la sam protiv ${r.opName}: ${r.myScore}:${r.opScore}.`}
+          accent="blue"
+          className="w-full"
+        />
 
         <Link href="/igraj-zajedno" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"
           style={{ color: '#9C9C9C' }}>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { IconShare } from '@/components/icons'
+import ShareResultButton from '@/components/ShareResultButton'
 
 type Result = {
   score: number
@@ -29,24 +29,9 @@ export default function KafanskiKvizEnd() {
     if (!raw) return null
     try { return JSON.parse(raw) as Result } catch { return null }
   })
-  const [shared, setShared] = useState(false)
-
   useEffect(() => { if (!r) router.push('/kafanski-kviz') }, [r, router])
 
   if (!r) return null
-
-  async function handleShare() {
-    if (!r) return
-    const url = `${window.location.origin}/kafanski-kviz`
-    const text = `Postigao/la sam ${r.score} bodova u Kafanskom kvizu! ${r.correct} tačnih.`
-    if (typeof navigator.share === 'function') {
-      try { await navigator.share({ title: 'Kafanski kviz', text, url }) } catch { /* */ }
-    } else {
-      await navigator.clipboard.writeText(`${text} ${url}`)
-      setShared(true)
-      setTimeout(() => setShared(false), 2500)
-    }
-  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
@@ -77,11 +62,13 @@ export default function KafanskiKvizEnd() {
             Igraj ponovo
           </Link>
           <Link href="/leaderboard" className="btn btn-secondary btn-md w-full">Rang lista</Link>
-          <button onClick={handleShare} className="btn btn-md w-full"
-            style={shared ? { background: '#E8F8F0', color: '#15803d' } : { background: '#FEE2E2', color: '#b91c1c' }}>
-            <IconShare size={16} strokeWidth={2.2} />
-            {shared ? 'Link kopiran' : 'Podeli rezultat'}
-          </button>
+          <ShareResultButton
+            gameLabel="Kafanskom kvizu"
+            score={r.score}
+            extra={`${r.correct} tačnih · ${Math.round(r.accuracy)}% tačnosti.`}
+            accent="red"
+            className="w-full"
+          />
           <Link href="/" className="block text-center text-[13px] font-medium mt-3" style={{ color: '#9C9C9C' }}>
             ← Početna
           </Link>
