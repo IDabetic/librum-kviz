@@ -162,8 +162,10 @@ export default function DuelGamePage() {
 
         const playerIds = [roomData.host_id, roomData.guest_id].filter(Boolean) as string[]
         if (playerIds.length > 0) {
+          // Read display info from public_profiles (safe view) — the
+          // raw profiles table is locked to own-row access only.
           const { data: profData } = await supabase
-            .from('profiles').select('id, first_name, nickname, avatar').in('id', playerIds)
+            .from('public_profiles').select('id, first_name, nickname, avatar').in('id', playerIds)
           const map: Record<string, { name: string; avatar: string | null }> = {}
           ;(profData || []).forEach((p: { id: string; first_name: string; nickname: string; avatar: string }) => {
             map[p.id] = { name: p.nickname || p.first_name || 'Igrač', avatar: p.avatar || null }

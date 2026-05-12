@@ -47,15 +47,20 @@ export default async function BrziKvizLanding() {
   startOfDay.setHours(0, 0, 0, 0)
   const { data: todayBest } = await supabase
     .from('quick_sessions')
-    .select('score, profiles(first_name, nickname)')
+    .select('score, user_id')
     .gte('created_at', startOfDay.toISOString())
     .order('score', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const todayBestName = todayBest
-    ? (() => {
-        const p = Array.isArray(todayBest.profiles) ? todayBest.profiles[0] : todayBest.profiles as { first_name: string; nickname: string } | null
+  // Resolve name from public_profiles (profiles is locked down).
+  const todayBestName = todayBest?.user_id
+    ? await (async () => {
+        const { data: p } = await supabase
+          .from('public_profiles')
+          .select('first_name, nickname')
+          .eq('id', todayBest.user_id)
+          .maybeSingle()
         return p?.nickname || p?.first_name || 'Igrač'
       })()
     : null

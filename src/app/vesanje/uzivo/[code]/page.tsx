@@ -191,7 +191,7 @@ export default function HangmanLivePage() {
       const ids = [data.host_id, data.guest_id].filter(Boolean) as string[]
       if (ids.length) {
         const { data: profs } = await supabase
-          .from('profiles').select('id, first_name, nickname, avatar').in('id', ids)
+          .from('public_profiles').select('id, first_name, nickname, avatar').in('id', ids)
         ;(profs || []).forEach((p: { id: string; first_name: string; nickname: string; avatar: string }) => {
           if (p.id === data.host_id) {
             setHostName(p.nickname || p.first_name || 'Domaćin')
@@ -220,7 +220,7 @@ export default function HangmanLivePage() {
         // If guest just joined, fetch their profile
         if (updated.guest_id && !guestName) {
           const supabase2 = createClient()
-          const { data: prof } = await supabase2.from('profiles')
+          const { data: prof } = await supabase2.from('public_profiles')
             .select('first_name, nickname, avatar').eq('id', updated.guest_id).single()
           if (prof) {
             setGuestName(prof.nickname || prof.first_name || 'Igrač')

@@ -18,11 +18,16 @@ export default async function KorisniciPage({ searchParams }: { searchParams: Pr
   const page = Math.max(0, parseInt(sp.page || '0', 10))
 
   let query = supabase.from('profiles')
-    .select('id, first_name, last_name, nickname, avatar, email, city, role, created_at', { count: 'exact' })
+    .select('id, first_name, last_name, nickname, avatar, email, city, role, created_at, is_blocked', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(page * per, page * per + per - 1)
   if (sp.q) query = query.or(`first_name.ilike.%${sp.q}%,last_name.ilike.%${sp.q}%,nickname.ilike.%${sp.q}%,email.ilike.%${sp.q}%`)
   if (sp.role && sp.role !== 'all') query = query.eq('role', sp.role)
+  if (sp.role === 'blocked') query = supabase.from('profiles')
+    .select('id, first_name, last_name, nickname, avatar, email, city, role, created_at, is_blocked', { count: 'exact' })
+    .eq('is_blocked', true)
+    .order('created_at', { ascending: false })
+    .range(page * per, page * per + per - 1)
 
   const { data: profiles, count } = await query
   const totalPages = Math.ceil((count ?? 0) / per)
@@ -93,6 +98,7 @@ export default async function KorisniciPage({ searchParams }: { searchParams: Pr
           <option value="urednik">Urednik</option>
           <option value="moderator">Moderator</option>
           <option value="super_admin">Super admin</option>
+          <option value="blocked">🚫 Blokirani</option>
         </select>
         <select name="per" defaultValue={String(per)} className="input flex-shrink-0" style={{ width: 'auto', minWidth: 90 }}>
           {PER_OPTIONS.map(n => <option key={n} value={n}>{n}/str.</option>)}

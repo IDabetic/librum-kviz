@@ -31,7 +31,9 @@ type LeaderRow = {
   user_id: string
   score: number
   questions_reached: number
-  profiles: { first_name: string | null; nickname: string | null; avatar: string | null } | { first_name: string | null; nickname: string | null; avatar: string | null }[] | null
+  // Resolved client-side from public_profiles (we don't embed profiles
+  // anymore — that table is locked down for anon).
+  profile?: { first_name: string | null; nickname: string | null; avatar: string | null } | null
 }
 
 export default async function Home() {
@@ -46,27 +48,43 @@ export default async function Home() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   let { data: top } = await supabase
     .from('survivor_sessions')
-    .select('user_id, score, questions_reached, profiles(first_name, nickname, avatar)')
+    .select('user_id, score, questions_reached')
     .gte('created_at', sevenDaysAgo)
     .order('score', { ascending: false })
     .limit(20)
   if (!top || top.length === 0) {
     const fallback = await supabase
       .from('survivor_sessions')
-      .select('user_id, score, questions_reached, profiles(first_name, nickname, avatar)')
+      .select('user_id, score, questions_reached')
       .order('score', { ascending: false })
       .limit(20)
     top = fallback.data ?? []
   }
   // Dedupe by user (each player's best entry only) and take top 5.
   const seenUsers = new Set<string>()
-  const leaderboard: LeaderRow[] = []
+  const dedup: LeaderRow[] = []
   for (const r of (top ?? []) as LeaderRow[]) {
     if (!r.user_id || seenUsers.has(r.user_id)) continue
     seenUsers.add(r.user_id)
-    leaderboard.push(r)
-    if (leaderboard.length >= 5) break
+    dedup.push(r)
+    if (dedup.length >= 5) break
   }
+  // Resolve display info from public_profiles (safe view — no email,
+  // no role). Anon visitors hit this code path too.
+  const topIds = dedup.map(r => r.user_id)
+  const { data: profs } = topIds.length
+    ? await supabase
+        .from('public_profiles')
+        .select('id, first_name, nickname, avatar')
+        .in('id', topIds)
+    : { data: [] as { id: string; first_name: string | null; nickname: string | null; avatar: string | null }[] }
+  const profMap = new Map((profs ?? []).map(p => [p.id, p]))
+  const leaderboard: LeaderRow[] = dedup.map(r => ({
+    ...r,
+    profile: profMap.get(r.user_id)
+      ? { first_name: profMap.get(r.user_id)!.first_name, nickname: profMap.get(r.user_id)!.nickname, avatar: profMap.get(r.user_id)!.avatar }
+      : null,
+  }))
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
@@ -200,7 +218,7 @@ export default async function Home() {
               <div className="card-soft overflow-hidden">
                 <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
                   {leaderboard.map((r, i) => {
-                    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+                    const prof = r.profile
                     const name = prof?.nickname || prof?.first_name || 'Igrač'
                     const medals = ['🥇', '🥈', '🥉']
                     return (

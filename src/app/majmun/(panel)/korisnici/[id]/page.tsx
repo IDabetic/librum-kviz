@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { IconBack } from '@/components/icons'
 import RoleEditor from './RoleEditor'
+import UserActions from './UserActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   const { id } = await params
   const supabase = await createClient()
   const { data: u } = await supabase.from('profiles')
-    .select('id, first_name, last_name, nickname, avatar, email, city, role, created_at')
+    .select('id, first_name, last_name, nickname, avatar, email, city, role, created_at, is_blocked')
     .eq('id', id).single()
   if (!u) notFound()
 
@@ -166,6 +167,8 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
 
         <RoleEditor userId={u.id} currentRole={u.role} />
       </div>
+
+      <UserActions userId={u.id} email={u.email} isBlocked={!!u.is_blocked} />
 
       {/* Per-answer log overview (most precise time data) */}
       {logTotal > 0 && (
