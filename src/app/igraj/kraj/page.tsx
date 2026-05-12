@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { IconShare } from '@/components/icons'
+import ShareResultButton from '@/components/ShareResultButton'
 
 type Result = {
   score: number
@@ -34,7 +34,6 @@ export default function KrajIgrePage() {
     if (!stored) return null
     try { return JSON.parse(stored) as Result } catch { return null }
   })
-  const [shared, setShared] = useState(false)
 
   useEffect(() => {
     if (!result) router.push('/igraj')
@@ -46,19 +45,6 @@ export default function KrajIgrePage() {
   const tone = questionsReached >= 100 ? 'epic' : questionsReached >= 50 ? 'great' : questionsReached >= 25 ? 'good' : 'try'
   const headline = tone === 'epic' ? 'Maraton znanja.' : tone === 'great' ? 'Sjajno odigrano.' : tone === 'good' ? 'Solidno!' : 'Probaj ponovo.'
   const accent = tone === 'epic' ? '#FFCB46' : tone === 'great' ? '#4CAF50' : tone === 'good' ? '#609DED' : '#9C9C9C'
-
-  async function handleShare() {
-    const url = `${window.location.origin}/igraj`
-    const text = `Postigao/la sam ${score} bodova i preživeo/la ${questionsReached} pitanja u Librum Survivor kvizu!`
-    if (typeof navigator.share === 'function') {
-      try { await navigator.share({ title: 'Librum Kviz', text, url }) }
-      catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(`${text} ${url}`)
-      setShared(true)
-      setTimeout(() => setShared(false), 2500)
-    }
-  }
 
   return (
     <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#FAFAFA' }}>
@@ -102,11 +88,13 @@ export default function KrajIgrePage() {
           <Link href="/igraj/start" className="btn btn-primary btn-lg">Igraj ponovo</Link>
           <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
         </div>
-        <button onClick={handleShare} className="btn btn-md w-full"
-          style={shared ? { background: '#E8F8F0', color: '#15803d' } : { background: '#BCD9FF', color: '#1e5fa4' }}>
-          <IconShare size={16} strokeWidth={2.2} />
-          {shared ? 'Link kopiran' : 'Podeli rezultat'}
-        </button>
+        <ShareResultButton
+          gameLabel="PRO kvizu"
+          score={score}
+          extra={`Preživeo/la sam ${questionsReached} pitanja sa ${Math.round(accuracy)}% tačnosti.`}
+          accent="blue"
+          className="w-full"
+        />
 
         {/* Back to home */}
         <Link href="/igraj" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"

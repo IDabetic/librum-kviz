@@ -7,8 +7,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { shuffle } from '@/lib/shuffle'
-import { IconClose, IconCheck, IconWrong, IconShare } from '@/components/icons'
+import { IconClose, IconCheck, IconWrong } from '@/components/icons'
 import ReportQuestionButton from '@/components/ReportQuestionButton'
+import ShareResultButton from '@/components/ShareResultButton'
 
 const ROUND_SECONDS = 60
 const TIME_PER_QUESTION = 10
@@ -67,7 +68,6 @@ export default function BrziKvizStart() {
   const [wrong, setWrong] = useState(0)
   const [scoreFlash, setScoreFlash] = useState<{ delta: number; key: number } | null>(null)
   const [gameOver, setGameOver] = useState(false)
-  const [shared, setShared] = useState(false)
 
   const savedRef = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
@@ -270,18 +270,6 @@ export default function BrziKvizStart() {
     router.push('/brzi-kviz')
   }
 
-  async function handleShare() {
-    const url = `${window.location.origin}/brzi-kviz`
-    const text = `Postigao/la sam ${score} bodova u Librum Brzom kvizu! ${correct} tačnih u ${ROUND_SECONDS}s.`
-    if (typeof navigator.share === 'function') {
-      try { await navigator.share({ title: 'Librum Brzi kviz', text, url }) } catch { /* */ }
-    } else {
-      await navigator.clipboard.writeText(`${text} ${url}`)
-      setShared(true)
-      setTimeout(() => setShared(false), 2500)
-    }
-  }
-
   // ── Render ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -334,11 +322,13 @@ export default function BrziKvizStart() {
                 <a href="/brzi-kviz/start" className="btn btn-primary btn-lg">Igraj ponovo</a>
                 <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
               </div>
-              <button onClick={handleShare} className="btn btn-md w-full"
-                style={shared ? { background: '#E8F8F0', color: '#15803d' } : { background: '#BCD9FF', color: '#1e5fa4' }}>
-                <IconShare size={16} strokeWidth={2.2} />
-                {shared ? 'Link kopiran' : 'Podeli rezultat'}
-              </button>
+              <ShareResultButton
+                gameLabel="Brzom kvizu"
+                score={score}
+                extra={`${correct} tačnih za ${ROUND_SECONDS} sekundi.`}
+                accent="blue"
+                className="w-full"
+              />
               <Link href="/brzi-kviz" className="block text-center mt-5 text-[13px] font-medium transition-opacity hover:opacity-70"
                 style={{ color: '#9C9C9C' }}>
                 ← Početna

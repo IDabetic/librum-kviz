@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { IconTrophy } from '@/components/icons'
+import ShareResultButton from '@/components/ShareResultButton'
 
 type GenreBreakdown = Record<string, { correct: number; total: number }>
 
@@ -152,6 +153,13 @@ export default function BookKvizEnd() {
           <Link href="/leaderboard" className="btn btn-secondary btn-md w-full">
             Rang lista
           </Link>
+          <ShareResultButton
+            gameLabel="Book kvizu"
+            score={r.score}
+            extra={r.topGenre ? `Najjači sam u žanru: ${r.topGenre}.` : `${r.correct} tačnih · ${Math.round(r.accuracy)}% tačnosti.`}
+            accent="gold"
+            className="w-full"
+          />
           <Link href="/" className="block text-center text-[13px] font-medium mt-3" style={{ color: '#9C9C9C' }}>
             ← Početna
           </Link>

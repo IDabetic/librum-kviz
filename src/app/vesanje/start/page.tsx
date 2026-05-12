@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { IconClose, IconCheck, IconWrong, IconHint } from '@/components/icons'
+import ShareResultButton from '@/components/ShareResultButton'
 
 // Serbian Latin alphabet for the keyboard (no Q W X Y; digraphs Dž/Lj/Nj entered as separate letters)
 const ALPHABET = ['A','B','C','Č','Ć','D','Đ','E','F','G','H','I','J','K','L','M','N','O','P','R','S','Š','T','U','V','Z','Ž']
@@ -538,7 +539,7 @@ function EndCard({ status, wordRow, wrongs, score, isCustom, onPlayAgainSameCat 
           <div className="text-[10px]" style={{ color: '#9C9C9C' }}>Kategorija</div>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 mb-2">
         <button onClick={onPlayAgainSameCat} className="btn btn-primary btn-md flex-1">
           {isCustom ? 'Nova igra' : 'Nova reč'}
         </button>
@@ -546,6 +547,15 @@ function EndCard({ status, wordRow, wrongs, score, isCustom, onPlayAgainSameCat 
           {isCustom ? 'Početna' : 'Promeni'}
         </Link>
       </div>
+      <ShareResultButton
+        gameLabel="Vešanju"
+        score={score}
+        extra={isWon
+          ? `Pogodio/la sam reč „${wordRow.word.toUpperCase()}” iz kategorije ${wordRow.category}.`
+          : `Reč je bila „${wordRow.word.toUpperCase()}” iz kategorije ${wordRow.category}.`}
+        accent={isWon ? 'green' : 'red'}
+        className="w-full"
+      />
     </div>
   )
 }
