@@ -43,6 +43,12 @@ export default function KorisniciList({ rows, myId }: Props) {
   const allSelected =
     selectableIds.length > 0 && selectableIds.every(id => selected.has(id))
 
+  // "Novo" chip threshold — pin the timestamp ONCE on mount instead of
+  // calling Date.now() on every render. Hook-purity rule trips on the
+  // inline call, and per-render churn would make chips flicker as the
+  // 24h boundary crosses anyway. Computed once is right.
+  const [nowMs] = useState(() => Date.now())
+
   function toggleAll() {
     if (allSelected) setSelected(new Set())
     else setSelected(new Set(selectableIds))
@@ -119,6 +125,12 @@ export default function KorisniciList({ rows, myId }: Props) {
             const isSelf = u.id === myId
             const checked = selected.has(u.id)
             const avgSec = u.pro_avg_sec_per_q != null ? u.pro_avg_sec_per_q.toFixed(1) : null
+            // Surface fresh signups visually — the list is already
+            // sorted by created_at desc, but a "Novo" chip makes the
+            // recency obvious at a glance instead of decoding the
+            // sidebar date.
+            const ageMs = nowMs - new Date(u.created_at).getTime()
+            const isFresh = ageMs < 24 * 60 * 60 * 1000  // 24h
 
             return (
               <div key={u.id}
@@ -144,6 +156,9 @@ export default function KorisniciList({ rows, myId }: Props) {
                       )}
                       {isSelf && (
                         <span className="chip" style={{ background: '#BCD9FF', color: '#1e5fa4' }}>ti</span>
+                      )}
+                      {isFresh && (
+                        <span className="chip" style={{ background: '#E8F8F0', color: '#15803d' }}>✨ Novo</span>
                       )}
                       {u.is_blocked && (
                         <span className="chip" style={{ background: '#FEE2E2', color: '#b91c1c' }}>🚫 blokiran</span>
