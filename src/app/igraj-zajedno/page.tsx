@@ -74,8 +74,10 @@ function IgrajZajednoInner() {
         filter: `room_code=eq.${createdCode}`,
       }, async (payload) => {
         if (payload.new.guest_id && !guestJoined) {
+          // Resolve guest name from the safe view — profiles itself
+          // is locked down, but public_profiles exposes first_name.
           const { data: prof } = await supabase
-            .from('profiles').select('first_name').eq('id', payload.new.guest_id).single()
+            .from('public_profiles').select('first_name').eq('id', payload.new.guest_id).single()
           setGuestName(prof?.first_name ?? 'Prijatelj')
           setGuestJoined(true)
         }

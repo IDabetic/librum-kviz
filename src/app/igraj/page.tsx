@@ -49,15 +49,21 @@ export default async function IgrajLandingPage() {
   startOfDay.setHours(0, 0, 0, 0)
   const { data: todayBest } = await supabase
     .from('survivor_sessions')
-    .select('score, profiles(first_name, nickname)')
+    .select('score, user_id')
     .gte('created_at', startOfDay.toISOString())
     .order('score', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const todayBestName = todayBest
-    ? (() => {
-        const p = Array.isArray(todayBest.profiles) ? todayBest.profiles[0] : todayBest.profiles as { first_name: string; nickname: string } | null
+  // Look up name from public_profiles — embedded selects on `profiles`
+  // are locked out for anon, so we resolve display info separately.
+  const todayBestName = todayBest?.user_id
+    ? await (async () => {
+        const { data: p } = await supabase
+          .from('public_profiles')
+          .select('first_name, nickname')
+          .eq('id', todayBest.user_id)
+          .maybeSingle()
         return p?.nickname || p?.first_name || 'Igrač'
       })()
     : null

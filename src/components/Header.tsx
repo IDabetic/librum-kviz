@@ -71,7 +71,9 @@ export default function Header() {
     if (!showRecent && !mobileOpen) return
     if (recentLoadedRef.current) return
     recentLoadedRef.current = true
-    createClient().from('profiles')
+    // Recent-members list is public — read from the safe view so we
+    // don't depend on profiles RLS allowing cross-row reads.
+    createClient().from('public_profiles')
       .select('id, first_name, last_name, nickname, avatar, created_at')
       .order('created_at', { ascending: false })
       .limit(15)

@@ -16,6 +16,7 @@ type Row = {
   city: string | null
   role: string
   created_at: string
+  is_blocked?: boolean | null
   pro_games: number
   pro_best: number
   pro_avg_sec_per_q: number | null
@@ -143,6 +144,9 @@ export default function KorisniciList({ rows, myId }: Props) {
                       )}
                       {isSelf && (
                         <span className="chip" style={{ background: '#BCD9FF', color: '#1e5fa4' }}>ti</span>
+                      )}
+                      {u.is_blocked && (
+                        <span className="chip" style={{ background: '#FEE2E2', color: '#b91c1c' }}>🚫 blokiran</span>
                       )}
                     </div>
                     <p className="text-[12px]" style={{ color: '#9C9C9C' }}>

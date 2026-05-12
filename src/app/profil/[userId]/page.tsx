@@ -11,8 +11,12 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
   const { userId } = await params
   const supabase = await createClient()
 
+  // Public profile reads only the display-safe view. Email/role/phone
+  // never leak through this page — those live behind RLS in `profiles`.
   const { data: profile } = await supabase
-    .from('profiles').select('*').eq('id', userId).single()
+    .from('public_profiles')
+    .select('id, first_name, last_name, nickname, avatar, city, created_at')
+    .eq('id', userId).single()
 
   if (!profile) notFound()
 

@@ -60,7 +60,7 @@ export default function KafanaDuelLobby() {
       }, async (payload) => {
         if (payload.new.guest_id && !guestJoined) {
           const { data: prof } = await supabase
-            .from('profiles').select('first_name').eq('id', payload.new.guest_id).single()
+            .from('public_profiles').select('first_name').eq('id', payload.new.guest_id).single()
           setGuestName(prof?.first_name ?? 'Prijatelj')
           setGuestJoined(true)
         }

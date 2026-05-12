@@ -98,23 +98,43 @@ function pickName(prof: { first_name?: string; last_name?: string; nickname?: st
   return prof.nickname || `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || 'Igrač'
 }
 
+// Resolve display info for a batch of user_ids via public_profiles
+// (a SECURITY-DEFINER view exposing only first_name/last_name/nickname/
+// avatar). We never embed `profiles(...)` anymore — that would hit the
+// locked-down profiles table and return nothing to anon.
+type ProfMap = Record<string, { name: string; avatar: string | null }>
+async function loadProfileMap(supabase: SB, userIds: string[]): Promise<ProfMap> {
+  const ids = [...new Set(userIds.filter(Boolean))]
+  if (ids.length === 0) return {}
+  const { data } = await supabase
+    .from('public_profiles')
+    .select('id, first_name, last_name, nickname, avatar')
+    .in('id', ids)
+  const map: ProfMap = {}
+  for (const p of (data || []) as { id: string; first_name: string; last_name: string; nickname: string; avatar: string | null }[]) {
+    map[p.id] = { name: pickName(p), avatar: p.avatar || null }
+  }
+  return map
+}
+
 // ── SURVIVOR ─────────────────────────────────────────────────────────────
 async function loadSurvivor(supabase: SB, since: Date | null): Promise<SurvivorRow[]> {
   let q = supabase
     .from('survivor_sessions')
-    .select('user_id, score, questions_reached, correct_answers, accuracy, best_combo, total_time_seconds, profiles(first_name, last_name, nickname, avatar)')
+    .select('user_id, score, questions_reached, correct_answers, accuracy, best_combo, total_time_seconds')
     .order('score', { ascending: false })
     .limit(500)
   if (since) q = q.gte('created_at', since.toISOString())
   const { data } = await q
+  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
   const seen = new Set<string>()
   const rows: SurvivorRow[] = []
   for (const r of (data || [])) {
     if (!r.user_id || seen.has(r.user_id)) continue
     seen.add(r.user_id)
-    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
+    const p = profMap[r.user_id]
     rows.push({
-      userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
+      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
       score: r.score, questionsReached: r.questions_reached,
       correctAnswers: r.correct_answers, accuracy: Number(r.accuracy),
       bestCombo: r.best_combo, totalTime: r.total_time_seconds,
@@ -138,12 +158,7 @@ async function loadDuel(supabase: SB, since: Date | null): Promise<DuelRow[]> {
 
   const userIds = [...new Set((games || []).flatMap(g => [g.host_id, g.guest_id]).filter(Boolean))] as string[]
   if (userIds.length === 0) return []
-  const { data: profData } = await supabase
-    .from('profiles').select('id, first_name, last_name, nickname, avatar').in('id', userIds)
-  const profMap: Record<string, { name: string; avatar: string | null }> = {}
-  ;(profData || []).forEach((p: { id: string; first_name: string; last_name: string; nickname: string; avatar: string }) => {
-    profMap[p.id] = { name: pickName(p), avatar: p.avatar || null }
-  })
+  const profMap = await loadProfileMap(supabase, userIds)
 
   const map: Record<string, DuelRow> = {}
   function record(uid: string, my: number, op: number) {
@@ -174,17 +189,18 @@ async function loadDuel(supabase: SB, since: Date | null): Promise<DuelRow[]> {
 async function loadHangman(supabase: SB, since: Date | null): Promise<HangmanRow[]> {
   let q = supabase
     .from('hangman_sessions')
-    .select('user_id, won, score, profiles(first_name, last_name, nickname, avatar)')
+    .select('user_id, won, score')
     .limit(2000)
   if (since) q = q.gte('created_at', since.toISOString())
   const { data } = await q
 
+  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
   const map: Record<string, HangmanRow> = {}
   ;(data || []).forEach(r => {
     if (!r.user_id) return
-    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
+    const p = profMap[r.user_id]
     if (!map[r.user_id]) map[r.user_id] = {
-      userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
+      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
       total: 0, wins: 0, winRate: 0, bestScore: 0, totalScore: 0,
     }
     map[r.user_id].total++
@@ -202,19 +218,20 @@ async function loadHangman(supabase: SB, since: Date | null): Promise<HangmanRow
 async function loadBook(supabase: SB, since: Date | null): Promise<BookRow[]> {
   let q = supabase
     .from('book_sessions')
-    .select('user_id, score, questions_reached, accuracy, top_genre, top_genre_pct, profiles(first_name, last_name, nickname, avatar)')
+    .select('user_id, score, questions_reached, accuracy, top_genre, top_genre_pct')
     .order('score', { ascending: false })
     .limit(500)
   if (since) q = q.gte('created_at', since.toISOString())
   const { data } = await q
+  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
   const seen = new Set<string>()
   const rows: BookRow[] = []
   for (const r of (data || [])) {
     if (!r.user_id || seen.has(r.user_id)) continue
     seen.add(r.user_id)
-    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
+    const p = profMap[r.user_id]
     rows.push({
-      userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
+      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
       score: r.score, questionsReached: r.questions_reached, accuracy: Number(r.accuracy),
       topGenre: r.top_genre, topGenrePct: r.top_genre_pct != null ? Number(r.top_genre_pct) : null,
     })
@@ -233,7 +250,7 @@ async function loadBook(supabase: SB, since: Date | null): Promise<BookRow[]> {
 async function loadKafana(supabase: SB, since: Date | null): Promise<KafanaRow[]> {
   let solo = supabase
     .from('kafana_sessions')
-    .select('user_id, score, questions_reached, accuracy, best_combo, profiles(first_name, last_name, nickname, avatar)')
+    .select('user_id, score, questions_reached, accuracy, best_combo')
     .order('score', { ascending: false })
     .limit(500)
   if (since) solo = solo.gte('created_at', since.toISOString())
@@ -248,16 +265,23 @@ async function loadKafana(supabase: SB, since: Date | null): Promise<KafanaRow[]
 
   const [{ data: soloData }, { data: duelData }] = await Promise.all([solo, duel])
 
+  // Single profile lookup for everyone — solo players + duel players.
+  const allUserIds = [
+    ...((soloData || []).map(r => r.user_id)),
+    ...((duelData || []).flatMap(g => [g.host_id, g.guest_id])),
+  ].filter((x): x is string => !!x)
+  const profMap = await loadProfileMap(supabase, allUserIds)
+
   // Walk solo first (already sorted desc by score) so a player's
   // best solo session populates secondary stats; later duel scores
   // only bump the headline score if higher.
   const map: Record<string, KafanaRow> = {}
   for (const r of (soloData || [])) {
     if (!r.user_id) continue
-    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
+    const p = profMap[r.user_id]
     if (!map[r.user_id]) {
       map[r.user_id] = {
-        userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
+        userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
         score: r.score ?? 0, questionsReached: r.questions_reached ?? 0,
         accuracy: Number(r.accuracy ?? 0), bestCombo: r.best_combo ?? 0,
       }
@@ -266,30 +290,12 @@ async function loadKafana(supabase: SB, since: Date | null): Promise<KafanaRow[]
     }
   }
 
-  // Pull profiles for any duel-only players who never played a solo
-  // run (so they don't show as "Igrač" with no avatar).
-  const duelOnlyIds = [...new Set(
-    (duelData || [])
-      .flatMap(g => [g.host_id, g.guest_id])
-      .filter((id): id is string => !!id && !map[id])
-  )]
-  let duelOnlyProf: Record<string, { name: string; avatar: string | null }> = {}
-  if (duelOnlyIds.length) {
-    const { data: profs } = await supabase
-      .from('profiles').select('id, first_name, last_name, nickname, avatar').in('id', duelOnlyIds)
-    duelOnlyProf = Object.fromEntries(
-      (profs || []).map((p: { id: string; first_name: string; last_name: string; nickname: string; avatar: string }) => [
-        p.id, { name: pickName(p), avatar: p.avatar || null },
-      ])
-    )
-  }
-
   for (const g of (duelData || [])) {
     const isFinished = g.status === 'finished' || (g.host_finished && g.guest_finished)
     if (!isFinished || !g.host_id || !g.guest_id) continue
     function bump(uid: string, score: number) {
       if (!map[uid]) {
-        const p = duelOnlyProf[uid]
+        const p = profMap[uid]
         map[uid] = {
           userId: uid, name: p?.name || 'Igrač', avatar: p?.avatar || null,
           score, questionsReached: 0, accuracy: 0, bestCombo: 0,
@@ -312,20 +318,21 @@ async function loadKafana(supabase: SB, since: Date | null): Promise<KafanaRow[]
 async function loadQuick(supabase: SB, since: Date | null): Promise<QuickRow[]> {
   let q = supabase
     .from('quick_sessions')
-    .select('user_id, score, correct_count, wrong_count, accuracy, total_answered, profiles(first_name, last_name, nickname, avatar)')
+    .select('user_id, score, correct_count, wrong_count, accuracy, total_answered')
     .order('score', { ascending: false })
     .limit(500)
   if (since) q = q.gte('created_at', since.toISOString())
   const { data } = await q
 
+  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
   const seen = new Set<string>()
   const rows: QuickRow[] = []
   for (const r of (data || [])) {
     if (!r.user_id || seen.has(r.user_id)) continue
     seen.add(r.user_id)
-    const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles as { first_name: string; last_name: string; nickname: string; avatar: string } | null
+    const p = profMap[r.user_id]
     rows.push({
-      userId: r.user_id, name: pickName(prof), avatar: prof?.avatar || null,
+      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
       score: r.score, correct: r.correct_count, wrong: r.wrong_count,
       accuracy: Number(r.accuracy), totalAnswered: r.total_answered,
     })
