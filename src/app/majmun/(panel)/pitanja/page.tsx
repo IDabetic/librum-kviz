@@ -109,7 +109,10 @@ export default async function PitanjaPage({ searchParams }: { searchParams: Prom
         </div>
         <div className="flex gap-2 flex-wrap">
           <Link href="/majmun/pitanja/uvoz" className="btn btn-secondary btn-md">
-            📥 Excel uvoz · 🔀 Mešanje
+            📥 Excel uvoz
+          </Link>
+          <Link href="/majmun/pitanja/mesanje" className="btn btn-secondary btn-md">
+            🔀 Mešanje
           </Link>
           <Link href="/majmun/pitanja/novo" className="btn btn-primary btn-md">
             + Novo pitanje
