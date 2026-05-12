@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { IconBack } from '@/components/icons'
-import UvozTools from './UvozTools'
+import MesanjeTools from './MesanjeTools'
 
 export const dynamic = 'force-dynamic'
 
-export default function UvozPitanjaPage() {
+export default function MesanjePitanjaPage() {
   return (
     <div className="max-w-2xl space-y-5">
       <Link href="/majmun/pitanja"
@@ -15,17 +15,15 @@ export default function UvozPitanjaPage() {
 
       <div>
         <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
-          📥 Uvoz pitanja
+          🔀 Mešanje
         </h1>
         <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>
-          Masovni unos pitanja iz Excel-a u zajednički <strong>questions</strong> pool koji
-          koriste PRO kviz, Brzi kviz i Trivia duel.
-          Za mešanje koristi posebnu stranicu{' '}
-          <Link href="/majmun/pitanja/mesanje" className="underline" style={{ color: '#609DED' }}>🔀 Mešanje</Link>.
+          Dve nezavisne opcije za <strong>questions</strong> pool (PRO kviz, Brzi kviz, Trivia duel).
+          Svaka se primenjuje na sve aktivne i neaktivne redove.
         </p>
       </div>
 
-      <UvozTools />
+      <MesanjeTools />
     </div>
   )
 }
