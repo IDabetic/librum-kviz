@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import { createClient } from '@/lib/supabase/server'
 import { IconHome, IconStar, IconSwords, IconHint, IconTime } from '@/components/icons'
 
 export const metadata: Metadata = {
@@ -16,10 +15,7 @@ export const metadata: Metadata = {
 // detail in admin, etc.). Visually consistent with the rest of the
 // site so anonymous visitors land on something friendly instead of
 // the default black Next.js error screen.
-export default async function NotFound() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
+export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
       <Header />
@@ -74,7 +70,7 @@ export default async function NotFound() {
             ].map(g => (
               <Link
                 key={g.href}
-                href={user ? g.href : `/auth/registracija?redirect=${encodeURIComponent(g.href)}`}
+                href={g.href}
                 className="card-soft p-4 sm:p-5 flex items-center gap-3 transition-transform hover:-translate-y-0.5">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: g.bg }}>
                   <g.Icon size={18} strokeWidth={2.2} />
