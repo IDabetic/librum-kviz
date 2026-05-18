@@ -10,9 +10,11 @@ import { createServerClient } from '@supabase/ssr'
 //    side of the header (avatar, logout, recent users dropdown) silently
 //    disappears. The refresh runs server-side here and writes the rotated
 //    cookies back to the response.
-// 2. Forces login for the legacy `/kvizovi` and `/igraj-zajedno` routes
-//    when there is no session. (Public game landings handle their own
-//    auth-gating in the page itself.)
+// 2. Forces login for legacy `/kvizovi` and for individual duel ROOMS
+//    (`/igraj-zajedno/<code>`). The bare `/igraj-zajedno` lobby stays
+//    public so Googlebot can crawl + rank it — the lobby's client
+//    component itself redirects anon to login the moment they try to
+//    create or join a room.
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -41,9 +43,13 @@ export async function proxy(request: NextRequest) {
   // Soft auth gate for routes that require a logged-in user. Page-level
   // checks still run, but redirecting here avoids flashing the page.
   const path = request.nextUrl.pathname
-  const protectedRoutes = ['/kvizovi', '/igraj-zajedno']
-  const isProtected = protectedRoutes.some(r => path.startsWith(r))
+  // /kvizovi (legacy) stays fully gated except public share links.
+  // For duels we only gate a specific room (/igraj-zajedno/<code>);
+  // the bare /igraj-zajedno lobby is public for SEO.
+  const isKvizovi = (path === '/kvizovi' || path.startsWith('/kvizovi/'))
     && !/\/kvizovi\/[^/]+\/share/.test(path)
+  const isDuelRoom = /^\/igraj-zajedno\/.+/.test(path)
+  const isProtected = isKvizovi || isDuelRoom
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
