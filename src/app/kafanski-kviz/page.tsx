@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { IconTime, IconTrophy, IconSwords } from '@/components/icons'
 
 import Footer from '@/components/Footer'
+import GameSeoContent from '@/components/GameSeoContent'
 
 export const metadata: Metadata = {
   title: 'Kafanski kviz – muzički kviz, pub kviz i kviz za društvo',
@@ -108,6 +109,7 @@ export default async function KafanskiKvizLanding() {
           Pozovi prijatelja na duel
         </Link>
       </main>
+      <GameSeoContent game="kafana" />
       <Footer />
     </div>
   )

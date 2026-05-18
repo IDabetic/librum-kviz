@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { IconHint, IconTime, IconStar, IconTrophy, IconSwords } from '@/components/icons'
 
 import Footer from '@/components/Footer'
+import GameSeoContent from '@/components/GameSeoContent'
 
 export const metadata: Metadata = {
   title: 'PRO kviz – survival kviz znanja sa rang-listom',
@@ -221,6 +222,7 @@ export default async function IgrajLandingPage() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <GameSeoContent game="pro" />
       <Footer />
     </div>
   )

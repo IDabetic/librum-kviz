@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { IconTime, IconStar, IconTrophy, IconDiscover } from '@/components/icons'
 
 import Footer from '@/components/Footer'
+import GameSeoContent from '@/components/GameSeoContent'
 
 export const metadata: Metadata = {
   title: 'Book kviz – kviz iz književnosti, kviz o knjigama i piscima',
@@ -151,6 +152,7 @@ export default async function BookKvizLanding() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <GameSeoContent game="book" />
       <Footer />
     </div>
   )

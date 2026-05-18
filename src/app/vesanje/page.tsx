@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { IconUsers, IconStar, IconTrophy } from '@/components/icons'
+import GameSeoContent from '@/components/GameSeoContent'
 
 import Footer from '@/components/Footer'
 
@@ -39,15 +39,20 @@ const CATEGORIES = [
 export default async function VesanjeLanding() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/prijava?redirect=/vesanje')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('first_name').eq('id', user.id).single()
+  // No anon redirect — Googlebot must see this page so it can rank for
+  // "igra vešanja online". The category links lead to /vesanje/start
+  // which gates the actual play behind login.
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('first_name').eq('id', user.id).single()
+    : { data: null as { first_name: string | null } | null }
 
-  const { data: stats } = await supabase
-    .from('hangman_sessions')
-    .select('won, score')
-    .eq('user_id', user.id)
+  const { data: stats } = user
+    ? await supabase
+        .from('hangman_sessions')
+        .select('won, score')
+        .eq('user_id', user.id)
+    : { data: null as { won: boolean; score: number }[] | null }
   const total = stats?.length || 0
   const wins = (stats || []).filter(s => s.won).length
   const totalScore = (stats || []).reduce((s, r) => s + (r.score ?? 0), 0)
@@ -160,6 +165,7 @@ export default async function VesanjeLanding() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <GameSeoContent game="vesanje" />
       <Footer />
     </div>
   )
