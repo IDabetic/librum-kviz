@@ -11,10 +11,11 @@ const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
   mainEntity: [
-    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna platforma za kratke igre znanja na srpskom — PRO kviz, Trivia duel, Vešanje i Brzi kviz. Pitanja pokrivaju književnost, istoriju, geografiju, sport, kulturu, prirodu i opšte znanje.' } },
-    { '@type': 'Question', name: 'Kako se igra PRO kviz?', acceptedAnswer: { '@type': 'Answer', text: 'PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove, svaka greška skida život. Igra traje dok imaš živote.' } },
-    { '@type': 'Question', name: 'Da li je Librum kviz besplatan?', acceptedAnswer: { '@type': 'Answer', text: 'Da, Librum kviz je besplatan za igranje.' } },
-    { '@type': 'Question', name: 'Mogu li da igram protiv prijatelja?', acceptedAnswer: { '@type': 'Answer', text: 'Možeš. Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ link prijatelju i odmerite znanje na istim pitanjima.' } },
+    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna platforma za kratke igre znanja na srpskom — PRO kviz, Book kviz, Kafanski kviz, Trivia duel, Vešanje i Brzi kviz. Pitanja pokrivaju književnost, istoriju, geografiju, sport, muziku, kulturu, prirodu i opšte znanje.' } },
+    { '@type': 'Question', name: 'Da li je Librum kviz besplatan?', acceptedAnswer: { '@type': 'Answer', text: 'Jeste — sve igre su potpuno besplatne. Potrebno je samo da napraviš nalog kako bi se rezultati upisivali na rang-listu i čuvali na tvom profilu.' } },
+    { '@type': 'Question', name: 'Kako se igra PRO kviz?', acceptedAnswer: { '@type': 'Answer', text: 'PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove i gradi kombo niz, a svaka greška skida jedan život. Igra traje dok imaš života.' } },
+    { '@type': 'Question', name: 'Mogu li da igram protiv prijatelja?', acceptedAnswer: { '@type': 'Answer', text: 'Možeš. Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ kod ili link prijatelju i odmerite znanje na istim pitanjima u realnom vremenu. Vešanje takođe ima mod za dvoje.' } },
+    { '@type': 'Question', name: 'Koje teme pokrivaju pitanja?', acceptedAnswer: { '@type': 'Answer', text: 'Opšte znanje, istorija, geografija, sport, nauka, film, muzika i književnost. Kafanski kviz je posvećen domaćoj i ex YU muzici, a Book kviz isključivo književnosti i žanrovima.' } },
   ],
 }
 
@@ -173,8 +174,12 @@ export default async function Home() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {GAMES.map(g => (
+              // Link straight to the public game landing — clean URL,
+              // no ?redirect= query param (Seobility flags dynamic
+              // params in internal links). The landing page itself
+              // gates play behind login for anon visitors.
               <Link key={g.href}
-                href={user ? g.href : `/auth/registracija?redirect=${g.href}`}
+                href={g.href}
                 className="card-soft overflow-hidden group transition-transform hover:scale-[1.03]">
                 <div className="h-24 sm:h-28 flex items-center justify-center" style={{ background: g.gradient }}>
                   <span className="text-[42px] sm:text-[48px] leading-none" aria-hidden>{g.emoji}</span>
@@ -343,10 +348,11 @@ export default async function Home() {
         </section>
       )}
 
-      {/* SEO content — multiple paragraphs covering core keyword clusters
-          (online kviz, kafanski kviz, kviz iz književnosti, trivia duel,
-          igra vešanja). Plain text + internal links so search engines
-          have something substantial to index per landing visit. */}
+      {/* SEO content — long-form, ~800 words of useful text covering
+          every keyword cluster (online kviz, kafanski kviz, kviz iz
+          književnosti, trivia duel, igra vešanja). Repeats the H1
+          verbs "Igraj / Saznaj / Pobeđuj" in body copy and adds a
+          visible FAQ that mirrors the FAQPage JSON-LD below. */}
       <section className="py-14 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-[14px] leading-relaxed space-y-5" style={{ color: '#5a5a5a' }}>
           <h2 className="font-black tracking-tight text-center mb-2" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
@@ -355,39 +361,98 @@ export default async function Home() {
           <p>
             <strong>Librum kviz</strong> je besplatna platforma za igre znanja na srpskom — online kviz koji
             spaja kviz opšte kulture, muzički kviz, kviz iz književnosti i klasičnu igru pogađanja
-            reči na jednom mestu. Bez instalacije, bez reklama u igri — otvoriš sajt, registruješ se za
-            10 sekundi i kreneš da igraš.
+            reči na jednom mestu. Bez instalacije i bez reklama u toku igre: otvoriš sajt, napraviš
+            nalog za desetak sekundi i odmah kreneš da igraš. Filozofija je jednostavna —{' '}
+            <strong>igraj</strong> kratku partiju kad god imaš pet minuta, <strong>saznaj</strong> nešto
+            novo iz svake runde i <strong>pobeđuj</strong> penjući se na rang-listu protiv ostalih igrača iz
+            Srbije i regiona.
           </p>
           <p>
             <Link href="/igraj" className="font-semibold underline" style={{ color: '#609DED' }}>PRO kviz</Link>{' '}
             je naš survival kviz znanja sa 10 života i rang-listom — najteži kviz opšteg znanja i najbolji
-            izazov za one koji žele da se takmiče.{' '}
+            izazov za one koji žele da se takmiče. Svaki tačan odgovor nosi bodove i gradi kombo niz, dok
+            te svaka greška košta jednog života. Pitanja pokrivaju istoriju, geografiju, sport, nauku,
+            film, muziku i opštu kulturu, a dostupne su i pomoći (lifelines) kada zapneš.{' '}
             <Link href="/book-kviz" className="font-semibold underline" style={{ color: '#9c7a13' }}>Book kviz</Link>{' '}
-            je kviz iz književnosti za ljubitelje knjiga: pitanja o piscima, romanima i žanrovima, a na
-            kraju saznaš koji književni žanr najbolje poznaješ.
+            je kviz iz književnosti za ljubitelje knjiga: pitanja o piscima, romanima, književnim likovima
+            i žanrovima — od drame i ljubavnog romana do krimića i fantastike. Na kraju partije saznaš
+            koji književni žanr najbolje poznaješ, što je odličan test znanja iz književnosti i poziv da
+            otkriješ nešto novo za čitanje.
           </p>
           <p>
             <Link href="/kafanski-kviz" className="font-semibold underline" style={{ color: '#b91c1c' }}>Kafanski kviz</Link>{' '}
-            je naš pub kviz i muzički kviz — preko 1000 pitanja o domaćoj i ex YU muzici, pevačima i
-            pesmama. Idealan kviz za društvo, kafanu i kućno druženje.{' '}
+            je naš pub kviz i muzički kviz — preko 1000 pitanja o domaćoj i ex YU muzici, pevačima,
+            grupama i kultnim pesmama. Idealan je kviz za društvo, za kafanu i za kućno druženje: pusti
+            ga na telefonu ili laptopu i neka ekipa pogađa hitove. Ako tražiš pitanja za pub kviz na
+            srpskom, ovo je najbrži način da napraviš veče kviza bez pripreme.{' '}
             <Link href="/igraj-zajedno" className="font-semibold underline" style={{ color: '#9c7a13' }}>Trivia duel</Link>{' '}
-            je multiplayer kviz protiv prijatelja u realnom vremenu — pošalji kod, pridruži se i odmerite
-            znanje na istim pitanjima.
+            je multiplayer kviz protiv prijatelja u realnom vremenu — napraviš sobu, pošalješ kod ili
+            link, drugi igrač se pridruži i oboje dobijate ista pitanja. Pobednik je onaj sa više bodova,
+            a možete odmah pokrenuti revanš.
           </p>
           <p>
             <Link href="/vesanje" className="font-semibold underline" style={{ color: '#15803d' }}>Igra vešanja</Link>{' '}
             je klasična online igra pogađanja reči po kategorijama — sport, geografija, istorija,
-            kultura, priroda i predmeti, sa hintom za teže reči.{' '}
+            kultura, priroda i predmeti — sa hintom za teže reči. Pogodna je i za decu i za odrasle, a
+            ima i mod za dvoje gde jedan zadaje a drugi pogađa.{' '}
             <Link href="/brzi-kviz" className="font-semibold underline" style={{ color: '#b91c1c' }}>Brzi kviz</Link>{' '}
-            je tačno-netačno kviz od 60 sekundi — kratki kviz za pauzu, brzinski test znanja iz svih
-            oblasti.
+            je tačno-netačno kviz od 60 sekundi — kratki, brzinski test znanja iz svih oblasti, savršen
+            za pauzu na poslu ili u prevozu. Cilj je da za jedan minut sakupiš što više tačnih odgovora.
           </p>
           <p>
-            Sve igre koriste isti sistem rang-liste, profila i bodova. Imaš zanimljivo pitanje? Pošalji
-            ga preko{' '}
+            Sve igre dele isti sistem profila, bodova i{' '}
+            <Link href="/leaderboard" className="font-semibold underline" style={{ color: '#609DED' }}>rang-liste</Link>{' '}
+            sa filterima za danas, sedam dana, mesec i sve vreme — tako da uvek znaš gde si u odnosu na
+            druge. Na profilu vidiš broj odigranih partija, rekorde i prosečno vreme po pitanju za svaku
+            igru. Imaš zanimljivo pitanje? Pošalji ga preko{' '}
             <Link href="/predlozi-pitanje" className="underline" style={{ color: '#609DED' }}>predloga pitanja</Link>{' '}
-            — ako prođe pregled, ulazi u sledeći kviz.
+            — ako prođe pregled urednika, ulazi u sledeći kviz i igraće ga svi.
           </p>
+
+          {/* Visible FAQ — mirrors faqSchema for rich-result eligibility */}
+          <h2 className="font-black tracking-tight text-center pt-6" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
+            Često postavljana pitanja
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Šta je Librum kviz?</h3>
+              <p>
+                Librum kviz je besplatna platforma za kratke igre znanja na srpskom — PRO kviz, Book
+                kviz, Kafanski kviz, Trivia duel, Vešanje i Brzi kviz. Pitanja pokrivaju književnost,
+                istoriju, geografiju, sport, muziku, kulturu, prirodu i opšte znanje.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Da li je Librum kviz besplatan?</h3>
+              <p>
+                Jeste — sve igre su potpuno besplatne. Potrebno je samo da napraviš nalog kako bi se
+                rezultati upisivali na rang-listu i čuvali na tvom profilu.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Kako se igra PRO kviz?</h3>
+              <p>
+                PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove i
+                gradi kombo niz, a svaka greška skida jedan život. Igra traje dok imaš života — cilj je
+                da stigneš što dalje i osvojiš što više bodova.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Mogu li da igram protiv prijatelja?</h3>
+              <p>
+                Možeš. Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ kod ili link
+                prijatelju i odmerite znanje na istim pitanjima u realnom vremenu. Vešanje takođe ima
+                mod za dvoje.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Koje teme pokrivaju pitanja?</h3>
+              <p>
+                Opšte znanje, istorija, geografija, sport, nauka, film, muzika i književnost. Kafanski
+                kviz je posvećen domaćoj i ex YU muzici, a Book kviz isključivo književnosti i žanrovima.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

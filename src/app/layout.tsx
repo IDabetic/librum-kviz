@@ -12,8 +12,11 @@ const poppins = Poppins({
 
 const SITE_URL = 'https://kviz.librum.club'
 const SITE_NAME = 'Librum Kviz'
-const DEFAULT_TITLE = 'Librum kviz – besplatan online kviz znanja, kafanski kviz, trivia duel'
-const DEFAULT_DESC = 'Besplatan online kviz znanja na srpskom. Igraj PRO kviz, kafanski kviz, muzički kviz, kviz iz književnosti, trivia duel, brzi kviz i igru vešanja. Hiljade pitanja iz opšte kulture — sam ili sa prijateljima.'
+// Title kept under ~580px and with no repeated word ("kviz" once, as
+// the brand). Description trimmed to ~150 chars so it doesn't get cut
+// in SERPs (Seobility flagged the old one as 199px over the limit).
+const DEFAULT_TITLE = 'Librum kviz – besplatne online igre znanja na srpskom'
+const DEFAULT_DESC = 'Besplatne igre znanja na srpskom: PRO i kafanski kviz, trivia duel, vešanje i brzi kviz. Hiljade pitanja — igraj sam ili sa prijateljima.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -77,7 +80,17 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  icons: { icon: '/icon' },
+  icons: {
+    icon: '/icon',
+    // Seobility flagged the missing Apple touch icon. Reuse the
+    // square logo asset — iOS scales it for the home-screen shortcut.
+    apple: '/og-logo.png',
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'Librum kviz',
+    statusBarStyle: 'default',
+  },
 }
 
 const websiteSchema = {
