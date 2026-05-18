@@ -16,11 +16,11 @@ export const metadata: Metadata = {
     'kviz za takmičenje', 'kviz izazov', 'kviz za pametne',
     'besplatan online kviz', 'kviz znanja na srpskom', 'Librum kviz',
   ],
-  alternates: { canonical: '/igraj' },
+  alternates: { canonical: '/pro-kviz' },
   openGraph: {
     title: 'PRO kviz – survival igra znanja | Librum Kviz',
     description: '10 života, kombo bonus i rang-lista. Najteži kviz opšteg znanja na srpskom.',
-    url: 'https://kviz.librum.club/igraj',
+    url: 'https://kviz.librum.club/pro-kviz',
     type: 'website',
     images: ['/og-share.jpg?v=6'],
   },
@@ -202,11 +202,11 @@ export default async function IgrajLandingPage() {
         </p>
 
         {user ? (
-          <Link href="/igraj/start" className="btn btn-primary btn-lg w-full">
+          <Link href="/pro-kviz/start" className="btn btn-primary btn-lg w-full">
             Kreni — imaš 10 života
           </Link>
         ) : (
-          <Link href="/auth/prijava?redirect=/igraj" className="btn btn-primary btn-lg w-full">
+          <Link href="/auth/prijava?redirect=/pro-kviz" className="btn btn-primary btn-lg w-full">
             Prijavi se da igraš
           </Link>
         )}

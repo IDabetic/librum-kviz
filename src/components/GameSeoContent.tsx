@@ -222,7 +222,7 @@ const COPY: Record<GameKey, GameCopy> = {
 }
 
 const FAQ_ANCHOR_LINKS: { href: string; label: string }[] = [
-  { href: '/igraj', label: 'PRO kviz' },
+  { href: '/pro-kviz', label: 'PRO kviz' },
   { href: '/book-kviz', label: 'Book kviz' },
   { href: '/kafanski-kviz', label: 'Kafanski kviz' },
   { href: '/igraj-zajedno', label: 'Trivia duel' },
@@ -295,7 +295,7 @@ export default function GameSeoContent({ game }: { game: GameKey }) {
 // Map landing href → game key so we can exclude the current game from
 // the internal-link cluster (no self-link).
 const COPY_KEY_FOR_HREF: Record<string, GameKey> = {
-  '/igraj': 'pro',
+  '/pro-kviz': 'pro',
   '/book-kviz': 'book',
   '/kafanski-kviz': 'kafana',
   '/igraj-zajedno': 'duel',

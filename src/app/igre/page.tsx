@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 // then a clean white body with the title, blurb and play CTA.
 const GAMES = [
   {
-    href: '/igraj',
+    href: '/pro-kviz',
     label: 'PRO kviz',
     emoji: '🎯',
     desc: '10 života, kombo bonus, lifelines. Provera koliko daleko stižeš.',

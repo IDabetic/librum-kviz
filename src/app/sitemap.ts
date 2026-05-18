@@ -7,7 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const pages: { path: string; priority: number; changeFrequency: 'daily' | 'weekly' | 'monthly' }[] = [
     { path: '/',                       priority: 1.0, changeFrequency: 'weekly'  },
     { path: '/igre',                   priority: 0.9, changeFrequency: 'weekly'  },
-    { path: '/igraj',                  priority: 0.9, changeFrequency: 'daily'   },
+    { path: '/pro-kviz',                  priority: 0.9, changeFrequency: 'daily'   },
     { path: '/book-kviz',              priority: 0.9, changeFrequency: 'weekly'  },
     { path: '/kafanski-kviz',          priority: 0.9, changeFrequency: 'weekly'  },
     { path: '/igraj-zajedno',          priority: 0.8, changeFrequency: 'weekly'  },

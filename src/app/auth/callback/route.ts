@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 // Handles Supabase email-link callbacks: signup confirmation, magic links, and
 // any other PKCE flow that comes back through this route. We always keep the
-// session and drop the user wherever `next` says (or `/igraj` by default).
+// session and drop the user wherever `next` says (or `/pro-kviz` by default).
 // Password reset is handled separately via /auth/nova-lozinka?reset=TOKEN and
 // does not pass through this route anymore.
 export async function GET(request: Request) {
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type')
-  const next = searchParams.get('next') || '/igraj'
+  const next = searchParams.get('next') || '/pro-kviz'
 
   const supabase = await createClient()
 
