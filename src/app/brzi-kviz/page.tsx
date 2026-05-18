@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { IconStar, IconTime, IconCheck, IconWrong, IconTrophy } from '@/components/icons'
+import GameSeoContent from '@/components/GameSeoContent'
 
 import Footer from '@/components/Footer'
 
@@ -29,18 +29,22 @@ export const metadata: Metadata = {
 export default async function BrziKvizLanding() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/prijava?redirect=/brzi-kviz')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('first_name').eq('id', user.id).single()
+  // No anon redirect — page must be crawlable for "brzi kviz" /
+  // "tačno netačno kviz". Play action is gated inside /brzi-kviz/start.
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('first_name').eq('id', user.id).single()
+    : { data: null as { first_name: string | null } | null }
 
-  const { data: best } = await supabase
-    .from('quick_sessions')
-    .select('score, correct_count, wrong_count, accuracy, total_answered')
-    .eq('user_id', user.id)
-    .order('score', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const { data: best } = user
+    ? await supabase
+        .from('quick_sessions')
+        .select('score, correct_count, wrong_count, accuracy, total_answered')
+        .eq('user_id', user.id)
+        .order('score', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null as { score: number; correct_count: number; wrong_count: number; accuracy: number; total_answered: number } | null }
 
   // today's top
   const startOfDay = new Date()
@@ -152,6 +156,7 @@ export default async function BrziKvizLanding() {
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
+      <GameSeoContent game="brzi" />
       <Footer />
     </div>
   )
