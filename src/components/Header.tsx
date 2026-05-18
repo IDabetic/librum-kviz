@@ -25,7 +25,7 @@ const NAV_LINKS = [
 // Game routes the mobile drawer used to surface as a colored grid. Now
 // that /igre is a real page, mobile just sends users there too — the
 // drawer stays slim with the same 4 top links.
-const GAME_ROUTES = ['/igraj', '/book-kviz', '/kafanski-kviz', '/igraj-zajedno', '/vesanje', '/brzi-kviz']
+const GAME_ROUTES = ['/pro-kviz', '/book-kviz', '/kafanski-kviz', '/igraj-zajedno', '/vesanje', '/brzi-kviz']
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -104,7 +104,7 @@ export default function Header() {
   }
 
   // "Igre" pill should also light up when the user is inside any specific
-  // game route (e.g. /igraj/start) — feels more right than only matching
+  // game route (e.g. /pro-kviz/start) — feels more right than only matching
   // /igre exactly.
   const inGameSection = GAME_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
 

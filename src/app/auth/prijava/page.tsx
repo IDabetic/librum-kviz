@@ -13,7 +13,7 @@ import { sendCustomPasswordResetEmail } from '@/lib/password-reset'
 function PrijavaForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/igraj'
+  const redirect = searchParams.get('redirect') || '/pro-kviz'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

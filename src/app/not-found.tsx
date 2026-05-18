@@ -61,7 +61,7 @@ export default function NotFound() {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
-              { href: '/igraj',          label: 'PRO kviz',      Icon: IconHome,   bg: '#BCD9FF', fg: '#1e5fa4' },
+              { href: '/pro-kviz',          label: 'PRO kviz',      Icon: IconHome,   bg: '#BCD9FF', fg: '#1e5fa4' },
               { href: '/book-kviz',      label: 'Book kviz',     Icon: IconStar,   bg: '#FFECBC', fg: '#9c7a13' },
               { href: '/kafanski-kviz',  label: 'Kafanski',      Icon: IconStar,   bg: '#FEE2E2', fg: '#b91c1c' },
               { href: '/igraj-zajedno',  label: 'Trivia duel',   Icon: IconSwords, bg: '#FFECBC', fg: '#9c7a13' },

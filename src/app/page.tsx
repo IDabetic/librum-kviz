@@ -20,7 +20,7 @@ const faqSchema = {
 }
 
 const GAMES = [
-  { href: '/igraj',          label: 'PRO kviz',       emoji: '🎯', desc: 'Survival, lifelines',     gradient: 'linear-gradient(135deg, #BCD9FF 0%, #609DED 100%)', accent: '#1e5fa4' },
+  { href: '/pro-kviz',          label: 'PRO kviz',       emoji: '🎯', desc: 'Survival, lifelines',     gradient: 'linear-gradient(135deg, #BCD9FF 0%, #609DED 100%)', accent: '#1e5fa4' },
   { href: '/book-kviz',      label: 'Book kviz',      emoji: '📚', desc: 'Književnost po žanru',     gradient: 'linear-gradient(135deg, #FFECBC 0%, #FFCB46 100%)', accent: '#9c7a13' },
   { href: '/kafanski-kviz',  label: 'Kafanski kviz',  emoji: '🎵', desc: 'Muzika i hitovi',          gradient: 'linear-gradient(135deg, #FEE2E2 0%, #E55353 100%)', accent: '#b91c1c' },
   { href: '/igraj-zajedno',  label: 'Trivia duel',    emoji: '⚔️', desc: 'Jedan na jedan',           gradient: 'linear-gradient(135deg, #FFCB46 0%, #FFECBC 100%)', accent: '#9c7a13' },
@@ -214,7 +214,7 @@ export default async function Home() {
               <div className="text-5xl mb-4">🎯</div>
               <p className="font-bold text-[16px] mb-2" style={{ color: '#343434' }}>Rang lista čeka prvog igrača</p>
               <p className="text-[13px] mb-5" style={{ color: '#9C9C9C' }}>Budi prvi koji će postaviti rekord.</p>
-              <Link href={user ? '/igraj' : '/auth/registracija'} className="btn btn-primary btn-md">
+              <Link href={user ? '/pro-kviz' : '/auth/registracija'} className="btn btn-primary btn-md">
                 {user ? 'Igraj PRO' : 'Registruj se'}
               </Link>
             </div>
@@ -368,7 +368,7 @@ export default async function Home() {
             Srbije i regiona.
           </p>
           <p>
-            <Link href="/igraj" className="font-semibold underline" style={{ color: '#609DED' }}>PRO kviz</Link>{' '}
+            <Link href="/pro-kviz" className="font-semibold underline" style={{ color: '#609DED' }}>PRO kviz</Link>{' '}
             je naš survival kviz znanja sa 10 života i rang-listom — najteži kviz opšteg znanja i najbolji
             izazov za one koji žele da se takmiče. Svaki tačan odgovor nosi bodove i gradi kombo niz, dok
             te svaka greška košta jednog života. Pitanja pokrivaju istoriju, geografiju, sport, nauku,

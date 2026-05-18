@@ -173,7 +173,7 @@ function PeriodHint({ period }: { period: PeriodId }) {
 
 // ── SURVIVOR ────────────────────────────────────────────────────────────
 function SurvivorBoard({ data, period, user, limit }: { data: SurvivorRow[]; period: PeriodId; user: boolean; limit: number | null }) {
-  if (data.length === 0) return <EmptyBoard user={user} href="/igraj" label="Igraj PRO kviz" icon="🎯" />
+  if (data.length === 0) return <EmptyBoard user={user} href="/pro-kviz" label="Igraj PRO kviz" icon="🎯" />
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />

@@ -36,7 +36,7 @@ export default function KrajIgrePage() {
   })
 
   useEffect(() => {
-    if (!result) router.push('/igraj')
+    if (!result) router.push('/pro-kviz')
   }, [result, router])
 
   if (!result) return null
@@ -85,7 +85,7 @@ export default function KrajIgrePage() {
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Link href="/igraj/start" className="btn btn-primary btn-lg">Igraj ponovo</Link>
+          <Link href="/pro-kviz/start" className="btn btn-primary btn-lg">Igraj ponovo</Link>
           <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
         </div>
         <ShareResultButton
@@ -97,7 +97,7 @@ export default function KrajIgrePage() {
         />
 
         {/* Back to home */}
-        <Link href="/igraj" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"
+        <Link href="/pro-kviz" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"
           style={{ color: '#9C9C9C' }}>
           ← Glavna stranica
         </Link>

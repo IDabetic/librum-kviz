@@ -302,7 +302,7 @@ export default function SurvivorGame() {
       wrong: finalWrong, skipped: finalSkipped, accuracy, bestCombo: finalBest,
       totalTime, sessionId: data?.id,
     }))
-    router.push('/igraj/kraj')
+    router.push('/pro-kviz/kraj')
   }
 
   // ── Handle answer ─────────────────────────────────────────────────────────
@@ -520,7 +520,7 @@ export default function SurvivorGame() {
 
   async function confirmExit() {
     await persistSession()
-    router.push('/igraj')
+    router.push('/pro-kviz')
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────

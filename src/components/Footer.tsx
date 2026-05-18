@@ -25,7 +25,7 @@ export default function Footer() {
               Igre
             </p>
             <ul className="space-y-2 text-[13px]">
-              <li><Link href="/igraj" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>PRO kviz</Link></li>
+              <li><Link href="/pro-kviz" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>PRO kviz</Link></li>
               <li><Link href="/book-kviz" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Book kviz</Link></li>
               <li><Link href="/kafanski-kviz" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Kafanski kviz</Link></li>
               <li><Link href="/igraj-zajedno" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Trivia duel</Link></li>

@@ -12,6 +12,18 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
   },
+  // 301 the old PRO-kviz route to the new keyword-friendly URL.
+  // /igraj → /pro-kviz (to match /book-kviz, /kafanski-kviz, …).
+  // Permanent so Google transfers any existing ranking signal and
+  // old bookmarks/links keep working. The exact-match + /:path*
+  // pair deliberately does NOT touch /igraj-zajedno (no slash after
+  // "igraj"), which stays its own route.
+  async redirects() {
+    return [
+      { source: '/igraj', destination: '/pro-kviz', permanent: true },
+      { source: '/igraj/:path*', destination: '/pro-kviz/:path*', permanent: true },
+    ]
+  },
   // Static assets get long-lived caching; HTML pages stay dynamic via
   // the per-route `dynamic = 'force-dynamic'` flag.
   async headers() {

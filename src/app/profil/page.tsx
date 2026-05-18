@@ -172,7 +172,7 @@ export default async function ProfilPage() {
               { value: sBestCombo, label: 'Najduži niz' },
               ...(sAvgT ? [{ value: sAvgT, label: 'Vreme/tačno' }] : []),
             ]}
-            href="/igraj"
+            href="/pro-kviz"
           />
           {/* Book kviz */}
           <GameCard
@@ -253,7 +253,7 @@ export default async function ProfilPage() {
             <p className="font-bold text-[17px] mb-2" style={{ color: '#343434' }}>Još nisi igrao</p>
             <p className="text-[14px] mb-6" style={{ color: '#9C9C9C' }}>Izaberi mod i kreni.</p>
             <div className="flex flex-wrap gap-2 justify-center">
-              <Link href="/igraj" className="btn btn-primary btn-md">PRO kviz</Link>
+              <Link href="/pro-kviz" className="btn btn-primary btn-md">PRO kviz</Link>
               <Link href="/book-kviz" className="btn btn-secondary btn-md">Book kviz</Link>
               <Link href="/kafanski-kviz" className="btn btn-secondary btn-md">Kafanski kviz</Link>
               <Link href="/vesanje" className="btn btn-secondary btn-md">Vešanje</Link>
