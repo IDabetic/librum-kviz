@@ -24,7 +24,13 @@ type ImportResult = {
   invalidRowsSample?: { rowNum: number; reason: string }[]
 }
 
-export default function UvozTools() {
+// pool selects which question table the upload targets:
+//   pro    → questions (PRO/Brzi/Duel) — default, requires Netačno cols
+//   book   → book_questions — requires a Žanr column
+//   kafana → kafana_questions
+type Pool = 'pro' | 'book' | 'kafana'
+
+export default function UvozTools({ pool = 'pro' }: { pool?: Pool }) {
   const router = useRouter()
 
   const [file, setFile] = useState<File | null>(null)
@@ -39,7 +45,7 @@ export default function UvozTools() {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/admin/questions-import', { method: 'POST', body: fd })
+      const res = await fetch(`/api/admin/questions-import?pool=${pool}`, { method: 'POST', body: fd })
       const json = (await res.json()) as ImportResult
       setImportResult(json)
       if (json.ok) router.refresh()
@@ -61,10 +67,16 @@ export default function UvozTools() {
 
       <div className="rounded-2xl p-4 mb-4 text-[12px] font-mono leading-relaxed"
         style={{ background: '#F2F2F2', color: '#343434' }}>
-        <div><strong>Pitanje</strong> · <strong>Tačan odgovor</strong> · <strong>Netačno</strong> · <strong>Netačno_1</strong> · <strong>Netačno_2</strong></div>
+        <div>
+          <strong>Pitanje</strong> · <strong>Tačan odgovor</strong> ·{' '}
+          <strong>Pogrešan 1</strong> · <strong>Pogrešan 2</strong> · <strong>Pogrešan 3</strong>
+          {pool === 'book' && <> · <strong>Žanr</strong></>}
+        </div>
       </div>
 
       <ul className="text-[12px] space-y-1 mb-5 leading-relaxed list-disc pl-5" style={{ color: '#9C9C9C' }}>
+        <li>Kolone za netačne odgovore mogu biti i <code>Netačno · Netačno_1 · Netačno_2</code> — oba naziva rade.</li>
+        {pool === 'book' && <li><strong>Žanr</strong> je obavezan za Book kviz (npr. Drama, Krimi, Fantastika…).</li>}
         <li>Tačan odgovor se u bazi uvek čuva na indeksu 0 — igre nasumično razbacuju redosled u runtime-u.</li>
         <li>Pitanja koja već postoje u bazi (po tekstu) se preskaču.</li>
         <li>Pitanja sa praznim kolonama ili identičnim odgovorima se preskaču i prijavljuju.</li>

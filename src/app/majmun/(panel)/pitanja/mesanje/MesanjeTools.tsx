@@ -13,9 +13,10 @@ import { useRouter } from 'next/navigation'
 //      per-render shuffle the games already do.
 
 type Mode = 'order' | 'answers'
+type Pool = 'pro' | 'book' | 'kafana'
 type Stats = { total: number; updated: number; failed?: number; candidates_for_update?: number }
 
-export default function MesanjeTools() {
+export default function MesanjeTools({ pool = 'pro' }: { pool?: Pool }) {
   const router = useRouter()
   const [busy, setBusy] = useState<Mode | null>(null)
   const [result, setResult] = useState<{ mode: Mode; ok: boolean; error?: string; stats?: Stats } | null>(null)
@@ -26,10 +27,10 @@ export default function MesanjeTools() {
     setBusy(mode)
     setResult(null)
     try {
-      const url = mode === 'order'
+      const base = mode === 'order'
         ? '/api/admin/questions-shuffle-order'
         : '/api/admin/questions-shuffle-answers'
-      const res = await fetch(url, { method: 'POST' })
+      const res = await fetch(`${base}?pool=${pool}`, { method: 'POST' })
       const json = await res.json()
       setResult({ mode, ok: json.ok, error: json.error, stats: json.stats })
       if (json.ok) router.refresh()

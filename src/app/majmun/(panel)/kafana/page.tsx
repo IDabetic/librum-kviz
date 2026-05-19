@@ -48,7 +48,11 @@ export default async function KafanskiKvizAdminPage({ searchParams }: { searchPa
             {count ?? 0} ukupno · {sp.q ? `pretraga "${sp.q}"` : 'svi rezultati'}
           </p>
         </div>
-        <Link href="/majmun/kafana/novo" className="btn btn-primary btn-md">+ Novo pitanje</Link>
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/majmun/kafana/uvoz" className="btn btn-secondary btn-md">📥 Excel uvoz</Link>
+          <Link href="/majmun/kafana/mesanje" className="btn btn-secondary btn-md">🔀 Mešanje</Link>
+          <Link href="/majmun/kafana/novo" className="btn btn-primary btn-md">+ Novo pitanje</Link>
+        </div>
       </div>
 
       <div className="rounded-2xl px-4 py-3 text-[12px] font-medium flex items-start gap-2"
