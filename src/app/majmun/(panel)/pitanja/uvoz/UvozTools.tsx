@@ -70,13 +70,13 @@ export default function UvozTools({ pool = 'pro' }: { pool?: Pool }) {
         <div>
           <strong>Pitanje</strong> · <strong>Tačan odgovor</strong> ·{' '}
           <strong>Pogrešan 1</strong> · <strong>Pogrešan 2</strong> · <strong>Pogrešan 3</strong>
-          {pool === 'book' && <> · <strong>Žanr</strong></>}
+          {pool === 'book' && <> · <span style={{ opacity: 0.6 }}>Žanr (opciono)</span></>}
         </div>
       </div>
 
       <ul className="text-[12px] space-y-1 mb-5 leading-relaxed list-disc pl-5" style={{ color: '#9C9C9C' }}>
         <li>Kolone za netačne odgovore mogu biti i <code>Netačno · Netačno_1 · Netačno_2</code> — oba naziva rade.</li>
-        {pool === 'book' && <li><strong>Žanr</strong> je obavezan za Book kviz (npr. Drama, Krimi, Fantastika…).</li>}
+        {pool === 'book' && <li><strong>Žanr</strong> nije obavezan — ako ga nema, pitanja idu u žanr „Razno”. Možeš ga dodati ako želiš da utiče na „najjači žanr”.</li>}
         <li>Tačan odgovor se u bazi uvek čuva na indeksu 0 — igre nasumično razbacuju redosled u runtime-u.</li>
         <li>Pitanja koja već postoje u bazi (po tekstu) se preskaču.</li>
         <li>Pitanja sa praznim kolonama ili identičnim odgovorima se preskaču i prijavljuju.</li>
