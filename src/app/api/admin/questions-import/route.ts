@@ -29,14 +29,20 @@ const MAX_BYTES = 10 * 1024 * 1024
 type Pool = 'pro' | 'book' | 'kafana'
 type PoolConfig = {
   table: string
-  needsGenre: boolean
+  // book_questions.genre is NOT NULL. A Žanr column in the Excel is
+  // OPTIONAL — the template is identical to PRO. When the column is
+  // absent or a cell is empty, the row gets `defaultGenre` so the
+  // insert never fails and the admin doesn't have to categorize 2000
+  // rows by hand. A power user can still add a Žanr column to label
+  // them (drives the "najjači žanr" stat on the result screen).
+  defaultGenre: string | null
   // Extra columns merged into every inserted row.
   extra: Record<string, unknown>
 }
 const POOLS: Record<Pool, PoolConfig> = {
-  pro:    { table: 'questions',        needsGenre: false, extra: { difficulty: 'medium', is_active: true } },
-  book:   { table: 'book_questions',   needsGenre: true,  extra: { is_active: true } },
-  kafana: { table: 'kafana_questions', needsGenre: false, extra: { difficulty: 'medium', is_active: true, tags: ['muzika', 'kafana'] } },
+  pro:    { table: 'questions',        defaultGenre: null,    extra: { difficulty: 'medium', is_active: true } },
+  book:   { table: 'book_questions',   defaultGenre: 'Razno', extra: { is_active: true } },
+  kafana: { table: 'kafana_questions', defaultGenre: null,    extra: { difficulty: 'medium', is_active: true, tags: ['muzika', 'kafana'] } },
 }
 
 type Row = Record<string, unknown>
@@ -126,17 +132,14 @@ export async function POST(req: Request) {
         invalidRows.push({ rowNum: i + 2, reason: 'fali odgovor' })
         continue
       }
-      if (cfg.needsGenre && !genre) {
-        invalidRows.push({ rowNum: i + 2, reason: 'fali žanr' })
-        continue
-      }
       const opts = [correct, w1, w2, w3]
       if (new Set(opts.map(o => o.toLowerCase())).size !== 4) {
         invalidRows.push({ rowNum: i + 2, reason: 'duplikati odgovora' })
         continue
       }
-      candidates.push(cfg.needsGenre
-        ? { question_text: q, options: opts, genre }
+      // Žanr optional: use the cell if present, else the pool default.
+      candidates.push(cfg.defaultGenre !== null
+        ? { question_text: q, options: opts, genre: genre || cfg.defaultGenre }
         : { question_text: q, options: opts })
     } catch (e) {
       invalidRows.push({
