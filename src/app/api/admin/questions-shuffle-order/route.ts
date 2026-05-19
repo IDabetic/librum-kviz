@@ -14,7 +14,18 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const ADMIN_ROLES = new Set(['urednik', 'moderator', 'super_admin'])
 const CONCURRENCY = 20
 
-export async function POST() {
+// ?pool=pro|book|kafana selects the question table.
+const POOL_TABLE: Record<string, string> = {
+  pro: 'questions',
+  book: 'book_questions',
+  kafana: 'kafana_questions',
+}
+
+export async function POST(req: Request) {
+  const pool = new URL(req.url).searchParams.get('pool') || 'pro'
+  const table = POOL_TABLE[pool]
+  if (!table) return NextResponse.json({ ok: false, error: 'bad-pool' }, { status: 400 })
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ ok: false, error: 'unauth' }, { status: 401 })
@@ -32,7 +43,7 @@ export async function POST() {
   const PAGE = 1000
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await admin
-      .from('questions').select('id').range(from, from + PAGE - 1)
+      .from(table).select('id').range(from, from + PAGE - 1)
     if (error) {
       return NextResponse.json({ ok: false, error: 'fetch-failed', detail: error.message }, { status: 500 })
     }
@@ -63,7 +74,7 @@ export async function POST() {
       const i = cursor++
       if (i >= ids.length) return
       const { error } = await admin
-        .from('questions')
+        .from(table)
         .update({ order_num: order[i] })
         .eq('id', ids[i])
       if (error) failed++

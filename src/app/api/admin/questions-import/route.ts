@@ -2,43 +2,47 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import * as XLSX from 'xlsx'
 
-// Bulk-import PRO/Brzi/Duel questions from an uploaded Excel file.
-// All three games share the public.questions table, so a single import
-// here populates all of them.
+// Bulk-import questions from an uploaded Excel file into one of the
+// three question pools. Pool is chosen via ?pool=pro|book|kafana
+// (default pro for back-compat with the original PRO/Brzi/Duel UI).
 //
-// Expected columns (Serbian header names, matching the user's
-// `Pitanja - sveža.xlsx` template):
-//   - Pitanje          → question_text
-//   - Tačan odgovor    → options[0]   (we keep correct at index 0
-//                                       in DB; per-render shuffle in
-//                                       the games randomizes display)
-//   - Netačno          → options[1]
-//   - Netačno_1        → options[2]
-//   - Netačno_2        → options[3]
+//   pro    → public.questions       (PRO + Brzi + Trivia duel)
+//   book   → public.book_questions  (Book kviz, requires a Žanr column)
+//   kafana → public.kafana_questions(Kafanski kviz, tagged muzika)
 //
-// Duplicate strategy: skip any row whose question_text already exists
-// in the table (case-sensitive, trimmed). The endpoint returns the
-// raw count of inserted vs. skipped vs. invalid rows so the admin UI
-// can show a clean summary.
+// Accepted Excel headers (case/space-insensitive, both wrong-answer
+// conventions supported so the same template works everywhere):
+//   - Pitanje                         → question_text
+//   - Tačan odgovor                   → options[0]  (kept at index 0;
+//                                        games shuffle at render)
+//   - Netačno / Pogrešan 1            → options[1]
+//   - Netačno_1 / Pogrešan 2          → options[2]
+//   - Netačno_2 / Pogrešan 3          → options[3]
+//   - Žanr  (book pool only, required)→ genre
+//
+// Duplicates are skipped both against the DB (by question_text) and
+// within the uploaded file itself.
 
 const ADMIN_ROLES = new Set(['urednik', 'moderator', 'super_admin'])
-const MAX_BYTES = 10 * 1024 * 1024  // 10 MB, plenty for ~10k rows
+const MAX_BYTES = 10 * 1024 * 1024
 
-// XLSX preserves Excel cell types — a year answer like 1945 comes
-// through as `number`, not `string`. We accept anything stringifiable
-// and coerce with String() in the loop.
+type Pool = 'pro' | 'book' | 'kafana'
+type PoolConfig = {
+  table: string
+  needsGenre: boolean
+  // Extra columns merged into every inserted row.
+  extra: Record<string, unknown>
+}
+const POOLS: Record<Pool, PoolConfig> = {
+  pro:    { table: 'questions',        needsGenre: false, extra: { difficulty: 'medium', is_active: true } },
+  book:   { table: 'book_questions',   needsGenre: true,  extra: { is_active: true } },
+  kafana: { table: 'kafana_questions', needsGenre: false, extra: { difficulty: 'medium', is_active: true, tags: ['muzika', 'kafana'] } },
+}
+
 type Row = Record<string, unknown>
 
-// Normalize a header to its canonical key by stripping whitespace
-// and unifying common Serbian variants the user might type into
-// the Excel header row. Lets us match "Tačan odgovor", "tacan odgovor",
-// or " Tačan Odgovor " to the same canonical column.
 function pickKey(row: Row, ...candidates: string[]): unknown {
-  // Exact-match first (cheap path).
-  for (const k of candidates) {
-    if (k in row) return row[k]
-  }
-  // Fallback: case-insensitive + trimmed lookup over all keys.
+  for (const k of candidates) if (k in row) return row[k]
   const keys = Object.keys(row)
   for (const c of candidates) {
     const target = c.trim().toLowerCase()
@@ -47,13 +51,19 @@ function pickKey(row: Row, ...candidates: string[]): unknown {
   }
   return undefined
 }
-
 function asTrimmed(v: unknown): string {
   if (v == null) return ''
   return String(v).trim()
 }
 
 export async function POST(req: Request) {
+  const url = new URL(req.url)
+  const poolParam = (url.searchParams.get('pool') || 'pro') as Pool
+  const cfg = POOLS[poolParam]
+  if (!cfg) {
+    return NextResponse.json({ ok: false, error: 'bad-pool' }, { status: 400 })
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ ok: false, error: 'unauth' }, { status: 401 })
@@ -88,8 +98,7 @@ export async function POST(req: Request) {
     rows = XLSX.utils.sheet_to_json<Row>(ws)
   } catch (e) {
     return NextResponse.json({
-      ok: false,
-      error: 'parse-failed',
+      ok: false, error: 'parse-failed',
       detail: e instanceof Error ? e.message : 'unknown',
     }, { status: 400 })
   }
@@ -99,9 +108,7 @@ export async function POST(req: Request) {
   }
 
   // ── Normalize + validate ────────────────────────────────────────
-  // Per-row try/catch so a single weird cell (e.g. an embedded
-  // formula or formatting object) doesn't 500 the whole request.
-  type Candidate = { question_text: string; options: string[]; correct_answer: 0 }
+  type Candidate = { question_text: string; options: string[]; genre?: string }
   const candidates: Candidate[] = []
   const invalidRows: { rowNum: number; reason: string }[] = []
   for (let i = 0; i < rows.length; i++) {
@@ -109,13 +116,18 @@ export async function POST(req: Request) {
       const r = rows[i] as Row
       const q       = asTrimmed(pickKey(r, 'Pitanje', 'pitanje'))
       const correct = asTrimmed(pickKey(r, 'Tačan odgovor', 'Tacan odgovor', 'Tačan_odgovor', 'tacan odgovor'))
-      const w1      = asTrimmed(pickKey(r, 'Netačno', 'Netacno', 'netacno'))
-      const w2      = asTrimmed(pickKey(r, 'Netačno_1', 'Netacno_1', 'Netačno 1', 'netacno_1'))
-      const w3      = asTrimmed(pickKey(r, 'Netačno_2', 'Netacno_2', 'Netačno 2', 'netacno_2'))
+      const w1      = asTrimmed(pickKey(r, 'Netačno', 'Netacno', 'netacno', 'Pogrešan 1', 'Pogresan 1', 'Pogrešan_1'))
+      const w2      = asTrimmed(pickKey(r, 'Netačno_1', 'Netacno_1', 'Netačno 1', 'netacno_1', 'Pogrešan 2', 'Pogresan 2', 'Pogrešan_2'))
+      const w3      = asTrimmed(pickKey(r, 'Netačno_2', 'Netacno_2', 'Netačno 2', 'netacno_2', 'Pogrešan 3', 'Pogresan 3', 'Pogrešan_3'))
+      const genre   = asTrimmed(pickKey(r, 'Žanr', 'Zanr', 'zanr', 'genre', 'Genre'))
 
       if (!q) { invalidRows.push({ rowNum: i + 2, reason: 'prazno pitanje' }); continue }
       if (!correct || !w1 || !w2 || !w3) {
         invalidRows.push({ rowNum: i + 2, reason: 'fali odgovor' })
+        continue
+      }
+      if (cfg.needsGenre && !genre) {
+        invalidRows.push({ rowNum: i + 2, reason: 'fali žanr' })
         continue
       }
       const opts = [correct, w1, w2, w3]
@@ -123,7 +135,9 @@ export async function POST(req: Request) {
         invalidRows.push({ rowNum: i + 2, reason: 'duplikati odgovora' })
         continue
       }
-      candidates.push({ question_text: q, options: opts, correct_answer: 0 })
+      candidates.push(cfg.needsGenre
+        ? { question_text: q, options: opts, genre }
+        : { question_text: q, options: opts })
     } catch (e) {
       invalidRows.push({
         rowNum: i + 2,
@@ -134,22 +148,18 @@ export async function POST(req: Request) {
 
   if (candidates.length === 0) {
     return NextResponse.json({
-      ok: false,
-      error: 'no-valid-rows',
+      ok: false, error: 'no-valid-rows',
       stats: { total: rows.length, invalid: invalidRows.length },
-      invalidRows: invalidRows.slice(0, 20),
+      invalidRowsSample: invalidRows.slice(0, 20),
     }, { status: 400 })
   }
 
-  // ── Detect duplicates against existing questions ────────────────
-  // Fetch all question_texts in chunks. We can't IN() 2000 strings in
-  // one shot (URL length), so we just read everything and dedupe in
-  // memory. The questions table is bounded (~few thousand rows).
+  // ── Dedupe against the chosen pool ──────────────────────────────
   const existingTexts = new Set<string>()
   const PAGE = 1000
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase
-      .from('questions')
+      .from(cfg.table)
       .select('question_text')
       .range(from, from + PAGE - 1)
     if (error) {
@@ -160,8 +170,6 @@ export async function POST(req: Request) {
     if (data.length < PAGE) break
   }
 
-  // Also dedupe WITHIN the upload (same question appearing twice in
-  // the same file should only insert once).
   const seenInUpload = new Set<string>()
   const toInsert: Candidate[] = []
   let dupeAgainstDb = 0
@@ -173,18 +181,18 @@ export async function POST(req: Request) {
     toInsert.push(c)
   }
 
-  // ── Bulk insert in batches ──────────────────────────────────────
+  // ── Bulk insert ─────────────────────────────────────────────────
   const CHUNK = 500
   let inserted = 0
   for (let i = 0; i < toInsert.length; i += CHUNK) {
     const slice = toInsert.slice(i, i + CHUNK)
-    const { error } = await supabase.from('questions').insert(
+    const { error } = await supabase.from(cfg.table).insert(
       slice.map(c => ({
         question_text: c.question_text,
         options: c.options,
-        correct_answer: c.correct_answer,
-        difficulty: 'medium',
-        is_active: true,
+        correct_answer: 0,
+        ...(c.genre ? { genre: c.genre } : {}),
+        ...cfg.extra,
       }))
     )
     if (error) {
@@ -198,6 +206,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
+    pool: poolParam,
     stats: {
       total: rows.length,
       valid: candidates.length,
@@ -206,8 +215,6 @@ export async function POST(req: Request) {
       dupe_in_file: dupeInFile,
       inserted,
     },
-    // Echo back the first 20 problematic rows so the admin can fix
-    // the source spreadsheet.
     invalidRowsSample: invalidRows.slice(0, 20),
   })
 }

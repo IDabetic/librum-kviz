@@ -20,6 +20,13 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const ADMIN_ROLES = new Set(['urednik', 'moderator', 'super_admin'])
 const CONCURRENCY = 20  // parallel updates per batch — keeps it under a minute for ~3000 rows
 
+// ?pool=pro|book|kafana selects which question table to shuffle.
+const POOL_TABLE: Record<string, string> = {
+  pro: 'questions',
+  book: 'book_questions',
+  kafana: 'kafana_questions',
+}
+
 function shuffleIndices(): number[] {
   // Fisher-Yates over [0,1,2,3]
   const a = [0, 1, 2, 3]
@@ -30,7 +37,11 @@ function shuffleIndices(): number[] {
   return a
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  const pool = new URL(req.url).searchParams.get('pool') || 'pro'
+  const table = POOL_TABLE[pool]
+  if (!table) return NextResponse.json({ ok: false, error: 'bad-pool' }, { status: 400 })
+
   // Auth + role check via the regular session-bound client.
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -52,7 +63,7 @@ export async function POST() {
   const PAGE = 1000
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await admin
-      .from('questions')
+      .from(table)
       .select('id, options, correct_answer')
       .range(from, from + PAGE - 1)
     if (error) {
@@ -102,7 +113,7 @@ export async function POST() {
       if (i >= updates.length) return
       const u = updates[i]
       const { error } = await admin
-        .from('questions')
+        .from(table)
         .update({ options: u.options, correct_answer: u.correct_answer })
         .eq('id', u.id)
       if (error) failed++
