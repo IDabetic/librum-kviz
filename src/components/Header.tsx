@@ -88,9 +88,11 @@ export default function Header() {
   // SECURITY-DEFINER view (public_contributors) that aggregates reports
   // + submissions per user, so anon can read it without touching the
   // underlying admin-only tables.
+  // Triggers on either the desktop dropdown opening OR the mobile drawer
+  // opening — the mobile drawer renders the same data inline.
   const contribLoadedRef = useRef(false)
   useEffect(() => {
-    if (!showContributors) return
+    if (!showContributors && !mobileOpen) return
     if (contribLoadedRef.current) return
     contribLoadedRef.current = true
     createClient().from('public_contributors')
@@ -98,7 +100,7 @@ export default function Header() {
       .order('total_contributions', { ascending: false })
       .limit(15)
       .then(({ data }) => { if (data) setContributors(data as Contributor[]) })
-  }, [showContributors])
+  }, [showContributors, mobileOpen])
 
   // Outside-click for the recent-members dropdown.
   useEffect(() => {
@@ -369,6 +371,37 @@ export default function Header() {
                           <span className="text-[13px] font-semibold truncate block" style={{ color: '#343434' }}>{name}</span>
                           <span className="text-[11px]" style={{ color: '#9C9C9C' }}>{timeAgo(u.created_at)}</span>
                         </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Contributors (mobile) — same lazy-loaded data as the
+                  desktop dropdown, condensed for the drawer. */}
+              {contributors.length > 0 && (
+                <div className="pt-3 mt-3 border-t border-[#F2F2F2]">
+                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>Doprinos kvizu</p>
+                  {contributors.slice(0, 5).map(c => {
+                    const name = c.nickname || `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() || 'Igrač'
+                    const parts: string[] = []
+                    if (c.submissions > 0) parts.push(`${c.submissions} ${c.submissions === 1 ? 'pitanje' : 'pitanja'}`)
+                    if (c.reports > 0)     parts.push(`${c.reports} ${c.reports === 1 ? 'prijava' : 'prijava'}`)
+                    return (
+                      <Link key={c.id} href={`/profil/${c.id}`}
+                        className="flex items-center gap-3 px-2 py-2.5 rounded-2xl">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+                          {c.avatar
+                            ? <Image src={`/avatars/${c.avatar}`} alt={name} width={32} height={32} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{name[0]}</div>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#343434' }}>{name}</span>
+                          <span className="text-[11px]" style={{ color: '#9C9C9C' }}>{parts.join(' · ')}</span>
+                        </div>
+                        <span className="chip flex-shrink-0" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                          {c.total_contributions}
+                        </span>
                       </Link>
                     )
                   })}
