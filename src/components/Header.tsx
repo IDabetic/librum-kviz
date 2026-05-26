@@ -12,6 +12,7 @@ import {
 import { Logo } from './Logo'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
+type Contributor = { id: string; first_name: string | null; last_name: string | null; nickname: string | null; avatar: string | null; reports: number; submissions: number; total_contributions: number }
 
 // Top-level nav. "Igre" is a hub page (/igre) with a colorful card grid;
 // the header itself stays a slim row of plain links — no dropdown.
@@ -49,6 +50,9 @@ export default function Header() {
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([])
   const [showRecent, setShowRecent] = useState(false)
   const recentRef = useRef<HTMLDivElement>(null)
+  const [contributors, setContributors] = useState<Contributor[]>([])
+  const [showContributors, setShowContributors] = useState(false)
+  const contribRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -80,6 +84,22 @@ export default function Header() {
       .then(({ data }) => { if (data) setRecentUsers(data as RecentUser[]) })
   }, [showRecent, mobileOpen])
 
+  // Same lazy-load pattern for contributors. The data comes from a
+  // SECURITY-DEFINER view (public_contributors) that aggregates reports
+  // + submissions per user, so anon can read it without touching the
+  // underlying admin-only tables.
+  const contribLoadedRef = useRef(false)
+  useEffect(() => {
+    if (!showContributors) return
+    if (contribLoadedRef.current) return
+    contribLoadedRef.current = true
+    createClient().from('public_contributors')
+      .select('id, first_name, last_name, nickname, avatar, reports, submissions, total_contributions')
+      .order('total_contributions', { ascending: false })
+      .limit(15)
+      .then(({ data }) => { if (data) setContributors(data as Contributor[]) })
+  }, [showContributors])
+
   // Outside-click for the recent-members dropdown.
   useEffect(() => {
     if (!showRecent) return
@@ -90,11 +110,22 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [showRecent])
 
-  // Close mobile drawer + recent dropdown when route changes — pathname
+  // Outside-click for the contributors dropdown.
+  useEffect(() => {
+    if (!showContributors) return
+    function handleClick(e: MouseEvent) {
+      if (contribRef.current && !contribRef.current.contains(e.target as Node)) setShowContributors(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showContributors])
+
+  // Close mobile drawer + dropdowns when route changes — pathname
   // comes from the router (external system), so this is a sync effect.
   useEffect(() => {
     setMobileOpen(false) // eslint-disable-line react-hooks/set-state-in-effect
     setShowRecent(false)
+    setShowContributors(false)
   }, [pathname])
 
   async function handleLogout() {
@@ -172,6 +203,65 @@ export default function Header() {
                             <p className="font-semibold text-[14px] truncate" style={{ color: '#343434' }}>{name}</p>
                             <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{timeAgo(u.created_at)}</p>
                           </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Contributors dropdown — sits next to Recent Members.
+                Highlights users who actively help curate the quiz by
+                submitting questions and reporting bad ones. */}
+            <div ref={contribRef} className="relative hidden md:block">
+              <button onClick={() => setShowContributors(o => !o)}
+                className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
+                style={showContributors
+                  ? { background: '#FFCB46', color: '#343434' }
+                  : { background: 'rgba(52,52,52,0.06)', color: '#343434' }}
+                aria-label="Korisnici koji doprinose kvizu">
+                <IconStar size={18} strokeWidth={2.2} />
+              </button>
+              {showContributors && (
+                <div className="absolute right-0 top-full mt-2 w-80 card-soft overflow-hidden z-50 animate-pop-in">
+                  <div className="px-5 py-4 border-b border-[#F2F2F2]">
+                    <p className="font-bold text-[15px]" style={{ color: '#343434' }}>Doprinos kvizu</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>
+                      Šalju nova pitanja i prijavljuju greške
+                    </p>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {contributors.length === 0 && (
+                      <p className="px-5 py-4 text-[13px]" style={{ color: '#9C9C9C' }}>
+                        Niko još nije dao doprinos. Budi prvi —{' '}
+                        <Link href="/predlozi-pitanje" onClick={() => setShowContributors(false)}
+                          className="underline" style={{ color: '#609DED' }}>pošalji pitanje</Link>.
+                      </p>
+                    )}
+                    {contributors.map(c => {
+                      const name = c.nickname || `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() || 'Igrač'
+                      // Build a tiny "X pitanja · Y prijava" subtitle. We
+                      // only show counts that are actually > 0 to keep
+                      // the line short and readable.
+                      const parts: string[] = []
+                      if (c.submissions > 0) parts.push(`${c.submissions} ${c.submissions === 1 ? 'pitanje' : 'pitanja'}`)
+                      if (c.reports > 0)     parts.push(`${c.reports} ${c.reports === 1 ? 'prijava' : 'prijava'}`)
+                      return (
+                        <Link key={c.id} href={`/profil/${c.id}`} onClick={() => setShowContributors(false)}
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#F2F2F2] transition-colors">
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+                            {c.avatar
+                              ? <Image src={`/avatars/${c.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
+                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{name[0]}</div>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-[14px] truncate" style={{ color: '#343434' }}>{name}</p>
+                            <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{parts.join(' · ')}</p>
+                          </div>
+                          <span className="chip flex-shrink-0" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                            {c.total_contributions}
+                          </span>
                         </Link>
                       )
                     })}
