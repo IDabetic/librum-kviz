@@ -60,6 +60,7 @@ export default async function BookKvizAdminPage({ searchParams }: { searchParams
         <div className="flex gap-2 flex-wrap">
           <Link href="/majmun/book-kviz/uvoz" className="btn btn-secondary btn-md">📥 Excel uvoz</Link>
           <Link href="/majmun/book-kviz/mesanje" className="btn btn-secondary btn-md">🔀 Mešanje</Link>
+          <Link href="/majmun/book-kviz/transkripcija" className="btn btn-secondary btn-md">🔤 Transkripcija</Link>
           <Link href="/majmun/book-kviz/novo" className="btn btn-primary btn-md">+ Novo pitanje</Link>
         </div>
       </div>
