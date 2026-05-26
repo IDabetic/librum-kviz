@@ -37,9 +37,30 @@ type LeaderRow = {
   profile?: { first_name: string | null; nickname: string | null; avatar: string | null } | null
 }
 
+// Round a question count down to its nearest thousand and add "k+".
+// 7534 → "7k+", 9056 → "9k+", 1200 → "1k+", anything below 1000 falls
+// back to the raw number with a "+" so the badge still reads natural.
+function formatQuestionCount(n: number): string {
+  if (n >= 1000) return `${Math.floor(n / 1000)}k+`
+  if (n > 0) return `${n}+`
+  return '—'
+}
+
 export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Live count of multiple-choice questions across the three pools that
+  // power PRO, Brzi, Trivia duel, Book and Kafanski kviz. We deliberately
+  // skip hangman_words — those are guess-a-word entries, not "pitanja".
+  // count: 'exact', head: true is a fast HEAD request — no row payload.
+  const [qCount, bCount, kCount] = await Promise.all([
+    supabase.from('questions').select('*', { count: 'exact', head: true }),
+    supabase.from('book_questions').select('*', { count: 'exact', head: true }),
+    supabase.from('kafana_questions').select('*', { count: 'exact', head: true }),
+  ])
+  const totalQuestions = (qCount.count ?? 0) + (bCount.count ?? 0) + (kCount.count ?? 0)
+  const questionsBadge = formatQuestionCount(totalQuestions)
 
   // Top 5 PRO scores in the last 7 days — gives anonymous visitors a
   // taste of what's waiting after registration. Falls back to all-time
@@ -120,7 +141,9 @@ export default async function Home() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7"
             style={{ background: '#FFECBC', color: '#9c7a13' }}>
             <IconStar size={14} strokeWidth={2.5} />
-            <span className="text-[12px] font-semibold tracking-tight">6 igara · hiljade pitanja · besplatno</span>
+            <span className="text-[12px] font-semibold tracking-tight">
+              6 igara · <span suppressHydrationWarning>{questionsBadge}</span> pitanja u bazi · besplatno
+            </span>
           </div>
 
           <h1 className="font-black tracking-tight leading-[1.02] mb-6"
