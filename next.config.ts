@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
     return [
       { source: '/igraj', destination: '/pro-kviz', permanent: true },
       { source: '/igraj/:path*', destination: '/pro-kviz/:path*', permanent: true },
+      // /leaderboard → /ranglista (route renamed to a Serbian slug).
+      // Permanent so Google transfers ranking signal and old bookmarks
+      // keep working.
+      { source: '/leaderboard', destination: '/ranglista', permanent: true },
     ]
   },
   // Static assets get long-lived caching; HTML pages stay dynamic via
