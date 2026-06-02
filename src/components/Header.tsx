@@ -18,7 +18,7 @@ type Contributor = { id: string; first_name: string | null; last_name: string | 
 // the header itself stays a slim row of plain links — no dropdown.
 const NAV_LINKS = [
   { href: '/igre',             label: 'Igre',             Icon: IconHome,    accent: '#609DED', tint: 'rgba(96,157,237,0.12)' },
-  { href: '/leaderboard',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
+  { href: '/ranglista',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
   { href: '/nagrade',          label: 'Nagrade',          Icon: IconStar,    accent: '#FFCB46', tint: 'rgba(255,203,70,0.18)' },
   { href: '/predlozi-pitanje', label: 'Pošalji pitanje',  Icon: IconUsers,   accent: '#15803d', tint: 'rgba(76,175,80,0.12)' },
 ]

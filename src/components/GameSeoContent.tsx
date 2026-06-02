@@ -279,7 +279,7 @@ export default function GameSeoContent({ game }: { game: GameKey }) {
             </span>
           ))}{' '}
           Sve dele istu{' '}
-          <Link href="/leaderboard" className="underline font-medium" style={{ color: '#609DED' }}>rang-listu</Link>{' '}
+          <Link href="/ranglista" className="underline font-medium" style={{ color: '#609DED' }}>rang-listu</Link>{' '}
           i sistem bodova.
         </p>
       </div>

@@ -31,7 +31,7 @@ export default function Footer() {
               <li><Link href="/igraj-zajedno" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Trivia duel</Link></li>
               <li><Link href="/vesanje" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Vešanje</Link></li>
               <li><Link href="/brzi-kviz" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Brzi kviz</Link></li>
-              <li><Link href="/leaderboard" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Rang lista</Link></li>
+              <li><Link href="/ranglista" className="transition-opacity hover:opacity-70" style={{ color: '#343434' }}>Rang lista</Link></li>
             </ul>
           </div>
 

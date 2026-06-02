@@ -38,7 +38,7 @@ export default function NagradePage() {
 
             <div className="grid grid-cols-2 gap-3 mt-8">
               <Link href="/igre" className="btn btn-primary btn-md">Idi u igre</Link>
-              <Link href="/leaderboard" className="btn btn-secondary btn-md">Rang lista</Link>
+              <Link href="/ranglista" className="btn btn-secondary btn-md">Rang lista</Link>
             </div>
           </div>
         </div>

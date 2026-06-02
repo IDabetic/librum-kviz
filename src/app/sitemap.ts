@@ -13,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/igraj-zajedno',          priority: 0.8, changeFrequency: 'weekly'  },
     { path: '/vesanje',                priority: 0.8, changeFrequency: 'weekly'  },
     { path: '/brzi-kviz',              priority: 0.8, changeFrequency: 'weekly'  },
-    { path: '/leaderboard',            priority: 0.7, changeFrequency: 'daily'   },
+    { path: '/ranglista',            priority: 0.7, changeFrequency: 'daily'   },
     { path: '/nagrade',                priority: 0.6, changeFrequency: 'monthly' },
     { path: '/predlozi-pitanje',       priority: 0.5, changeFrequency: 'monthly' },
     { path: '/politika-privatnosti',   priority: 0.3, changeFrequency: 'monthly' },

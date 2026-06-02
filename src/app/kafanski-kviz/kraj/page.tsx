@@ -61,7 +61,7 @@ export default function KafanskiKvizEnd() {
           <Link href="/kafanski-kviz/start" className="btn btn-primary btn-lg w-full" style={{ background: '#b91c1c' }}>
             Igraj ponovo
           </Link>
-          <Link href="/leaderboard" className="btn btn-secondary btn-md w-full">Rang lista</Link>
+          <Link href="/ranglista" className="btn btn-secondary btn-md w-full">Rang lista</Link>
           <ShareResultButton
             gameLabel="Kafanskom kvizu"
             score={r.score}

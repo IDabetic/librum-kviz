@@ -86,7 +86,7 @@ export default function KrajIgrePage() {
         {/* Actions */}
         <div className="grid grid-cols-2 gap-3 mb-3">
           <Link href="/pro-kviz/start" className="btn btn-primary btn-lg">Igraj ponovo</Link>
-          <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
+          <Link href="/ranglista" className="btn btn-secondary btn-lg">Rang lista</Link>
         </div>
         <ShareResultButton
           gameLabel="PRO kvizu"

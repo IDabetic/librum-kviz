@@ -119,7 +119,7 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
       <Header />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
-        <Link href="/leaderboard"
+        <Link href="/ranglista"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
           style={{ color: '#609DED' }}>
           <IconBack size={16} strokeWidth={2.2} />

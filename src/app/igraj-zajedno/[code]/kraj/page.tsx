@@ -325,7 +325,7 @@ export default function DuelEndPage() {
             style={rematchDisabled ? { opacity: 0.7, cursor: 'not-allowed' } : undefined}>
             {rematchLabel}
           </button>
-          <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
+          <Link href="/ranglista" className="btn btn-secondary btn-lg">Rang lista</Link>
         </div>
         {opReady && !myReady && (
           <p className="text-center text-[12px] font-semibold mb-3" style={{ color: '#9c7a13' }}>

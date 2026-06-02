@@ -320,7 +320,7 @@ export default function BrziKvizStart() {
                     component would stay in gameOver=true forever. A real
                     anchor forces a full reload → fresh state, fresh pool. */}
                 <a href="/brzi-kviz/start" className="btn btn-primary btn-lg">Igraj ponovo</a>
-                <Link href="/leaderboard" className="btn btn-secondary btn-lg">Rang lista</Link>
+                <Link href="/ranglista" className="btn btn-secondary btn-lg">Rang lista</Link>
               </div>
               <ShareResultButton
                 gameLabel="Brzom kvizu"

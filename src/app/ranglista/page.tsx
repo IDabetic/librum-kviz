@@ -17,11 +17,11 @@ export const metadata: Metadata = {
     'kviz takmičenje online', 'najbolji igrači kviz', 'top igrači',
     'kviz pobednici', 'Librum kviz', 'kviz Srbija', 'kviz na srpskom',
   ],
-  alternates: { canonical: '/leaderboard' },
+  alternates: { canonical: '/ranglista' },
   openGraph: {
     title: 'Rang lista – Librum Kviz',
     description: 'Najbolji rezultati u svim igrama Librum kviza.',
-    url: 'https://kviz.librum.club/leaderboard',
+    url: 'https://kviz.librum.club/ranglista',
     type: 'website',
     images: ['/og-share.jpg?v=6'],
   },

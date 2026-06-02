@@ -150,7 +150,7 @@ export default function BookKvizEnd() {
           <Link href="/book-kviz/start" className="btn btn-primary btn-lg w-full">
             Igraj ponovo
           </Link>
-          <Link href="/leaderboard" className="btn btn-secondary btn-md w-full">
+          <Link href="/ranglista" className="btn btn-secondary btn-md w-full">
             Rang lista
           </Link>
           <ShareResultButton

@@ -164,7 +164,7 @@ export default async function Home() {
                 <Link href="/igre" className="btn btn-primary btn-lg w-full sm:w-auto sm:min-w-[200px]">
                   Igraj sada
                 </Link>
-                <Link href="/leaderboard" className="btn btn-secondary btn-lg w-full sm:w-auto sm:min-w-[200px]">
+                <Link href="/ranglista" className="btn btn-secondary btn-lg w-full sm:w-auto sm:min-w-[200px]">
                   Rang lista
                 </Link>
               </>
@@ -280,7 +280,7 @@ export default async function Home() {
 
               <div className="mt-5 text-center">
                 {user ? (
-                  <Link href="/leaderboard" className="btn btn-secondary btn-md">
+                  <Link href="/ranglista" className="btn btn-secondary btn-md">
                     Cela rang lista →
                   </Link>
                 ) : (
@@ -424,7 +424,7 @@ export default async function Home() {
           </p>
           <p>
             Sve igre dele isti sistem profila, bodova i{' '}
-            <Link href="/leaderboard" className="font-semibold underline" style={{ color: '#609DED' }}>rang-liste</Link>{' '}
+            <Link href="/ranglista" className="font-semibold underline" style={{ color: '#609DED' }}>rang-liste</Link>{' '}
             sa filterima za danas, sedam dana, mesec i sve vreme — tako da uvek znaš gde si u odnosu na
             druge. Na profilu vidiš broj odigranih partija, rekorde i prosečno vreme po pitanju za svaku
             igru. Imaš zanimljivo pitanje? Pošalji ga preko{' '}
