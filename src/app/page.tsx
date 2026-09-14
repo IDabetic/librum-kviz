@@ -46,34 +46,64 @@ function formatQuestionCount(n: number): string {
   return '—'
 }
 
+// Koliko pitanja fali do sledeće okrugle stotine/hiljade. Poziv na
+// doprinos radi bolje sa konkretnim brojem („još 43”) nego sa opštim
+// „pošalji pitanje”, a broj se sam obnavlja kako baza raste.
+function doOkruglog(n: number): { cilj: number; fali: number } | null {
+  if (n <= 0) return null
+  // Korak je namerno sitan: „još 58 do 9100” je poziv na koji neko može da
+  // odgovori danas, „još 958 do 10000” nije. Korak raste tek kad bi sitan
+  // postao besmislen.
+  const korak = n >= 50000 ? 1000 : n >= 10000 ? 500 : 100
+  const cilj = Math.floor(n / korak) * korak + korak
+  return { cilj, fali: cilj - n }
+}
+
 export default async function Home() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  // ⚠ 14.09.2026: ova tri poziva su ranije išla JEDAN ZA DRUGIM, iako nijedan
+  // ne zavisi od druga dva. Uz funkciju koja je do danas radila u `iad1`, a
+  // bazu u Frankfurtu, svaki je prelazio Atlantik i vraćao se, pa je naslovna
+  // umela da traje 16 s i probije Kulin prag od 20 s. Funkcija je premeštena u
+  // `fra1` (vercel.json), a ovde se ono što je nezavisno traži odjednom.
+  const [
+    { data: { user } },
+    { data: brojPitanja },
+    { data: topSedamDana },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.rpc('broj_pitanja'),
+    (async () => {
+      // Server komponenta se izvršava jednom po zahtevu, pa je Date.now() ovde
+      // bezbedan; pravilo čistoće se pali odbrambeno.
+      // eslint-disable-next-line react-hooks/purity
+      const odSedamDana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      return supabase
+        .from('survivor_sessions')
+        .select('user_id, score, questions_reached')
+        .gte('created_at', odSedamDana)
+        .order('score', { ascending: false })
+        .limit(20)
+    })(),
+  ])
 
   // Live count of multiple-choice questions across the three pools that
   // power PRO, Brzi, Trivia duel, Book and Kafanski kviz. We deliberately
   // skip hangman_words — those are guess-a-word entries, not "pitanja".
-  // count: 'exact', head: true is a fast HEAD request — no row payload.
-  const [qCount, bCount, kCount] = await Promise.all([
-    supabase.from('questions').select('*', { count: 'exact', head: true }),
-    supabase.from('book_questions').select('*', { count: 'exact', head: true }),
-    supabase.from('kafana_questions').select('*', { count: 'exact', head: true }),
-  ])
-  const totalQuestions = (qCount.count ?? 0) + (bCount.count ?? 0) + (kCount.count ?? 0)
+  //
+  // Ide kroz RPC `broj_pitanja()` a ne kroz tri odvojena brojanja: RLS na
+  // `kafana_questions` dozvoljava čitanje samo prijavljenima, pa je
+  // neprijavljen posetilac video 7k+ umesto 9k+.
+  const totalQuestions = Number(brojPitanja) || 0
   const questionsBadge = formatQuestionCount(totalQuestions)
+  const okrugli = doOkruglog(totalQuestions)
 
   // Top 5 PRO scores in the last 7 days — gives anonymous visitors a
   // taste of what's waiting after registration. Falls back to all-time
   // top 5 if nobody played this week. Server component runs once per
   // request, so Date.now() here is safe — purity rule fires defensively.
-  // eslint-disable-next-line react-hooks/purity
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  let { data: top } = await supabase
-    .from('survivor_sessions')
-    .select('user_id, score, questions_reached')
-    .gte('created_at', sevenDaysAgo)
-    .order('score', { ascending: false })
-    .limit(20)
+  let top = topSedamDana
   if (!top || top.length === 0) {
     const fallback = await supabase
       .from('survivor_sessions')
@@ -145,6 +175,18 @@ export default async function Home() {
               6 igara · <span suppressHydrationWarning>{questionsBadge}</span> pitanja u bazi · besplatno
             </span>
           </div>
+
+          {okrugli && (
+            <div className="mb-7 -mt-3">
+              <Link href="/dodaj-pitanja"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full transition-all hover:opacity-80"
+                style={{ background: 'rgba(96,157,237,0.12)', color: '#1e5fa4' }}>
+                <span className="text-[12px] font-semibold tracking-tight">
+                  Još {okrugli.fali} {okrugli.fali === 1 ? 'pitanje' : 'pitanja'} do {okrugli.cilj}. Dodaj svoje →
+                </span>
+              </Link>
+            </div>
+          )}
 
           <h1 className="font-black tracking-tight leading-[1.02] mb-6"
             style={{ color: '#343434', fontSize: 'clamp(44px, 9vw, 96px)' }}>
