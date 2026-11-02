@@ -131,6 +131,7 @@
 		ED18EE7D3B6358D185964D21 /* rezervna-pitanja.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "rezervna-pitanja.json"; sourceTree = "<group>"; };
 		EE4B80D0067FB0FF1E210FA7 /* ProKviz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProKviz.swift; sourceTree = "<group>"; };
 		F3AB3B786514F9B55415ED5B /* BitkaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitkaView.swift; sourceTree = "<group>"; };
+		F583C72551710F26BE8F03A4 /* Konfiguracija.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Konfiguracija.xcconfig; sourceTree = "<group>"; };
 		FF23D03C5EDB331D59A95605 /* Partija.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Partija.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -213,11 +214,20 @@
 			path = ProKviz;
 			sourceTree = "<group>";
 		};
+		4CBEB2AA7F8E89C990DD620B /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				F583C72551710F26BE8F03A4 /* Konfiguracija.xcconfig */,
+			);
+			path = ios;
+			sourceTree = "<group>";
+		};
 		80ECC8199A86528A75924A57 /* mobile */ = {
 			isa = PBXGroup;
 			children = (
 				C3149020E63844C84F392134 /* zvuci */,
 				C07D844869F2682159014641 /* fontovi */,
+				4CBEB2AA7F8E89C990DD620B /* ios */,
 			);
 			name = mobile;
 			path = ..;
@@ -523,6 +533,7 @@
 /* Begin XCBuildConfiguration section */
 		015FDC8B3E5958D00322A06B /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F583C72551710F26BE8F03A4 /* Konfiguracija.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LibrumKviz/LibrumKviz.entitlements;
@@ -633,6 +644,7 @@
 		};
 		FAFE8632B684495D6BD62C74 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F583C72551710F26BE8F03A4 /* Konfiguracija.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LibrumKviz/LibrumKviz.entitlements;
