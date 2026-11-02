@@ -19,6 +19,8 @@ export const VISINA_MAPE: number = svet.visina
 export const REGIONI: Region[] = svet.regioni
 export const OBLASTI: Oblast[] = svet.drzave
 export const VEZE: [string, string][] = svet.veze as [string, string][]
+/** Morski putevi: [a, b, x1, y1, x2, y2] sa tačkama obala, za crtanje isprekidane linije. */
+export const MORE: [string, string, number, number, number, number][] = svet.more as [string, string, number, number, number, number][]
 
 const SUSEDI: Record<string, string[]> = {}
 for (const [a, b] of VEZE) {

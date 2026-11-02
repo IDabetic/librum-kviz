@@ -10,7 +10,18 @@ struct Oblast: Decodable { let id: String; let ime: String; let region: String; 
 
 /// Mapa država iz svet.json (isti fajl kao veb i Android, pravi ga alati/napravi-mapu.mjs).
 enum Mapa {
-    private struct Svet: Decodable { let sirina: Double; let visina: Double; let regioni: [Region]; let drzave: [Oblast]; let veze: [[String]] }
+    private struct Svet: Decodable { let sirina: Double; let visina: Double; let regioni: [Region]; let drzave: [Oblast]; let veze: [[String]]; let more: [[Morski]] }
+
+    /// Element morskog puta u JSON-u: ili oznaka države ili koordinata.
+    enum Morski: Decodable {
+        case id(String), broj(Double)
+        init(from d: Decoder) throws {
+            let c = try d.singleValueContainer()
+            if let s = try? c.decode(String.self) { self = .id(s) } else { self = .broj(try c.decode(Double.self)) }
+        }
+        var tekst: String { if case let .id(s) = self { return s }; return "" }
+        var vrednost: Double { if case let .broj(v) = self { return v }; return 0 }
+    }
 
     private static let svet: Svet = {
         let url = Bundle(for: Oznacivac.self).url(forResource: "svet", withExtension: "json") ?? Bundle.main.url(forResource: "svet", withExtension: "json")!
@@ -23,6 +34,10 @@ enum Mapa {
     static var regioni: [Region] { svet.regioni }
     static var oblasti: [Oblast] { svet.drzave }
     static var veze: [(String, String)] { svet.veze.map { ($0[0], $0[1]) } }
+    /// Morski putevi sa tačkama obala (a, b, od, do), za isprekidanu liniju.
+    static let more: [(a: String, b: String, od: CGPoint, do: CGPoint)] = svet.more.map {
+        ($0[0].tekst, $0[1].tekst, CGPoint(x: $0[2].vrednost, y: $0[3].vrednost), CGPoint(x: $0[4].vrednost, y: $0[5].vrednost))
+    }
 
     private static let susedstvo: [String: [String]] = {
         var s: [String: [String]] = [:]

@@ -55,6 +55,7 @@ struct MapaView: View {
 
     private static let neutralne: [Color] = [Color(hex: 0xCFEDE6), Color(hex: 0xFFD9E6), Color(hex: 0xFFF0BF), Color(hex: 0xDED5F7), Color(hex: 0xD3ECFA)]
     private static let okean = Color(hex: 0xE3EDF2)
+    private static let morskiPut = Color(hex: 0x4F7486)
 
     var body: some View {
         GeometryReader { g in
@@ -68,6 +69,24 @@ struct MapaView: View {
                 mapa.translateBy(x: pocetak.x, y: pocetak.y)
                 mapa.scaleBy(x: k, y: k)
                 let tanko = 1.1 / k
+                // Morski putevi ispod država: isprekidane linije preko mora, kao u Risku.
+                for put in Mapa.more {
+                    let jak = izabrana.map { (put.a == $0 && mete.contains(put.b)) || (put.b == $0 && mete.contains(put.a)) } ?? false
+                    let stil = StrokeStyle(lineWidth: (jak ? 3 : 1.8) / k, lineCap: .round, dash: jak ? [7 / k, 5 / k] : [5 / k, 6 / k])
+                    let boja = jak ? Color.mastilo : Self.morskiPut.opacity(0.75)
+                    var linija = Path()
+                    if abs(put.od.x - put.do.x) > Mapa.sirina / 2 {
+                        // Put preko ivice karte (Aljaska–Čukotka): dva kraka ka ivicama.
+                        let (levo, desno) = put.od.x < put.do.x ? (put.od, put.do) : (put.do, put.od)
+                        linija.move(to: levo); linija.addLine(to: CGPoint(x: 0, y: levo.y - 8))
+                        linija.move(to: desno); linija.addLine(to: CGPoint(x: Mapa.sirina, y: desno.y - 8))
+                    } else {
+                        let kontrola = CGPoint(x: (put.od.x + put.do.x) / 2 - (put.do.y - put.od.y) * 0.12,
+                                               y: (put.od.y + put.do.y) / 2 + (put.do.x - put.od.x) * 0.12)
+                        linija.move(to: put.od); linija.addQuadCurve(to: put.do, control: kontrola)
+                    }
+                    mapa.stroke(linija, with: .color(boja), style: stil)
+                }
                 for o in Mapa.oblasti {
                     guard let put = PutanjeMape.sve[o.id], let st = stanje.oblasti[o.id] else { continue }
                     let boja = stanje.igraci.first { $0.id == st.vlasnik }.map { Color(hex: $0.boja) } ?? Self.neutralne[o.boja % 5]
@@ -132,6 +151,11 @@ struct MapaView: View {
                 }
             })
             .onChange(of: fokus, initial: true) { _, novi in centriraj(novi, velicina: g.size, osnova: osnova) }
+            .onChange(of: mete) { _, nove in
+                // Izabrana država i sve njene mete staju u kadar, da se vidi kuda se može dalje.
+                guard let izabrana, !nove.isEmpty else { return }
+                uokviri([izabrana] + nove, velicina: g.size, osnova: osnova)
+            }
             .overlay(alignment: .topTrailing) {
                 VStack(spacing: 8) {
                     zumDugme("plus.magnifyingglass", "Uvećaj") { razmera = min(8, razmera * 1.5) }
@@ -157,6 +181,18 @@ struct MapaView: View {
             if velicina.width < 700 { razmera = max(razmera, 2.4, velicina.height / (Mapa.visina * osnova)) }
             let k = osnova * razmera
             pomak = ogranici(CGSize(width: (Mapa.sirina / 2 - o.x) * k, height: (Mapa.visina / 2 - o.y) * k), k: k, velicina: velicina)
+        }
+    }
+
+    private func uokviri(_ ids: [String], velicina: CGSize, osnova: CGFloat) {
+        let t = ids.map(Mapa.oblast)
+        let (x0, x1) = (t.map(\.x).min()!, t.map(\.x).max()!)
+        let (y0, y1) = (t.map(\.y).min()!, t.map(\.y).max()!)
+        let k = min(velicina.width / ((x1 - x0) * 1.5 + 140), velicina.height / ((y1 - y0) * 1.5 + 140))
+        withAnimation(.easeInOut(duration: 0.45)) {
+            razmera = min(8, max(1, k / osnova))
+            let kk = osnova * razmera
+            pomak = ogranici(CGSize(width: (Mapa.sirina / 2 - (x0 + x1) / 2) * kk, height: (Mapa.visina / 2 - (y0 + y1) / 2) * kk), k: kk, velicina: velicina)
         }
     }
 

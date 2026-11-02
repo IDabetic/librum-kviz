@@ -58,6 +58,7 @@ import kotlin.math.min
 
 private val NEUTRALNE = listOf(Color(0xFFCFEDE6), Color(0xFFFFD9E6), Color(0xFFFFF0BF), Color(0xFFDED5F7), Color(0xFFD3ECFA))
 private val OKEAN = Color(0xFFE3EDF2)
+private val MORSKI_PUT = Color(0xFF4F7486)
 
 /** Putanje država iz SVG zapisa (M/L/Z), pretvorene jednom. */
 private object PutanjeMape {
@@ -135,6 +136,18 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
             pomak = ogranici(Offset((Mapa.sirina / 2 - o.x) * k, (Mapa.visina / 2 - o.y) * k), k)
         }
 
+        // Izabrana država i sve njene mete staju u kadar, da se vidi kuda se može dalje.
+        LaunchedEffect(mete) {
+            val id = izabrana ?: return@LaunchedEffect
+            if (mete.isEmpty()) return@LaunchedEffect
+            val t = (mete + id).map { Mapa.oblast(it) }
+            val x0 = t.minOf { it.x }; val x1 = t.maxOf { it.x }; val y0 = t.minOf { it.y }; val y1 = t.maxOf { it.y }
+            val kk = min(sirinaPx / ((x1 - x0) * 1.5f + 140), visinaPx / ((y1 - y0) * 1.5f + 140))
+            razmera = (kk / osnova).coerceIn(1f, 8f)
+            val k = osnova * razmera
+            pomak = ogranici(Offset((Mapa.sirina / 2 - (x0 + x1) / 2) * k, (Mapa.visina / 2 - (y0 + y1) / 2) * k), k)
+        }
+
         Canvas(
             Modifier.fillMaxSize().background(OKEAN)
                 .pointerInput(Unit) {
@@ -163,6 +176,23 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
             val p = pocetak(k)
             translate(p.x, p.y) {
                 withTransform({ scale(k, k, pivot = Offset.Zero) }) {
+                    // Morski putevi ispod država: isprekidane linije preko mora, kao u Risku.
+                    for (m in Mapa.more) {
+                        val jak = izabrana != null && ((m.a == izabrana && m.b in mete) || (m.b == izabrana && m.a in mete))
+                        val boja = if (jak) Boje.mastilo else MORSKI_PUT.copy(alpha = 0.75f)
+                        val crta = PathEffect.dashPathEffect(if (jak) floatArrayOf(7f * gustina / k, 5f * gustina / k) else floatArrayOf(5f * gustina / k, 6f * gustina / k))
+                        val linija = Path()
+                        if (kotlin.math.abs(m.x1 - m.x2) > Mapa.sirina / 2) {
+                            // Put preko ivice karte (Aljaska–Čukotka): dva kraka ka ivicama.
+                            val (lx, ly, dx, dy) = if (m.x1 < m.x2) listOf(m.x1, m.y1, m.x2, m.y2) else listOf(m.x2, m.y2, m.x1, m.y1)
+                            linija.moveTo(lx, ly); linija.lineTo(0f, ly - 8)
+                            linija.moveTo(dx, dy); linija.lineTo(Mapa.sirina, dy - 8)
+                        } else {
+                            linija.moveTo(m.x1, m.y1)
+                            linija.quadraticTo((m.x1 + m.x2) / 2 - (m.y2 - m.y1) * 0.12f, (m.y1 + m.y2) / 2 + (m.x2 - m.x1) * 0.12f, m.x2, m.y2)
+                        }
+                        drawPath(linija, boja, style = Stroke((if (jak) 3f else 1.8f) * gustina / k, pathEffect = crta))
+                    }
                     for (o in Mapa.oblasti) {
                         val put = PutanjeMape.sve[o.id] ?: continue
                         val st = stanje.oblasti[o.id] ?: continue
@@ -202,7 +232,7 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
                     drawPath(kruna, Boje.zuta)
                     drawPath(kruna, Boje.mastilo, style = Stroke(1.4f * gustina))
                 }
-                if (krupno && (o.povrsina * k * k > 2200 * gustina * gustina || o.id in mete || o.id == izabrana)) {
+                if ((krupno && o.povrsina * k * k > 2200 * gustina * gustina) || o.id in mete || o.id == izabrana) {
                     val ime = merac.measure(o.ime, TextStyle(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Boje.mastilo))
                     drawText(ime, topLeft = Offset(c.x - ime.size.width / 2f, c.y + r + 2 * gustina))
                 }

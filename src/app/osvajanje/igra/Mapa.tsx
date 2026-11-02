@@ -1,28 +1,42 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { OBLASTI, SIRINA_MAPE, VISINA_MAPE, oblast, type Stanje } from '@/lib/osvajanje/pravila'
+import { MORE, OBLASTI, SIRINA_MAPE, VISINA_MAPE, oblast, type Stanje } from '@/lib/osvajanje/pravila'
 
 type Pogled = { x: number; y: number; w: number }
+type Velicina = { w: number; h: number }
 
-const ODNOS = VISINA_MAPE / SIRINA_MAPE
-const NAJMANJI_W = 260
+const NAJMANJI_W = 110 // najjači zum: Luksemburg i Liban postanu dovoljno veliki za prst
 // Neutralne države su svetle (susedi uvek različiti, kao na infografici), da osvojene
 // u punoj boji igrača odmah iskoče.
 const NEUTRALNE = ['#CFEDE6', '#FFD9E6', '#FFF0BF', '#DED5F7', '#D3ECFA']
 const OKEAN = '#E3EDF2'
+const MORSKI_PUT = '#4F7486'
 
-function ogranici(p: Pogled): Pogled {
+/** Pogled uvek ispunjava ceo okvir; van mape se ne pomera, a kad je mapa uža od okvira, centrira se. */
+function ogranici(p: Pogled, odnos: number): Pogled {
   const w = Math.min(SIRINA_MAPE, Math.max(NAJMANJI_W, p.w))
-  const h = w * ODNOS
-  return { w, x: Math.min(SIRINA_MAPE - w, Math.max(0, p.x)), y: Math.min(VISINA_MAPE - h, Math.max(0, p.y)) }
+  const h = w * odnos
+  const x = Math.min(SIRINA_MAPE - w, Math.max(0, p.x))
+  const y = h >= VISINA_MAPE ? (VISINA_MAPE - h) / 2 : Math.min(VISINA_MAPE - h, Math.max(0, p.y))
+  return { w, x, y }
+}
+
+/** Kadar koji obuhvata tačke (država i njene mete) sa vazduhom oko njih. */
+function kadar(tacke: { x: number; y: number }[], odnos: number, sirinaPx: number): Pogled {
+  const xs = tacke.map(t => t.x)
+  const ys = tacke.map(t => t.y)
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
+  const najmanji = sirinaPx < 700 ? 420 : 640
+  const w = Math.max(najmanji, (x1 - x0) * 1.5 + 140, ((y1 - y0) * 1.5 + 140) / odnos)
+  return ogranici({ w, x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - (w * odnos) / 2 }, odnos)
 }
 
 /**
- * Mapa sveta po državama: boja vlasnika, značka sa vojskama, zum točkićem,
- * prstima ili dugmićima, pomeranje prevlačenjem. Dodir bez pomeranja bira državu.
+ * Mapa sveta po državama sa morskim putevima: zum točkićem, prstima, dvoklikom ili
+ * dugmićima, pomeranje prevlačenjem. Izbor države sam uokviri nju i njene mete.
  *
- * @example <Mapa stanje={s} izabrana="SRB" mete={['BGR']} fokus="SRB" onOblast={id => …} />
+ * @example <Mapa stanje={s} izabrana="BRA" mete={['ARG', 'SEN']} fokus="BRA" onOblast={id => …} />
  */
 export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
   stanje: Stanje
@@ -33,7 +47,9 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
 }) {
   const okvir = useRef<HTMLDivElement>(null)
   // Mapa se crta tek kad pitanja stignu (samo u pregledaču), pa je prozor dostupan od početka.
-  const [sirinaPx, setSirinaPx] = useState(() => (typeof window === 'undefined' ? 800 : Math.min(window.innerWidth, 1280)))
+  const [velicina, setVelicina] = useState<Velicina>(() =>
+    typeof window === 'undefined' ? { w: 800, h: 600 } : { w: Math.min(window.innerWidth, 1600), h: window.innerHeight * 0.6 })
+  const odnos = velicina.h / velicina.w
   const [pogled, setPogled] = useState<Pogled>({ x: 0, y: 0, w: SIRINA_MAPE })
   const pokazivaci = useRef(new Map<number, { x: number; y: number }>())
   const pomereno = useRef(0)
@@ -41,36 +57,38 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
   useEffect(() => {
     const el = okvir.current
     if (!el) return
-    const ro = new ResizeObserver(([e]) => setSirinaPx(e.contentRect.width))
+    const ro = new ResizeObserver(([e]) => setVelicina({ w: e.contentRect.width, h: e.contentRect.height }))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
 
-  // Na uskom ekranu mapa dolazi do fokusa (prestonica ili bitka) u krupnijem kadru.
-  // Podešava se tokom crtanja kad se fokus promeni (React obrazac umesto efekta).
-  const usko = sirinaPx < 900
-  const kljucFokusa = `${fokus}|${usko}`
-  const [prethodniFokus, setPrethodniFokus] = useState('')
-  if (fokus && kljucFokusa !== prethodniFokus) {
-    setPrethodniFokus(kljucFokusa)
-    const o = oblast(fokus)
+  // Kadar se podešava tokom crtanja kad se promeni izbor ili fokus (React obrazac umesto efekta):
+  // izabrana država sa metama staje cela u kadar, inače mapa dolazi do fokusa (prestonica, bitka).
+  const tacke = izabrana && mete.length ? [izabrana, ...mete] : fokus ? [fokus] : []
+  const kljucKadra = `${tacke.join(',')}|${Math.round(velicina.w)}x${Math.round(velicina.h)}`
+  const [prethodniKadar, setPrethodniKadar] = useState('')
+  if (tacke.length && kljucKadra !== prethodniKadar) {
+    setPrethodniKadar(kljucKadra)
     setPogled(p => {
-      const w = usko ? Math.min(p.w, 820) : p.w
-      const unutra = o.x > p.x + w * 0.15 && o.x < p.x + w * 0.85 && o.y > p.y + w * ODNOS * 0.15 && o.y < p.y + w * ODNOS * 0.85
-      return unutra && w === p.w ? p : ogranici({ w, x: o.x - w / 2, y: o.y - (w * ODNOS) / 2 })
+      if (tacke.length > 1) return kadar(tacke.map(oblast), odnos, velicina.w)
+      const o = oblast(tacke[0])
+      const w = velicina.w < 700 ? Math.min(p.w, 560) : Math.min(p.w, 1100)
+      const h = w * odnos
+      const unutra = o.x > p.x + w * 0.2 && o.x < p.x + w * 0.8 && o.y > p.y + h * 0.2 && o.y < p.y + h * 0.8
+      return unutra && w === p.w ? ogranici(p, odnos) : ogranici({ w, x: o.x - w / 2, y: o.y - h / 2 }, odnos)
     })
   }
 
-  const jedinica = pogled.w / sirinaPx // koliko jedinica mape staje u jedan piksel ekrana
+  const jedinica = pogled.w / velicina.w // koliko jedinica mape staje u jedan piksel ekrana
 
   function zumiraj(faktor: number, ox = 0.5, oy = 0.5) {
     setPogled(p => {
       const w = Math.min(SIRINA_MAPE, Math.max(NAJMANJI_W, p.w * faktor))
-      return ogranici({ w, x: p.x + (p.w - w) * ox, y: p.y + (p.w - w) * ODNOS * oy })
+      return ogranici({ w, x: p.x + (p.w - w) * ox, y: p.y + (p.w - w) * odnos * oy }, odnos)
     })
   }
 
-  function tacka(e: React.PointerEvent | React.WheelEvent) {
+  function tacka(e: React.PointerEvent | React.WheelEvent | React.MouseEvent) {
     const r = okvir.current!.getBoundingClientRect()
     return { ox: (e.clientX - r.left) / r.width, oy: (e.clientY - r.top) / r.height }
   }
@@ -89,6 +107,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
       const druga = sve.find(([id]) => id !== e.pointerId)![1]
       const pre = Math.hypot(stara.x - druga.x, stara.y - druga.y)
       const posle = Math.hypot(e.clientX - druga.x, e.clientY - druga.y)
+      pomereno.current += 10
       if (pre > 0 && posle > 0) {
         const { ox, oy } = tacka(e)
         zumiraj(pre / posle, ox, oy)
@@ -99,7 +118,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
       pomereno.current += Math.abs(dx) + Math.abs(dy)
       if (pomereno.current > 6) {
         if (!okvir.current!.hasPointerCapture(e.pointerId)) okvir.current!.setPointerCapture(e.pointerId)
-        setPogled(p => ogranici({ ...p, x: p.x - dx * jedinica, y: p.y - dy * jedinica }))
+        setPogled(p => ogranici({ ...p, x: p.x - dx * jedinica, y: p.y - dy * jedinica }, odnos))
       }
     }
     pokazivaci.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
@@ -120,21 +139,49 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
   const krupno = pogled.w < 520 // neutralne značke i imena tek pri jakom zumu, inače prekriju mapu
   const r = 11 * jedinica
   const izabranaO = izabrana ? oblast(izabrana) : null
+  const aktivniPut = (a: string, b: string) => !!izabrana && ((a === izabrana && mete.includes(b)) || (b === izabrana && mete.includes(a)))
 
   return (
     <div className="relative h-full w-full select-none">
       <div ref={okvir} className="h-full w-full overflow-hidden rounded-[24px] touch-none"
         style={{ background: OKEAN, border: '2.5px solid #151515', boxShadow: '0 5px 0 #151515' }}
         onPointerDown={naDole} onPointerMove={naPomeranje} onPointerUp={naGore} onPointerCancel={naGore} onPointerLeave={naGore}
+        onDoubleClick={e => { const { ox, oy } = tacka(e); zumiraj(1 / 2, ox, oy) }}
         onWheel={e => { const { ox, oy } = tacka(e); zumiraj(e.deltaY > 0 ? 1.15 : 1 / 1.15, ox, oy) }}>
-        <svg viewBox={`${pogled.x} ${pogled.y} ${pogled.w} ${pogled.w * ODNOS}`} className="h-full w-full"
+        <svg viewBox={`${pogled.x} ${pogled.y} ${pogled.w} ${pogled.w * odnos}`} className="h-full w-full"
           preserveAspectRatio="xMidYMid meet" role="group" aria-label="Mapa sveta">
           <defs>
             <pattern id="talasi" width="80" height="28" patternUnits="userSpaceOnUse">
               <path d="M0 14c10-6 30-6 40 0s30 6 40 0" fill="none" stroke="#D5E3EA" strokeWidth="1.5" />
             </pattern>
           </defs>
-          <rect x="0" y="0" width={SIRINA_MAPE} height={VISINA_MAPE} fill="url(#talasi)" />
+          <rect x={-SIRINA_MAPE} y={-VISINA_MAPE} width={SIRINA_MAPE * 3} height={VISINA_MAPE * 3} fill="url(#talasi)" />
+
+          {/* Morski putevi: isprekidane linije preko mora, kao u Risku. */}
+          {MORE.map(([a, b, x1, y1, x2, y2]) => {
+            const jak = aktivniPut(a, b)
+            const stil = { stroke: jak ? '#151515' : MORSKI_PUT, strokeWidth: jak ? 3 : 1.8, strokeDasharray: jak ? '7 5' : '5 6', opacity: jak ? 1 : 0.75 }
+            if (Math.abs(x1 - x2) > SIRINA_MAPE / 2) {
+              // Put preko ivice karte (Aljaska–Čukotka): dva kraka ka ivicama.
+              const [levo, desno] = x1 < x2 ? [[x1, y1], [x2, y2]] : [[x2, y2], [x1, y1]]
+              return (
+                <g key={`${a}-${b}`} pointerEvents="none">
+                  <line x1={levo[0]} y1={levo[1]} x2={0} y2={levo[1] - 8} {...stil} vectorEffect="non-scaling-stroke" />
+                  <line x1={desno[0]} y1={desno[1]} x2={SIRINA_MAPE} y2={desno[1] - 8} {...stil} vectorEffect="non-scaling-stroke" />
+                </g>
+              )
+            }
+            // Blago savijena linija, da se dva paralelna puta ne preklope.
+            const mx = (x1 + x2) / 2 - (y2 - y1) * 0.12
+            const my = (y1 + y2) / 2 + (x2 - x1) * 0.12
+            return (
+              <g key={`${a}-${b}`} pointerEvents="none">
+                <path d={`M${x1} ${y1}Q${mx} ${my} ${x2} ${y2}`} fill="none" {...stil} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                <circle cx={x1} cy={y1} r={3 * jedinica} fill={stil.stroke} />
+                <circle cx={x2} cy={y2} r={3 * jedinica} fill={stil.stroke} />
+              </g>
+            )
+          })}
 
           {OBLASTI.map(o => {
             const st = stanje.oblasti[o.id]
@@ -172,11 +219,6 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
             <path d={izabranaO.d} fill="none" stroke="#FFD84D" strokeWidth={5} vectorEffect="non-scaling-stroke"
               strokeLinejoin="round" pointerEvents="none" />
           )}
-          {izabranaO && mete.map(id => {
-            const m = oblast(id)
-            return <line key={`l-${id}`} x1={izabranaO.x} y1={izabranaO.y} x2={m.x} y2={m.y} stroke="#151515"
-              strokeWidth={2} strokeDasharray="4 4" vectorEffect="non-scaling-stroke" pointerEvents="none" opacity={0.6} />
-          })}
 
           {OBLASTI.map(o => {
             const st = stanje.oblasti[o.id]
@@ -196,7 +238,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
                   <path transform={`translate(${o.x - r * 0.7} ${o.y - r * 2.05}) scale(${r / 10})`}
                     d="M0 9V2l3.5 3L7 0l3.5 5L14 2v7z" fill="#FFD84D" stroke="#151515" strokeWidth={1.4} strokeLinejoin="round" />
                 )}
-                {krupno && (o.povrsina / (jedinica * jedinica) > 2200 || mete.includes(o.id) || o.id === izabrana) && (
+                {(krupno || mete.includes(o.id) || o.id === izabrana) && (o.povrsina / (jedinica * jedinica) > 2200 || mete.includes(o.id) || o.id === izabrana) && (
                   <text x={o.x} y={o.y + r * 2.15} textAnchor="middle" fontSize={r * 0.95} fontWeight={700} fill="#151515"
                     stroke="#F3F0E6" strokeWidth={r * 0.28} paintOrder="stroke" pointerEvents="none">
                     {o.ime}
@@ -210,9 +252,9 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
 
       <div className="absolute right-3 top-3 flex flex-col gap-2">
         {[
-          { natpis: 'Uvećaj', znak: '+', radnja: () => zumiraj(1 / 1.5) },
-          { natpis: 'Umanji', znak: '−', radnja: () => zumiraj(1.5) },
-          { natpis: 'Ceo svet', znak: '⤢', radnja: () => setPogled({ x: 0, y: 0, w: SIRINA_MAPE }) },
+          { natpis: 'Uvećaj', znak: '+', radnja: () => zumiraj(1 / 1.6) },
+          { natpis: 'Umanji', znak: '−', radnja: () => zumiraj(1.6) },
+          { natpis: 'Ceo svet', znak: '⤢', radnja: () => setPogled(ogranici({ x: 0, y: 0, w: SIRINA_MAPE }, odnos)) },
         ].map(d => (
           <button key={d.natpis} onClick={d.radnja} aria-label={d.natpis} title={d.natpis}
             className="w-11 h-11 grid place-items-center rounded-full bg-white text-[20px] font-bold"
@@ -221,6 +263,12 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
           </button>
         ))}
       </div>
+
+      <p className="absolute left-3 bottom-3 rounded-xl bg-white/90 px-3 py-2 text-[12px] font-semibold leading-tight"
+        style={{ border: '1.5px solid #E7E1D0' }}>
+        <svg width="26" height="8" className="inline mr-1.5 align-middle" aria-hidden><line x1="1" y1="4" x2="25" y2="4" stroke={MORSKI_PUT} strokeWidth="2" strokeDasharray="5 4" /></svg>
+        morski put · napadaš samo susede
+      </p>
     </div>
   )
 }

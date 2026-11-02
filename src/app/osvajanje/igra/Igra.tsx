@@ -263,7 +263,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
         ))}
       </div>
 
-      <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-6 pt-3 pb-2">
+      <main className="flex-1 min-h-0 w-full px-2 sm:px-4 pt-3 pb-2">
         <Mapa stanje={s} izabrana={izabrana} mete={mete} onOblast={naOblast}
           fokus={otvoreno?.kuda ?? izabrana ?? ti.prestonica} />
       </main>

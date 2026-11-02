@@ -17,7 +17,10 @@ import kotlin.math.min
     val boja: Int, val povrsina: Float, val d: String,
 )
 
-@Serializable private data class Svet(val sirina: Float, val visina: Float, val regioni: List<Region>, val drzave: List<Oblast>, val veze: List<List<String>>)
+@Serializable private data class Svet(val sirina: Float, val visina: Float, val regioni: List<Region>, val drzave: List<Oblast>, val veze: List<List<String>>, val more: List<List<kotlinx.serialization.json.JsonPrimitive>>)
+
+/** Morski put sa tačkama obala, za isprekidanu liniju. */
+data class MorskiPut(val a: String, val b: String, val x1: Float, val y1: Float, val x2: Float, val y2: Float)
 
 /** Mapa država iz svet.json (isti fajl kao veb i iOS); učitava se jednom pri pokretanju. */
 object Mapa {
@@ -42,6 +45,9 @@ object Mapa {
     val regioni get() = svet.regioni
     val oblasti get() = svet.drzave
     val veze get() = svet.veze.map { it[0] to it[1] }
+    val more: List<MorskiPut> by lazy {
+        svet.more.map { MorskiPut(it[0].content, it[1].content, it[2].content.toFloat(), it[3].content.toFloat(), it[4].content.toFloat(), it[5].content.toFloat()) }
+    }
 
     fun susedi(id: String): List<String> = susedstvo[id].orEmpty()
     fun oblast(id: String): Oblast = poId.getValue(id)

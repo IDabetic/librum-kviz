@@ -127,6 +127,9 @@ for (const id of [...ids].sort((a, b) => susedi.get(b).size - susedi.get(a).size
   const zauzete = new Set([...susedi.get(id)].map(n => BOJA[n]))
   BOJA[id] = [0, 1, 2, 3, 4].find(b => !zauzete.has(b))
 }
+// Kopnene veze se pamte posebno; sve dodato posle njih su morski putevi (crtaju se isprekidano).
+const kopno = new Set()
+for (const [a, s] of susedi) for (const b of s) kopno.add([a, b].sort().join('|'))
 for (const [a, b] of MORSKE) { susedi.get(a).add(b); susedi.get(b).add(a) }
 
 const centar = Object.fromEntries(zemlje.map(z => [z.id, sredina(z.f)]))
@@ -150,6 +153,25 @@ for (;;) {
   susedi.get(par[0]).add(par[1]); susedi.get(par[1]).add(par[0])
 }
 
+// Krajevi morskog puta: najbliži par tačaka obala dve države (ne središta, da linija ide preko mora).
+const tackeObale = id => {
+  const brojevi = (putanja(zemlje.find(z => z.id === id).f.geometry).match(/-?\d+(\.\d+)?/g) ?? []).map(Number)
+  const t = []
+  for (let i = 0; i + 1 < brojevi.length; i += 2) t.push([brojevi[i], brojevi[i + 1]])
+  return t
+}
+function najblizi(a, b) {
+  let naj = null
+  const ta = tackeObale(a), tb = tackeObale(b)
+  for (const p of ta) for (const q of tb) {
+    const d = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2
+    if (!naj || d < naj.d) naj = { d, p, q }
+  }
+  return [...naj.p, ...naj.q].map(v => Math.round(v))
+}
+// Na ovoj projekciji SAD–Rusija ide preko ivice karte (Aljaska levo, Čukotka desno).
+const preko = (a, b) => (a === 'RUS' && b === 'USA') || (a === 'USA' && b === 'RUS')
+
 const veze = []
 for (const [a, s] of susedi) for (const b of s) if (a < b) veze.push([a, b])
 
@@ -168,6 +190,14 @@ const izlazniPodaci = {
     d: kratka(putanja(z.f.geometry)),
   })).sort((a, b) => a.id.localeCompare(b.id)),
   veze: veze.sort(),
+  more: veze.filter(([a, b]) => !kopno.has([a, b].sort().join('|')))
+    .map(([a, b]) => {
+      if (!preko(a, b)) return [a, b, ...najblizi(a, b)]
+      // Aljaska je krajnja leva tačka SAD, Čukotka krajnja desna tačka Rusije.
+      const levo = tackeObale('USA').reduce((m, t) => (t[0] < m[0] ? t : m))
+      const desno = tackeObale('RUS').reduce((m, t) => (t[0] > m[0] ? t : m))
+      return a === 'RUS' ? [a, b, ...desno.map(Math.round), ...levo.map(Math.round)] : [a, b, ...levo.map(Math.round), ...desno.map(Math.round)]
+    }),
 }
 fs.writeFileSync(izlaz, JSON.stringify(izlazniPodaci))
-console.log(`${izlazniPodaci.drzave.length} država, ${veze.length} veza, ${izlazniPodaci.regioni.length} regiona, ${SIRINA}×${VISINA}, ${(fs.statSync(izlaz).size / 1024).toFixed(0)} KB`)
+console.log(`${izlazniPodaci.drzave.length} država, ${veze.length} veza (${izlazniPodaci.more.length} morskih), ${izlazniPodaci.regioni.length} regiona, ${SIRINA}×${VISINA}, ${(fs.statSync(izlaz).size / 1024).toFixed(0)} KB`)
