@@ -36,6 +36,7 @@ struct OsvajanjeIgraView: View {
             }
         }
         .task(id: ObjectIdentifier(model)) { await model.pokreni() }
+        .task(id: ObjectIdentifier(model)) { await model.slusaj() }
         .overlay { pitanje }
         .overlay { if let b = model.bitka { BitkaView(model: model, bitka: b) } }
         .overlay { kraj }

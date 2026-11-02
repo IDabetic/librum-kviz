@@ -253,3 +253,16 @@ final class OsvajanjeKontinentTests: XCTestCase {
         for id in napad.oblastiIgraca(napad.trenutni.id) { XCTAssertTrue(Set(napad.mete(id)).isSubset(of: evropa)) }
     }
 }
+
+final class OsvajanjeVezaTests: XCTestCase {
+    /// Stanje putuje kao JSON između telefona; posle puta mora biti isto (mapa, misije, odbrane, redosled).
+    func testStanjeKrozJsonOstajeIsto() throws {
+        var r = Slucajno(seme: 11)
+        var s = Stanje.nova(krugova: 8, tezina: .normalno, slucajno: &r, igraci: Array(Stanje.podrazumevani.prefix(3)), misije: true)
+        s.odbrane = ["evr": .zamka]
+        let d = try JSONEncoder().encode(s)
+        let natrag = try JSONDecoder().decode(Stanje.self, from: d)
+        XCTAssertEqual(natrag, s)
+        XCTAssertLessThan(d.count, 20_000, "stanje mora ostati malo za slanje na svaki potez")
+    }
+}

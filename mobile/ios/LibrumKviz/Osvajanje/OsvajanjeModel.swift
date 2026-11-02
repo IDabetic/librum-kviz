@@ -73,6 +73,89 @@ final class OsvajanjeModel {
                              misije: p.teren == nil, teren: p.teren)
         slucajno = s
         postavka = p
+        if let soba = p.soba, let ja = p.korisnik {
+            veza = VezaOsvajanja(soba: soba, ja: ja, domacin: p.domacin)
+            // Ostali čekaju početno stanje domaćina (njegova mapa, misije i redosled).
+            cekaPocetak = !p.domacin
+        }
+        stanje.igraci = stanje.igraci.map { var i = $0; if let v = veza { i.covek = i.id == v.mojId }; return i }
+    }
+
+    // MARK: Partija preko servera
+
+    private(set) var veza: VezaOsvajanja?
+    /// Telefon koji nije domaćin čeka prvo stanje sa servera.
+    private(set) var cekaPocetak = false
+    private var cekaUdaljenuOdbranu: (rb: Int, nastavak: CheckedContinuation<Skor, Never>)?
+    /// Branim se od napada sa drugog telefona: redni broj „bitke” i skor napadača.
+    private var udaljeniNapad: (rb: Int, napadac: Skor)?
+    private var zapocetPotez: (krug: Int, igrac: Int)?
+    private static let rokOdbrane: Duration = .seconds(45)
+
+    /// Igrač sa drugog telefona (pravi nalog, ne ja i ne bot).
+    private func udaljen(_ i: Igrac) -> Bool { veza != nil && i.id.hasPrefix("u:") && !i.covek }
+
+    private func lokalizuj(_ s: Stanje) -> Stanje {
+        var s = s
+        s.igraci = s.igraci.map { var i = $0; i.covek = i.id == veza?.mojId; return i }
+        return s
+    }
+
+    private func objavi(_ s: Stanje) {
+        guard let veza else { return }
+        Task { await veza.posalji(.init(v: "stanje", stanje: s)) }
+    }
+
+    /// Slušanje sobe: novi potezi na svake 1,5 s dok je partija otvorena.
+    func slusaj() async {
+        guard let veza else { return }
+        while !Task.isCancelled && stanje.faza != .kraj {
+            for red in await veza.novi() { primi(red) }
+            try? await Task.sleep(for: .milliseconds(1500))
+        }
+    }
+
+    private func primi(_ red: VezaOsvajanja.Red) {
+        let a = red.akcija
+        switch a.v {
+        case "stanje":
+            guard let novo = a.stanje else { return }
+            stanje = lokalizuj(novo)
+            if cekaPocetak { cekaPocetak = false; spremno = !spil.prazan }
+            pocniPotezAkoTreba()
+        case "bitka":
+            guard let odakle = a.odakle, let kuda = a.kuda, let skor = a.skor, bitka == nil,
+                  let mojTim, stanje.oblasti[kuda]?.vlasnik == mojTim else { return }
+            udaljeniNapad = (red.rb, skor)
+            bitka = novaBitka(napadam: false, odakle: odakle, kuda: kuda)
+        case "odbrana":
+            guard let rb = a.bitka, let skor = a.skor, let c = cekaUdaljenuOdbranu, c.rb == rb else { return }
+            cekaUdaljenuOdbranu = nil
+            c.nastavak.resume(returning: skor)
+        default: break
+        }
+    }
+
+    /// Posle stanja sa servera: ako je red na mene (ili na bota, a ja sam domaćin), potez kreće jednom.
+    private func pocniPotezAkoTreba() {
+        guard stanje.faza == .snabdevanje, zapocetPotez.map({ $0 != (stanje.krug, stanje.naPotezu) }) ?? true else { return }
+        let t = stanje.trenutni
+        guard t.covek || (!udaljen(t) && veza?.domacin == true) else { return }
+        pocniPotez(stanje)
+    }
+
+    /// Napad na državu pravog igrača sa drugog telefona: on odgovara na svoja pitanja; ako se ne javi u roku, umesto njega bot.
+    private func udaljenaOdbrana(odakle: String, kuda: String, napadac: Skor) async -> Skor {
+        guard let veza, let rb = await veza.posalji(.init(v: "bitka", odakle: odakle, kuda: kuda, skor: napadac)) else { return stanje.botSkor(&slucajno) }
+        let rok = Task { [weak self] in
+            try? await Task.sleep(for: Self.rokOdbrane)
+            guard let self, let c = self.cekaUdaljenuOdbranu, c.rb == rb else { return }
+            self.cekaUdaljenuOdbranu = nil
+            c.nastavak.resume(returning: self.stanje.botSkor(&self.slucajno))
+        }
+        let skor = await withCheckedContinuation { cekaUdaljenuOdbranu = (rb, $0) }
+        rok.cancel()
+        return skor
     }
 
     private(set) var postavka: OsvajanjePostavka?
@@ -117,7 +200,7 @@ final class OsvajanjeModel {
     func pokreni() async {
         do {
             spil = Spil(try await PaketPitanja.deljeni.ucitaj())
-            spremno = true
+            spremno = !cekaPocetak
             // U partiji sa misijom prvi potez čeka da igrač pročita misiju.
             if postavka == nil { pocniPotez(stanje) }
         } catch {
@@ -154,6 +237,9 @@ final class OsvajanjeModel {
     /// Posle lista sa misijom: kreće prvi potez.
     func zapocni() {
         guard spremno, stanje.krug == 1, stanje.faza == .snabdevanje, otvoreno == nil else { return }
+        // Domaćin šalje početno stanje (mapa, misije, redosled); ostali kreću kad ga prime.
+        if veza?.domacin == true { objavi(stanje) }
+        if veza != nil { pocniPotezAkoTreba(); return }
         pocniPotez(stanje)
     }
 
@@ -186,7 +272,9 @@ final class OsvajanjeModel {
 
     func krajPoteza() {
         izabrana = nil; utvrdjivanje = false
-        pocniPotez(stanje.zavrsiPotez())
+        let novo = stanje.zavrsiPotez()
+        objavi(novo)
+        pocniPotez(novo)
     }
 
     /// Odgovor sa kartice pitanja (nil = isteklo vreme).
@@ -244,6 +332,21 @@ final class OsvajanjeModel {
                 let (novo, ishod) = stanje.razresiBitku(odakle: b.odakle, kuda: b.kuda, napadac: Odgovor(tacan: tacno, ms: ms), branilac: nil)
                 stanje = novo
                 b.ishod = ishod
+            } else if let branilac = stanje.igraci.first(where: { $0.tim == stanje.oblasti[b.kuda]?.vlasnik }), udaljen(branilac) {
+                // Branilac je na drugom telefonu: rezultat stiže kad odgovori (ili posle roka).
+                let moj = Skor(tacnih: b.tacnih, ms: b.ms)
+                b.korak = .rezultat
+                bitka = b
+                Task {
+                    let rival = await udaljenaOdbrana(odakle: b.odakle, kuda: b.kuda, napadac: moj)
+                    guard stanje.mete(b.odakle).contains(b.kuda) else { return }
+                    let (novo, ishod) = stanje.razresiBitkuSkorom(odakle: b.odakle, kuda: b.kuda, napadac: moj, branilac: rival)
+                    stanje = novo
+                    bitka?.rival = rival
+                    bitka?.ishod = ishod
+                    objavi(novo)
+                }
+                return
             } else {
                 let rival = stanje.botSkor(&slucajno, pitanja: b.prikazi.count)
                 let (novo, ishod) = stanje.razresiBitkuSkorom(odakle: b.odakle, kuda: b.kuda, napadac: Skor(tacnih: b.tacnih, ms: b.ms), branilac: rival)
@@ -251,8 +354,19 @@ final class OsvajanjeModel {
                 b.rival = rival
                 b.ishod = ishod
             }
+            objavi(stanje)
         }
         b.korak = .rezultat
+        if !b.napadam, let n = udaljeniNapad, let veza {
+            // Odbrana od napada sa drugog telefona: šaljem svoj skor, ishod (za prikaz) po istom pravilu; mapa stiže sa servera.
+            let moj = Skor(tacnih: b.tacnih, ms: b.ms)
+            udaljeniNapad = nil
+            Task { await veza.posalji(.init(v: "odbrana", skor: moj, bitka: n.rb)) }
+            let razlika = n.napadac.tacnih - moj.tacnih
+            let osvojio = razlika >= (stanje.odbranaMete(b.kuda) == .prednost ? 2 : 1) || (razlika == 0 && n.napadac.ms < moj.ms)
+            b.rival = n.napadac
+            b.ishod = Ishod(gubitakNapadaca: 0, gubitakBranioca: 0, osvojeno: osvojio, proboj: false, plen: false, izgubljenaDrzava: !osvojio)
+        }
         bitka = b
         if !b.napadam { cekaOdbranu?.resume(returning: Skor(tacnih: b.tacnih, ms: b.ms)); cekaOdbranu = nil }
     }
@@ -294,6 +408,9 @@ final class OsvajanjeModel {
     private func pocniPotez(_ novo: Stanje) {
         stanje = novo
         guard novo.faza == .snabdevanje else { return }
+        zapocetPotez = (novo.krug, novo.naPotezu)
+        // Pravi igrač sa drugog telefona igra sam; bota vodi samo domaćin.
+        if udaljen(novo.trenutni) || (veza != nil && !novo.trenutni.covek && veza?.domacin != true) { return }
         if novo.trenutni.covek {
             // Potez čoveka počinje napadom (vlasnik 02.11): pojačanja stižu sama i idu na granice, bez pitanja.
             let tim = novo.trenutni.tim
@@ -319,7 +436,11 @@ final class OsvajanjeModel {
             if let vlasnik = stanje.oblasti[napad.kuda]?.vlasnik {
                 let napadac = stanje.botSkor(&slucajno)
                 let branilac: Skor
-                if stanje.igraci.first(where: { $0.tim == vlasnik })?.covek == true {
+                if let b = stanje.igraci.first(where: { $0.tim == vlasnik }), udaljen(b) {
+                    branilac = await udaljenaOdbrana(odakle: napad.odakle, kuda: napad.kuda, napadac: napadac)
+                    stanje = stanje.razresiBitkuSkorom(odakle: napad.odakle, kuda: napad.kuda, napadac: napadac, branilac: branilac).0
+                    objavi(stanje)
+                } else if stanje.igraci.first(where: { $0.tim == vlasnik })?.covek == true {
                     branilac = await withCheckedContinuation { nastavak in
                         cekaOdbranu = nastavak
                         bitka = novaBitka(napadam: false, odakle: napad.odakle, kuda: napad.kuda)
@@ -340,7 +461,9 @@ final class OsvajanjeModel {
         }
         izabrana = nil
         botRadi = false
-        pocniPotez(stanje.zavrsiPotez())
+        let novo = stanje.zavrsiPotez()
+        objavi(novo)
+        pocniPotez(novo)
     }
 
     func javi(_ tekst: String) {

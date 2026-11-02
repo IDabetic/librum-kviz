@@ -36,6 +36,7 @@
 		583EF28111F53188EA0E898E /* PocetnaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C5AC4CC3916A6E90BB355C /* PocetnaView.swift */; };
 		6E7C2DDB0843ED38A1D2642D /* MapaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34A53034F0CC8C1D196D136 /* MapaView.swift */; };
 		70203C908BBD6D9059387F05 /* cinjenice.json in Resources */ = {isa = PBXBuildFile; fileRef = D370A58A8A6F237287D8C8A5 /* cinjenice.json */; };
+		716E26AD7BF3ED3A524DEF4F /* VezaOsvajanja.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EBF51989642885311008168 /* VezaOsvajanja.swift */; };
 		71712F6A7F4A8B220A1D668A /* ProKvizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 439C9475647BD63A6D08009F /* ProKvizView.swift */; };
 		73997394D3DA009D5F171A26 /* Supabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F7FFAE025C531368758B6B /* Supabase.swift */; };
 		7DA75BC772EC4344C84E7F74 /* ProfilDelovi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD48DD303A60EBF63230C73 /* ProfilDelovi.swift */; };
@@ -83,6 +84,7 @@
 		2483BC76902BF318AFB375A7 /* Zvuk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zvuk.swift; sourceTree = "<group>"; };
 		26009EDFA71CD993EFB9CD91 /* DeljenjeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeljenjeTests.swift; sourceTree = "<group>"; };
 		2735B64623C0DCC699BAC21A /* Katalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Katalog.swift; sourceTree = "<group>"; };
+		2EBF51989642885311008168 /* VezaOsvajanja.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VezaOsvajanja.swift; sourceTree = "<group>"; };
 		2FF3937835EE161D1EC5C164 /* LibrumKviz.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LibrumKviz.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30A3F1D8E5729330DA828B8E /* PravilaIgara.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PravilaIgara.swift; sourceTree = "<group>"; };
 		31F7FFAE025C531368758B6B /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 				0D48064B32341C34B07F6ED9 /* OsvajanjeModel.swift */,
 				A888EF4247356C4BAE44843E /* OsvajanjeView.swift */,
 				9FED500CF38EA749232AE59B /* Pravila.swift */,
+				2EBF51989642885311008168 /* VezaOsvajanja.swift */,
 			);
 			path = Osvajanje;
 			sourceTree = "<group>";
@@ -504,6 +507,7 @@
 				0CE75257CC63950632E2EF51 /* Tema.swift in Sources */,
 				169CB97CDDF9684EBEE9E499 /* UvodView.swift in Sources */,
 				FC3DB799164BCDB3F3F119D0 /* VesanjeView.swift in Sources */,
+				716E26AD7BF3ED3A524DEF4F /* VezaOsvajanja.swift in Sources */,
 				C36FD053D30EB4B0B092DD13 /* Zajednica.swift in Sources */,
 				90470CF5ABF49C8B3AB7515E /* Zvuk.swift in Sources */,
 			);

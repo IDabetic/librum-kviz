@@ -88,11 +88,12 @@ enum Tezina: String, CaseIterable, Identifiable {
     }
 }
 
-struct Igrac: Equatable {
+struct Igrac: Equatable, Codable {
     let id: String
     var ime: String
     let boja: UInt32
-    let covek: Bool
+    /// Igrač na ovom uređaju (u partiji preko servera svaki telefon postavlja svoje).
+    var covek: Bool
     let prestonica: String
     var ispao: Bool
     /// Tim (vlasnik država). Svako za sebe: tim = id igrača.
@@ -104,14 +105,14 @@ struct Igrac: Equatable {
 /// Igrač za novu partiju (čekaonica): bez prestonice, ona se bira na početku.
 struct NoviIgrac { let id: String; let ime: String; let boja: UInt32; let covek: Bool; var tim: String? = nil; var kapiten = true }
 
-struct StanjeOblasti: Equatable { var vlasnik: String?; var vojske: Int }
+struct StanjeOblasti: Equatable, Codable { var vlasnik: String?; var vojske: Int }
 
-enum Faza: Equatable { case snabdevanje, raspored, napad, kraj }
+enum Faza: String, Equatable, Codable { case snabdevanje, raspored, napad, kraj }
 
 struct Odgovor: Equatable { let tacan: Bool; let ms: Int }
 
 /// Rezultat jedne strane u bitki od 5 pitanja.
-struct Skor: Equatable { let tacnih: Int; let ms: Int }
+struct Skor: Equatable, Codable { let tacnih: Int; let ms: Int }
 
 struct Ishod: Equatable {
     let gubitakNapadaca: Int
@@ -156,7 +157,7 @@ enum Kontinenti {
     }
 }
 
-enum Odbrana: String, CaseIterable, Identifiable {
+enum Odbrana: String, CaseIterable, Identifiable, Codable {
     case brzSat, bezPomoci, teskoPitanje, prednost, temaBranioca, tvrdjava, zamka
     var id: String { rawValue }
     var naziv: String {
@@ -205,7 +206,7 @@ enum Misije {
     static func tekst(_ id: String?) -> String { sve.first { $0.id == id }?.tekst ?? "" }
 }
 
-struct Stanje: Equatable {
+struct Stanje: Equatable, Codable {
     var igraci: [Igrac]
     var oblasti: [String: StanjeOblasti]
     var krug: Int

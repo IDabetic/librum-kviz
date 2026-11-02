@@ -26,6 +26,10 @@ struct OsvajanjePostavka: Identifiable {
     var teren: String? = nil
     /// Pravi igrači se traže preko servera (sobe); inače su prazna mesta botovi odmah.
     var traziIgrace = false
+    /// Partija sa pravim igračima: soba, moj nalog i da li sam domaćin (mesto 0, vodi botove).
+    var soba: String? = nil
+    var korisnik: String? = nil
+    var domacin = false
 
     static let boje: [UInt32] = [0x12907E, 0xFF5FA2, 0x6D4BC9, 0xF4A33C, 0x6EC3F2, 0xE5385C]
     static let imenaBotova = ["Mimi", "Zig", "Bloop", "Lumi", "Luna", "Max", "Sara", "Đole", "Ana", "Pera", "Mila"]
@@ -313,16 +317,25 @@ struct CekaonicaView: View {
     private func primi(_ s: Soba) {
         soba = s
         guard s.status == "pocela" else { return }
-        let drugi = s.mesta.filter { $0.user_id != sesija.korisnikId }
+        let ja = sesija.korisnikId ?? ""
+        let drugi = s.mesta.filter { $0.user_id != ja }.sorted { $0.mesto < $1.mesto }
         var i = 0
+        // Isti id na svakom telefonu („u:<nalog>”): partija preko servera prepoznaje ko je ko.
         postavka.igraci = postavka.igraci.map { p in
-            guard !p.covek, i < drugi.count else { return p }
+            if p.covek { return NoviIgrac(id: VezaOsvajanja.idIgraca(ja), ime: p.ime, boja: p.boja, covek: true, tim: p.tim, kapiten: p.kapiten) }
+            guard i < drugi.count else { return p }
             defer { i += 1 }
-            return NoviIgrac(id: "igrac\(i)", ime: drugi[i].nadimak, boja: p.boja, covek: false, tim: p.tim, kapiten: p.kapiten)
+            return NoviIgrac(id: VezaOsvajanja.idIgraca(drugi[i].user_id), ime: drugi[i].nadimak, boja: p.boja, covek: false, tim: p.tim, kapiten: p.kapiten)
+        }
+        if !drugi.isEmpty {
+            postavka.soba = s.id
+            postavka.korisnik = ja
+            postavka.domacin = s.mesta.first { $0.mesto == 0 }?.user_id == ja
         }
         Zvuk.pusti(.bedz, jacina: 0.4)
-        // Igrači su na okupu: kontinent se igra odmah, ceo svet ide na izbor kontinenata.
-        if postavka.teren != nil { igra = postavka; return }
+        // Igrači su na okupu: kontinent se igra odmah; sa pravim igračima i ceo svet odmah
+        // (početne kontinente bira domaćinov telefon, da svi imaju istu mapu), inače izbor kontinenata.
+        if postavka.teren != nil || postavka.soba != nil { igra = postavka; return }
         redIzbora = Stanje.redosledIzbora(timovi.shuffled())
         withAnimation { korak = .kontinenti }
         Task { await botoviBiraju() }

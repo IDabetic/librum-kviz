@@ -139,6 +139,7 @@ struct Spil {
     private var pitanja: [Pitanje]
     private var indeks = 0
     init(_ pitanja: [Pitanje]) { self.pitanja = pitanja }
+    var prazan: Bool { pitanja.isEmpty }
     mutating func sledece() -> Prikaz {
         let p = pitanja[indeks % pitanja.count]
         indeks += 1
