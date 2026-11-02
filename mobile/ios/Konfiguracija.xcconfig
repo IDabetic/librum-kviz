@@ -1,0 +1,4 @@
+// Javni podaci (isti kao NEXT_PUBLIC_* na vebu): URL projekta i anon ključ, RLS štiti bazu.
+// „//” u xcconfig počinje komentar, zato se šema dodaje u kodu.
+SUPABASE_URL = htnfatughrtmbgtekxfs.supabase.co
+SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0bmZhdHVnaHJ0bWJndGVreGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTg2NTEsImV4cCI6MjA5MzU3NDY1MX0.4P9ROqqzwjGpZVaqH6pC8-9xfd91QkAV0rJ_r_Bx5EI

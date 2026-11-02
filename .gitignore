@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# iOS gradnja
+mobile/ios/build/
+mobile/ios/*.xcodeproj/xcuserdata/
+# Android gradnja
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
