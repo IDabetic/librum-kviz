@@ -94,25 +94,25 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
     <>
       {/* Identity */}
       <div className="card-soft p-6">
-        <h2 className="font-bold text-[15px] mb-1 tracking-tight" style={{ color: '#343434' }}>Identitet</h2>
-        <p className="text-[12px] mb-5" style={{ color: '#9C9C9C' }}>
-          Email: <strong>{email}</strong> · Uloga: <strong style={{ color: '#FFCB46' }}>{profile.role.replace('_', ' ')}</strong>
+        <h2 className="font-bold text-[15px] mb-1 tracking-tight" style={{ color: '#1A1A1E' }}>Identitet</h2>
+        <p className="text-[12px] mb-5" style={{ color: '#6B6760' }}>
+          Email: <strong>{email}</strong> · Uloga: <strong style={{ color: '#E2B93A' }}>{profile.role.replace('_', ' ')}</strong>
         </p>
 
         {/* Avatar picker */}
-        <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>Avatar</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6B6760' }}>Avatar</p>
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 ring-2" style={{ ['--tw-ring-color' as string]: '#609DED' }}>
+          <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 ring-2" style={{ ['--tw-ring-color' as string]: '#3A36A0' }}>
             <Image src={`/avatars/${avatar}`} alt="Avatar" width={56} height={56} className="w-full h-full object-cover" />
           </div>
-          <div className="text-[12px]" style={{ color: '#9C9C9C' }}>Trenutni avatar</div>
+          <div className="text-[12px]" style={{ color: '#6B6760' }}>Trenutni avatar</div>
         </div>
         <div className="grid grid-cols-9 sm:grid-cols-13 gap-1.5 mb-5">
           {AVATAR_LIST.map(av => (
             <button key={av} onClick={() => setAvatar(av)}
               className="relative rounded-xl overflow-hidden aspect-square transition-all hover:scale-110"
               style={{
-                outline: avatar === av ? '3px solid #609DED' : '1px solid transparent',
+                outline: avatar === av ? '3px solid #3A36A0' : '1px solid transparent',
                 outlineOffset: 2,
               }}>
               <Image src={`/avatars/${av}`} alt={av} width={48} height={48} className="w-full h-full object-cover" />
@@ -136,19 +136,19 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
         <button onClick={saveProfile} disabled={savingProfile}
           className="btn btn-md w-full"
           style={profileSaved
-            ? { background: '#4CAF50', color: 'white' }
-            : { background: '#609DED', color: 'white' }}>
+            ? { background: '#2FBF8A', color: 'white' }
+            : { background: '#3A36A0', color: 'white' }}>
           {profileSaved ? '✓ Sačuvano' : savingProfile ? 'Čuvanje…' : 'Sačuvaj profil'}
         </button>
       </div>
 
       {/* Password */}
       <div className="card-soft p-6">
-        <h2 className="font-bold text-[15px] mb-1 tracking-tight flex items-center gap-2" style={{ color: '#343434' }}>
-          <IconLock size={16} strokeWidth={2.2} className="text-[#9C9C9C]" />
+        <h2 className="font-bold text-[15px] mb-1 tracking-tight flex items-center gap-2" style={{ color: '#1A1A1E' }}>
+          <IconLock size={16} strokeWidth={2.2} className="text-[#6B6760]" />
           Promena lozinke
         </h2>
-        <p className="text-[12px] mb-5" style={{ color: '#9C9C9C' }}>
+        <p className="text-[12px] mb-5" style={{ color: '#6B6760' }}>
           Postavi novu lozinku za prijavu. Najmanje 6 karaktera.
         </p>
 
@@ -164,27 +164,27 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
         )}
 
         {pwSaved && (
-          <div className="rounded-2xl px-4 py-3 mb-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-            <IconCheck size={16} className="text-[#15803d]" /> Lozinka je promenjena.
+          <div className="rounded-2xl px-4 py-3 mb-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
+            <IconCheck size={16} className="text-[#1F8A62]" /> Lozinka je promenjena.
           </div>
         )}
 
         <button onClick={changePassword} disabled={savingPw || !newPw || !newPw2}
           className="btn btn-md w-full mb-4"
           style={pwSaved
-            ? { background: '#4CAF50', color: 'white' }
-            : { background: '#609DED', color: 'white' }}>
+            ? { background: '#2FBF8A', color: 'white' }
+            : { background: '#3A36A0', color: 'white' }}>
           {savingPw ? 'Čuvanje…' : 'Promeni lozinku'}
         </button>
 
         {/* Email reset (works for OAuth-only users without a password) */}
-        <div className="pt-4 border-t" style={{ borderColor: '#F2F2F2' }}>
-          <p className="text-[12px] mb-3" style={{ color: '#9C9C9C' }}>
+        <div className="pt-4 border-t" style={{ borderColor: '#EBE8E1' }}>
+          <p className="text-[12px] mb-3" style={{ color: '#6B6760' }}>
             Loguješ se preko GitHub-a i nemaš lozinku? Pošalji link na email i postavi prvu lozinku iz mejla.
           </p>
           {resetSent ? (
-            <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-              <IconCheck size={16} className="text-[#15803d]" /> Email poslat — proveri inbox.
+            <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
+              <IconCheck size={16} className="text-[#1F8A62]" /> Email poslat — proveri inbox.
             </div>
           ) : (
             <button onClick={sendResetEmail} disabled={sendingReset} className="btn btn-secondary btn-md w-full">

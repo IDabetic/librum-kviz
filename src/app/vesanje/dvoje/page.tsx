@@ -79,15 +79,15 @@ export default function VesanjeDvojePage() {
 
   if (step === 'handoff') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#FAFAFA' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F6F4EF' }}>
         <div className="card-soft p-8 max-w-sm text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: '#FFCB46' }}>
-            <IconUsers size={28} className="text-[#343434]" strokeWidth={2.2} />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: '#E2B93A' }}>
+            <IconUsers size={28} className="text-[#1A1A1E]" strokeWidth={2.2} />
           </div>
-          <h1 className="font-black text-[24px] mb-2 tracking-tight" style={{ color: '#343434' }}>
+          <h1 className="font-black text-[24px] mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
             Predaj telefon Igraču 2
           </h1>
-          <p className="text-[14px] mb-7" style={{ color: '#9C9C9C' }}>
+          <p className="text-[14px] mb-7" style={{ color: '#6B6760' }}>
             Reč je sakrivena. Igrač 2 može da krene sa pogađanjem.
           </p>
           <button onClick={() => router.push('/vesanje/start?mode=custom')}
@@ -96,7 +96,7 @@ export default function VesanjeDvojePage() {
           </button>
           <button onClick={() => setStep('enter')}
             className="block w-full mt-4 text-[13px] font-medium transition-opacity hover:opacity-70"
-            style={{ color: '#9C9C9C' }}>
+            style={{ color: '#6B6760' }}>
             ← Promeni reč
           </button>
         </div>
@@ -105,32 +105,32 @@ export default function VesanjeDvojePage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen" style={{ background: '#F6F4EF' }}>
       <Header />
       <main className="max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
         <Link href="/vesanje"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-          style={{ color: '#609DED' }}>
+          style={{ color: '#3A36A0' }}>
           <IconBack size={16} strokeWidth={2.2} />
           Nazad
         </Link>
 
         <div className="text-center mb-8">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#3A36A0' }}>
             Igra za dvoje
           </p>
           <h1 className="font-black tracking-tight leading-[1.1] mb-3"
-            style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+            style={{ color: '#1A1A1E', fontSize: 'clamp(28px, 5vw, 40px)' }}>
             Smisli reč
           </h1>
-          <p className="text-[14px]" style={{ color: '#9C9C9C' }}>
+          <p className="text-[14px]" style={{ color: '#6B6760' }}>
             Dodaj reč i hint — onda biraj kako se igra.
           </p>
         </div>
 
         {/* Mode toggle */}
-        <div className="flex p-1 rounded-full mb-5" style={{ background: '#F2F2F2' }}>
+        <div className="flex p-1 rounded-full mb-5" style={{ background: '#EBE8E1' }}>
           {([
             { id: 'phone', label: 'Na ovom telefonu' },
             { id: 'code',  label: 'Pozovi kodom' },
@@ -138,8 +138,8 @@ export default function VesanjeDvojePage() {
             <button key={m.id} onClick={() => setMode(m.id)}
               className="flex-1 py-2.5 px-3 rounded-full text-[13px] font-semibold transition-all"
               style={mode === m.id
-                ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-                : { color: '#9C9C9C' }}>
+                ? { background: '#FFFDF9', color: '#1A1A1E', boxShadow: '0 2px 8px rgba(26,26,30,0.06)' }
+                : { color: '#6B6760' }}>
               {m.label}
             </button>
           ))}
@@ -147,7 +147,7 @@ export default function VesanjeDvojePage() {
 
         <div className="card-soft p-6 sm:p-7">
           <div className="mb-4">
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
               Kategorija
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
@@ -155,8 +155,8 @@ export default function VesanjeDvojePage() {
                 <button key={c} onClick={() => setCategory(c)}
                   className="py-2 rounded-xl text-[12px] font-bold transition-all"
                   style={category === c
-                    ? { background: '#609DED', color: 'white' }
-                    : { background: '#F2F2F2', color: '#9C9C9C' }}>
+                    ? { background: '#3A36A0', color: 'white' }
+                    : { background: '#EBE8E1', color: '#6B6760' }}>
                   {c}
                 </button>
               ))}
@@ -164,7 +164,7 @@ export default function VesanjeDvojePage() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
               Reč
             </label>
             <input value={word} onChange={e => setWord(e.target.value)}
@@ -172,18 +172,18 @@ export default function VesanjeDvojePage() {
               placeholder="Tačna reč…"
               maxLength={30} autoFocus />
             <div className="flex items-center justify-between mt-2">
-              <p className="text-[11px]" style={{ color: '#9C9C9C' }}>
+              <p className="text-[11px]" style={{ color: '#6B6760' }}>
                 Samo na srpskom · 4-18 slova
               </p>
-              <p className="text-[11px] font-bold" style={{ color: letterCount < 4 || letterCount > 18 ? '#E55353' : '#4CAF50' }}>
+              <p className="text-[11px] font-bold" style={{ color: letterCount < 4 || letterCount > 18 ? '#E55353' : '#2FBF8A' }}>
                 {letterCount} {letterCount === 1 ? 'slovo' : 'slova'}
               </p>
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
-              <IconHint size={14} className="inline mr-1 text-[#FFCB46]" strokeWidth={2.2} />
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
+              <IconHint size={14} className="inline mr-1 text-[#E2B93A]" strokeWidth={2.2} />
               Hint
             </label>
             <textarea value={hint} onChange={e => setHint(e.target.value)}
@@ -191,10 +191,10 @@ export default function VesanjeDvojePage() {
               placeholder="Opisni nagoveštaj — bez direktnog otkrivanja reči."
               maxLength={200} />
             <div className="flex items-center justify-between mt-2">
-              <p className="text-[11px]" style={{ color: '#9C9C9C' }}>
+              <p className="text-[11px]" style={{ color: '#6B6760' }}>
                 Pomaže, ali ne otkriva direktno
               </p>
-              <p className="text-[11px] font-bold" style={{ color: hintTrim.length > 200 ? '#E55353' : '#9C9C9C' }}>
+              <p className="text-[11px] font-bold" style={{ color: hintTrim.length > 200 ? '#E55353' : '#6B6760' }}>
                 {hintTrim.length}/200
               </p>
             </div>
@@ -213,7 +213,7 @@ export default function VesanjeDvojePage() {
               : <><IconShare size={16} strokeWidth={2.2} /> Generiši kod i podeli</>}
           </button>
 
-          <p className="text-[11px] text-center mt-4" style={{ color: '#9C9C9C' }}>
+          <p className="text-[11px] text-center mt-4" style={{ color: '#6B6760' }}>
             {mode === 'phone'
               ? 'Igrač 2 igra na istom telefonu — predaš mu nakon što potvrdiš reč.'
               : 'Igrač 2 otvori link na svom telefonu — pratiš igru u realnom vremenu.'}

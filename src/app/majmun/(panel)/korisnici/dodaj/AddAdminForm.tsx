@@ -57,12 +57,12 @@ export default function AddAdminForm() {
     <div className="card-soft p-6 sm:p-7">
       {/* Step 1: lookup */}
       <form onSubmit={handleLookup}>
-        <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+        <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
           Email korisnika
         </label>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#6B6760' }}>
               <IconEmail size={16} strokeWidth={2} />
             </div>
             <input value={email} onChange={e => setEmail(e.target.value)} type="email"
@@ -72,7 +72,7 @@ export default function AddAdminForm() {
             {busy ? '...' : 'Pronađi'}
           </button>
         </div>
-        <p className="text-[11px] mt-2" style={{ color: '#9C9C9C' }}>
+        <p className="text-[11px] mt-2" style={{ color: '#6B6760' }}>
           Korisnik mora već biti registrovan. Ako nije, podeli mu link za registraciju i probaj kasnije.
         </p>
       </form>
@@ -84,39 +84,39 @@ export default function AddAdminForm() {
       )}
 
       {success && (
-        <div className="rounded-2xl px-4 py-3 mt-4 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-          <IconCheck size={16} className="text-[#15803d]" /> {success}
+        <div className="rounded-2xl px-4 py-3 mt-4 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
+          <IconCheck size={16} className="text-[#1F8A62]" /> {success}
         </div>
       )}
 
       {/* Step 2: assign role */}
       {found && (
-        <div className="mt-6 pt-6 border-t" style={{ borderColor: '#F2F2F2' }}>
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>Pronađen korisnik</p>
-          <div className="rounded-2xl p-4 mb-5" style={{ background: '#F2F2F2' }}>
-            <p className="font-bold text-[15px]" style={{ color: '#343434' }}>{found.name}</p>
-            <p className="text-[12px] mt-1" style={{ color: '#9C9C9C' }}>
+        <div className="mt-6 pt-6 border-t" style={{ borderColor: '#EBE8E1' }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6B6760' }}>Pronađen korisnik</p>
+          <div className="rounded-2xl p-4 mb-5" style={{ background: '#EBE8E1' }}>
+            <p className="font-bold text-[15px]" style={{ color: '#1A1A1E' }}>{found.name}</p>
+            <p className="text-[12px] mt-1" style={{ color: '#6B6760' }}>
               Trenutna uloga: <strong>{ROLE_LABELS[found.currentRole]}</strong>
             </p>
           </div>
 
-          <p className="text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>Postavi novu ulogu</p>
+          <p className="text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#1A1A1E' }}>Postavi novu ulogu</p>
           <div className="space-y-2 mb-5">
             {ASSIGNABLE_ROLES.map(r => (
               <button key={r.id} type="button" onClick={() => setSelectedRole(r.id)}
                 className="w-full flex items-start gap-3 px-4 py-3 rounded-2xl text-left transition-all"
                 style={selectedRole === r.id
-                  ? { background: '#BCD9FF', border: '1.5px solid #609DED' }
-                  : { background: '#F2F2F2', border: '1.5px solid transparent' }}>
+                  ? { background: '#D4D2F5', border: '1.5px solid #3A36A0' }
+                  : { background: '#EBE8E1', border: '1.5px solid transparent' }}>
                 <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={selectedRole === r.id
-                    ? { borderColor: '#609DED', background: '#609DED' }
-                    : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                    ? { borderColor: '#3A36A0', background: '#3A36A0' }
+                    : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
                   {selectedRole === r.id && <div className="w-2 h-2 rounded-full bg-white" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>{r.label}</div>
-                  <div className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>{r.desc}</div>
+                  <div className="font-bold text-[14px] tracking-tight" style={{ color: '#1A1A1E' }}>{r.label}</div>
+                  <div className="text-[12px] mt-0.5" style={{ color: '#6B6760' }}>{r.desc}</div>
                 </div>
               </button>
             ))}

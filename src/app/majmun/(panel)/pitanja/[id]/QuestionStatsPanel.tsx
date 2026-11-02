@@ -34,11 +34,11 @@ export default function QuestionStatsPanel({
   return (
     <div className="card-soft p-6">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 className="font-bold text-[15px] tracking-tight" style={{ color: '#343434' }}>
+        <h2 className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1A1E' }}>
           Statistika pitanja
         </h2>
         {total === 0 && (
-          <span className="text-[11px]" style={{ color: '#9C9C9C' }}>
+          <span className="text-[11px]" style={{ color: '#6B6760' }}>
             Još nema odgovora — sačekaj da igrači odgovore.
           </span>
         )}
@@ -59,7 +59,7 @@ export default function QuestionStatsPanel({
 
       {topWrong.length > 0 && (
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9C9C9C' }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6B6760' }}>
             Najčešći pogrešni odgovori
           </p>
           <div className="space-y-1.5">
@@ -67,8 +67,8 @@ export default function QuestionStatsPanel({
               const opt = question.options[idx] ?? `Opcija ${idx}`
               const pct = wrongPickPct(idx, count)
               return (
-                <div key={idx} className="flex items-center gap-3 text-[13px]" style={{ color: '#343434' }}>
-                  <span className="font-mono text-[11px] flex-shrink-0" style={{ color: '#9C9C9C' }}>
+                <div key={idx} className="flex items-center gap-3 text-[13px]" style={{ color: '#1A1A1E' }}>
+                  <span className="font-mono text-[11px] flex-shrink-0" style={{ color: '#6B6760' }}>
                     #{idx}
                   </span>
                   <span className="flex-1 truncate">{opt}</span>
@@ -89,14 +89,14 @@ function Stat({ label, value, tone }: {
   label: string; value: number | string; tone?: 'ok' | 'warn' | 'bad'
 }) {
   const color =
-    tone === 'ok'   ? '#15803d' :
-    tone === 'warn' ? '#9c7a13' :
+    tone === 'ok'   ? '#1F8A62' :
+    tone === 'warn' ? '#8A6A12' :
     tone === 'bad'  ? '#b91c1c' :
-                      '#343434'
+                      '#1A1A1E'
   return (
-    <div className="rounded-2xl p-3 text-center" style={{ background: '#F2F2F2' }}>
+    <div className="rounded-2xl p-3 text-center" style={{ background: '#EBE8E1' }}>
       <div className="font-black text-[16px] tracking-tight" style={{ color }}>{value}</div>
-      <div className="text-[10px] mt-0.5" style={{ color: '#9C9C9C' }}>{label}</div>
+      <div className="text-[10px] mt-0.5" style={{ color: '#6B6760' }}>{label}</div>
     </div>
   )
 }

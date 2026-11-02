@@ -76,16 +76,16 @@ export default async function PrijavePage({ searchParams }: { searchParams: Prom
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+          <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>
             Prijavljena pitanja
           </h1>
-          <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>
+          <p className="text-[13px] mt-1" style={{ color: '#6B6760' }}>
             {count ?? rows.length} ukupno · prikaz: {filter === 'all' ? 'sve' : filter}
           </p>
         </div>
       </div>
 
-      <div className="flex p-1 rounded-full max-w-md" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full max-w-md" style={{ background: '#EBE8E1' }}>
         {[
           { id: 'pending',  label: `Na čekanju (${statusCounts.pending ?? 0})` },
           { id: 'reviewed', label: `Pregledano (${statusCounts.reviewed ?? 0})` },
@@ -95,8 +95,8 @@ export default async function PrijavePage({ searchParams }: { searchParams: Prom
           <a key={t.id} href={`/majmun/prijave?status=${t.id}`}
             className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap text-center"
             style={filter === t.id
-              ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-              : { color: '#9C9C9C' }}>
+              ? { background: '#FFFDF9', color: '#1A1A1E', boxShadow: '0 2px 8px rgba(26,26,30,0.06)' }
+              : { color: '#6B6760' }}>
             {t.label}
           </a>
         ))}

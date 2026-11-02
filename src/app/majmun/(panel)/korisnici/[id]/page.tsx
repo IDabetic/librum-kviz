@@ -144,21 +144,21 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   return (
     <div className="max-w-3xl space-y-5">
 
-      <Link href="/majmun/korisnici" className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+      <Link href="/majmun/korisnici" className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-opacity hover:opacity-70" style={{ color: '#3A36A0' }}>
         <IconBack size={16} strokeWidth={2.2} /> Svi korisnici
       </Link>
 
       <div className="card-soft p-6">
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+          <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
             {u.avatar
               ? <Image src={`/avatars/${u.avatar}`} alt={name} width={64} height={64} className="w-full h-full object-cover" />
-              : <div className="w-full h-full flex items-center justify-center font-bold text-[20px] text-white" style={{ background: '#609DED' }}>{name[0]}</div>}
+              : <div className="w-full h-full flex items-center justify-center font-bold text-[20px] text-white" style={{ background: '#3A36A0' }}>{name[0]}</div>}
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="font-black tracking-tight truncate" style={{ color: '#343434', fontSize: 'clamp(20px, 4vw, 26px)' }}>{name}</h1>
-            <p className="text-[13px] truncate" style={{ color: '#9C9C9C' }}>{u.email}{u.city ? ` · ${u.city}` : ''}</p>
-            <p className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>
+            <h1 className="font-black tracking-tight truncate" style={{ color: '#1A1A1E', fontSize: 'clamp(20px, 4vw, 26px)' }}>{name}</h1>
+            <p className="text-[13px] truncate" style={{ color: '#6B6760' }}>{u.email}{u.city ? ` · ${u.city}` : ''}</p>
+            <p className="text-[11px] mt-0.5" style={{ color: '#6B6760' }}>
               ID: {u.id.substring(0, 8)}… · Pridružio se {new Date(u.created_at).toLocaleDateString('sr')}
               {lastActivity && ` · Poslednja aktivnost ${fmtAgo(lastActivity)}`}
             </p>
@@ -173,7 +173,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       {/* Per-answer log overview (most precise time data) */}
       {logTotal > 0 && (
         <div className="card-soft p-5">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>
             Pojedinačni odgovori (PRO + Brzi)
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -188,15 +188,15 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
 
       {/* Last 10 individual answers — text + time + correct/wrong */}
       <div className="card-soft p-5">
-        <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
+        <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>
           Poslednjih {Math.max(last10.length, 0) || 10} odgovora
         </p>
         {last10.length === 0 ? (
-          <p className="text-[13px]" style={{ color: '#9C9C9C' }}>
+          <p className="text-[13px]" style={{ color: '#6B6760' }}>
             Nema zapisa pojedinačnih odgovora. Per-answer logging je uključen 07.05.2026. u 09:30 —
             ako je korisnik poslednji put igrao pre toga, sesije postoje ali pojedinačni odgovori nisu sačuvani.
             {sTotal > 0 || qTotal > 0 ? (
-              <span style={{ color: '#9c7a13' }}>
+              <span style={{ color: '#8A6A12' }}>
                 {' '}Korisnik ima ukupno {sTotal + qTotal} sesija ali bez detaljnih zapisa — što
                 može značiti da nije igrao posle 09:30 ili da je skor unet zaobilaženjem klijenta.
               </span>
@@ -209,24 +209,24 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
               const sec = (l.time_ms / 1000).toFixed(1)
               const fast = l.time_ms < 3000
               return (
-                <div key={i} className="flex items-start gap-3 py-2.5 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+                <div key={i} className="flex items-start gap-3 py-2.5 border-b last:border-0" style={{ borderColor: '#EBE8E1' }}>
                   <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[12px] font-bold"
                     style={{
-                      background: l.was_correct ? '#E8F8F0' : '#FEE2E2',
-                      color: l.was_correct ? '#15803d' : '#b91c1c',
+                      background: l.was_correct ? '#D4F3E7' : '#FEE2E2',
+                      color: l.was_correct ? '#1F8A62' : '#b91c1c',
                     }}>
                     {l.was_correct ? '✓' : '✗'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] leading-snug line-clamp-2" style={{ color: '#343434' }}>
-                      {text || <span style={{ color: '#9C9C9C' }}>(pitanje obrisano)</span>}
+                    <p className="text-[13px] leading-snug line-clamp-2" style={{ color: '#1A1A1E' }}>
+                      {text || <span style={{ color: '#6B6760' }}>(pitanje obrisano)</span>}
                     </p>
-                    <p className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>
+                    <p className="text-[11px] mt-0.5" style={{ color: '#6B6760' }}>
                       {new Date(l.created_at).toLocaleString('sr', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                   <div className="font-bold text-[13px] flex-shrink-0 tabular-nums"
-                    style={{ color: fast ? '#E55353' : '#343434' }}>
+                    style={{ color: fast ? '#E55353' : '#1A1A1E' }}>
                     {sec}s
                   </div>
                 </div>
@@ -237,15 +237,15 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
-        <StatCard label="PRO kviz" total={sTotal} primary={sBest} primaryLabel="Rekord" accent="#609DED" bg="#BCD9FF"
+        <StatCard label="PRO kviz" total={sTotal} primary={sBest} primaryLabel="Rekord" accent="#3A36A0" bg="#D4D2F5"
           extra={proAvgSecPerQ != null ? `Prosek ${fmtSec(proAvgSecPerQ)} po pitanju` : undefined} />
-        <StatCard label="Book kviz" total={bTotal} primary={bBest} primaryLabel="Rekord" accent="#9c7a13" bg="#FFECBC"
+        <StatCard label="Book kviz" total={bTotal} primary={bBest} primaryLabel="Rekord" accent="#8A6A12" bg="#F5E6B8"
           extra={bTopGenre ? `Najjači žanr: ${bTopGenre}` : undefined} />
         <StatCard label="Trivia duel" total={duelTotal}
           primary={duelWinPct != null ? `${duelWinPct}%` : '—'}
           primaryLabel={`${duelWins}W · ${duelLosses}L · ${duelTies}T`}
-          accent="#9c7a13" bg="#FFECBC" />
-        <StatCard label="Vešanje" total={hTotal} primary={hWins} primaryLabel="Pobeda" accent="#15803d" bg="#E8F8F0" />
+          accent="#8A6A12" bg="#F5E6B8" />
+        <StatCard label="Vešanje" total={hTotal} primary={hWins} primaryLabel="Pobeda" accent="#1F8A62" bg="#D4F3E7" />
         <StatCard label="Brzi kviz" total={qTotal} primary={qBest} primaryLabel="Rekord" accent="#b91c1c" bg="#FEE2E2"
           extra={quickAvgSecPerQ != null ? `Prosek ${fmtSec(quickAvgSecPerQ)} po pitanju` : undefined} />
       </div>
@@ -253,20 +253,20 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       {/* Recent PRO sessions */}
       {survivorRows.length > 0 && (
         <div className="card-soft p-5">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>Skorašnje PRO partije</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>Skorašnje PRO partije</p>
           <div className="space-y-1">
             {survivorRows.slice(0, 8).map((s, i) => {
               const secPerQ = s.questions_reached > 0 ? s.total_time_seconds / s.questions_reached : null
               const fast = secPerQ != null && secPerQ < 5
               return (
-                <div key={i} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
-                  <div className="text-[13px] flex-1 min-w-0" style={{ color: '#343434' }}>
+                <div key={i} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: '#EBE8E1' }}>
+                  <div className="text-[13px] flex-1 min-w-0" style={{ color: '#1A1A1E' }}>
                     {s.questions_reached} pitanja · niz {s.best_combo} · {Number(s.accuracy).toFixed(0)}% tačnih
                   </div>
-                  <div className="text-[12px] flex-shrink-0" style={{ color: fast ? '#E55353' : '#9C9C9C' }}>
+                  <div className="text-[12px] flex-shrink-0" style={{ color: fast ? '#E55353' : '#6B6760' }}>
                     {secPerQ != null ? `${secPerQ.toFixed(1)}s/pit` : '—'}
                   </div>
-                  <div className="font-bold text-[14px] w-12 text-right" style={{ color: '#609DED' }}>{s.score}</div>
+                  <div className="font-bold text-[14px] w-12 text-right" style={{ color: '#3A36A0' }}>{s.score}</div>
                 </div>
               )
             })}
@@ -277,19 +277,19 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       {/* Recent duels */}
       {duels.length > 0 && (
         <div className="card-soft p-5">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>Skorašnji dueli</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>Skorašnji dueli</p>
           <div className="space-y-1">
             {duels.slice(0, 8).map((d, i) => {
-              const result = (d.mine ?? 0) > (d.theirs ?? 0) ? { l: 'Pobeda', c: '#15803d' }
+              const result = (d.mine ?? 0) > (d.theirs ?? 0) ? { l: 'Pobeda', c: '#1F8A62' }
                           : (d.mine ?? 0) < (d.theirs ?? 0) ? { l: 'Poraz',  c: '#b91c1c' }
-                          : { l: 'Nereš.', c: '#9C9C9C' }
+                          : { l: 'Nereš.', c: '#6B6760' }
               return (
-                <div key={d.id || i} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
-                  <div className="text-[13px] flex-1 min-w-0" style={{ color: '#343434' }}>
+                <div key={d.id || i} className="flex items-center justify-between gap-3 py-2 border-b last:border-0" style={{ borderColor: '#EBE8E1' }}>
+                  <div className="text-[13px] flex-1 min-w-0" style={{ color: '#1A1A1E' }}>
                     {new Date(d.created_at!).toLocaleDateString('sr')}
                   </div>
                   <div className="text-[12px] flex-shrink-0 font-semibold" style={{ color: result.c }}>{result.l}</div>
-                  <div className="font-bold text-[14px] w-20 text-right" style={{ color: '#343434' }}>{d.mine ?? 0} : {d.theirs ?? 0}</div>
+                  <div className="font-bold text-[14px] w-20 text-right" style={{ color: '#1A1A1E' }}>{d.mine ?? 0} : {d.theirs ?? 0}</div>
                 </div>
               )
             })}
@@ -304,14 +304,14 @@ function Stat({ label, value, tone }: {
   label: string; value: number | string; tone?: 'ok' | 'warn' | 'bad'
 }) {
   const color =
-    tone === 'ok'   ? '#15803d' :
-    tone === 'warn' ? '#9c7a13' :
+    tone === 'ok'   ? '#1F8A62' :
+    tone === 'warn' ? '#8A6A12' :
     tone === 'bad'  ? '#b91c1c' :
-                      '#343434'
+                      '#1A1A1E'
   return (
-    <div className="rounded-2xl p-3 text-center" style={{ background: '#F2F2F2' }}>
+    <div className="rounded-2xl p-3 text-center" style={{ background: '#EBE8E1' }}>
       <div className="font-black text-[16px] tracking-tight" style={{ color }}>{value}</div>
-      <div className="text-[10px] mt-0.5" style={{ color: '#9C9C9C' }}>{label}</div>
+      <div className="text-[10px] mt-0.5" style={{ color: '#6B6760' }}>{label}</div>
     </div>
   )
 }
@@ -323,11 +323,11 @@ function StatCard({ label, total, primary, primaryLabel, accent, bg, extra }: {
     <div className="card-soft p-5">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-2 h-2 rounded-full" style={{ background: accent }} />
-        <p className="font-bold text-[13px] tracking-tight" style={{ color: '#343434' }}>{label}</p>
+        <p className="font-bold text-[13px] tracking-tight" style={{ color: '#1A1A1E' }}>{label}</p>
       </div>
       <p className="font-black tracking-tight leading-none" style={{ color: accent, fontSize: 'clamp(22px, 4vw, 28px)' }}>{primary}</p>
-      <p className="text-[11px] mt-1" style={{ color: '#9C9C9C' }}>{primaryLabel} · {total} sesija</p>
-      {extra && <p className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>{extra}</p>}
+      <p className="text-[11px] mt-1" style={{ color: '#6B6760' }}>{primaryLabel} · {total} sesija</p>
+      {extra && <p className="text-[11px] mt-0.5" style={{ color: '#6B6760' }}>{extra}</p>}
       <div className="mt-3 h-1 rounded-full" style={{ background: bg }} />
     </div>
   )

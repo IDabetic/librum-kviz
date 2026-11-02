@@ -62,7 +62,7 @@ export default function UserActions({ userId, email, isBlocked }: Props) {
 
   return (
     <div className="card-soft p-5">
-      <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
+      <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>
         Admin akcije
       </p>
 
@@ -108,7 +108,7 @@ export default function UserActions({ userId, email, isBlocked }: Props) {
 
       {msg && (
         <p className="mt-3 text-[12px] font-medium"
-          style={{ color: msg.kind === 'ok' ? '#15803d' : '#b91c1c' }}>
+          style={{ color: msg.kind === 'ok' ? '#1F8A62' : '#b91c1c' }}>
           {msg.text}
         </p>
       )}
@@ -116,12 +116,12 @@ export default function UserActions({ userId, email, isBlocked }: Props) {
       {/* ── Set-password modal ───────────────────────────────────── */}
       {showPwdModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
-          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          style={{ background: 'rgba(26,26,30,0.40)' }}>
           <div className="card-soft p-6 max-w-sm w-full">
-            <h3 className="font-black text-[18px] tracking-tight mb-2" style={{ color: '#343434' }}>
+            <h3 className="font-black text-[18px] tracking-tight mb-2" style={{ color: '#1A1A1E' }}>
               Postavi novu lozinku
             </h3>
-            <p className="text-[12px] mb-4" style={{ color: '#9C9C9C' }}>
+            <p className="text-[12px] mb-4" style={{ color: '#6B6760' }}>
               Korisnik će moći da se uloguje sa ovom lozinkom. Pošalji mu je usmeno ili šifrovanim kanalom — nemoj preko običnog maila.
             </p>
             <input
@@ -166,8 +166,8 @@ function Button({ children, kind, onClick, disabled, busy, title }: {
   title?: string
 }) {
   const colors = {
-    primary: { bg: '#609DED', fg: 'white' },
-    secondary: { bg: '#F2F2F2', fg: '#343434' },
+    primary: { bg: '#3A36A0', fg: 'white' },
+    secondary: { bg: '#EBE8E1', fg: '#1A1A1E' },
     danger: { bg: '#E55353', fg: 'white' },
   }[kind]
   return (

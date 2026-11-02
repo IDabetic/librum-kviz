@@ -16,12 +16,12 @@ export default async function PolitikaPrivatnosti() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F6F4EF' }}>
       {user ? (
         <Header />
       ) : (
         <nav className="sticky top-0 z-40 backdrop-blur-xl"
-          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(26,26,30,0.06)' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <Logo height={36} />
             <Link href="/auth/prijava" className="btn btn-primary btn-sm">Prijava</Link>
@@ -30,23 +30,23 @@ export default async function PolitikaPrivatnosti() {
       )}
 
       <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
-        <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
+        <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#3A36A0' }}>
           Pravna obaveštenja
         </p>
         <h1 className="font-black tracking-tight leading-[1.05] mb-3"
-          style={{ color: '#343434', fontSize: 'clamp(36px, 7vw, 48px)' }}>
+          style={{ color: '#1A1A1E', fontSize: 'clamp(36px, 7vw, 48px)' }}>
           Politika privatnosti
         </h1>
-        <p className="text-[13px] mb-8" style={{ color: '#9C9C9C' }}>
+        <p className="text-[13px] mb-8" style={{ color: '#6B6760' }}>
           Poslednja izmena: maj 2026.
         </p>
 
-        <article className="card-soft p-7 sm:p-10 space-y-6 text-[15px] leading-relaxed" style={{ color: '#343434' }}>
+        <article className="card-soft p-7 sm:p-10 space-y-6 text-[15px] leading-relaxed" style={{ color: '#1A1A1E' }}>
           <Section title="1. Ko smo">
             <p>
               Librum kviz (u daljem tekstu „Servis“) je besplatna onlajn platforma za igre znanja na srpskom jeziku,
               dostupna na adresi <strong>kviz.librum.club</strong>. Servis vodi <strong>Librum</strong>, a kontakt za sva pitanja vezana
-              za privatnost je <a href="mailto:info@librum.club" className="underline" style={{ color: '#609DED' }}>info@librum.club</a>.
+              za privatnost je <a href="mailto:info@librum.club" className="underline" style={{ color: '#3A36A0' }}>info@librum.club</a>.
             </p>
             <p>
               Ova politika opisuje koje podatke prikupljamo, zašto ih prikupljamo, kako ih koristimo i čuvamo, sa kim ih delimo
@@ -125,9 +125,9 @@ export default async function PolitikaPrivatnosti() {
               <li>Zatražite brisanje naloga i svih povezanih podataka.</li>
               <li>Povučete saglasnost u svakom trenutku.</li>
               <li>Podnesete prigovor Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti
-                (<a href="https://poverenik.rs" target="_blank" rel="noopener" className="underline" style={{ color: '#609DED' }}>poverenik.rs</a>).</li>
+                (<a href="https://poverenik.rs" target="_blank" rel="noopener" className="underline" style={{ color: '#3A36A0' }}>poverenik.rs</a>).</li>
             </ul>
-            <p>Zahtev za bilo koje od ovih prava šaljete na <a href="mailto:info@librum.club" className="underline" style={{ color: '#609DED' }}>info@librum.club</a> sa naslovom „Zahtev za zaštitu podataka“. Odgovaramo u roku od 30 dana.</p>
+            <p>Zahtev za bilo koje od ovih prava šaljete na <a href="mailto:info@librum.club" className="underline" style={{ color: '#3A36A0' }}>info@librum.club</a> sa naslovom „Zahtev za zaštitu podataka“. Odgovaramo u roku od 30 dana.</p>
           </Section>
 
           <Section title="9. Bezbednost">
@@ -154,7 +154,7 @@ export default async function PolitikaPrivatnosti() {
 
           <Section title="12. Kontakt">
             <p>
-              Za sva pitanja o privatnosti pišite nam na <a href="mailto:info@librum.club" className="underline" style={{ color: '#609DED' }}>info@librum.club</a>.
+              Za sva pitanja o privatnosti pišite nam na <a href="mailto:info@librum.club" className="underline" style={{ color: '#3A36A0' }}>info@librum.club</a>.
               Trudimo se da odgovorimo u roku od 5 radnih dana.
             </p>
           </Section>
@@ -169,7 +169,7 @@ export default async function PolitikaPrivatnosti() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="font-black text-[20px] tracking-tight" style={{ color: '#343434' }}>{title}</h2>
+      <h2 className="font-black text-[20px] tracking-tight" style={{ color: '#1A1A1E' }}>{title}</h2>
       <div className="space-y-3">{children}</div>
     </section>
   )

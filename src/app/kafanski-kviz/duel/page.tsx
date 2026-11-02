@@ -163,7 +163,7 @@ export default function KafanaDuelLobby() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen" style={{ background: '#F6F4EF' }}>
       <Header />
       <main className="max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="text-center mb-10">
@@ -171,21 +171,21 @@ export default function KafanaDuelLobby() {
             Kafanski multiplayer
           </p>
           <h1 className="font-black tracking-tight leading-[1.1] mb-3"
-            style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
+            style={{ color: '#1A1A1E', fontSize: 'clamp(32px, 5vw, 48px)' }}>
             Kafanski duel
           </h1>
-          <p className="text-[14px] sm:text-[15px]" style={{ color: '#9C9C9C' }}>
+          <p className="text-[14px] sm:text-[15px]" style={{ color: '#6B6760' }}>
             Izazovi prijatelja u znanju kafanskih hitova.
           </p>
         </div>
 
-        <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto" style={{ background: '#F2F2F2' }}>
+        <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto" style={{ background: '#EBE8E1' }}>
           {(['create', 'join'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className="flex-1 py-2.5 rounded-full text-[14px] font-semibold transition-all"
               style={tab === t
-                ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-                : { color: '#9C9C9C' }}>
+                ? { background: '#FFFDF9', color: '#1A1A1E', boxShadow: '0 2px 8px rgba(26,26,30,0.06)' }
+                : { color: '#6B6760' }}>
               {t === 'create' ? 'Kreiraj' : 'Pridruži se'}
             </button>
           ))}
@@ -195,7 +195,7 @@ export default function KafanaDuelLobby() {
           <div className="card-soft p-6 sm:p-8">
             {!createdCode ? (
               <>
-                <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
+                <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#1A1A1E' }}>
                   Dužina duela
                 </label>
 
@@ -207,24 +207,24 @@ export default function KafanaDuelLobby() {
                         className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-left transition-all"
                         style={sel
                           ? { background: '#FEE2E2', border: `1.5px solid ${ACCENT}` }
-                          : { background: '#F2F2F2', border: '1.5px solid transparent' }}>
+                          : { background: '#EBE8E1', border: '1.5px solid transparent' }}>
                         <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
                           style={sel
                             ? { borderColor: ACCENT, background: ACCENT }
-                            : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                            : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
                           {sel && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         <div className="flex-1">
-                          <div className="font-bold text-[15px] tracking-tight" style={{ color: '#343434' }}>{f.label}</div>
-                          <div className="text-[12px]" style={{ color: '#9C9C9C' }}>{f.desc}</div>
+                          <div className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1A1E' }}>{f.label}</div>
+                          <div className="text-[12px]" style={{ color: '#6B6760' }}>{f.desc}</div>
                         </div>
                       </button>
                     )
                   })}
                 </div>
 
-                <div className="rounded-2xl p-4 mb-5" style={{ background: '#FFECBC' }}>
-                  <p className="text-[12px] font-semibold leading-relaxed" style={{ color: '#9c7a13' }}>
+                <div className="rounded-2xl p-4 mb-5" style={{ background: '#F5E6B8' }}>
+                  <p className="text-[12px] font-semibold leading-relaxed" style={{ color: '#8A6A12' }}>
                     Oba igrača dobijaju <strong>ista pitanja iz Kafanskog kviza</strong>. Tačan +10, pogrešan -5, vreme istekne -5. 15 sekundi po pitanju. Bez života, bez pomoći.
                   </p>
                 </div>
@@ -237,7 +237,7 @@ export default function KafanaDuelLobby() {
               </>
             ) : (
               <>
-                <p className="text-[13px] mb-2 text-center" style={{ color: '#9C9C9C' }}>
+                <p className="text-[13px] mb-2 text-center" style={{ color: '#6B6760' }}>
                   {guestJoined ? `${guestName} se pridružio/la` : 'Podeli kod sa prijateljem'}
                 </p>
                 <div className="font-black text-center py-5 px-7 rounded-2xl mb-5 mx-auto"
@@ -246,7 +246,7 @@ export default function KafanaDuelLobby() {
                 </div>
 
                 {!guestJoined ? (
-                  <p className="text-center text-[13px]" style={{ color: '#9C9C9C' }}>
+                  <p className="text-center text-[13px]" style={{ color: '#6B6760' }}>
                     Čekamo {waitingForGuest && '…'}
                   </p>
                 ) : (
@@ -263,7 +263,7 @@ export default function KafanaDuelLobby() {
 
         {tab === 'join' && (
           <div className="card-soft p-6 sm:p-8">
-            <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
+            <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#1A1A1E' }}>
               Šifra sobe
             </label>
             <input

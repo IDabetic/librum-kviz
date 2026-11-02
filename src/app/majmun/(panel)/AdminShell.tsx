@@ -57,42 +57,42 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
   const displayName = profile.nickname || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Admin'
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen flex" style={{ background: '#F6F4EF' }}>
 
       {/* ── Mobile top bar ───────────────────────────────────────────── */}
       <div className="lg:hidden fixed top-0 inset-x-0 z-40 backdrop-blur-xl flex items-center justify-between px-4 py-3"
-        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,26,30,0.06)' }}>
         <Logo height={24} />
         <button onClick={() => setOpen(o => !o)}
           className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: open ? '#343434' : 'rgba(52,52,52,0.06)', color: open ? 'white' : '#343434' }}>
+          style={{ background: open ? '#1A1A1E' : 'rgba(26,26,30,0.06)', color: open ? 'white' : '#1A1A1E' }}>
           {open ? <IconClose size={18} strokeWidth={2.2} /> : <IconMenu size={18} strokeWidth={2.2} />}
         </button>
       </div>
 
       {/* ── Sidebar ──────────────────────────────────────────────────── */}
       <aside className={`fixed lg:sticky top-0 z-50 lg:z-auto h-screen w-72 flex-shrink-0 transition-transform lg:transition-none ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-        style={{ background: '#FCFCFC', borderRight: '1px solid rgba(52,52,52,0.06)' }}>
+        style={{ background: '#FFFDF9', borderRight: '1px solid rgba(26,26,30,0.06)' }}>
         <div className="flex flex-col h-full">
 
           {/* Logo block */}
           <div className="px-6 pt-7 pb-6">
             <Logo height={36} href={null} />
-            <p className="text-[10px] font-bold uppercase tracking-widest mt-1.5" style={{ color: '#9C9C9C' }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-1.5" style={{ color: '#6B6760' }}>
               Admin panel
             </p>
           </div>
 
           {/* User card */}
-          <div className="mx-4 mb-5 p-3 rounded-2xl flex items-center gap-3" style={{ background: '#F2F2F2' }}>
+          <div className="mx-4 mb-5 p-3 rounded-2xl flex items-center gap-3" style={{ background: '#EBE8E1' }}>
             <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-white">
               {profile.avatar
                 ? <Image src={`/avatars/${profile.avatar}`} alt={displayName} width={40} height={40} className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#609DED', color: 'white' }}>{displayName[0]}</div>}
+                : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#3A36A0', color: 'white' }}>{displayName[0]}</div>}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-bold text-[13px] truncate" style={{ color: '#343434' }}>{displayName}</p>
-              <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: '#9C9C9C' }}>
+              <p className="font-bold text-[13px] truncate" style={{ color: '#1A1A1E' }}>{displayName}</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: '#6B6760' }}>
                 {profile.role.replace('_', ' ')}
               </p>
             </div>
@@ -108,15 +108,15 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
                 <Link key={href} href={href} onClick={() => setOpen(false)}
                   className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-[14px] font-semibold transition-all"
                   style={active
-                    ? { background: '#343434', color: '#FCFCFC' }
-                    : { color: '#343434' }}
-                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = '#F2F2F2' }}
+                    ? { background: '#1A1A1E', color: '#FFFDF9' }
+                    : { color: '#1A1A1E' }}
+                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = '#EBE8E1' }}
                   onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}>
                   <Icon size={16} strokeWidth={2.2} />
                   <span className="flex-1">{label}</span>
                   {hint && (
                     <span className="text-[10px] font-medium uppercase tracking-wider"
-                      style={{ color: active ? 'rgba(252,252,252,0.55)' : '#9C9C9C' }}>
+                      style={{ color: active ? 'rgba(252,252,252,0.55)' : '#6B6760' }}>
                       {hint}
                     </span>
                   )}
@@ -126,11 +126,11 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
           </nav>
 
           {/* Bottom actions */}
-          <div className="p-4 mt-3 border-t space-y-1" style={{ borderColor: '#F2F2F2' }}>
+          <div className="p-4 mt-3 border-t space-y-1" style={{ borderColor: '#EBE8E1' }}>
             <Link href="/majmun/podesavanja" onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-[14px] font-semibold transition-colors"
-              style={{ color: '#343434' }}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = '#F2F2F2'}
+              style={{ color: '#1A1A1E' }}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = '#EBE8E1'}
               onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'}>
               <IconSettings size={16} strokeWidth={2.2} />
               Podešavanja
@@ -143,7 +143,7 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
               <IconLogout size={16} strokeWidth={2.2} />
               Odjava
             </button>
-            <Link href="/" className="block text-center text-[11px] mt-3 transition-opacity hover:opacity-70" style={{ color: '#9C9C9C' }}>
+            <Link href="/" className="block text-center text-[11px] mt-3 transition-opacity hover:opacity-70" style={{ color: '#6B6760' }}>
               ← Nazad na sajt
             </Link>
           </div>
@@ -152,7 +152,7 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
 
       {/* Backdrop on mobile when open */}
       {open && (
-        <div onClick={() => setOpen(false)} className="lg:hidden fixed inset-0 z-40" style={{ background: 'rgba(52,52,52,0.40)' }} />
+        <div onClick={() => setOpen(false)} className="lg:hidden fixed inset-0 z-40" style={{ background: 'rgba(26,26,30,0.40)' }} />
       )}
 
       {/* ── Main ────────────────────────────────────────────────────── */}

@@ -51,7 +51,7 @@ function PrijavaForm() {
         <button
           onClick={() => { setForgotMode(false); setResetSent(false) }}
           className="flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-colors hover:opacity-70"
-          style={{ color: '#609DED' }}
+          style={{ color: '#3A36A0' }}
         >
           <IconBack size={16} strokeWidth={2.2} />
           Nazad na prijavu
@@ -60,17 +60,17 @@ function PrijavaForm() {
         {resetSent ? (
           <div className="text-center py-4">
             <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ background: '#FFECBC' }}>
-              <IconCheck size={28} className="text-[#FFCB46]" />
+              style={{ background: '#F5E6B8' }}>
+              <IconCheck size={28} className="text-[#E2B93A]" />
             </div>
-            <h3 className="font-bold text-[17px] mb-2" style={{ color: '#343434' }}>Email je poslat!</h3>
-            <p className="text-[14px] leading-relaxed" style={{ color: '#9C9C9C' }}>
-              Proveri inbox (i spam) na <span className="font-semibold" style={{ color: '#343434' }}>{resetEmail}</span>.
+            <h3 className="font-bold text-[17px] mb-2" style={{ color: '#1A1A1E' }}>Email je poslat!</h3>
+            <p className="text-[14px] leading-relaxed" style={{ color: '#6B6760' }}>
+              Proveri inbox (i spam) na <span className="font-semibold" style={{ color: '#1A1A1E' }}>{resetEmail}</span>.
             </p>
           </div>
         ) : (
           <form onSubmit={handleForgot} className="space-y-4">
-            <p className="text-[13px] mb-1" style={{ color: '#9C9C9C' }}>
+            <p className="text-[13px] mb-1" style={{ color: '#6B6760' }}>
               Poslaćemo ti link za novu lozinku.
             </p>
             <InputWithIcon
@@ -96,7 +96,7 @@ function PrijavaForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {potvrdjeno && (
-        <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#E8F8F0', color: '#15803d' }}>
+        <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
           ✓ Email potvrđen — prijavi se ispod.
         </div>
       )}
@@ -133,7 +133,7 @@ function PrijavaForm() {
         />
         <div className="flex justify-end mt-2">
           <button type="button" onClick={() => { setForgotMode(true); setResetEmail(email) }}
-            className="text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+            className="text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#3A36A0' }}>
             Zaboravljena lozinka?
           </button>
         </div>
@@ -156,14 +156,14 @@ function InputWithIcon({
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="relative">
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#9C9C9C' }}>
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#6B6760' }}>
         <Icon size={18} strokeWidth={2} />
       </div>
       <input {...props} className="input pl-11 pr-11" />
       {RightIcon && (
         <button type="button" onClick={onRightIconClick}
           className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-opacity hover:opacity-70"
-          style={{ color: '#9C9C9C' }}>
+          style={{ color: '#6B6760' }}>
           <RightIcon size={18} strokeWidth={2} />
         </button>
       )}
@@ -173,23 +173,22 @@ function InputWithIcon({
 
 export default function PrijavaPage() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
-      {/* Top bar */}
-      <nav className="sticky top-0 z-40 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Logo height={36} />
-          <Link href="/auth/registracija" className="btn btn-secondary btn-sm">Registracija</Link>
+    <div className="page-ink min-h-screen flex flex-col">
+      <nav className="sticky top-0 z-40" style={{ background: '#F4EFE6' }}>
+        <div className="h-[3px]" style={{ background: 'linear-gradient(90deg, #3A36A0 0%, #3B78E0 50%, #2FBF8A 100%)' }} />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between" style={{ borderBottom: '1px solid #12101A' }}>
+          <Logo height={32} />
+          <Link href="/auth/registracija" className="btn btn-primary btn-sm">Registracija</Link>
         </div>
       </nav>
 
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:py-20">
         <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="font-black tracking-tight mb-2" style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 40px)' }}>
-              Dobrodošao/la nazad.
+          <div className="mb-8">
+            <h1 className="leading-[0.95] mb-3" style={{ color: '#F4EFE6', fontSize: 'clamp(40px, 8vw, 64px)', fontWeight: 500 }}>
+              Prijava.
             </h1>
-            <p className="text-[14px]" style={{ color: '#9C9C9C' }}>Prijavi se na svoj nalog.</p>
+            <p className="text-[15px]" style={{ color: '#A39E95' }}>Istom nalogom igraš sve kvizove.</p>
           </div>
 
           <div className="card-soft p-7 sm:p-8">
@@ -198,9 +197,9 @@ export default function PrijavaPage() {
             </Suspense>
           </div>
 
-          <p className="text-center mt-6 text-[14px]" style={{ color: '#9C9C9C' }}>
+          <p className="text-center mt-6 text-[14px]" style={{ color: '#A39E95' }}>
             Nemaš nalog?{' '}
-            <Link href="/auth/registracija" className="font-semibold transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+            <Link href="/auth/registracija" className="font-semibold underline" style={{ color: '#F4EFE6' }}>
               Registruj se
             </Link>
           </p>

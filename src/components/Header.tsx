@@ -6,21 +6,22 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState, useRef } from 'react'
 import {
-  IconHome, IconTrophy, IconUsers,
+  IconHome, IconTrophy, IconUsers, IconQuestion,
   IconMenu, IconClose, IconLogout, IconStar,
 } from './icons'
 import { Logo } from './Logo'
+import { jeAutorPitanja, PRAG_PODRAZUMEVANO } from '@/lib/bedzevi'
 
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
-type Contributor = { id: string; first_name: string | null; last_name: string | null; nickname: string | null; avatar: string | null; reports: number; submissions: number; total_contributions: number }
+type Contributor = { id: string; first_name: string | null; last_name: string | null; nickname: string | null; avatar: string | null; reports: number; submissions: number; total_contributions: number; accepted: number }
 
 // Top-level nav. "Igre" is a hub page (/igre) with a colorful card grid;
 // the header itself stays a slim row of plain links — no dropdown.
 const NAV_LINKS = [
-  { href: '/igre',             label: 'Igre',             Icon: IconHome,    accent: '#609DED', tint: 'rgba(96,157,237,0.12)' },
-  { href: '/ranglista',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#9c7a13', tint: 'rgba(255,203,70,0.18)' },
-  { href: '/nagrade',          label: 'Nagrade',          Icon: IconStar,    accent: '#FFCB46', tint: 'rgba(255,203,70,0.18)' },
-  { href: '/predlozi-pitanje', label: 'Pošalji pitanje',  Icon: IconUsers,   accent: '#15803d', tint: 'rgba(76,175,80,0.12)' },
+  { href: '/igre',             label: 'Igre',             Icon: IconHome,    accent: '#3A36A0', tint: 'rgba(58,54,160,0.12)' },
+  { href: '/ranglista',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#8A6A12', tint: 'rgba(226,185,58,0.18)' },
+  { href: '/nagrade',       label: 'Nagrade',       Icon: IconStar,     accent: '#E2B93A', tint: 'rgba(226,185,58,0.18)' },
+  { href: '/dodaj-pitanja', label: 'Dodaj pitanja', Icon: IconQuestion, accent: '#1F8A62', tint: 'rgba(47,191,138,0.12)' },
 ]
 
 // Game routes the mobile drawer used to surface as a colored grid. Now
@@ -46,24 +47,30 @@ export default function Header() {
   const pathname = usePathname()
   const [userName, setUserName] = useState<string | null>(null)
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
+  const [authKnown, setAuthKnown] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([])
   const [showRecent, setShowRecent] = useState(false)
   const recentRef = useRef<HTMLDivElement>(null)
   const [contributors, setContributors] = useState<Contributor[]>([])
+  const [pragBedza, setPragBedza] = useState(PRAG_PODRAZUMEVANO)
   const [showContributors, setShowContributors] = useState(false)
   const contribRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+      if (!user) {
+        setAuthKnown(true)
+        return
+      }
       supabase.from('profiles').select('first_name, avatar').eq('id', user.id).single()
         .then(({ data }) => {
           if (data) {
             setUserName(data.first_name)
             setUserAvatar(data.avatar || null)
           }
+          setAuthKnown(true)
         })
     })
   }, [])
@@ -95,11 +102,17 @@ export default function Header() {
     if (!showContributors && !mobileOpen) return
     if (contribLoadedRef.current) return
     contribLoadedRef.current = true
-    createClient().from('public_contributors')
-      .select('id, first_name, last_name, nickname, avatar, reports, submissions, total_contributions')
+    const sb = createClient()
+    sb.from('public_contributors')
+      .select('id, first_name, last_name, nickname, avatar, reports, submissions, total_contributions, accepted')
       .order('total_contributions', { ascending: false })
       .limit(15)
       .then(({ data }) => { if (data) setContributors(data as Contributor[]) })
+    // Prag bedža je podesiv u adminu, pa se čita zajedno sa listom.
+    sb.rpc('prag_bedza').then(({ data }) => {
+      const n = Number(data)
+      if (Number.isFinite(n) && n > 0) setPragBedza(n)
+    })
   }, [showContributors, mobileOpen])
 
   // Outside-click for the recent-members dropdown.
@@ -143,27 +156,32 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          {/* Logo */}
-          <Logo height={36} priority />
+      <header className="sticky top-0 z-50" style={{ background: '#F4EFE6' }}>
+        <div className="h-[3px]" style={{ background: 'linear-gradient(90deg, #3A36A0 0%, #3B78E0 50%, #2FBF8A 100%)' }} />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between gap-4"
+          style={{ borderBottom: '1px solid #12101A' }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <Logo height={32} priority />
+            <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-[0.22em]"
+              style={{ color: '#6B6760' }}>
+              Klub · kviz
+            </span>
+          </div>
 
-          {/* Desktop nav — four flat links */}
-          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-            {NAV_LINKS.map(({ href, label, Icon, accent, tint }) => {
+          <nav className="hidden md:flex items-center gap-7 flex-1 justify-center">
+            {NAV_LINKS.map(({ href, label }) => {
               const active =
                 pathname === href ||
                 pathname.startsWith(href + '/') ||
                 (href === '/igre' && inGameSection)
               return (
-                <Link key={href} href={href} title={label}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all"
-                  style={active ? { background: accent, color: 'white' } : { color: '#343434' }}
-                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = tint }}
-                  onMouseLeave={e => { if (!active) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}>
-                  <Icon size={16} strokeWidth={2.2} style={active ? undefined : { color: accent }} />
-                  <span>{label}</span>
+                <Link key={href} href={href}
+                  className="relative text-[13px] font-semibold tracking-wide py-1"
+                  style={{ color: '#12101A' }}>
+                  {label}
+                  {active && (
+                    <span className="absolute left-0 right-0 -bottom-[22px] h-[2px]" style={{ background: '#12101A' }} />
+                  )}
                 </Link>
               )
             })}
@@ -176,34 +194,34 @@ export default function Header() {
               <button onClick={() => setShowRecent(o => !o)}
                 className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
                 style={showRecent
-                  ? { background: '#609DED', color: 'white' }
-                  : { background: 'rgba(52,52,52,0.06)', color: '#343434' }}
+                  ? { background: '#3A36A0', color: 'white' }
+                  : { background: 'rgba(26,26,30,0.06)', color: '#1A1A1E' }}
                 aria-label="Novi članovi">
                 <IconUsers size={18} strokeWidth={2.2} />
               </button>
               {showRecent && (
                 <div className="absolute right-0 top-full mt-2 w-80 card-soft overflow-hidden z-50 animate-pop-in">
-                  <div className="px-5 py-4 border-b border-[#F2F2F2]">
-                    <p className="font-bold text-[15px]" style={{ color: '#343434' }}>Novi članovi</p>
-                    <p className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>Poslednji koji su se pridružili</p>
+                  <div className="px-5 py-4 border-b border-[#EBE8E1]">
+                    <p className="font-bold text-[15px]" style={{ color: '#1A1A1E' }}>Novi članovi</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: '#6B6760' }}>Poslednji koji su se pridružili</p>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {recentUsers.length === 0 && (
-                      <p className="px-5 py-4 text-[13px]" style={{ color: '#9C9C9C' }}>Učitavanje…</p>
+                      <p className="px-5 py-4 text-[13px]" style={{ color: '#6B6760' }}>Učitavanje…</p>
                     )}
                     {recentUsers.map(u => {
                       const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
                       return (
                         <Link key={u.id} href={`/profil/${u.id}`} onClick={() => setShowRecent(false)}
-                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#F2F2F2] transition-colors">
-                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#EBE8E1] transition-colors">
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
                             {u.avatar
                               ? <Image src={`/avatars/${u.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
-                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#609DED', color: 'white' }}>{name[0]}</div>}
+                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#3A36A0', color: 'white' }}>{name[0]}</div>}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[14px] truncate" style={{ color: '#343434' }}>{name}</p>
-                            <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{timeAgo(u.created_at)}</p>
+                            <p className="font-semibold text-[14px] truncate" style={{ color: '#1A1A1E' }}>{name}</p>
+                            <p className="text-[12px]" style={{ color: '#6B6760' }}>{timeAgo(u.created_at)}</p>
                           </div>
                         </Link>
                       )
@@ -220,25 +238,29 @@ export default function Header() {
               <button onClick={() => setShowContributors(o => !o)}
                 className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
                 style={showContributors
-                  ? { background: '#FFCB46', color: '#343434' }
-                  : { background: 'rgba(52,52,52,0.06)', color: '#343434' }}
+                  ? { background: '#E2B93A', color: '#1A1A1E' }
+                  : { background: 'rgba(26,26,30,0.06)', color: '#1A1A1E' }}
                 aria-label="Korisnici koji doprinose kvizu">
                 <IconStar size={18} strokeWidth={2.2} />
               </button>
               {showContributors && (
                 <div className="absolute right-0 top-full mt-2 w-80 card-soft overflow-hidden z-50 animate-pop-in">
-                  <div className="px-5 py-4 border-b border-[#F2F2F2]">
-                    <p className="font-bold text-[15px]" style={{ color: '#343434' }}>Doprinos kvizu</p>
-                    <p className="text-[12px] mt-0.5" style={{ color: '#9C9C9C' }}>
+                  <div className="px-5 py-4 border-b border-[#EBE8E1]">
+                    <p className="font-bold text-[15px]" style={{ color: '#1A1A1E' }}>Doprinos kvizu</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: '#6B6760' }}>
                       Šalju nova pitanja i prijavljuju greške
                     </p>
+                    <Link href="/autori-pitanja" onClick={() => setShowContributors(false)}
+                      className="text-[12px] font-semibold underline" style={{ color: '#3A36A0' }}>
+                      Rang lista autora pitanja →
+                    </Link>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {contributors.length === 0 && (
-                      <p className="px-5 py-4 text-[13px]" style={{ color: '#9C9C9C' }}>
+                      <p className="px-5 py-4 text-[13px]" style={{ color: '#6B6760' }}>
                         Niko još nije dao doprinos. Budi prvi —{' '}
-                        <Link href="/predlozi-pitanje" onClick={() => setShowContributors(false)}
-                          className="underline" style={{ color: '#609DED' }}>pošalji pitanje</Link>.
+                        <Link href="/dodaj-pitanja" onClick={() => setShowContributors(false)}
+                          className="underline" style={{ color: '#3A36A0' }}>dodaj pitanje</Link>.
                       </p>
                     )}
                     {contributors.map(c => {
@@ -248,20 +270,24 @@ export default function Header() {
                       // the line short and readable.
                       const parts: string[] = []
                       if (c.submissions > 0) parts.push(`${c.submissions} ${c.submissions === 1 ? 'pitanje' : 'pitanja'}`)
+                      if (c.accepted > 0)    parts.push(`${c.accepted} u kvizu`)
                       if (c.reports > 0)     parts.push(`${c.reports} ${c.reports === 1 ? 'prijava' : 'prijava'}`)
                       return (
                         <Link key={c.id} href={`/profil/${c.id}`} onClick={() => setShowContributors(false)}
-                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#F2F2F2] transition-colors">
-                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#EBE8E1] transition-colors">
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
                             {c.avatar
                               ? <Image src={`/avatars/${c.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
-                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{name[0]}</div>}
+                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{name[0]}</div>}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[14px] truncate" style={{ color: '#343434' }}>{name}</p>
-                            <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{parts.join(' · ')}</p>
+                            <p className="font-semibold text-[14px] truncate" style={{ color: '#1A1A1E' }}>
+                              {jeAutorPitanja(c.accepted, pragBedza) && <span title="Autor pitanja">🏅 </span>}
+                              {name}
+                            </p>
+                            <p className="text-[12px]" style={{ color: '#6B6760' }}>{parts.join(' · ')}</p>
                           </div>
-                          <span className="chip flex-shrink-0" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                          <span className="chip flex-shrink-0" style={{ background: '#F5E6B8', color: '#8A6A12' }}>
                             {c.total_contributions}
                           </span>
                         </Link>
@@ -272,15 +298,26 @@ export default function Header() {
               )}
             </div>
 
+            {authKnown && !userName && (
+              <div className="hidden md:flex items-center gap-4">
+                <Link href="/auth/prijava" className="text-[13px] font-semibold" style={{ color: '#12101A' }}>
+                  Prijava
+                </Link>
+                <Link href="/auth/registracija" className="btn btn-primary btn-sm">
+                  Registracija
+                </Link>
+              </div>
+            )}
+
             {/* User avatar */}
             {userName && (
-              <Link href="/profil" className="hidden md:flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-full transition-all hover:bg-[#F2F2F2]">
-                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+              <Link href="/profil" className="hidden md:flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-full transition-all hover:bg-[#EBE8E1]">
+                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
                   {userAvatar
                     ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={36} height={36} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{userName[0].toUpperCase()}</div>}
+                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{userName[0].toUpperCase()}</div>}
                 </div>
-                <span className="text-[13px] font-semibold" style={{ color: '#343434' }}>{userName}</span>
+                <span className="text-[13px] font-semibold" style={{ color: '#1A1A1E' }}>{userName}</span>
               </Link>
             )}
 
@@ -288,14 +325,14 @@ export default function Header() {
             {userName && (
               <button onClick={handleLogout}
                 className="hidden md:flex items-center justify-center w-10 h-10 rounded-full transition-all"
-                style={{ color: '#9C9C9C' }}
+                style={{ color: '#6B6760' }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = 'rgba(229,83,83,0.10)'
                   ;(e.currentTarget as HTMLButtonElement).style.color = '#E55353'
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                  ;(e.currentTarget as HTMLButtonElement).style.color = '#9C9C9C'
+                  ;(e.currentTarget as HTMLButtonElement).style.color = '#6B6760'
                 }}
                 aria-label="Odjava">
                 <IconLogout size={18} strokeWidth={2.2} />
@@ -305,7 +342,7 @@ export default function Header() {
             {/* Mobile hamburger */}
             <button onClick={() => setMobileOpen(o => !o)}
               className="md:hidden flex items-center justify-center w-10 h-10 rounded-full transition-all"
-              style={{ background: mobileOpen ? '#343434' : 'rgba(52,52,52,0.06)', color: mobileOpen ? 'white' : '#343434' }}
+              style={{ background: mobileOpen ? '#1A1A1E' : 'rgba(26,26,30,0.06)', color: mobileOpen ? 'white' : '#1A1A1E' }}
               aria-label="Meni">
               {mobileOpen ? <IconClose size={20} strokeWidth={2.2} /> : <IconMenu size={20} strokeWidth={2.2} />}
             </button>
@@ -314,20 +351,20 @@ export default function Header() {
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-[#F2F2F2] animate-fade-in">
+          <div className="md:hidden border-t border-[#EBE8E1] animate-fade-in">
             <div className="max-w-6xl mx-auto px-4 py-3 space-y-3">
               {/* User card */}
               {userName && (
                 <Link href="/profil" className="flex items-center gap-3 p-3 rounded-2xl"
-                  style={{ background: '#F2F2F2' }}>
+                  style={{ background: '#EBE8E1' }}>
                   <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 bg-white">
                     {userAvatar
                       ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={44} height={44} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{userName[0].toUpperCase()}</div>}
+                      : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{userName[0].toUpperCase()}</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-bold truncate" style={{ color: '#343434' }}>{userName}</p>
-                    <p className="text-[12px]" style={{ color: '#9C9C9C' }}>Otvori profil →</p>
+                    <p className="text-[14px] font-bold truncate" style={{ color: '#1A1A1E' }}>{userName}</p>
+                    <p className="text-[12px]" style={{ color: '#6B6760' }}>Otvori profil →</p>
                   </div>
                 </Link>
               )}
@@ -345,7 +382,7 @@ export default function Header() {
                       className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"
                       style={active
                         ? { background: accent, color: 'white' }
-                        : { color: '#343434', background: tint }}>
+                        : { color: '#1A1A1E', background: tint }}>
                       <Icon size={18} strokeWidth={2.2} style={active ? undefined : { color: accent }} />
                       {label}
                     </Link>
@@ -355,21 +392,21 @@ export default function Header() {
 
               {/* Recent users */}
               {recentUsers.length > 0 && (
-                <div className="pt-3 mt-3 border-t border-[#F2F2F2]">
-                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>Novi članovi</p>
+                <div className="pt-3 mt-3 border-t border-[#EBE8E1]">
+                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>Novi članovi</p>
                   {recentUsers.slice(0, 5).map(u => {
                     const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
                     return (
                       <Link key={u.id} href={`/profil/${u.id}`}
                         className="flex items-center gap-3 px-2 py-2.5 rounded-2xl">
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
                           {u.avatar
                             ? <Image src={`/avatars/${u.avatar}`} alt={name} width={32} height={32} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#609DED', color: 'white' }}>{name[0]}</div>}
+                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#3A36A0', color: 'white' }}>{name[0]}</div>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#343434' }}>{name}</span>
-                          <span className="text-[11px]" style={{ color: '#9C9C9C' }}>{timeAgo(u.created_at)}</span>
+                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#1A1A1E' }}>{name}</span>
+                          <span className="text-[11px]" style={{ color: '#6B6760' }}>{timeAgo(u.created_at)}</span>
                         </div>
                       </Link>
                     )
@@ -380,8 +417,8 @@ export default function Header() {
               {/* Contributors (mobile) — same lazy-loaded data as the
                   desktop dropdown, condensed for the drawer. */}
               {contributors.length > 0 && (
-                <div className="pt-3 mt-3 border-t border-[#F2F2F2]">
-                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>Doprinos kvizu</p>
+                <div className="pt-3 mt-3 border-t border-[#EBE8E1]">
+                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>Doprinos kvizu</p>
                   {contributors.slice(0, 5).map(c => {
                     const name = c.nickname || `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() || 'Igrač'
                     const parts: string[] = []
@@ -390,16 +427,16 @@ export default function Header() {
                     return (
                       <Link key={c.id} href={`/profil/${c.id}`}
                         className="flex items-center gap-3 px-2 py-2.5 rounded-2xl">
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
                           {c.avatar
                             ? <Image src={`/avatars/${c.avatar}`} alt={name} width={32} height={32} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#FFCB46', color: '#343434' }}>{name[0]}</div>}
+                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{name[0]}</div>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#343434' }}>{name}</span>
-                          <span className="text-[11px]" style={{ color: '#9C9C9C' }}>{parts.join(' · ')}</span>
+                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#1A1A1E' }}>{name}</span>
+                          <span className="text-[11px]" style={{ color: '#6B6760' }}>{parts.join(' · ')}</span>
                         </div>
-                        <span className="chip flex-shrink-0" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                        <span className="chip flex-shrink-0" style={{ background: '#F5E6B8', color: '#8A6A12' }}>
                           {c.total_contributions}
                         </span>
                       </Link>
@@ -410,7 +447,7 @@ export default function Header() {
 
               {userName && (
                 <button onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-colors mt-3 border-t border-[#F2F2F2] pt-4"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-colors mt-3 border-t border-[#EBE8E1] pt-4"
                   style={{ color: '#E55353' }}>
                   <IconLogout size={18} strokeWidth={2.2} />
                   Odjava

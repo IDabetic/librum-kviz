@@ -1,12 +1,19 @@
 import type { Metadata } from 'next'
-import { Poppins } from 'next/font/google'
+import { Fraunces, Source_Sans_3 } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-const poppins = Poppins({
+const display = Fraunces({
   subsets: ['latin', 'latin-ext'],
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
-  variable: '--font-poppins',
+  weight: ['500', '600', '700'],
+  variable: '--font-fraunces',
+  display: 'swap',
+})
+
+const sans = Source_Sans_3({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-source',
   display: 'swap',
 })
 
@@ -119,7 +126,7 @@ const organizationSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sr" className={`${poppins.variable} h-full`}>
+    <html lang="sr" className={`${display.variable} ${sans.variable} h-full`}>
       <body className="min-h-full antialiased font-sans">
         {children}
         <Script id="ld-website" type="application/ld+json"

@@ -367,11 +367,11 @@ export default async function LeaderboardPage() {
   ])
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+    <div className="page-ink min-h-screen">
       {user && <Header />}
       {!user && (
         <nav className="sticky top-0 z-40 backdrop-blur-xl"
-          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(26,26,30,0.06)' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <Logo height={36} />
             <Link href="/auth/prijava" className="btn btn-primary btn-sm">Prijava</Link>
@@ -380,12 +380,19 @@ export default async function LeaderboardPage() {
       )}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="text-center mb-10">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#3A36A0' }}>
             Najbolji igrači
           </p>
-          <h1 className="font-black tracking-tight leading-[1.1]" style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
+          <h1 className="leading-[0.95]" style={{ color: '#F4EFE6', fontSize: 'clamp(40px, 8vw, 72px)', fontWeight: 500 }}>
             Rang lista
           </h1>
+          {/* Autori pitanja se mere doprinosom bazi, ne rezultatom u igri,
+              pa imaju svoju listu umesto još jednog taba ovde. */}
+          <Link href="/autori-pitanja"
+            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-full text-[13px] font-semibold transition-all"
+            style={{ background: '#F5E6B8', color: '#8A6A12' }}>
+            🏅 Rang lista autora pitanja
+          </Link>
         </div>
         <LeaderboardTabs survivor={survivor} duel={duel} hangman={hangman} quick={quick} book={book} kafana={kafana} user={!!user} />
       </main>

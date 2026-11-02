@@ -31,11 +31,11 @@ const DEFAULT_TOP: TopId = 'top10'
 const LIST_MAX_HEIGHT = 'max-h-[520px] overflow-y-auto'
 
 const GAMES = [
-  { id: 'survivor', label: 'PRO kviz',       Icon: IconHome,     accent: '#609DED' },
-  { id: 'book',     label: 'Book kviz',      Icon: IconDiscover, accent: '#9c7a13' },
+  { id: 'survivor', label: 'PRO kviz',       Icon: IconHome,     accent: '#3A36A0' },
+  { id: 'book',     label: 'Book kviz',      Icon: IconDiscover, accent: '#8A6A12' },
   { id: 'kafana',   label: 'Kafanski kviz',  Icon: IconStar,     accent: '#b91c1c' },
-  { id: 'duel',     label: 'Trivia duel',    Icon: IconSwords,   accent: '#FFCB46' },
-  { id: 'hangman',  label: 'Vešanje',        Icon: IconHint,     accent: '#4CAF50' },
+  { id: 'duel',     label: 'Trivia duel',    Icon: IconSwords,   accent: '#E2B93A' },
+  { id: 'hangman',  label: 'Vešanje',        Icon: IconHint,     accent: '#2FBF8A' },
   { id: 'quick',    label: 'Brzi kviz',      Icon: IconTime,     accent: '#E55353' },
 ] as const
 type GameId = typeof GAMES[number]['id']
@@ -67,8 +67,8 @@ export default function LeaderboardTabs({
             <button key={g.id} onClick={() => setGame(g.id)}
               className="flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-bold transition-all"
               style={active
-                ? { background: g.accent, color: g.id === 'duel' ? '#343434' : 'white' }
-                : { background: '#F2F2F2', color: '#9C9C9C' }
+                ? { background: g.accent, color: g.id === 'duel' ? '#1A1A1E' : 'white' }
+                : { background: '#EBE8E1', color: '#6B6760' }
               }>
               <g.Icon size={14} strokeWidth={2.2} />
               {g.label}
@@ -78,13 +78,13 @@ export default function LeaderboardTabs({
       </div>
 
       {/* Period pills */}
-      <div className="flex p-1 rounded-full mb-3 max-w-md mx-auto overflow-x-auto" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full mb-3 max-w-md mx-auto overflow-x-auto" style={{ background: '#EBE8E1' }}>
         {PERIODS.map(p => (
           <button key={p.id} onClick={() => setPeriod(p.id)}
             className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
             style={period === p.id
-              ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-              : { color: '#9C9C9C' }}>
+              ? { background: '#FFFDF9', color: '#1A1A1E', boxShadow: '0 2px 8px rgba(26,26,30,0.06)' }
+              : { color: '#6B6760' }}>
             {p.label}
           </button>
         ))}
@@ -92,13 +92,13 @@ export default function LeaderboardTabs({
 
       {/* Top-N selector — caps how many rows show, plus the list itself
           scrolls inside its card so the page doesn't grow to 200 rows tall. */}
-      <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto overflow-x-auto" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto overflow-x-auto" style={{ background: '#EBE8E1' }}>
         {TOP_OPTIONS.map(t => (
           <button key={t.id} onClick={() => setTopId(t.id)}
             className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
             style={topId === t.id
-              ? { background: '#609DED', color: '#FCFCFC' }
-              : { color: '#9C9C9C' }}>
+              ? { background: '#3A36A0', color: '#FFFDF9' }
+              : { color: '#6B6760' }}>
             {t.label}
           </button>
         ))}
@@ -115,9 +115,9 @@ export default function LeaderboardTabs({
 }
 
 // ── Shared helpers ──────────────────────────────────────────────────────
-function Avatar({ name, avatar, size = 40, accent = '#609DED' }: { name: string; avatar: string | null; size?: number; accent?: string }) {
+function Avatar({ name, avatar, size = 40, accent = '#3A36A0' }: { name: string; avatar: string | null; size?: number; accent?: string }) {
   return (
-    <div className="rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]" style={{ width: size, height: size }}>
+    <div className="rounded-2xl overflow-hidden flex-shrink-0 bg-[#EBE8E1]" style={{ width: size, height: size }}>
       {avatar
         ? <Image src={`/avatars/${avatar}`} alt={name} width={size} height={size} className="w-full h-full object-cover" />
         : <div className="w-full h-full flex items-center justify-center font-bold text-white" style={{ background: accent, fontSize: size * 0.4 }}>{name[0]}</div>}
@@ -130,7 +130,7 @@ function Rank({ i }: { i: number }) {
     <span className="w-9 text-center flex-shrink-0">
       {i < 3
         ? <span className="text-[26px] sm:text-[28px] leading-none">{MEDALS[i]}</span>
-        : <span className="text-[14px] font-black" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
+        : <span className="text-[14px] font-black" style={{ color: '#6B6760' }}>{i + 1}</span>}
     </span>
   )
 }
@@ -150,8 +150,8 @@ function EmptyBoard({ user, href, label, icon }: { user: boolean; href: string; 
   return (
     <div className="card-soft py-16 text-center px-6">
       <div className="text-5xl mb-4">{icon}</div>
-      <p className="font-bold text-[16px] mb-1" style={{ color: '#343434' }}>Nema rezultata u ovom periodu</p>
-      <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Probaj drugi period ili budi prvi koji će igrati.</p>
+      <p className="font-bold text-[16px] mb-1" style={{ color: '#1A1A1E' }}>Nema rezultata u ovom periodu</p>
+      <p className="text-[13px] mb-6" style={{ color: '#6B6760' }}>Probaj drugi period ili budi prvi koji će igrati.</p>
       <Link href={user ? href : '/auth/registracija'} className="btn btn-primary btn-md">
         {user ? label : 'Registruj se'}
       </Link>
@@ -167,7 +167,7 @@ function PeriodHint({ period }: { period: PeriodId }) {
     all: 'Najbolji rezultati svih vremena',
   }
   return (
-    <p className="text-center text-[12px] mb-3" style={{ color: '#9C9C9C' }}>{map[period]}</p>
+    <p className="text-center text-[12px] mb-3" style={{ color: '#6B6760' }}>{map[period]}</p>
   )
 }
 
@@ -177,20 +177,20 @@ function SurvivorBoard({ data, period, user, limit }: { data: SurvivorRow[]; per
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#EBE8E1' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#EBE8E1] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
-            <Avatar name={p.name} avatar={p.avatar} accent="#609DED" />
+            <Avatar name={p.name} avatar={p.avatar} accent="#3A36A0" />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#1A1A1E' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>
                 {p.questionsReached} pit. · {Math.round(p.accuracy)}% · niz {p.bestCombo}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
-              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#1A1A1E' }}>{p.score}</div>
+              <div className="text-[11px]" style={{ color: '#6B6760' }}>bodova</div>
             </div>
           </Link>
         ))}
@@ -205,19 +205,19 @@ function DuelBoard({ data, period, user, limit }: { data: DuelRow[]; period: Per
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#EBE8E1' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#EBE8E1] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
-            <Avatar name={p.name} avatar={p.avatar} accent="#FFCB46" />
+            <Avatar name={p.name} avatar={p.avatar} accent="#E2B93A" />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.plays} {p.plays === 1 ? 'duel' : 'duela'}</p>
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#1A1A1E' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>{p.plays} {p.plays === 1 ? 'duel' : 'duela'}</p>
             </div>
             <div className="flex gap-2.5 text-center flex-shrink-0">
-              <div><div className="font-bold text-[15px]" style={{ color: '#4CAF50' }}>{p.wins}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>W</div></div>
-              <div><div className="font-bold text-[15px]" style={{ color: '#9C9C9C' }}>{p.draws}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>D</div></div>
-              <div><div className="font-bold text-[15px]" style={{ color: '#E55353' }}>{p.losses}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>L</div></div>
+              <div><div className="font-bold text-[15px]" style={{ color: '#2FBF8A' }}>{p.wins}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>W</div></div>
+              <div><div className="font-bold text-[15px]" style={{ color: '#6B6760' }}>{p.draws}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>D</div></div>
+              <div><div className="font-bold text-[15px]" style={{ color: '#E55353' }}>{p.losses}</div><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>L</div></div>
             </div>
           </Link>
         ))}
@@ -232,18 +232,18 @@ function HangmanBoard({ data, period, user, limit }: { data: HangmanRow[]; perio
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#EBE8E1' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#EBE8E1] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
-            <Avatar name={p.name} avatar={p.avatar} accent="#4CAF50" />
+            <Avatar name={p.name} avatar={p.avatar} accent="#2FBF8A" />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.total} {p.total === 1 ? 'igra' : 'igara'} · {p.winRate}%</p>
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#1A1A1E' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>{p.total} {p.total === 1 ? 'igra' : 'igara'} · {p.winRate}%</p>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="font-black text-[18px] tracking-tight" style={{ color: '#4CAF50' }}>{p.wins}</div>
-              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>{p.wins === 1 ? 'pobeda' : 'pobeda'}</div>
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#2FBF8A' }}>{p.wins}</div>
+              <div className="text-[11px]" style={{ color: '#6B6760' }}>{p.wins === 1 ? 'pobeda' : 'pobeda'}</div>
             </div>
           </Link>
         ))}
@@ -258,18 +258,18 @@ function QuickBoard({ data, period, user, limit }: { data: QuickRow[]; period: P
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#EBE8E1' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#EBE8E1] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#E55353" />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>{p.correct} tačno · {Math.round(p.accuracy)}%</p>
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#1A1A1E' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>{p.correct} tačno · {Math.round(p.accuracy)}%</p>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
-              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#1A1A1E' }}>{p.score}</div>
+              <div className="text-[11px]" style={{ color: '#6B6760' }}>bodova</div>
             </div>
           </Link>
         ))}
@@ -284,27 +284,27 @@ function BookBoard({ data, period, user, limit }: { data: BookRow[]; period: Per
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#EBE8E1' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#EBE8E1] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
-            <Avatar name={p.name} avatar={p.avatar} accent="#9c7a13" />
+            <Avatar name={p.name} avatar={p.avatar} accent="#8A6A12" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
+                <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#1A1A1E' }}>{p.name}</p>
                 {p.topGenre && (
-                  <span className="chip" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                  <span className="chip" style={{ background: '#F5E6B8', color: '#8A6A12' }}>
                     {p.topGenre}
                   </span>
                 )}
               </div>
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>
                 {p.questionsReached} pit. · {Math.round(p.accuracy)}% tačnih
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{p.score}</div>
-              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
+              <div className="font-black text-[18px] tracking-tight" style={{ color: '#1A1A1E' }}>{p.score}</div>
+              <div className="text-[11px]" style={{ color: '#6B6760' }}>bodova</div>
             </div>
           </Link>
         ))}
@@ -319,20 +319,20 @@ function KafanaBoard({ data, period, user, limit }: { data: KafanaRow[]; period:
   return (
     <div className="card-soft overflow-hidden">
       <PeriodHint period={period} />
-      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#F2F2F2' }}>
+      <div className={`divide-y ${LIST_MAX_HEIGHT}`} style={{ borderColor: '#EBE8E1' }}>
         {data.slice(0, limit ?? data.length).map((p, i) => (
-          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#F2F2F2] transition-colors" style={rowStyle(i)}>
+          <Link key={i} href={`/profil/${p.userId}`} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#EBE8E1] transition-colors" style={rowStyle(i)}>
             <Rank i={i} />
             <Avatar name={p.name} avatar={p.avatar} accent="#b91c1c" />
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{p.name}</p>
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+              <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#1A1A1E' }}>{p.name}</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>
                 {p.questionsReached} pit. · {Math.round(p.accuracy)}% · niz {p.bestCombo}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
               <div className="font-black text-[18px] tracking-tight" style={{ color: '#b91c1c' }}>{p.score}</div>
-              <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
+              <div className="text-[11px]" style={{ color: '#6B6760' }}>bodova</div>
             </div>
           </Link>
         ))}

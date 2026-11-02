@@ -58,15 +58,15 @@ export default function UvozTools({ pool = 'pro' }: { pool?: Pool }) {
 
   return (
     <section className="card-soft p-6">
-      <h2 className="font-bold text-[16px] mb-2 tracking-tight" style={{ color: '#343434' }}>
+      <h2 className="font-bold text-[16px] mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
         📥 Uvoz pitanja iz Excel-a
       </h2>
-      <p className="text-[13px] mb-4 leading-relaxed" style={{ color: '#9C9C9C' }}>
+      <p className="text-[13px] mb-4 leading-relaxed" style={{ color: '#6B6760' }}>
         Excel mora imati ove kolone (prvi red su nazivi, redosled bilo koji):
       </p>
 
       <div className="rounded-2xl p-4 mb-4 text-[12px] font-mono leading-relaxed"
-        style={{ background: '#F2F2F2', color: '#343434' }}>
+        style={{ background: '#EBE8E1', color: '#1A1A1E' }}>
         <div>
           <strong>Pitanje</strong> · <strong>Tačan odgovor</strong> ·{' '}
           <strong>Pogrešan 1</strong> · <strong>Pogrešan 2</strong> · <strong>Pogrešan 3</strong>
@@ -74,7 +74,7 @@ export default function UvozTools({ pool = 'pro' }: { pool?: Pool }) {
         </div>
       </div>
 
-      <ul className="text-[12px] space-y-1 mb-5 leading-relaxed list-disc pl-5" style={{ color: '#9C9C9C' }}>
+      <ul className="text-[12px] space-y-1 mb-5 leading-relaxed list-disc pl-5" style={{ color: '#6B6760' }}>
         <li>Kolone za netačne odgovore mogu biti i <code>Netačno · Netačno_1 · Netačno_2</code> — oba naziva rade.</li>
         {pool === 'book' && <li><strong>Žanr</strong> nije obavezan — ako ga nema, pitanja idu u žanr „Razno”. Možeš ga dodati ako želiš da utiče na „najjači žanr”.</li>}
         <li>Tačan odgovor se u bazi uvek čuva na indeksu 0 — igre nasumično razbacuju redosled u runtime-u.</li>
@@ -118,7 +118,7 @@ function ImportResultPanel({ result }: { result: ImportResult }) {
   const s = result.stats!
   return (
     <div className="mt-5 rounded-2xl px-4 py-3 text-[13px]"
-      style={{ background: '#E8F8F0', color: '#15803d' }}>
+      style={{ background: '#D4F3E7', color: '#1F8A62' }}>
       <p className="font-bold mb-2">✓ Uvoz završen</p>
       <ul className="text-[12px] space-y-1 leading-relaxed">
         <li>📄 Redova u fajlu: <strong>{s.total}</strong></li>

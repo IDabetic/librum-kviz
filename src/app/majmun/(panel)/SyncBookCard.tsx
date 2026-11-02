@@ -25,12 +25,12 @@ export default function SyncBookCard() {
   return (
     <div className="card-soft p-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: '#FFECBC' }}>
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: '#F5E6B8' }}>
           <span className="text-[18px]">📚</span>
         </div>
         <div>
-          <p className="font-bold text-[14px]" style={{ color: '#343434' }}>Književnost u PRO pool</p>
-          <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+          <p className="font-bold text-[14px]" style={{ color: '#1A1A1E' }}>Književnost u PRO pool</p>
+          <p className="text-[12px]" style={{ color: '#6B6760' }}>
             Kopiraj sva aktivna pitanja iz Book kviza u PRO pool. Idempotentno — duplikati po tekstu se preskaču.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function SyncBookCard() {
       {result && (
         <div className="mt-3 rounded-2xl px-4 py-3 text-[13px]"
           style={result.ok
-            ? { background: '#E8F8F0', color: '#15803d' }
+            ? { background: '#D4F3E7', color: '#1F8A62' }
             : { background: '#FEE2E2', color: '#b91c1c' }}>
           {result.ok ? (
             <>

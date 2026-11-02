@@ -75,15 +75,15 @@ export default async function TranskripcijaPage() {
     <div className="max-w-4xl space-y-5">
       <Link href="/majmun/book-kviz"
         className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-opacity hover:opacity-70"
-        style={{ color: '#609DED' }}>
+        style={{ color: '#3A36A0' }}>
         <IconBack size={16} strokeWidth={2.2} /> Sva Book pitanja
       </Link>
 
       <div>
-        <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+        <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>
           🔤 Transkripcija stranih imena
         </h1>
-        <p className="text-[13px] mt-1 leading-relaxed" style={{ color: '#9C9C9C' }}>
+        <p className="text-[13px] mt-1 leading-relaxed" style={{ color: '#6B6760' }}>
           Srpsko latinično pismo nema slova <strong>Q · W · X · Y</strong>. Svako Book pitanje
           ili odgovor koji ih sadrži najverovatnije ima netranskribovano strano ime
           („Harry Potter” → „Hari Poter”). Detekcija ispod nađe sva takva pitanja, pa onda
@@ -94,7 +94,7 @@ export default async function TranskripcijaPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="Sva Book pitanja" value={allRows.length} />
         <Stat label="Sumnjivih (sadrže Q/W/X/Y)" value={flagged.length} accent="#b91c1c" />
-        <Stat label="Čistih" value={allRows.length - flagged.length} accent="#15803d" />
+        <Stat label="Čistih" value={allRows.length - flagged.length} accent="#1F8A62" />
         <Stat label="% sumnjivih" value={allRows.length ? `${Math.round(100 * flagged.length / allRows.length)}%` : '0%'} />
       </div>
 
@@ -106,8 +106,8 @@ export default async function TranskripcijaPage() {
 function Stat({ label, value, accent }: { label: string; value: number | string; accent?: string }) {
   return (
     <div className="card-soft p-4 text-center">
-      <p className="font-black text-[20px] tracking-tight" style={{ color: accent || '#343434' }}>{value}</p>
-      <p className="text-[10px] mt-1" style={{ color: '#9C9C9C' }}>{label}</p>
+      <p className="font-black text-[20px] tracking-tight" style={{ color: accent || '#1A1A1E' }}>{value}</p>
+      <p className="text-[10px] mt-1" style={{ color: '#6B6760' }}>{label}</p>
     </div>
   )
 }

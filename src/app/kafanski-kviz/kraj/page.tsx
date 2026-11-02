@@ -34,7 +34,7 @@ export default function KafanskiKvizEnd() {
   if (!r) return null
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F6F4EF' }}>
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
 
         <div className="text-center mb-8">
@@ -42,17 +42,17 @@ export default function KafanskiKvizEnd() {
             Kraj
           </p>
           <h1 className="font-black tracking-tight leading-[1.05] mb-3"
-            style={{ color: '#343434', fontSize: 'clamp(36px, 7vw, 56px)' }}>
+            style={{ color: '#1A1A1E', fontSize: 'clamp(36px, 7vw, 56px)' }}>
             {r.score}
           </h1>
-          <p className="text-[14px]" style={{ color: '#9C9C9C' }}>bodova u Kafanskom kvizu</p>
+          <p className="text-[14px]" style={{ color: '#6B6760' }}>bodova u Kafanskom kvizu</p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mb-5">
           <Stat label="Pitanja" value={r.questionsReached} />
           <Stat label="Tačnost" value={`${Math.round(r.accuracy)}%`} />
           <Stat label="Najbolji niz" value={r.bestCombo} />
-          <Stat label="Tačno" value={r.correct} accent="#15803d" />
+          <Stat label="Tačno" value={r.correct} accent="#1F8A62" />
           <Stat label="Pogrešno" value={r.wrong} accent="#b91c1c" />
           <Stat label="Vreme" value={fmtTime(r.totalTime)} />
         </div>
@@ -69,7 +69,7 @@ export default function KafanskiKvizEnd() {
             accent="red"
             className="w-full"
           />
-          <Link href="/" className="block text-center text-[13px] font-medium mt-3" style={{ color: '#9C9C9C' }}>
+          <Link href="/" className="block text-center text-[13px] font-medium mt-3" style={{ color: '#6B6760' }}>
             ← Početna
           </Link>
         </div>
@@ -81,8 +81,8 @@ export default function KafanskiKvizEnd() {
 function Stat({ label, value, accent }: { label: string; value: number | string; accent?: string }) {
   return (
     <div className="card-soft p-4 text-center">
-      <p className="font-black text-[18px] tracking-tight" style={{ color: accent || '#343434' }}>{value}</p>
-      <p className="text-[10px] mt-1" style={{ color: '#9C9C9C' }}>{label}</p>
+      <p className="font-black text-[18px] tracking-tight" style={{ color: accent || '#1A1A1E' }}>{value}</p>
+      <p className="text-[10px] mt-1" style={{ color: '#6B6760' }}>{label}</p>
     </div>
   )
 }

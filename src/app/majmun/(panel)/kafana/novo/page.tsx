@@ -72,14 +72,14 @@ export default function NovoKafanskoPitanjePage() {
         Sva Kafanska pitanja
       </Link>
 
-      <h1 className="font-black tracking-tight mb-6" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+      <h1 className="font-black tracking-tight mb-6" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>
         Novo Kafansko pitanje
       </h1>
 
       <div className="card-soft p-6 sm:p-8 space-y-5">
         {success && (
-          <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-            <IconCheck size={16} className="text-[#15803d]" />
+          <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
+            <IconCheck size={16} className="text-[#1F8A62]" />
             Sačuvano.
           </div>
         )}
@@ -90,20 +90,20 @@ export default function NovoKafanskoPitanjePage() {
         )}
 
         <label className="block">
-          <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>Tekst pitanja</span>
+          <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>Tekst pitanja</span>
           <textarea value={text} onChange={e => setText(e.target.value)} rows={3}
             placeholder="Npr. Ko peva pesmu „Dva smo sveta različita“?"
             className="input w-full mt-1.5" />
         </label>
 
         <div>
-          <span className="text-[12px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#9C9C9C' }}>
+          <span className="text-[12px] font-bold uppercase tracking-wider mb-2 block" style={{ color: '#6B6760' }}>
             Odgovori (radio = tačan)
           </span>
           <div className="space-y-2">
             {options.map((o, i) => (
               <label key={i} className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer"
-                style={{ background: correctIdx === i ? '#E8F8F0' : '#F2F2F2' }}>
+                style={{ background: correctIdx === i ? '#D4F3E7' : '#EBE8E1' }}>
                 <input type="radio" name="correct" checked={correctIdx === i}
                   onChange={() => setCorrectIdx(i)} className="w-4 h-4 flex-shrink-0" />
                 <input value={o} onChange={e => setOpt(i, e.target.value)}
@@ -115,7 +115,7 @@ export default function NovoKafanskoPitanjePage() {
         </div>
 
         <label className="block">
-          <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>Težina</span>
+          <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>Težina</span>
           <select value={difficulty} onChange={e => setDifficulty(e.target.value as typeof DIFFICULTIES[number]['id'])}
             className="input w-full mt-1.5">
             {DIFFICULTIES.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
@@ -124,7 +124,7 @@ export default function NovoKafanskoPitanjePage() {
 
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} className="w-4 h-4" />
-          <span className="text-[13px]" style={{ color: '#343434' }}>Aktivno</span>
+          <span className="text-[13px]" style={{ color: '#1A1A1E' }}>Aktivno</span>
         </label>
 
         <div className="flex gap-3 pt-2">

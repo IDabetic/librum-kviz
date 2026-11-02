@@ -1,80 +1,90 @@
 @import "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────────────
-   Design tokens — Apple-minimal, urban, cool
-   ───────────────────────────────────────────────────────────────── */
+/* Librum klub — indigo / mint iz logoa, papir umesto Apple-sivog. */
 @theme {
-  /* Primary */
-  --color-ink:        #343434;   /* dark black — primary text */
-  --color-blue:       #609DED;   /* primary action */
-  --color-yellow:     #FFCB46;   /* accent */
-  --color-bg:         #FAFAFA;   /* page background */
+  --color-ink:          #1A1A1E;
+  --color-blue:         #3A36A0;
+  --color-yellow:       #E2B93A;
+  --color-bg:           #F6F4EF;
+  --color-light-blue:   #D4D2F5;
+  --color-light-yellow: #F5E6B8;
+  --color-grey-dark:    #A39E95;
+  --color-grey:         #6B6760;
+  --color-grey-soft:    #EBE8E1;
+  --color-white:        #FFFDF9;
+  --color-success:      #2FBF8A;
+  --color-danger:       #E55353;
+  --color-warning:      #E2B93A;
+  --color-primary:      #3A36A0;
+  --color-primary-dark: #2C2980;
+  --color-mint:         #2FBF8A;
 
-  /* Secondary */
-  --color-light-blue:   #BCD9FF;
-  --color-light-yellow: #FFECBC;
-  --color-grey-dark:    #B9B9B9;
-  --color-grey:         #9C9C9C;
-  --color-grey-soft:    #F2F2F2;
-  --color-white:        #FCFCFC;
-
-  /* Semantic */
-  --color-success: #4CAF50;
-  --color-danger:  #E55353;
-  --color-warning: #FFCB46;
-
-  /* Aliases used throughout */
-  --color-primary:      #609DED;
-  --color-primary-dark: #4480c8;
-
-  --font-sans: var(--font-poppins), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: var(--font-source), "Source Sans 3", system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Fraunces, Georgia, serif;
 }
 
 :root {
-  --background: #FAFAFA;
-  --foreground: #343434;
+  --background: #F6F4EF;
+  --foreground: #1A1A1E;
 }
 
 html {
   overflow-x: hidden;
-  font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--font-source), "Source Sans 3", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
+  background: #F6F4EF;
   color: var(--foreground);
   overflow-x: hidden;
   letter-spacing: -0.01em;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
+.page-ink {
+  background:
+    radial-gradient(900px 520px at 0% 0%, rgba(91, 86, 196, 0.22), transparent 50%),
+    radial-gradient(700px 480px at 100% 80%, rgba(61, 220, 151, 0.10), transparent 46%),
+    #12101A;
+  color: #EDE6D9;
 }
+.page-ink .btn-secondary {
+  color: #F4EFE6;
+  border-color: rgba(244, 239, 230, 0.35);
+}
+.page-ink .btn-secondary:hover:not(:disabled) {
+  border-color: #F4EFE6;
+  background: rgba(244, 239, 230, 0.06);
+}
+.page-ink .card-soft .btn-secondary {
+  color: #1A1A1E;
+  border-color: rgba(26,26,30,0.18);
+}
+.page-ink .card-soft .btn-secondary:hover:not(:disabled) {
+  border-color: #1A1A1E;
+  background: rgba(26,26,30,0.04);
+}
+.page-ink .btn-ghost { color: #F4EFE6; }
+.page-ink .btn-ghost:hover:not(:disabled) { background: rgba(244, 239, 230, 0.08); }
 
-/* Headings — tighter tracking + balanced wraps */
-h1, h2, h3, h4, h5, h6 {
-  letter-spacing: -0.02em;
+*, *::before, *::after { box-sizing: border-box; }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-fraunces), Fraunces, Georgia, serif;
+  letter-spacing: -0.03em;
   text-wrap: balance;
+  font-weight: 600;
 }
 
-/* Selection */
-::selection {
-  background: #609DED;
-  color: white;
-}
+::selection { background: #3A36A0; color: white; }
 
-/* Scrollbar — minimal */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(52,52,52,0.15); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(52,52,52,0.25); }
+::-webkit-scrollbar-thumb { background: rgba(26,26,30,0.18); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(26,26,30,0.28); }
 
-/* ─────────────────────────────────────────────────────────────────
-   Animations
-   ───────────────────────────────────────────────────────────────── */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -95,25 +105,23 @@ h1, h2, h3, h4, h5, h6 {
 .animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-pop-in  { animation: pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-/* ─────────────────────────────────────────────────────────────────
-   Reusable utility classes (in spirit of Apple HIG)
-   ───────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in, .animate-pop-in, .skeleton { animation: none; }
+}
 
-/* Soft frosted card — used everywhere */
 .card-soft {
-  background: #FCFCFC;
-  border: 1px solid rgba(52,52,52,0.06);
-  border-radius: 24px;
-  box-shadow: 0 1px 3px rgba(52,52,52,0.04), 0 4px 16px rgba(52,52,52,0.04);
+  background: #FFFDF9;
+  border: 1px solid rgba(26,26,30,0.08);
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(26,26,30,0.04);
 }
 
 .card-flat {
-  background: #FCFCFC;
-  border: 1px solid rgba(52,52,52,0.08);
-  border-radius: 20px;
+  background: #FFFDF9;
+  border: 1px solid rgba(26,26,30,0.10);
+  border-radius: 12px;
 }
 
-/* Buttons — primary blue, secondary outline, sizes S/M/L */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -121,7 +129,7 @@ h1, h2, h3, h4, h5, h6 {
   gap: 8px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  border-radius: 999px;
+  border-radius: 8px;
   transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
               background 0.15s ease,
               box-shadow 0.2s ease,
@@ -130,69 +138,53 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   user-select: none;
 }
-.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:active:not(:disabled) { transform: scale(0.98); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Global pointer cursor for interactive elements. Buttons in some
-   browsers default to the text or arrow cursor — explicitly opt every
-   clickable thing into the pointing-hand cursor (X, "Prijavi pitanje",
-   recent users, logout, avatars, anchors, etc.). */
 button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
 a[href],
 label[for],
-summary {
-  cursor: pointer;
-}
+summary { cursor: pointer; }
 button:disabled,
-[role="button"][aria-disabled="true"] {
-  cursor: not-allowed;
-}
+[role="button"][aria-disabled="true"] { cursor: not-allowed; }
 
-.btn-sm { padding: 8px 18px; font-size: 13px; }
-.btn-md { padding: 12px 24px; font-size: 14px; }
-.btn-lg { padding: 16px 32px; font-size: 16px; }
+.btn-sm { padding: 8px 16px; font-size: 13px; }
+.btn-md { padding: 12px 22px; font-size: 14px; }
+.btn-lg { padding: 16px 28px; font-size: 16px; }
 
 .btn-primary {
-  background: #609DED;
+  background: #3A36A0;
   color: white;
-  box-shadow: 0 4px 14px rgba(96, 157, 237, 0.30);
+  box-shadow: 0 4px 14px rgba(58, 54, 160, 0.28);
 }
 .btn-primary:hover:not(:disabled) {
-  background: #4480c8;
-  box-shadow: 0 6px 18px rgba(96, 157, 237, 0.40);
+  background: #2C2980;
+  box-shadow: 0 6px 18px rgba(58, 54, 160, 0.36);
 }
 
 .btn-secondary {
   background: transparent;
-  color: #343434;
-  border: 1.5px solid rgba(52,52,52,0.18);
+  color: #1A1A1E;
+  border: 1.5px solid rgba(26,26,30,0.18);
 }
 .btn-secondary:hover:not(:disabled) {
-  border-color: #343434;
-  background: rgba(52,52,52,0.04);
+  border-color: #1A1A1E;
+  background: rgba(26,26,30,0.04);
 }
 
-.btn-ghost {
-  background: transparent;
-  color: #343434;
-}
-.btn-ghost:hover:not(:disabled) {
-  background: rgba(52,52,52,0.06);
-}
+.btn-ghost { background: transparent; color: #1A1A1E; }
+.btn-ghost:hover:not(:disabled) { background: rgba(26,26,30,0.06); }
 
 .btn-yellow {
-  background: #FFCB46;
-  color: #343434;
-  box-shadow: 0 4px 14px rgba(255, 203, 70, 0.35);
+  background: #E2B93A;
+  color: #1A1A1E;
+  box-shadow: 0 4px 14px rgba(226, 185, 58, 0.35);
 }
 .btn-yellow:hover:not(:disabled) {
-  background: #f5be33;
-  box-shadow: 0 6px 18px rgba(255, 203, 70, 0.45);
+  background: #C9A432;
 }
 
-/* Inputs — declared in @layer components so Tailwind utilities like
-   pl-11/pr-10 can override individual padding sides. */
 @layer components {
   .input {
     width: 100%;
@@ -203,36 +195,34 @@ button:disabled,
     font-size: 15px;
     font-weight: 500;
     letter-spacing: -0.01em;
-    background: #FCFCFC;
-    border: 1.5px solid rgba(52,52,52,0.10);
-    border-radius: 14px;
-    color: #343434;
+    background: #FFFDF9;
+    border: 1.5px solid rgba(26,26,30,0.12);
+    border-radius: 10px;
+    color: #1A1A1E;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     outline: none;
   }
-  .input::placeholder { color: rgba(52,52,52,0.35); font-weight: 400; }
+  .input::placeholder { color: rgba(26,26,30,0.38); font-weight: 400; }
   .input:focus {
-    border-color: #609DED;
-    box-shadow: 0 0 0 4px rgba(96, 157, 237, 0.12);
+    border-color: #3A36A0;
+    box-shadow: 0 0 0 4px rgba(58, 54, 160, 0.14);
   }
 }
 
-/* Chip / tag */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
-/* Skeleton loader shimmer */
 .skeleton {
-  background: linear-gradient(90deg, #F2F2F2 0%, #F8F8F8 50%, #F2F2F2 100%);
+  background: linear-gradient(90deg, #EBE8E1 0%, #F6F4EF 50%, #EBE8E1 100%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
-  border-radius: 12px;
+  border-radius: 10px;
 }

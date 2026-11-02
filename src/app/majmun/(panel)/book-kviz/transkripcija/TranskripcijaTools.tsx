@@ -28,7 +28,7 @@ export default function TranskripcijaTools({ flagged }: { flagged: FlaggedRow[] 
 
   return (
     <>
-      <div className="flex p-1 rounded-full mb-2 overflow-x-auto" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full mb-2 overflow-x-auto" style={{ background: '#EBE8E1' }}>
         {([
           { id: 'detekcija', label: `🔍 Detekcija (${flagged.length})` },
           { id: 'zameni',    label: '🔧 Zameni' },
@@ -37,8 +37,8 @@ export default function TranskripcijaTools({ flagged }: { flagged: FlaggedRow[] 
           <button key={t.id} onClick={() => setTab(t.id)}
             className="flex-1 py-2.5 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
             style={tab === t.id
-              ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-              : { color: '#9C9C9C' }}>
+              ? { background: '#FFFDF9', color: '#1A1A1E', boxShadow: '0 2px 8px rgba(26,26,30,0.06)' }
+              : { color: '#6B6760' }}>
             {t.label}
           </button>
         ))}
@@ -55,38 +55,38 @@ export default function TranskripcijaTools({ flagged }: { flagged: FlaggedRow[] 
 function DetectionTab({ flagged }: { flagged: FlaggedRow[] }) {
   if (flagged.length === 0) {
     return (
-      <div className="card-soft p-10 text-center text-[15px]" style={{ color: '#15803d' }}>
+      <div className="card-soft p-10 text-center text-[15px]" style={{ color: '#1F8A62' }}>
         🎉 Nijedno Book pitanje ne sadrži strana slova (Q · W · X · Y). Čista baza!
       </div>
     )
   }
   return (
     <div className="card-soft overflow-hidden">
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+      <div className="divide-y" style={{ borderColor: '#EBE8E1' }}>
         {flagged.map(r => (
           <div key={r.id} className="px-5 py-4">
             <div className="flex items-start justify-between gap-3 mb-2">
-              <p className="text-[14px] leading-snug" style={{ color: '#343434' }}>
+              <p className="text-[14px] leading-snug" style={{ color: '#1A1A1E' }}>
                 <RenderParts parts={r.questionParts} />
               </p>
               <Link href={`/majmun/book-kviz/${r.id}`}
                 className="btn btn-secondary btn-sm flex-shrink-0"
-                style={{ background: '#BCD9FF', color: '#1e5fa4' }}>
+                style={{ background: '#D4D2F5', color: '#2C2980' }}>
                 ✎ Uredi
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-1.5 text-[12px]">
               {r.optionsParts.map((opt, i) => (
                 <div key={i} className="rounded-lg px-2 py-1.5"
-                  style={{ background: i === 0 ? '#E8F8F0' : '#F2F2F2' }}>
-                  <span style={{ color: i === 0 ? '#15803d' : '#343434', fontWeight: i === 0 ? 600 : 400 }}>
+                  style={{ background: i === 0 ? '#D4F3E7' : '#EBE8E1' }}>
+                  <span style={{ color: i === 0 ? '#1F8A62' : '#1A1A1E', fontWeight: i === 0 ? 600 : 400 }}>
                     <RenderParts parts={opt} />
                   </span>
                 </div>
               ))}
             </div>
             {r.genre && (
-              <p className="text-[10px] mt-2" style={{ color: '#9C9C9C' }}>
+              <p className="text-[10px] mt-2" style={{ color: '#6B6760' }}>
                 Žanr: {r.genre} · ID: {r.id.substring(0, 8)}…
               </p>
             )}
@@ -153,7 +153,7 @@ function BulkReplaceTab() {
 
   return (
     <div className="card-soft p-6 space-y-4">
-      <p className="text-[13px] leading-relaxed" style={{ color: '#9C9C9C' }}>
+      <p className="text-[13px] leading-relaxed" style={{ color: '#6B6760' }}>
         Pronađi tekst (npr. <code className="font-mono">Harry Potter</code>) i zameni ga
         srpskom transkripcijom (<code className="font-mono">Hari Poter</code>) u svim Book
         pitanjima odjednom. <strong>Uvek prvo pokreni Pregled</strong> da vidiš šta će biti
@@ -162,12 +162,12 @@ function BulkReplaceTab() {
 
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-[12px] font-semibold mb-1 block" style={{ color: '#343434' }}>Pronađi</label>
+          <label className="text-[12px] font-semibold mb-1 block" style={{ color: '#1A1A1E' }}>Pronađi</label>
           <input className="input" value={find} onChange={e => { setFind(e.target.value); setPreview(null); setResult(null) }}
             placeholder="Harry Potter" />
         </div>
         <div>
-          <label className="text-[12px] font-semibold mb-1 block" style={{ color: '#343434' }}>Zameni sa</label>
+          <label className="text-[12px] font-semibold mb-1 block" style={{ color: '#1A1A1E' }}>Zameni sa</label>
           <input className="input" value={replace} onChange={e => { setReplace(e.target.value); setPreview(null); setResult(null) }}
             placeholder="Hari Poter" />
         </div>
@@ -175,7 +175,7 @@ function BulkReplaceTab() {
 
       <div className="flex flex-wrap gap-3 items-center">
         <div>
-          <label className="text-[12px] font-semibold mr-2" style={{ color: '#343434' }}>Polja:</label>
+          <label className="text-[12px] font-semibold mr-2" style={{ color: '#1A1A1E' }}>Polja:</label>
           <select className="input" style={{ width: 'auto', display: 'inline-block' }}
             value={scope} onChange={e => setScope(e.target.value as ReplaceScope)}>
             <option value="both">Pitanje + odgovori</option>
@@ -183,7 +183,7 @@ function BulkReplaceTab() {
             <option value="options">Samo odgovori</option>
           </select>
         </div>
-        <label className="text-[12px] flex items-center gap-2" style={{ color: '#343434' }}>
+        <label className="text-[12px] flex items-center gap-2" style={{ color: '#1A1A1E' }}>
           <input type="checkbox" checked={caseSensitive} onChange={e => setCaseSensitive(e.target.checked)} />
           Razlikuj velika/mala slova
         </label>
@@ -207,7 +207,7 @@ function BulkReplaceTab() {
 
       {preview && (
         <div className="rounded-2xl px-4 py-3 text-[13px]"
-          style={{ background: '#FFECBC', color: '#9c7a13' }}>
+          style={{ background: '#F5E6B8', color: '#8A6A12' }}>
           <p className="font-bold mb-2">📋 Pregled</p>
           <p>• Ukupno pojavljivanja: <strong>{preview.total_matches}</strong></p>
           <p>• Redova koji bi bili izmenjeni: <strong>{preview.rows_affected}</strong></p>
@@ -219,7 +219,7 @@ function BulkReplaceTab() {
                 {preview.sample.map(s => (
                   <div key={s.id} className="rounded-lg px-2 py-1.5" style={{ background: 'rgba(252,252,252,0.6)' }}>
                     <p style={{ color: '#b91c1c' }}>− {s.before}</p>
-                    <p style={{ color: '#15803d' }}>+ {s.after}</p>
+                    <p style={{ color: '#1F8A62' }}>+ {s.after}</p>
                   </div>
                 ))}
               </div>
@@ -231,7 +231,7 @@ function BulkReplaceTab() {
       {result && (
         <div className="rounded-2xl px-4 py-3 text-[13px]"
           style={result.ok
-            ? { background: '#E8F8F0', color: '#15803d' }
+            ? { background: '#D4F3E7', color: '#1F8A62' }
             : { background: '#FEE2E2', color: '#b91c1c' }}>
           {result.ok
             ? <>✓ Primenjeno. Redova izmenjeno: <strong>{result.rows_affected}</strong> · ukupno zamena: <strong>{result.total_replacements}</strong></>
@@ -325,7 +325,7 @@ function AiTab({ flagged }: { flagged: FlaggedRow[] }) {
     <div className="space-y-4">
 
       <div className="card-soft p-6">
-        <p className="text-[13px] leading-relaxed mb-4" style={{ color: '#9C9C9C' }}>
+        <p className="text-[13px] leading-relaxed mb-4" style={{ color: '#6B6760' }}>
           Selektuj sumnjiva pitanja, klikni „Zatraži AI predlog” i Claude će predložiti srpsku
           transkripciju za svako (zadržava značenje, samo transkribuje strana imena/naslove
           po pravilima srpske latinice). Vidiš diff pre primene — odobravaš ručno.
@@ -333,9 +333,9 @@ function AiTab({ flagged }: { flagged: FlaggedRow[] }) {
           ⚠️ Zahteva <code>ANTHROPIC_API_KEY</code> u Vercel env. Trošak ~$0.02 po 10 pitanja.
         </p>
 
-        <div className="flex items-center justify-between mb-3 pb-3 border-b" style={{ borderColor: '#F2F2F2' }}>
+        <div className="flex items-center justify-between mb-3 pb-3 border-b" style={{ borderColor: '#EBE8E1' }}>
           <button onClick={toggleAll} className="text-[12px] font-semibold underline"
-            style={{ color: '#609DED' }}>
+            style={{ color: '#3A36A0' }}>
             {selected.size === flagged.length ? 'Poništi sve' : `Selektuj sva (${flagged.length})`}
           </button>
           <button onClick={fetchSuggestions} disabled={selected.size === 0 || busy !== null}
@@ -348,10 +348,10 @@ function AiTab({ flagged }: { flagged: FlaggedRow[] }) {
           {flagged.map(r => {
             const checked = selected.has(r.id)
             return (
-              <label key={r.id} className="flex items-start gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-[#F2F2F2]">
+              <label key={r.id} className="flex items-start gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-[#EBE8E1]">
                 <input type="checkbox" checked={checked} onChange={() => toggle(r.id)}
                   className="mt-0.5 flex-shrink-0" />
-                <span className="text-[12px] leading-snug" style={{ color: '#343434' }}>
+                <span className="text-[12px] leading-snug" style={{ color: '#1A1A1E' }}>
                   <RenderParts parts={r.questionParts} />
                 </span>
               </label>
@@ -368,12 +368,12 @@ function AiTab({ flagged }: { flagged: FlaggedRow[] }) {
 
       {suggestions.length > 0 && (
         <div className="card-soft p-6">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: '#F2F2F2' }}>
-            <p className="font-bold text-[15px]" style={{ color: '#343434' }}>
+          <div className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: '#EBE8E1' }}>
+            <p className="font-bold text-[15px]" style={{ color: '#1A1A1E' }}>
               📝 AI predlozi ({suggestions.filter(s => s.changed).length} promenjenih od {suggestions.length})
             </p>
             <button onClick={applyApproved} disabled={approved.size === 0 || busy !== null}
-              className="btn btn-md" style={{ background: '#15803d', color: 'white' }}>
+              className="btn btn-md" style={{ background: '#1F8A62', color: 'white' }}>
               {busy === 'apply' ? 'Primenjujem…' : `✓ Primeni ${approved.size} odobrenih`}
             </button>
           </div>
@@ -385,7 +385,7 @@ function AiTab({ flagged }: { flagged: FlaggedRow[] }) {
               const isApproved = approved.has(s.id)
               return (
                 <div key={s.id} className={`rounded-2xl p-4 border-2 transition-all ${s.changed ? '' : 'opacity-50'}`}
-                  style={{ borderColor: isApproved ? '#15803d' : 'rgba(52,52,52,0.10)', background: '#FCFCFC' }}>
+                  style={{ borderColor: isApproved ? '#1F8A62' : 'rgba(26,26,30,0.10)', background: '#FFFDF9' }}>
                   <div className="flex items-start gap-3 mb-2">
                     <input type="checkbox" checked={isApproved} disabled={!s.changed}
                       onChange={() => toggleApprove(s.id)} className="mt-1 flex-shrink-0" />
@@ -393,7 +393,7 @@ function AiTab({ flagged }: { flagged: FlaggedRow[] }) {
                       <p className="text-[12px] mb-1" style={{ color: '#b91c1c' }}>
                         − {orig.raw.question_text}
                       </p>
-                      <p className="text-[12px]" style={{ color: '#15803d' }}>
+                      <p className="text-[12px]" style={{ color: '#1F8A62' }}>
                         + {s.question_text}
                       </p>
                     </div>
@@ -404,21 +404,21 @@ function AiTab({ flagged }: { flagged: FlaggedRow[] }) {
                       const changed = o !== newOpt
                       return (
                         <div key={i} className="text-[11px] rounded px-2 py-1"
-                          style={{ background: i === 0 ? '#E8F8F0' : '#F2F2F2' }}>
+                          style={{ background: i === 0 ? '#D4F3E7' : '#EBE8E1' }}>
                           {changed ? (
                             <>
                               <span style={{ color: '#b91c1c' }}>− {o}</span><br />
-                              <span style={{ color: '#15803d' }}>+ {newOpt}</span>
+                              <span style={{ color: '#1F8A62' }}>+ {newOpt}</span>
                             </>
                           ) : (
-                            <span style={{ color: '#9C9C9C' }}>{o}</span>
+                            <span style={{ color: '#6B6760' }}>{o}</span>
                           )}
                         </div>
                       )
                     })}
                   </div>
                   {!s.changed && (
-                    <p className="text-[11px] mt-2 pl-7" style={{ color: '#9C9C9C' }}>
+                    <p className="text-[11px] mt-2 pl-7" style={{ color: '#6B6760' }}>
                       (AI nije našao šta da promeni)
                     </p>
                   )}

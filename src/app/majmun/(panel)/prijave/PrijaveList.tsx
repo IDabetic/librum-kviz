@@ -20,9 +20,9 @@ type Row = {
 }
 
 const STATUS_COLOR: Record<string, { bg: string; fg: string; label: string }> = {
-  pending:  { bg: '#FFECBC', fg: '#9c7a13', label: 'Na čekanju' },
-  reviewed: { bg: '#BCD9FF', fg: '#1e5fa4', label: 'Pregledano' },
-  resolved: { bg: '#E8F8F0', fg: '#15803d', label: 'Rešeno' },
+  pending:  { bg: '#F5E6B8', fg: '#8A6A12', label: 'Na čekanju' },
+  reviewed: { bg: '#D4D2F5', fg: '#2C2980', label: 'Pregledano' },
+  resolved: { bg: '#D4F3E7', fg: '#1F8A62', label: 'Rešeno' },
 }
 
 function fmtDate(s: string): string {
@@ -55,28 +55,28 @@ export default function PrijaveList({ rows }: { rows: Row[] }) {
   if (rows.length === 0) {
     return (
       <div className="card-soft py-16 text-center">
-        <p className="font-bold text-[16px] mb-2" style={{ color: '#343434' }}>Nema prijava u ovoj kategoriji</p>
+        <p className="font-bold text-[16px] mb-2" style={{ color: '#1A1A1E' }}>Nema prijava u ovoj kategoriji</p>
       </div>
     )
   }
 
   return (
     <div className="card-soft overflow-hidden">
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+      <div className="divide-y" style={{ borderColor: '#EBE8E1' }}>
         {rows.map(r => {
           const ss = STATUS_COLOR[r.status] || STATUS_COLOR.pending
           return (
             <div key={r.id} className="px-5 py-4">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="chip" style={{ background: ss.bg, color: ss.fg }}>{ss.label}</span>
-                <span className="chip" style={{ background: '#F2F2F2', color: '#343434' }}>{r.sourceLabel}</span>
-                <span className="text-[11px]" style={{ color: '#9C9C9C' }}>
+                <span className="chip" style={{ background: '#EBE8E1', color: '#1A1A1E' }}>{r.sourceLabel}</span>
+                <span className="text-[11px]" style={{ color: '#6B6760' }}>
                   {r.reporterName} · {fmtDate(r.createdAt)}
                 </span>
               </div>
 
               {r.questionText && (
-                <p className="text-[14px] font-semibold leading-snug mb-2" style={{ color: '#343434' }}>
+                <p className="text-[14px] font-semibold leading-snug mb-2" style={{ color: '#1A1A1E' }}>
                   {r.questionText}
                 </p>
               )}
@@ -93,19 +93,19 @@ export default function PrijaveList({ rows }: { rows: Row[] }) {
                 )}
                 {r.status !== 'reviewed' && (
                   <button onClick={() => setStatus(r.id, 'reviewed')} disabled={busy === r.id}
-                    className="btn btn-sm" style={{ background: '#BCD9FF', color: '#1e5fa4' }}>
+                    className="btn btn-sm" style={{ background: '#D4D2F5', color: '#2C2980' }}>
                     Označi „Pregledano“
                   </button>
                 )}
                 {r.status !== 'resolved' && (
                   <button onClick={() => setStatus(r.id, 'resolved')} disabled={busy === r.id}
-                    className="btn btn-sm" style={{ background: '#E8F8F0', color: '#15803d' }}>
+                    className="btn btn-sm" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
                     Reši
                   </button>
                 )}
                 {r.status !== 'pending' && (
                   <button onClick={() => setStatus(r.id, 'pending')} disabled={busy === r.id}
-                    className="btn btn-sm" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                    className="btn btn-sm" style={{ background: '#F5E6B8', color: '#8A6A12' }}>
                     Vrati na čekanje
                   </button>
                 )}

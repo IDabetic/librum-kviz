@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
       // Permanent so Google transfers ranking signal and old bookmarks
       // keep working.
       { source: '/leaderboard', destination: '/ranglista', permanent: true },
+      { source: '/predlozi-pitanje', destination: '/dodaj-pitanja', permanent: false },
     ]
   },
   // Static assets get long-lived caching; HTML pages stay dynamic via

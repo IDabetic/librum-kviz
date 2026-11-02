@@ -16,7 +16,7 @@ export async function GET() {
           justifyContent: 'center',
           position: 'relative',
           // Bold diagonal gradient blending the four brand pastels
-          background: 'linear-gradient(135deg, #BCD9FF 0%, #E8F8F0 35%, #FFECBC 70%, #FFCB46 100%)',
+          background: 'linear-gradient(135deg, #D4D2F5 0%, #D4F3E7 35%, #F5E6B8 70%, #E2B93A 100%)',
           fontFamily: 'system-ui, -apple-system, sans-serif',
           overflow: 'hidden',
         }}
@@ -50,7 +50,7 @@ export async function GET() {
 
           {/* Headline */}
           <div style={{
-            color: '#343434',
+            color: '#1A1A1E',
             fontSize: 84,
             fontWeight: 900,
             letterSpacing: -3,
@@ -60,12 +60,12 @@ export async function GET() {
             alignItems: 'center',
           }}>
             <span>Usudi se da budeš</span>
-            <span style={{ color: '#609DED' }}>bolji od drugih.</span>
+            <span style={{ color: '#3A36A0' }}>bolji od drugih.</span>
           </div>
 
           {/* Sub */}
           <div style={{
-            color: '#343434',
+            color: '#1A1A1E',
             fontSize: 26,
             fontWeight: 600,
             marginTop: 36,
@@ -88,9 +88,9 @@ export async function GET() {
           justifyContent: 'center',
           gap: 10,
         }}>
-          <div style={{ width: 8, height: 8, borderRadius: 4, background: '#FFCB46', display: 'flex' }} />
+          <div style={{ width: 8, height: 8, borderRadius: 4, background: '#E2B93A', display: 'flex' }} />
           <span style={{
-            color: '#343434',
+            color: '#1A1A1E',
             fontSize: 20,
             fontWeight: 700,
             letterSpacing: 3,

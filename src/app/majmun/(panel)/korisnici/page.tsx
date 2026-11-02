@@ -81,15 +81,15 @@ export default async function KorisniciPage({ searchParams }: { searchParams: Pr
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>Korisnici</h1>
-          <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>{count ?? 0} ukupno</p>
+          <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>Korisnici</h1>
+          <p className="text-[13px] mt-1" style={{ color: '#6B6760' }}>{count ?? 0} ukupno</p>
         </div>
         <Link href="/majmun/korisnici/dodaj" className="btn btn-primary btn-md">+ Dodaj admina</Link>
       </div>
 
       <form className="card-soft p-4 flex items-center gap-2 flex-wrap" action="/majmun/korisnici">
         <div className="relative flex-1 min-w-[200px]">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#9C9C9C' }}><IconSearch size={16} strokeWidth={2.2} /></div>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#6B6760' }}><IconSearch size={16} strokeWidth={2.2} /></div>
           <input name="q" defaultValue={sp.q || ''} className="input pl-11" placeholder="Pretraga po imenu ili email-u…" />
         </div>
         <select name="role" defaultValue={sp.role || 'all'} className="input flex-shrink-0" style={{ width: 'auto', minWidth: 130 }}>
@@ -110,7 +110,7 @@ export default async function KorisniciPage({ searchParams }: { searchParams: Pr
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
-          <p className="text-[12px]" style={{ color: '#9C9C9C' }}>Strana {page + 1} od {totalPages}</p>
+          <p className="text-[12px]" style={{ color: '#6B6760' }}>Strana {page + 1} od {totalPages}</p>
           <div className="flex gap-2">
             {page > 0 && <Link href={`/majmun/korisnici?${baseQuery({ page: String(page - 1) })}`} className="btn btn-secondary btn-sm">← Prethodna</Link>}
             {page < totalPages - 1 && <Link href={`/majmun/korisnici?${baseQuery({ page: String(page + 1) })}`} className="btn btn-primary btn-sm">Sledeća →</Link>}

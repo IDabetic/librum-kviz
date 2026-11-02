@@ -118,10 +118,10 @@ export default async function AdminDashboard() {
       {/* ── Greeting ─────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(24px, 4vw, 32px)' }}>
+          <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(24px, 4vw, 32px)' }}>
             Dobrodošao, {me?.first_name || 'admine'}!
           </h1>
-          <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>Pregled stanja platforme.</p>
+          <p className="text-[13px] mt-1" style={{ color: '#6B6760' }}>Pregled stanja platforme.</p>
         </div>
         <div className="flex gap-2">
           <Link href="/majmun/pitanja/novo" className="btn btn-primary btn-md">
@@ -132,19 +132,19 @@ export default async function AdminDashboard() {
 
       {/* ── KPI cards ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Kpi Icon={IconUsers}    label="Korisnika"           value={fmtN(usersAll.count ?? 0)}     sub={`+${usersToday.count ?? 0} danas`}   bg="#BCD9FF" fg="#1e5fa4" />
-        <Kpi Icon={IconHome}     label="PRO partija"         value={fmtN(surTotal.count ?? 0)}     sub={`+${surToday.count ?? 0} danas`}     bg="#E8F8F0" fg="#15803d" />
-        <Kpi Icon={IconStar}     label="Book partija"        value={fmtN(bookTotal.count ?? 0)}    sub={`+${bookToday.count ?? 0} danas`}    bg="#FFECBC" fg="#9c7a13" />
+        <Kpi Icon={IconUsers}    label="Korisnika"           value={fmtN(usersAll.count ?? 0)}     sub={`+${usersToday.count ?? 0} danas`}   bg="#D4D2F5" fg="#2C2980" />
+        <Kpi Icon={IconHome}     label="PRO partija"         value={fmtN(surTotal.count ?? 0)}     sub={`+${surToday.count ?? 0} danas`}     bg="#D4F3E7" fg="#1F8A62" />
+        <Kpi Icon={IconStar}     label="Book partija"        value={fmtN(bookTotal.count ?? 0)}    sub={`+${bookToday.count ?? 0} danas`}    bg="#F5E6B8" fg="#8A6A12" />
         <Kpi Icon={IconStar}     label="Kafanski partija"    value={fmtN(kafanaTotal.count ?? 0)}  sub={`+${kafanaToday.count ?? 0} danas`}  bg="#FEE2E2" fg="#b91c1c" />
-        <Kpi Icon={IconHint}     label="Vešanje partija"     value={fmtN(hangmanTotal.count ?? 0)} sub={`+${hangmanToday.count ?? 0} danas`} bg="#E8F8F0" fg="#15803d" />
+        <Kpi Icon={IconHint}     label="Vešanje partija"     value={fmtN(hangmanTotal.count ?? 0)} sub={`+${hangmanToday.count ?? 0} danas`} bg="#D4F3E7" fg="#1F8A62" />
         <Kpi Icon={IconTime}     label="Brzi kviz partija"   value={fmtN(quickTotal.count ?? 0)}   sub={`+${quickToday.count ?? 0} danas`}   bg="#FEE2E2" fg="#b91c1c" />
-        <Kpi Icon={IconSwords}   label="Duela"               value={fmtN(duelTotal.count ?? 0)}    sub={`+${duelToday.count ?? 0} danas`}    bg="#F2F2F2" fg="#343434" />
-        <Kpi Icon={IconDiscover} label="Aktivnih PRO pitanja" value={fmtN(questActive.count ?? 0)} sub={`${fmtN(questInactive.count ?? 0)} neaktivnih`} bg="#BCD9FF" fg="#1e5fa4" />
-        <Kpi Icon={IconStar}     label="Aktivnih Book pitanja" value={fmtN(bookActive.count ?? 0)} sub={`${fmtN(bookInactive.count ?? 0)} neaktivnih`} bg="#FFECBC" fg="#9c7a13" />
+        <Kpi Icon={IconSwords}   label="Duela"               value={fmtN(duelTotal.count ?? 0)}    sub={`+${duelToday.count ?? 0} danas`}    bg="#EBE8E1" fg="#1A1A1E" />
+        <Kpi Icon={IconDiscover} label="Aktivnih PRO pitanja" value={fmtN(questActive.count ?? 0)} sub={`${fmtN(questInactive.count ?? 0)} neaktivnih`} bg="#D4D2F5" fg="#2C2980" />
+        <Kpi Icon={IconStar}     label="Aktivnih Book pitanja" value={fmtN(bookActive.count ?? 0)} sub={`${fmtN(bookInactive.count ?? 0)} neaktivnih`} bg="#F5E6B8" fg="#8A6A12" />
         <Kpi Icon={IconStar}     label="Aktivnih Kafanski"   value={fmtN(kafanaActive.count ?? 0)} sub={`${fmtN(kafanaInactive.count ?? 0)} neaktivnih`} bg="#FEE2E2" fg="#b91c1c" />
-        <Kpi Icon={IconUsers}    label="Predloga"            value={fmtN(submissions.count ?? 0)}  sub="čeka pregled" bg="#FFECBC" fg="#9c7a13" />
+        <Kpi Icon={IconUsers}    label="Predloga"            value={fmtN(submissions.count ?? 0)}  sub="čeka pregled" bg="#F5E6B8" fg="#8A6A12" />
         <Kpi Icon={IconUsers}    label="Prijava pitanja"     value={fmtN(reportsPending.count ?? 0)} sub="na čekanju" bg="#FEE2E2" fg="#b91c1c" />
-        <Kpi Icon={IconTrophy}   label="Najpopularnija"      value={mostPopular?.name || '—'}      sub={`${fmtN(mostPopular?.count || 0)} partija`} bg="#FFCB46" fg="#343434" />
+        <Kpi Icon={IconTrophy}   label="Najpopularnija"      value={mostPopular?.name || '—'}      sub={`${fmtN(mostPopular?.count || 0)} partija`} bg="#E2B93A" fg="#1A1A1E" />
       </div>
 
       {/* ── One-shot maintenance actions ────────────────────────────── */}
@@ -154,46 +154,46 @@ export default async function AdminDashboard() {
       <div className="grid lg:grid-cols-3 gap-4">
         {/* Today's leader */}
         <div className="card-soft p-6 lg:col-span-1">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>
             Rekord dana
           </p>
           {topToday && topName ? (
             <>
-              <p className="font-black tracking-tight leading-none" style={{ color: '#FFCB46', fontSize: 'clamp(36px, 6vw, 48px)' }}>
+              <p className="font-black tracking-tight leading-none" style={{ color: '#E2B93A', fontSize: 'clamp(36px, 6vw, 48px)' }}>
                 {topToday.score}
               </p>
-              <p className="text-[13px] mt-2" style={{ color: '#343434' }}>
+              <p className="text-[13px] mt-2" style={{ color: '#1A1A1E' }}>
                 <strong>{topName}</strong> · PRO kviz
               </p>
             </>
           ) : (
-            <p className="text-[13px]" style={{ color: '#9C9C9C' }}>Još niko nije igrao danas.</p>
+            <p className="text-[13px]" style={{ color: '#6B6760' }}>Još niko nije igrao danas.</p>
           )}
         </div>
 
         {/* Recent users */}
         <div className="card-soft p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
+            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#6B6760' }}>
               Novi korisnici (poslednjih 7 dana: {usersWeek.count ?? 0})
             </p>
-            <Link href="/majmun/korisnici" className="text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+            <Link href="/majmun/korisnici" className="text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#3A36A0' }}>
               Svi →
             </Link>
           </div>
           <div className="space-y-1">
             {(recentUsers.data || []).slice(0, 5).map(u => (
-              <div key={u.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
-                <span className="font-semibold text-[13px]" style={{ color: '#343434' }}>
+              <div key={u.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: '#EBE8E1' }}>
+                <span className="font-semibold text-[13px]" style={{ color: '#1A1A1E' }}>
                   {u.nickname || u.first_name || 'Igrač'}
                 </span>
-                <span className="text-[11px]" style={{ color: '#9C9C9C' }}>
+                <span className="text-[11px]" style={{ color: '#6B6760' }}>
                   {new Date(u.created_at).toLocaleDateString('sr')}
                 </span>
               </div>
             ))}
             {(!recentUsers.data || recentUsers.data.length === 0) && (
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>—</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>—</p>
             )}
           </div>
         </div>
@@ -203,7 +203,7 @@ export default async function AdminDashboard() {
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Recent PRO sessions */}
         <div className="card-soft p-6">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-4" style={{ color: '#9C9C9C' }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-4" style={{ color: '#6B6760' }}>
             Skorašnje PRO partije
           </p>
           <div className="space-y-1">
@@ -211,19 +211,19 @@ export default async function AdminDashboard() {
               const p = Array.isArray(s.profiles) ? s.profiles[0] : s.profiles as { first_name: string; nickname: string } | null
               const name = p?.nickname || p?.first_name || 'Igrač'
               return (
-                <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+                <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: '#EBE8E1' }}>
                   <div className="min-w-0">
-                    <p className="font-semibold text-[13px] truncate" style={{ color: '#343434' }}>{name}</p>
-                    <p className="text-[11px]" style={{ color: '#9C9C9C' }}>
+                    <p className="font-semibold text-[13px] truncate" style={{ color: '#1A1A1E' }}>{name}</p>
+                    <p className="text-[11px]" style={{ color: '#6B6760' }}>
                       {s.questions_reached} pit. · {new Date(s.created_at).toLocaleString('sr', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                  <span className="font-black text-[16px]" style={{ color: '#609DED' }}>{s.score}</span>
+                  <span className="font-black text-[16px]" style={{ color: '#3A36A0' }}>{s.score}</span>
                 </div>
               )
             })}
             {(!recentSurvivor.data || recentSurvivor.data.length === 0) && (
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>—</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>—</p>
             )}
           </div>
         </div>
@@ -231,10 +231,10 @@ export default async function AdminDashboard() {
         {/* Recent submissions */}
         <div className="card-soft p-6">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
+            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#6B6760' }}>
               Korisnički predlozi
             </p>
-            <Link href="/majmun/predlozi" className="text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#609DED' }}>
+            <Link href="/majmun/predlozi" className="text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#3A36A0' }}>
               Svi →
             </Link>
           </div>
@@ -242,16 +242,16 @@ export default async function AdminDashboard() {
             {recentSubmissions.map((s, i) => {
               const name = s.profile?.nickname || s.profile?.first_name || s.submitter_email || 'Anon'
               return (
-                <div key={i} className="py-2 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
-                  <p className="text-[13px] line-clamp-2" style={{ color: '#343434' }}>{s.question_text}</p>
-                  <p className="text-[11px] mt-1" style={{ color: '#9C9C9C' }}>
+                <div key={i} className="py-2 border-b last:border-0" style={{ borderColor: '#EBE8E1' }}>
+                  <p className="text-[13px] line-clamp-2" style={{ color: '#1A1A1E' }}>{s.question_text}</p>
+                  <p className="text-[11px] mt-1" style={{ color: '#6B6760' }}>
                     {name} · {new Date(s.created_at).toLocaleDateString('sr')}
                   </p>
                 </div>
               )
             })}
             {recentSubmissions.length === 0 && (
-              <p className="text-[12px]" style={{ color: '#9C9C9C' }}>—</p>
+              <p className="text-[12px]" style={{ color: '#6B6760' }}>—</p>
             )}
           </div>
         </div>
@@ -270,12 +270,12 @@ function Kpi({ Icon, label, value, sub, bg, fg }: {
         <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
           <Icon size={16} className={`text-[${fg}]`} strokeWidth={2.2} />
         </div>
-        <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#9C9C9C' }}>{label}</p>
+        <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>{label}</p>
       </div>
-      <p className="font-black tracking-tight leading-none" style={{ color: '#343434', fontSize: 'clamp(20px, 3.5vw, 28px)' }}>
+      <p className="font-black tracking-tight leading-none" style={{ color: '#1A1A1E', fontSize: 'clamp(20px, 3.5vw, 28px)' }}>
         {value}
       </p>
-      <p className="text-[11px] mt-2" style={{ color: '#9C9C9C' }}>{sub}</p>
+      <p className="text-[11px] mt-2" style={{ color: '#6B6760' }}>{sub}</p>
     </div>
   )
 }

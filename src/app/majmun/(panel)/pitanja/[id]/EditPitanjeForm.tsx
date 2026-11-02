@@ -87,26 +87,26 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
 
       <Link href="/majmun/pitanja"
         className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-        style={{ color: '#609DED' }}>
+        style={{ color: '#3A36A0' }}>
         <IconBack size={16} strokeWidth={2.2} />
         Sva pitanja
       </Link>
 
-      <h1 className="font-black tracking-tight mb-2" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+      <h1 className="font-black tracking-tight mb-2" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>
         Izmeni pitanje
       </h1>
-      <p className="text-[12px] mb-5" style={{ color: '#9C9C9C' }}>
+      <p className="text-[12px] mb-5" style={{ color: '#6B6760' }}>
         ID: {row.id} · Kreirano: {new Date(row.created_at).toLocaleString('sr')}
       </p>
 
       {/* Stats */}
       {row.times_shown > 0 && (
         <div className="card-soft p-4 mb-5">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#9C9C9C' }}>Statistika</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>Statistika</p>
           <div className="grid grid-cols-3 gap-3">
             <Stat value={row.times_shown} label="Prikazivanja" />
-            <Stat value={row.times_correct} label="Tačnih" accent="#4CAF50" />
-            <Stat value={`${accuracy}%`} label="Tačnost" accent="#609DED" />
+            <Stat value={row.times_correct} label="Tačnih" accent="#2FBF8A" />
+            <Stat value={`${accuracy}%`} label="Tačnost" accent="#3A36A0" />
           </div>
         </div>
       )}
@@ -114,8 +114,8 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
       <div className="card-soft p-6 sm:p-8">
 
         {success && (
-          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-            <IconCheck size={16} className="text-[#15803d]" />
+          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
+            <IconCheck size={16} className="text-[#1F8A62]" />
             Sačuvano.
           </div>
         )}
@@ -127,7 +127,7 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
         )}
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
             Tekst pitanja
           </label>
           <textarea value={text} onChange={e => setText(e.target.value)}
@@ -135,7 +135,7 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
         </div>
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
             Odgovori (klikni radio za tačan)
           </label>
           <div className="space-y-2">
@@ -144,8 +144,8 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
                 <button type="button" onClick={() => setCorrectIdx(i)}
                   className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
                   style={correctIdx === i
-                    ? { borderColor: '#4CAF50', background: '#4CAF50' }
-                    : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                    ? { borderColor: '#2FBF8A', background: '#2FBF8A' }
+                    : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
                   {correctIdx === i && <div className="w-2 h-2 rounded-full bg-white" />}
                 </button>
                 <input value={o} onChange={e => setOpt(i, e.target.value)}
@@ -156,7 +156,7 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
         </div>
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
             Objašnjenje
           </label>
           <textarea value={info} onChange={e => setInfo(e.target.value)}
@@ -165,21 +165,21 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
 
         <div className="grid sm:grid-cols-2 gap-4 mb-5">
           <div>
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>Težina</label>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Težina</label>
             <div className="grid grid-cols-2 gap-1.5">
               {DIFFICULTIES.map(d => (
                 <button key={d.id} type="button" onClick={() => setDifficulty(d.id)}
                   className="py-2 rounded-xl text-[12px] font-bold transition-all"
                   style={difficulty === d.id
-                    ? { background: '#609DED', color: 'white' }
-                    : { background: '#F2F2F2', color: '#9C9C9C' }}>
+                    ? { background: '#3A36A0', color: 'white' }
+                    : { background: '#EBE8E1', color: '#6B6760' }}>
                   {d.label}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>Tagovi</label>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Tagovi</label>
             <input value={tags} onChange={e => setTags(e.target.value)} className="input" placeholder="književnost, ruska" />
           </div>
         </div>
@@ -188,11 +188,11 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
           <button type="button" onClick={() => setActive(a => !a)}
             className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
             style={active
-              ? { borderColor: '#4CAF50', background: '#4CAF50' }
-              : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+              ? { borderColor: '#2FBF8A', background: '#2FBF8A' }
+              : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
             {active && <span className="text-white font-black text-[10px]">✓</span>}
           </button>
-          <span className="text-[13px] font-medium" style={{ color: '#343434' }}>
+          <span className="text-[13px] font-medium" style={{ color: '#1A1A1E' }}>
             Aktivno (vidljivo u igri)
           </span>
         </label>
@@ -214,9 +214,9 @@ export default function EditPitanjeForm({ row }: { row: Row }) {
 
 function Stat({ value, label, accent }: { value: number | string; label: string; accent?: string }) {
   return (
-    <div className="rounded-2xl p-3 text-center" style={{ background: '#F2F2F2' }}>
-      <div className="font-black text-[18px] tracking-tight" style={{ color: accent || '#343434' }}>{value}</div>
-      <div className="text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>{label}</div>
+    <div className="rounded-2xl p-3 text-center" style={{ background: '#EBE8E1' }}>
+      <div className="font-black text-[18px] tracking-tight" style={{ color: accent || '#1A1A1E' }}>{value}</div>
+      <div className="text-[11px] mt-0.5" style={{ color: '#6B6760' }}>{label}</div>
     </div>
   )
 }

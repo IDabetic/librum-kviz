@@ -81,16 +81,16 @@ export default function EditBookForm({ row }: { row: Row }) {
     <div className="max-w-3xl space-y-5">
       <Link href="/majmun/book-kviz"
         className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-opacity hover:opacity-70"
-        style={{ color: '#609DED' }}>
+        style={{ color: '#3A36A0' }}>
         <IconBack size={16} strokeWidth={2.2} /> Sva Book pitanja
       </Link>
 
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+        <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>
           Izmena Book pitanja
         </h1>
         {row.times_shown > 0 && (
-          <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+          <p className="text-[12px]" style={{ color: '#6B6760' }}>
             {row.times_shown} prikaza · {accuracy}% tačnih
           </p>
         )}
@@ -98,8 +98,8 @@ export default function EditBookForm({ row }: { row: Row }) {
 
       <div className="card-soft p-6 sm:p-8">
         {saved && (
-          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-            <IconCheck size={16} className="text-[#15803d]" /> Sačuvano.
+          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
+            <IconCheck size={16} className="text-[#1F8A62]" /> Sačuvano.
           </div>
         )}
         {error && (
@@ -108,14 +108,14 @@ export default function EditBookForm({ row }: { row: Row }) {
 
         {/* Genre */}
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>Žanr</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Žanr</label>
           <div className="flex flex-wrap gap-1.5">
             {GENRES.map(g => (
               <button key={g} type="button" onClick={() => setGenre(g)}
                 className="px-3 py-1.5 rounded-full text-[12px] font-bold transition-all"
                 style={genre === g
-                  ? { background: '#9c7a13', color: 'white' }
-                  : { background: '#FFECBC', color: '#9c7a13' }}>
+                  ? { background: '#8A6A12', color: 'white' }
+                  : { background: '#F5E6B8', color: '#8A6A12' }}>
                 {g}
               </button>
             ))}
@@ -124,14 +124,14 @@ export default function EditBookForm({ row }: { row: Row }) {
 
         {/* Question */}
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>Tekst pitanja *</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Tekst pitanja *</label>
           <textarea value={text} onChange={e => setText(e.target.value)}
             className="input resize-none" rows={3} />
         </div>
 
         {/* Options */}
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>
             Odgovori * (klikni radio dugme za tačan)
           </label>
           <div className="space-y-2">
@@ -140,8 +140,8 @@ export default function EditBookForm({ row }: { row: Row }) {
                 <button type="button" onClick={() => setCorrectIdx(i)}
                   className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
                   style={correctIdx === i
-                    ? { borderColor: '#4CAF50', background: '#4CAF50' }
-                    : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                    ? { borderColor: '#2FBF8A', background: '#2FBF8A' }
+                    : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
                   {correctIdx === i && <div className="w-2 h-2 rounded-full bg-white" />}
                 </button>
                 <input value={o} onChange={e => setOpt(i, e.target.value)}
@@ -157,11 +157,11 @@ export default function EditBookForm({ row }: { row: Row }) {
           <button type="button" onClick={() => setActive(a => !a)}
             className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
             style={active
-              ? { borderColor: '#4CAF50', background: '#4CAF50' }
-              : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+              ? { borderColor: '#2FBF8A', background: '#2FBF8A' }
+              : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
             {active && <span className="text-white font-black text-[10px]">✓</span>}
           </button>
-          <span className="text-[13px] font-medium" style={{ color: '#343434' }}>
+          <span className="text-[13px] font-medium" style={{ color: '#1A1A1E' }}>
             Aktivno (vidljivo u igri)
           </span>
         </label>
@@ -176,7 +176,7 @@ export default function EditBookForm({ row }: { row: Row }) {
       {/* Danger zone */}
       <div className="card-soft p-6" style={{ borderColor: 'rgba(229,83,83,0.20)' }}>
         <h3 className="font-bold text-[14px] mb-2" style={{ color: '#E55353' }}>Brisanje pitanja</h3>
-        <p className="text-[12px] mb-4" style={{ color: '#9C9C9C' }}>
+        <p className="text-[12px] mb-4" style={{ color: '#6B6760' }}>
           Trajno ukloni iz baze. Ne može se vratiti.
         </p>
         {!confirmDelete ? (

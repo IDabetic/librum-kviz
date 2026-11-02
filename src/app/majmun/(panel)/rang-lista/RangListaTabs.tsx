@@ -59,13 +59,13 @@ export default function RangListaTabs({
 
   return (
     <>
-      <div className="flex p-1 rounded-full mb-6 overflow-x-auto" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full mb-6 overflow-x-auto" style={{ background: '#EBE8E1' }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className="flex-shrink-0 py-2.5 px-4 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap"
             style={tab === t.id
-              ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-              : { color: '#9C9C9C' }}>
+              ? { background: '#FFFDF9', color: '#1A1A1E', boxShadow: '0 2px 8px rgba(26,26,30,0.06)' }
+              : { color: '#6B6760' }}>
             {t.label}
             {t.id === 'suspicious' && suspicious.length > 0 && (
               <span className="ml-1.5 inline-flex items-center justify-center text-[10px] font-black px-1.5 py-0.5 rounded-full"
@@ -81,22 +81,22 @@ export default function RangListaTabs({
       {tab === 'suspicious' && (
         <div className="card-soft overflow-hidden">
           {suspicious.length === 0 ? (
-            <p className="px-5 py-10 text-center text-[14px]" style={{ color: '#9C9C9C' }}>
+            <p className="px-5 py-10 text-center text-[14px]" style={{ color: '#6B6760' }}>
               Nema sumnjivih partija u izabranom periodu. 🎉
             </p>
           ) : (
-            <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+            <div className="divide-y" style={{ borderColor: '#EBE8E1' }}>
               {suspicious.map(r => (
                 <div key={r.id} className="px-5 py-3 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[14px]" style={{ color: '#343434' }}>
+                    <p className="font-semibold text-[14px]" style={{ color: '#1A1A1E' }}>
                       <span className="chip mr-2" style={{ background: '#FEE2E2', color: '#b91c1c' }}>{r.game}</span>
                       {r.user}
                     </p>
                     <p className="text-[11px] mt-0.5" style={{ color: '#b91c1c' }}>
                       ⚠ {r.reason}
                     </p>
-                    <p className="text-[10px] mt-0.5" style={{ color: '#9C9C9C' }}>
+                    <p className="text-[10px] mt-0.5" style={{ color: '#6B6760' }}>
                       {fmtTime(r.created_at)}
                     </p>
                   </div>
@@ -114,13 +114,13 @@ export default function RangListaTabs({
 
       {/* ── PRO kviz ──────────────────────────────────────────── */}
       {tab === 'survivor' && (
-        <SessionList rows={survivor} accent="#609DED" busy={busy} onDelete={id => deleteSession('survivor_sessions', id)}
+        <SessionList rows={survivor} accent="#3A36A0" busy={busy} onDelete={id => deleteSession('survivor_sessions', id)}
           detail={r => `${r.questions_reached} pit. · ${Math.round(Number(r.accuracy))}% · ${fmtTime(r.created_at)}`} />
       )}
 
       {/* ── Book kviz ─────────────────────────────────────────── */}
       {tab === 'book' && (
-        <SessionList rows={book} accent="#9c7a13" busy={busy} onDelete={id => deleteSession('book_sessions', id)}
+        <SessionList rows={book} accent="#8A6A12" busy={busy} onDelete={id => deleteSession('book_sessions', id)}
           detail={r => `${r.questions_reached} pit. · ${Math.round(Number(r.accuracy))}%${r.top_genre ? ` · ${r.top_genre}` : ''} · ${fmtTime(r.created_at)}`} />
       )}
 
@@ -133,20 +133,20 @@ export default function RangListaTabs({
       {/* ── Trivia duel ───────────────────────────────────────── */}
       {tab === 'duel' && (
         <div className="card-soft overflow-hidden">
-          <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+          <div className="divide-y" style={{ borderColor: '#EBE8E1' }}>
             {duels.map(r => {
               const finished = r.status === 'finished' || (r.host_finished && r.guest_finished)
               return (
                 <div key={r.id} className="px-5 py-3 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[14px]" style={{ color: '#343434' }}>
-                      {r.host_name} <span style={{ color: '#9C9C9C' }}>vs</span> {r.guest_name}
+                    <p className="font-semibold text-[14px]" style={{ color: '#1A1A1E' }}>
+                      {r.host_name} <span style={{ color: '#6B6760' }}>vs</span> {r.guest_name}
                     </p>
-                    <p className="text-[11px]" style={{ color: '#9C9C9C' }}>
+                    <p className="text-[11px]" style={{ color: '#6B6760' }}>
                       {r.quiz_type === 'kafana' ? 'Kafanski' : 'PRO'} · {finished ? 'završen' : r.status} · {fmtTime(r.created_at)}
                     </p>
                   </div>
-                  <div className="font-black text-[16px] tabular-nums" style={{ color: '#9c7a13' }}>
+                  <div className="font-black text-[16px] tabular-nums" style={{ color: '#8A6A12' }}>
                     {r.host_score}:{r.guest_score}
                   </div>
                   <button onClick={() => deleteSession('game_rooms', r.id)} disabled={busy === r.id}
@@ -163,16 +163,16 @@ export default function RangListaTabs({
       {/* ── Vešanje ───────────────────────────────────────────── */}
       {tab === 'hangman' && (
         <div className="card-soft overflow-hidden">
-          <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+          <div className="divide-y" style={{ borderColor: '#EBE8E1' }}>
             {hangman.map(r => (
               <div key={r.id} className="px-5 py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[14px]" style={{ color: '#343434' }}>{r.name}</p>
-                  <p className="text-[11px]" style={{ color: '#9C9C9C' }}>
+                  <p className="font-semibold text-[14px]" style={{ color: '#1A1A1E' }}>{r.name}</p>
+                  <p className="text-[11px]" style={{ color: '#6B6760' }}>
                     {r.word.toUpperCase()} · {r.category || 'Custom'} · {r.won ? 'pobeda' : 'poraz'} · {fmtTime(r.created_at)}
                   </p>
                 </div>
-                <div className="font-black text-[16px]" style={{ color: r.won ? '#4CAF50' : '#E55353' }}>{r.score}</div>
+                <div className="font-black text-[16px]" style={{ color: r.won ? '#2FBF8A' : '#E55353' }}>{r.score}</div>
                 <button onClick={() => deleteSession('hangman_sessions', r.id)} disabled={busy === r.id}
                   className="btn btn-sm" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
                   {busy === r.id ? '...' : 'Obriši'}
@@ -205,12 +205,12 @@ function SessionList<T extends { id: string; name: string; score: number }>({
 }) {
   return (
     <div className="card-soft overflow-hidden">
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+      <div className="divide-y" style={{ borderColor: '#EBE8E1' }}>
         {rows.map(r => (
           <div key={r.id} className="px-5 py-3 flex items-center gap-3">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-[14px]" style={{ color: '#343434' }}>{r.name}</p>
-              <p className="text-[11px]" style={{ color: '#9C9C9C' }}>{detail(r)}</p>
+              <p className="font-semibold text-[14px]" style={{ color: '#1A1A1E' }}>{r.name}</p>
+              <p className="text-[11px]" style={{ color: '#6B6760' }}>{detail(r)}</p>
             </div>
             <div className="font-black text-[16px]" style={{ color: accent }}>{r.score}</div>
             <button onClick={() => onDelete(r.id)} disabled={busy === r.id}
