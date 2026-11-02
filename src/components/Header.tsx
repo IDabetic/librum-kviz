@@ -27,7 +27,7 @@ const NAV_LINKS = [
 // Game routes the mobile drawer used to surface as a colored grid. Now
 // that /igre is a real page, mobile just sends users there too — the
 // drawer stays slim with the same 4 top links.
-const GAME_ROUTES = ['/pro-kviz', '/book-kviz', '/kafanski-kviz', '/igraj-zajedno', '/vesanje', '/brzi-kviz']
+const GAME_ROUTES = ['/osvajanje', '/pro-kviz', '/book-kviz', '/kafanski-kviz', '/igraj-zajedno', '/vesanje', '/brzi-kviz']
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()

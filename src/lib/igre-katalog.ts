@@ -5,6 +5,18 @@ export type Maskota = 'Mimi' | 'Zig' | 'Bloop' | 'Lumi'
 
 export const IGRE = [
   {
+    href: '/osvajanje',
+    n: '00',
+    label: 'Osvajanje sveta',
+    kratko: 'Osvajanje sveta',
+    desc: 'Kontinenti, vojske i bitke znanja protiv dva rivala.',
+    cta: 'Osvoji svet',
+    accent: '#12907E',
+    boja: '#12907E',
+    tekst: '#FFFFFF',
+    maskota: 'Mimi' as Maskota,
+  },
+  {
     href: '/pro-kviz',
     n: '01',
     label: 'PRO kviz',
@@ -14,7 +26,7 @@ export const IGRE = [
     accent: '#6D4BC9',
     boja: '#6D4BC9',
     tekst: '#FFFFFF',
-    maskota: 'Mimi' as Maskota,
+    maskota: 'Lumi' as Maskota,
   },
   {
     href: '/book-kviz',
@@ -47,8 +59,8 @@ export const IGRE = [
     kratko: 'Duel',
     desc: 'Ista pitanja, jedno na jedno.',
     cta: 'Izazovi',
-    accent: '#12907E',
-    boja: '#12907E',
+    accent: '#151515',
+    boja: '#151515',
     tekst: '#FFFFFF',
     maskota: 'Bloop' as Maskota,
   },

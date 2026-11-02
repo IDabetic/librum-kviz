@@ -27,9 +27,9 @@ export default async function IgrePage() {
       <Header />
       <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
         <h1 className="mb-8" style={{ fontSize: 'clamp(44px, 9vw, 88px)' }}>Igre</h1>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {IGRE.map(g => (
-            <KarticaIgre key={g.href} igra={g} href={user ? g.href : `/auth/prijava?redirect=${g.href}`} />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 [&>*:first-child]:col-span-2 lg:[&>*:first-child]:col-span-3">
+          {IGRE.map((g, i) => (
+            <KarticaIgre key={g.href} igra={g} velika={i === 0} href={user || g.href === '/osvajanje' ? g.href : `/auth/prijava?redirect=${g.href}`} />
           ))}
         </div>
       </main>

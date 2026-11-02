@@ -130,6 +130,8 @@ export default async function Home() {
   }))
 
   const [prva, ...ostale] = IGRE
+  // Osvajanje se igra protiv botova, pa je otvoreno i bez naloga.
+  const link = (href: string) => (user || href === '/osvajanje' ? href : `/auth/prijava?redirect=${href}`)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -151,10 +153,10 @@ export default async function Home() {
         </div>
 
         <div className="grid gap-4 sm:gap-5 md:grid-cols-[1.3fr_1fr]">
-          <KarticaIgre igra={prva} href={user ? prva.href : `/auth/prijava?redirect=${prva.href}`} velika />
+          <KarticaIgre igra={prva} href={link(prva.href)} velika />
           <div className="grid grid-cols-2 gap-4 sm:gap-5">
             {ostale.slice(0, 2).map(g => (
-              <KarticaIgre key={g.href} igra={g} href={user ? g.href : `/auth/prijava?redirect=${g.href}`} />
+              <KarticaIgre key={g.href} igra={g} href={link(g.href)} />
             ))}
             <div className="col-span-2 card-soft p-5 flex flex-col justify-between">
               <p className="text-[15px] font-semibold leading-snug">
@@ -172,9 +174,9 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 mt-4 sm:mt-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5 mt-4 sm:mt-5">
           {ostale.slice(2).map(g => (
-            <KarticaIgre key={g.href} igra={g} href={user ? g.href : `/auth/prijava?redirect=${g.href}`} />
+            <KarticaIgre key={g.href} igra={g} href={link(g.href)} />
           ))}
         </div>
 
