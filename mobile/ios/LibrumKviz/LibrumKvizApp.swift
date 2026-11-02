@@ -29,6 +29,9 @@ struct Koren: View {
     @Environment(Napredak.self) private var napredak
     @Environment(Sesija.self) private var sesija
     @State private var kartica = 1
+    @State private var link: Link?
+    /// Odredište linka librumkviz://duel/KOD ili librumkviz://igrac/ID.
+    enum Link: Identifiable { case duel(String), igrac(String); var id: String { switch self { case .duel(let k): "d" + k; case .igrac(let i): "i" + i } } }
     var body: some View {
         TabView(selection: $kartica) {
             NavigationStack { IgraciTabView() }
@@ -45,6 +48,22 @@ struct Koren: View {
                 .tabItem { Label("Profil", systemImage: "person") }
                 .tag(3)
                 .badge(napredak.neprocitanih + Brojaci.deljeni.obavestenja)
+        }
+        .onOpenURL { url in
+            guard url.scheme == "librumkviz", let vrednost = url.pathComponents.dropFirst().first else { return }
+            switch url.host() {
+            case "duel": link = .duel(vrednost.uppercased())
+            case "igrac": link = .igrac(vrednost)
+            default: break
+            }
+        }
+        .fullScreenCover(item: $link) { l in
+            NavigationStack {
+                switch l {
+                case .duel(let kod): DuelView(kodSobe: kod)
+                case .igrac(let id): ProfilIgracaView(id: id)
+                }
+            }
         }
         // Brojači na karticama: na svakih 60 s dok je aplikacija otvorena (shortcut: bez push-a; posle Firebase-a stiže odmah).
         .task(id: sesija.korisnikId) {

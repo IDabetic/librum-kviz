@@ -59,6 +59,10 @@ targets:
         UIAppFonts: [ArchivoBlack-Regular.ttf, SpaceGrotesk.ttf]
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes: [remote-notification]
+        # librumkviz://duel/KOD i librumkviz://igrac/ID otvaraju izazov ili profil (deljenje van aplikacije).
+        CFBundleURLTypes:
+          - CFBundleURLName: club.librum.kviz
+            CFBundleURLSchemes: [librumkviz]
         SUPABASE_URL: "$(SUPABASE_URL)"
         SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
     settings:

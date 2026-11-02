@@ -290,7 +290,7 @@ private struct DuelSoba: View {
             if model.jaSamDomacin {
                 if model.soba?.guest_id == nil {
                     Text("Pošalji kod prijatelju. Čekamo da uđe…").font(.tekst(16)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
-                    ShareLink(item: "Igrajmo duel u Librum kvizu. Kod sobe: \(model.soba?.room_code ?? "")") {
+                    ShareLink(item: "Igrajmo duel u Librum kvizu. Kod sobe: \(model.soba?.room_code ?? "") · librumkviz://duel/\(model.soba?.room_code ?? "")") {
                         Label("Pošalji kod", systemImage: "square.and.arrow.up")
                     }
                     .buttonStyle(.sekundarno)

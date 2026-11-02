@@ -32,7 +32,7 @@ struct ProfilView: View {
                     ProfilZaglavlje(profil: p, nivo: napredak.nivo) {
                         HStack(spacing: 10) {
                             NavigationLink { IzmenaProfilaView() } label: { Text("Uredi profil") }.buttonStyle(.sekundarno)
-                            ShareLink(item: "Igram Librum kviz: \(p.nadimak), nivo \(napredak.nivo). https://kviz.librum.club") {
+                            ShareLink(item: "Igram Librum kviz: \(p.nadimak), nivo \(napredak.nivo). Zaprati me: librumkviz://igrac/\(sesija.korisnikId ?? "")") {
                                 Image(systemName: "square.and.arrow.up").font(.system(size: 17, weight: .bold)).foregroundStyle(Color.mastilo)
                                     .frame(width: 54, height: 54).background(Color.kartica, in: RoundedRectangle(cornerRadius: 16))
                                     .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.mastilo, lineWidth: 2))
