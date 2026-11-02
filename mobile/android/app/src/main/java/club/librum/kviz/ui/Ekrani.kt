@@ -196,8 +196,10 @@ fun RangLista() {
 
 /** Profil: prijava i registracija, ili nalog sa odjavom i brisanjem. */
 @Composable
-fun Profil(sesija: Sesija) {
+fun Profil(sesija: Sesija, idi: (String) -> Unit = {}) {
     val nalog by sesija.nalog.collectAsState()
+    var mojProfil by remember { mutableStateOf<club.librum.kviz.zajednica.ProfilIgraca?>(null) }
+    LaunchedEffect(nalog?.id) { mojProfil = nalog?.id?.let { id -> runCatching { club.librum.kviz.zajednica.Drustvo.profil(sesija, id) }.getOrNull() } }
     val kontekst = LocalContext.current
     val opseg = rememberCoroutineScope()
     var potvrdaBrisanja by remember { mutableStateOf(false) }
@@ -209,8 +211,19 @@ fun Profil(sesija: Sesija) {
             Spacer(Modifier.height(36.dp))
             val n = nalog
             if (n != null) {
+                val mp = mojProfil
+                if (mp != null) {
+                    club.librum.kviz.zajednica.ProfilZaglavlje(mp) {
+                        // Samo na mom profilu; drugi vide „Poslao N pitanja · M u igri”.
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Dugme("Dodaj pitanje", Modifier.weight(1f), VrstaDugmeta.ZUTO) { idi("dodaj/pro") }
+                            Dugme("Dodaj reč", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO) { idi("dodaj/vesanje") }
+                        }
+                    }
+                    club.librum.kviz.zajednica.ProfilStatistike(mp)
+                }
                 Column(Modifier.fillMaxWidth().pop().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    if (mp == null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Box(Modifier.size(84.dp).background(Boje.teal, CircleShape).border(2.5.dp, Boje.mastilo, CircleShape), contentAlignment = Alignment.Center) {
                             MaskotaSlika(Maskota.BLOOP, 70.dp)
                         }
@@ -218,7 +231,7 @@ fun Profil(sesija: Sesija) {
                             Text(n.nadimak ?: "Igrač", style = naslov(28.sp))
                             Text(n.email.orEmpty(), style = tekst(14.sp, boja = Boje.sivaTekst))
                         }
-                    }
+                    } else Text(n.email.orEmpty(), style = tekst(14.sp, boja = Boje.sivaTekst))
                     greska?.let { Text(it, style = tekst(14.sp, FontWeight.SemiBold, Boje.crvena)) }
                     Dugme("Odjavi se", vrsta = VrstaDugmeta.SEKUNDARNO) { opseg.launch { sesija.odjava() } }
                     Text("Obriši nalog", style = tekst(15.sp, FontWeight.Bold, Boje.crvena),

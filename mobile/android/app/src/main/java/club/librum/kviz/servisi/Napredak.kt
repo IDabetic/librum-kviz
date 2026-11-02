@@ -66,6 +66,8 @@ class Napredak(context: Context) {
         var uvodZavrsen: Boolean = false,
         var zvuk: Boolean = true,
         var tema: String = "sistem",
+        /** Prihvaćena pravila zajednice (pre prve objave, komentara ili poruke). */
+        var pravilaZajednice: Boolean = false,
     )
 
     private val prefs = context.getSharedPreferences("napredak", Context.MODE_PRIVATE)

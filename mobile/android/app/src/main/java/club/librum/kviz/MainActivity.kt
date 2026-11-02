@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material3.Icon
@@ -35,6 +36,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import club.librum.kviz.osvajanje.Mapa
 import club.librum.kviz.osvajanje.OsvajanjeTok
+import club.librum.kviz.zajednica.IgraciEkran
+import club.librum.kviz.zajednica.DodajPitanjeEkran
+import club.librum.kviz.zajednica.ProfilIgracaEkran
+import club.librum.kviz.zajednica.TraziIgraceEkran
+import club.librum.kviz.zajednica.PorukeEkran
+import club.librum.kviz.zajednica.RazgovorEkran
 import club.librum.kviz.osvajanje.OsvajanjeTokEkran
 import club.librum.kviz.osvajanje.OsvajanjeUvod
 import club.librum.kviz.osvajanje.Tezina
@@ -68,6 +75,7 @@ class MainActivity : ComponentActivity() {
 private data class Kartica(val ruta: String, val natpis: String, val ikonica: androidx.compose.ui.graphics.vector.ImageVector)
 
 private val KARTICE = listOf(
+    Kartica("igraci", "Igrači", Icons.Rounded.Groups),
     Kartica("igre", "Igre", Icons.Rounded.SportsEsports),
     Kartica("rang", "Rang lista", Icons.Rounded.EmojiEvents),
     Kartica("profil", "Profil", Icons.Rounded.Person),
@@ -108,8 +116,14 @@ private fun Aplikacija() {
         Box(Modifier.fillMaxSize().padding(bottom = if (ruta in KARTICE.map { it.ruta }) razmak.calculateBottomPadding() else 0.dp)) {
             NavHost(nav, startDestination = "igre") {
                 composable("igre") { Pocetna(nalog?.nadimak) { nav.navigate(it) } }
+                composable("igraci") { IgraciEkran(sesija) { nav.navigate(it) } }
+                composable("igrac/{id}") { e -> ProfilIgracaEkran(sesija, e.arguments?.getString("id").orEmpty(), { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("igraci/trazi") { TraziIgraceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("poruke") { PorukeEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("razgovor/{sa}/{ime}") { e -> RazgovorEkran(sesija, e.arguments?.getString("sa").orEmpty(), e.arguments?.getString("ime").orEmpty()) { nav.popBackStack() } }
                 composable("rang") { RangLista() }
-                composable("profil") { Profil(sesija) }
+                composable("profil") { Profil(sesija) { nav.navigate(it) } }
+                composable("dodaj/{vrsta}") { e -> DodajPitanjeEkran(sesija, e.arguments?.getString("vrsta") ?: "pro") { nav.popBackStack() } }
                 composable("osvajanje") { OsvajanjeUvod(nalog?.nadimak) { p -> OsvajanjeTok.postavka = p; nav.navigate("osvajanje/igra") } }
                 composable("osvajanje/igra") { OsvajanjeTokEkran(sesija) { nav.popBackStack() } }
                 composable("pro") { ProKvizEkran(sesija, Survival.PRO) { nav.popBackStack() } }
