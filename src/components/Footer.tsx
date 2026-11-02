@@ -8,7 +8,6 @@ export default function Footer() {
   ]
   return (
     <footer className="mt-10" style={{ background: '#151515' }}>
-      <div className="h-1.5" style={{ background: 'linear-gradient(90deg, #12907E 0%, #3B78E0 50%, #12907E 100%)' }} />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
