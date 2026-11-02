@@ -1,6 +1,6 @@
 # Librum kviz aplikacija: šta postoji i šta fali
 
-Ažurirano: 03.11.2026. · verzija 1 · grana `redizajn-quizpop`
+Ažurirano: 03.11.2026. · verzija 2 (urađeno na iOS-u: tačke 1–8 iz redosleda) · grana `redizajn-quizpop`
 
 Pregled svakog toka u iOS aplikaciji (Android prati isti spisak), poređen sa QuizPop kitom
 i sa vebom kviz.librum.club. Kolona „Gradi se” je redosled rada.
@@ -39,6 +39,13 @@ PRO, Book, Slikari, Brzi kviz, Vešanje, Duel, teme. Prodavnicu i novčiće smo 
 | Android | Osvajanje v3, stare igre | sve ostalo iz ove tabele |
 
 ## 3. Redosled gradnje
+
+Urađeno 03.11 na iOS-u (commit 36d5859 do 1a6f7fa): prijava pitanja, pravila zajednice i blokirani,
+Sanduče sa servera i brojači, rang lista „Koje pratim”, duel bez čekanja, linkovi `librumkviz://`,
+„Pošalji pitanje” u aplikaciji, Dnevni izazov. Ostaje: vibracija (prekidač), Osvajanje nastavak,
+Android, admin, Firebase/App Store. Linkovi `https://kviz.librum.club/...` (universal links) traže
+apple-app-site-association na vebu, ide sa sledećom objavom sajta.
+
 
 1. Prijava netačnog pitanja iz igre.
 2. Pravila zajednice pre prve objave i spisak blokiranih (uslov za App Store).
