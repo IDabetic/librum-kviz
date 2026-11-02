@@ -47,6 +47,8 @@ struct ProfilView: View {
                 VStack(spacing: 0) {
                     RedListe(ikonica: "lifepreserver", naziv: "Pomoć danas", vrednost: "\(napredak.pomociOstalo()) od \(Napredak.pomociDnevno)", strelica: false)
                     Divider().overlay(Color.kremTamnija)
+                    NavigationLink { IgraciView() } label: { RedListe(ikonica: "person.2", naziv: "Igrači i praćenje") }
+                    Divider().overlay(Color.kremTamnija)
                     NavigationLink { StatistikaView() } label: { RedListe(ikonica: "chart.bar", naziv: "Statistika") }
                     Divider().overlay(Color.kremTamnija)
                     NavigationLink { SanduceView() } label: { RedListe(ikonica: "tray", naziv: "Sanduče", vrednost: napredak.neprocitanih > 0 ? "\(napredak.neprocitanih) novo" : nil) }
@@ -355,6 +357,7 @@ struct SanduceView: View {
                                                     (.bedzevi, "Bedževi · \(sve.filter { $0.vrsta == .bedz }.count)")])
             ScrollView {
                 VStack(spacing: 10) {
+                    if filter != .bedzevi { DolazniIzazovi() }
                     if ucitava {
                         ForEach(0..<4, id: \.self) { _ in Skelet(visina: 84, radijus: 20) }
                     } else if poruke.isEmpty {

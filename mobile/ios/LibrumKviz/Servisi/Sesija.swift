@@ -18,7 +18,11 @@ final class Sesija {
 
     var prijavljen: Bool { korisnikId != nil }
 
+    /// Poslednja napravljena sesija (aplikacija ima jednu), za servise van prikaza.
+    static weak var trenutna: Sesija?
+
     init() {
+        defer { Sesija.trenutna = self }
         if let podaci = Self.citajKeychain(), let t = try? JSONDecoder().decode(Supabase.Token.self, from: podaci) {
             primeni(t)
         }

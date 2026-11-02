@@ -199,6 +199,9 @@ struct RangListaView: View {
 /// Javni profil drugog igrača: avatar, od kada igra i statistika po igri.
 struct ProfilIgracaView: View {
     let id: String
+    @Environment(Sesija.self) private var sesija
+    @State private var brojevi: Drustvo.Brojevi?
+    @State private var duel = false
     struct Profil: Decodable {
         struct Igra: Decodable { let igra: String; let partija: Int; let najbolje: Int; let prosek_ms: Int?; let tacnost: Int?; let sa_pomoci: Int? }
         let nadimak: String
@@ -224,6 +227,21 @@ struct ProfilIgracaView: View {
                     AvatarSlika(avatar: p.avatar, velicina: 120)
                     Text(p.nadimak).font(.naslov(30))
                     if let od = p.od?.prefix(4) { Text("Igra od \(od).").font(.tekst(13)).foregroundStyle(Color.sivaTekst) }
+                    if let b = brojevi {
+                        Text("\(b.pratilaca) pratilaca · prati \(b.prati)").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+                    }
+                    if sesija.prijavljen && sesija.korisnikId != id {
+                        HStack(spacing: 10) {
+                            Button {
+                                Task {
+                                    let prati = !(brojevi?.pratim ?? false)
+                                    if await Drustvo.prati(sesija, id: id, da: prati) { brojevi = await Drustvo.brojevi(id) }
+                                }
+                            } label: { Label((brojevi?.pratim ?? false) ? "Pratiš" : "Prati", systemImage: (brojevi?.pratim ?? false) ? "checkmark" : "person.badge.plus") }
+                                .buttonStyle(DugmeStil(vrsta: (brojevi?.pratim ?? false) ? .sekundarno : .primarno))
+                            Button { duel = true } label: { Label("Izazovi", systemImage: "bolt") }.buttonStyle(.zuto)
+                        }
+                    }
                     StatistikaPoIgrama(profil: p)
                 }
             }
@@ -233,6 +251,10 @@ struct ProfilIgracaView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .task { await ucitaj() }
+        .task { brojevi = await Drustvo.brojevi(id) }
+        .navigationDestination(isPresented: $duel) {
+            if case .gotovo(let p) = stanje { DuelView(izazovi: (id, p.nadimak)) }
+        }
     }
 
     private func ucitaj() async {

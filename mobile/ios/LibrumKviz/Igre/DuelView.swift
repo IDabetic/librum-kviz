@@ -3,6 +3,10 @@ import SwiftUI
 /// Duel iz kita (Battles): arena, brzi meč, privatna soba, izazov prijatelju,
 /// traženje rivala, VS ekran, pitanja sa rezultatom uživo, ishod runde i kraj meča.
 struct DuelView: View {
+    /// Izazov sa profila: napravi sobu i pošalji izazov ovom igraču.
+    var izazovi: (id: String, ime: String)? = nil
+    /// Prihvaćen izazov: uđi u sobu ovim kodom.
+    var kodSobe: String? = nil
     @Environment(Sesija.self) private var sesija
     @Environment(Napredak.self) private var napredak
     @Environment(\.dismiss) private var zatvori
@@ -27,6 +31,16 @@ struct DuelView: View {
         .toolbar(.hidden, for: .tabBar)
         .fullScreenCover(isPresented: $prijava) { PrijavaTok() }
         .onAppear { if model == nil { model = DuelModel(sesija: sesija) } }
+        .task(id: model == nil) {
+            guard let m = model, sesija.prijavljen else { return }
+            if let kod = kodSobe, m.faza == .lobi {
+                m.kod = kod
+                await m.pridruzi()
+            } else if let cilj = izazovi, m.faza == .lobi {
+                await m.napravi(brojPitanja: 10)
+                if let soba = m.soba { await Drustvo.posaljiIzazov(sesija, za: cilj.id, kod: soba.room_code) }
+            }
+        }
         .onChange(of: model?.faza) { _, f in if f == .kraj { model?.zabelezi(napredak) } }
         .overlay {
             if potvrdaIzlaska {
