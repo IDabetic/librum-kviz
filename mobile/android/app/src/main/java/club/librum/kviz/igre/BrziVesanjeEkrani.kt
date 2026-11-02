@@ -1,6 +1,17 @@
 package club.librum.kviz.igre
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -216,9 +227,13 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
     var celaRec by remember { mutableStateOf(false) }
     var pokusaj by remember { mutableStateOf("") }
     var sacuvano by remember { mutableStateOf(false) }
+    var unos by remember { mutableStateOf("") }
+    val fokus = remember { FocusRequester() }
+    val tastatura = LocalSoftwareKeyboardController.current
 
     fun sledeca() {
         if (reci.isEmpty()) return
+        unos = ""
         val r = reci[indeks % reci.size]; indeks++
         rec = r; igra = Vesanje(r.word); pocetak = System.currentTimeMillis(); sacuvano = false; celaRec = false
     }
@@ -257,8 +272,13 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                     Text("${igra.poeni}", style = naslov(22.sp), modifier = Modifier.padding(start = 10.dp))
                 }
                 Column(Modifier.fillMaxWidth().pop(Boje.zuta).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    r.category?.let { Oznaka(it, Boje.tinta) }
-                    r.hint?.let { Text(it, style = tekst(17.sp, FontWeight.SemiBold, Boje.tinta)) }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            r.category?.let { Oznaka(it, Boje.tinta) }
+                            r.hint?.let { Text(it, style = tekst(17.sp, FontWeight.SemiBold, Boje.tinta)) }
+                        }
+                        VesalaCrtez(Vesanje.POCETNI_ZIVOTI - igra.zivoti, igra.status == Vesanje.Status.PORAZ, Modifier.size(96.dp, 116.dp))
+                    }
                     FlowRow(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         igra.prikaz.forEach { z ->
@@ -271,19 +291,27 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                     }
                 }
                 if (igra.status == Vesanje.Status.IGRA) {
-                    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp), maxItemsInEachRow = 7) {
-                        Vesanje.AZBUKA.forEach { s ->
-                            val isk = igra.iskorisceno(s)
-                            Box(
-                                Modifier.weight(1f).heightIn(min = 46.dp)
-                                    .background(if (isk) Boje.udubljeno else Boje.kartica, RoundedCornerShape(12.dp))
-                                    .border(1.5.dp, if (isk) Color.Transparent else Boje.mastilo, RoundedCornerShape(12.dp))
-                                    .clickable(enabled = !isk, role = Role.Button) { igra.pogodi(s); posle() },
-                                contentAlignment = Alignment.Center,
-                            ) { Text(s, style = tekst(17.sp, FontWeight.Bold, if (isk) Boje.sivaTekst else Boje.mastilo)) }
+                    if (!celaRec) {
+                        // Skriveno polje drži tastaturu telefona; svako slovo u polju je pokušaj, a već iskorišćena se preskaču,
+                        // pa brzo kucanje i IME koji prepisuje kompoziciju ne gube slova.
+                        BasicTextField(unos, { novo ->
+                            novo.forEach { z ->
+                                val slovo = z.toString().uppercase(java.util.Locale.forLanguageTag("sr-Latn"))
+                                if (igra.status == Vesanje.Status.IGRA && slovo in Vesanje.AZBUKA && !igra.iskorisceno(slovo)) { igra.pogodi(slovo); posle() }
+                            }
+                            unos = novo
+                        }, Modifier.size(1.dp).alpha(0.01f).focusRequester(fokus).semantics { contentDescription = "Otkucaj slovo" },
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false))
+                        LaunchedEffect(r.id) { delay(300); runCatching { fokus.requestFocus() }; tastatura?.show() }
+                        val iskoriscena = Vesanje.AZBUKA.filter { igra.iskorisceno(it) }
+                        if (iskoriscena.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            iskoriscena.forEach { sl ->
+                                val pogodak = r.word.uppercase(java.util.Locale.forLanguageTag("sr-Latn")).contains(sl)
+                                Text(sl, style = tekst(18.sp, FontWeight.Bold, if (pogodak) Boje.teal else Boje.crvena),
+                                    textDecoration = if (pogodak) null else TextDecoration.LineThrough)
+                            }
                         }
-                        // 27 slova = 3 × 7 + 6: prazno polje drži poslednji red iste širine kao ostali.
-                        Spacer(Modifier.weight(1f))
+                        Dugme("Kucaj slova", vrsta = VrstaDugmeta.SEKUNDARNO) { runCatching { fokus.requestFocus() }; tastatura?.show() }
                     }
                     if (celaRec) {
                         OutlinedTextField(pokusaj, { pokusaj = it }, Modifier.fillMaxWidth(), label = { Text("Cela reč") }, singleLine = true,
@@ -292,7 +320,7 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                         Dugme("Pogodi") { igra.pogodiRec(pokusaj); pokusaj = ""; celaRec = false; posle() }
                         Text("Pogrešna cela reč odnosi 2 života.", style = tekst(13.sp, boja = Boje.sivaTekst))
                     } else {
-                        Dugme("Pogodi celu reč", vrsta = VrstaDugmeta.SEKUNDARNO) { celaRec = true }
+                        Dugme("Pogodi celu reč", vrsta = VrstaDugmeta.SEKUNDARNO) { tastatura?.hide(); celaRec = true }
                     }
                 } else {
                     val pobeda = igra.status == Vesanje.Status.POBEDA
@@ -306,5 +334,26 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+/** Vešala: konstrukcija stalno, pa glava, telo, ruke i noge, deo po deo na svaki izgubljen život (kao iOS VesalaCrtez). */
+@Composable
+private fun VesalaCrtez(greske: Int, kraj: Boolean, modifier: Modifier) {
+    Canvas(modifier.semantics { contentDescription = if (greske == 0) "Vešala, još nijedan promašaj" else "Vešala, $greske od ${Vesanje.POCETNI_ZIVOTI} delova" }) {
+        val w = size.width; val h = size.height
+        val debljina = 4.dp.toPx()
+        fun linija(boja: Color, x1: Float, y1: Float, x2: Float, y2: Float) = drawLine(boja, Offset(w * x1, h * y1), Offset(w * x2, h * y2), debljina, StrokeCap.Round)
+        linija(Boje.tinta, 0.08f, 0.96f, 0.62f, 0.96f); linija(Boje.tinta, 0.22f, 0.96f, 0.22f, 0.05f); linija(Boje.tinta, 0.22f, 0.05f, 0.72f, 0.05f)
+        linija(Boje.tinta, 0.22f, 0.22f, 0.38f, 0.05f); linija(Boje.tinta, 0.72f, 0.05f, 0.72f, 0.17f)
+        val boja = if (kraj) Boje.crvena else Boje.tinta
+        val glava = h * 0.09f
+        val vrat = (h * 0.17f + glava * 2) / h
+        if (greske >= 1) drawCircle(boja, glava, Offset(w * 0.72f, h * 0.17f + glava), style = Stroke(debljina))
+        if (greske >= 2) linija(boja, 0.72f, vrat, 0.72f, 0.62f)
+        if (greske >= 3) linija(boja, 0.72f, vrat + 0.06f, 0.56f, vrat + 0.2f)
+        if (greske >= 4) linija(boja, 0.72f, vrat + 0.06f, 0.88f, vrat + 0.2f)
+        if (greske >= 5) linija(boja, 0.72f, 0.62f, 0.58f, 0.86f)
+        if (greske >= 6) linija(boja, 0.72f, 0.62f, 0.86f, 0.86f)
     }
 }
