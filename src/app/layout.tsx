@@ -23,7 +23,7 @@ const SITE_NAME = 'Librum Kviz'
 // the brand). Description trimmed to ~150 chars so it doesn't get cut
 // in SERPs (Seobility flagged the old one as 199px over the limit).
 const DEFAULT_TITLE = 'Librum kviz – besplatne online igre znanja na srpskom'
-const DEFAULT_DESC = 'Besplatne igre znanja na srpskom: PRO i kafanski kviz, trivia duel, vešanje i brzi kviz. Hiljade pitanja — igraj sam ili sa prijateljima.'
+const DEFAULT_DESC = 'Librum kviz: aplikacija sa igrama znanja na srpskom. Osvajanje sveta, PRO i Book kviz, trivia duel, vešanje i brzi kviz.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     'kviz opšteg znanja', 'online kviz znanja', 'kviz sa rang-listom', 'kviz izazov',
     'Book kviz', 'književni kviz', 'kviz iz književnosti', 'književnost kviz',
     'kviz o knjigama', 'kviz o piscima', 'kviz o žanrovima', 'kviz za čitaoce',
-    'kafanski kviz', 'pub quiz Srbija', 'kviz za društvo', 'kviz za kafanu',
+    'osvajanje sveta', 'kviz aplikacija', 'kviz za društvo',
     'muzički kviz', 'kviz o muzici', 'domaća muzika kviz', 'ex yu muzika kviz',
     'pitanja za pub kviz', 'brzi kviz', 'kviz 60 sekundi', 'tačno netačno kviz',
     'trivia duel', 'duel kviz', 'kviz protiv prijatelja', 'multiplayer kviz',

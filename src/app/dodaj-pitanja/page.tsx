@@ -6,7 +6,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { createClient } from '@/lib/supabase/client'
 import { IconBack, IconCheck, IconWrong, IconLock, IconHint } from '@/components/icons'
-import { SEGMENTI, segment, jePojam, VESANJE_KATEGORIJE, type SegmentKey } from '@/lib/segmenti'
+import { AKTIVNI_SEGMENTI, segment, jePojam, VESANJE_KATEGORIJE, type SegmentKey } from '@/lib/segmenti'
 
 // Strana na kojoj prijavljen korisnik šalje pitanja u kviz: prvo bira
 // segment (fond pitanja), pa ili popuni obrazac za jedno pitanje ili
@@ -294,7 +294,7 @@ function IzborSegmenta({ seg, onChange }: { seg: SegmentKey; onChange: (k: Segme
       </h2>
 
       <div className="grid gap-2.5 grid-cols-2 lg:grid-cols-4">
-        {SEGMENTI.map(s => {
+        {AKTIVNI_SEGMENTI.map(s => {
           const aktivan = s.key === seg
           return (
             <button key={s.key} type="button" onClick={() => onChange(s.key)}

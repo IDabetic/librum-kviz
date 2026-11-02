@@ -8,6 +8,8 @@
 // šablona), `kratko` je potpis ispod imena na kartici za izbor — tamo
 // „Book kviz / Book kviz” ne bi imalo smisla.
 
+type Segment = { key: string; label: string; igre: string; kratko: string; desc: string; emoji: string; accent: string; tint: string; table: string; zanr: boolean; ugasen?: boolean }
+
 export const SEGMENTI = [
   {
     key: 'pro' as const,
@@ -44,6 +46,8 @@ export const SEGMENTI = [
     tint: 'rgba(229,83,83,0.12)',
     table: 'kafana_questions',
     zanr: false,
+    // Kafanski kviz je ugašen 02.11.2026: segment ostaje zbog starih predloga u adminu, ali se novi ne primaju.
+    ugasen: true,
   },
   {
     key: 'vesanje' as const,
@@ -57,7 +61,10 @@ export const SEGMENTI = [
     table: 'hangman_words',
     zanr: false,
   },
-]
+] as const satisfies readonly Segment[]
+
+/** Segmenti u koje korisnik danas može da pošalje pitanje (bez ugašenih). */
+export const AKTIVNI_SEGMENTI = SEGMENTI.filter(s => !('ugasen' in s && s.ugasen))
 
 // Vešanje nema ponuđene odgovore: umesto pitanja i četiri odgovora šalje
 // se pojam, opis i kategorija. U bazi se to smešta u ista polja

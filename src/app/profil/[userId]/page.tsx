@@ -93,10 +93,6 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
     return `${(totT / totC).toFixed(1)}s`
   })()
 
-  const kSessions = kafana.data || []
-  const kBest = kSessions.length ? Math.max(...kSessions.map(s => s.score)) : 0
-  const kBestQ = kSessions.length ? Math.max(...kSessions.map(s => s.questions_reached)) : 0
-  const kAvgT = avgTimePerCorrect(kSessions)
 
   let dWins = 0, dLosses = 0, dDraws = 0, dPlays = 0
   ;(duelGames.data || []).forEach(g => {
@@ -160,13 +156,6 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
               ...(bTopGenre ? [{ value: bTopGenre, label: 'Najjači žanr' }] : []),
               ...(bAvgT ? [{ value: bAvgT, label: 'Vreme/tačno' }] : []),
             ]} />
-          <GameCard Icon={IconStar}   label="Kafanski kviz" accent="#C42B4F" bg="#FFE3EA"
-            primary={{ value: kBest, label: 'Rekord bodova' }}
-            secondary={[
-              { value: kSessions.length, label: 'Partija' },
-              { value: kBestQ, label: 'Max pitanja' },
-              ...(kAvgT ? [{ value: kAvgT, label: 'Vreme/tačno' }] : []),
-            ]} />
           <GameCard Icon={IconSwords} label="Trivia duel" accent="#8A6A12" bg="#FFF3C4"
             primary={{ value: dWins, label: 'Pobeda' }}
             secondary={[
@@ -188,7 +177,7 @@ export default async function PublicProfilPage({ params }: { params: Promise<{ u
             ]} />
         </div>
 
-        {(sSessions.length + bSessions.length + kSessions.length + hSessions.length + qSessions.length) === 0 && (
+        {(sSessions.length + bSessions.length + hSessions.length + qSessions.length) === 0 && (
           <div className="card-soft py-16 text-center">
             <div className="text-5xl mb-4">🎮</div>
             <p className="font-bold text-[17px]" style={{ color: '#151515' }}>Još nije igrao</p>

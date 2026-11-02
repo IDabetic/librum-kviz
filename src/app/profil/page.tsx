@@ -116,11 +116,6 @@ export default async function ProfilPage({
 
   // Kafanski kviz stats
   const kSessions = kafana.data || []
-  const kTotal = kSessions.length
-  const kBest = kTotal ? Math.max(...kSessions.map(s => s.score)) : 0
-  const kBestQ = kTotal ? Math.max(...kSessions.map(s => s.questions_reached)) : 0
-  const kBestCombo = kTotal ? Math.max(...kSessions.map(s => s.best_combo)) : 0
-  const kAvgT = avgPerCorrect(kSessions)
 
   // Duel stats
   const dGames = duelGames.data || []
@@ -222,18 +217,6 @@ export default async function ProfilPage({
             ]}
             href="/book-kviz"
           />
-          {/* Kafanski kviz */}
-          <GameCard
-            Icon={IconStar} label="Kafanski kviz" accent="#C42B4F" bg="#FFE3EA"
-            primary={{ value: kBest, label: 'Rekord bodova' }}
-            secondary={[
-              { value: kTotal, label: 'Partija' },
-              { value: kBestQ, label: 'Max pitanja' },
-              { value: kBestCombo, label: 'Najduži niz' },
-              ...(kAvgT ? [{ value: kAvgT, label: 'Vreme/tačno' }] : []),
-            ]}
-            href="/kafanski-kviz"
-          />
           {/* Trivia duel */}
           <GameCard
             Icon={IconSwords} label="Trivia duel" accent="#8A6A12" bg="#FFF3C4"
@@ -271,7 +254,7 @@ export default async function ProfilPage({
         </div>
 
         {/* ─ Recent activity (mixed) ────────────────────────────────── */}
-        {(sTotal + bTotal + kTotal + hTotal + qTotal) > 0 && (
+        {(sTotal + bTotal + hTotal + qTotal) > 0 && (
           <div className="card-soft p-6 sm:p-7">
             <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#151515' }}>
               Skorašnja aktivnost
@@ -284,14 +267,13 @@ export default async function ProfilPage({
           </div>
         )}
 
-        {(sTotal + bTotal + kTotal + hTotal + qTotal + dTotal) === 0 && (
+        {(sTotal + bTotal + hTotal + qTotal + dTotal) === 0 && (
           <div className="card-soft p-10 text-center">
             <p className="font-bold text-[17px] mb-2" style={{ color: '#151515' }}>Još nisi igrao</p>
             <p className="text-[14px] mb-6" style={{ color: '#6F6C66' }}>Izaberi mod i kreni.</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <Link href="/pro-kviz" className="btn btn-primary btn-md">PRO kviz</Link>
               <Link href="/book-kviz" className="btn btn-secondary btn-md">Book kviz</Link>
-              <Link href="/kafanski-kviz" className="btn btn-secondary btn-md">Kafanski kviz</Link>
               <Link href="/vesanje" className="btn btn-secondary btn-md">Vešanje</Link>
               <Link href="/brzi-kviz" className="btn btn-secondary btn-md">Brzi kviz</Link>
             </div>
@@ -370,17 +352,6 @@ function recentMix(survivor: SurvivorSession[], book: BookSession[], kafana: Kaf
       score: b.score,
       scoreColor: accent,
       date: new Date(b.created_at),
-    })
-  })
-  kafana.forEach(k => {
-    const accent = k.score >= 500 ? '#12907E' : k.score >= 200 ? '#FFD84D' : '#C42B4F'
-    mix.push({
-      type: 'kafana',
-      title: 'Kafanski kviz',
-      detail: `${k.questions_reached} pit. · niz ${k.best_combo} · ${fmtTime(k.total_time_seconds)}`,
-      score: k.score,
-      scoreColor: accent,
-      date: new Date(k.created_at),
     })
   })
   hangman.forEach(h => {

@@ -63,7 +63,6 @@ export default function NotFound() {
             {[
               { href: '/pro-kviz',          label: 'PRO kviz',      Icon: IconHome,   bg: '#DFF3EE', fg: '#0E6F61' },
               { href: '/book-kviz',      label: 'Book kviz',     Icon: IconStar,   bg: '#FFF3C4', fg: '#8A6A12' },
-              { href: '/kafanski-kviz',  label: 'Kafanski',      Icon: IconStar,   bg: '#FFE3EA', fg: '#C42B4F' },
               { href: '/igraj-zajedno',  label: 'Trivia duel',   Icon: IconSwords, bg: '#FFF3C4', fg: '#8A6A12' },
               { href: '/vesanje',        label: 'Vešanje',       Icon: IconHint,   bg: '#DFF3EE', fg: '#0E6F61' },
               { href: '/brzi-kviz',      label: 'Brzi kviz',     Icon: IconTime,   bg: '#FFE3EA', fg: '#C42B4F' },

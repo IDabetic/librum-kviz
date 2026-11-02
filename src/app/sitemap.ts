@@ -9,7 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/igre',                   priority: 0.9, changeFrequency: 'weekly'  },
     { path: '/pro-kviz',                  priority: 0.9, changeFrequency: 'daily'   },
     { path: '/book-kviz',              priority: 0.9, changeFrequency: 'weekly'  },
-    { path: '/kafanski-kviz',          priority: 0.9, changeFrequency: 'weekly'  },
     { path: '/igraj-zajedno',          priority: 0.8, changeFrequency: 'weekly'  },
     { path: '/vesanje',                priority: 0.8, changeFrequency: 'weekly'  },
     { path: '/brzi-kviz',              priority: 0.8, changeFrequency: 'weekly'  },

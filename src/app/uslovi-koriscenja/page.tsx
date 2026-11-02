@@ -53,7 +53,7 @@ export default async function UsloviKoriscenja() {
           <Section title="2. Šta je Servis">
             <p>
               Servis je besplatna onlajn platforma za kratke igre znanja na srpskom jeziku — PRO kviz, Brzi kviz, Trivia duel,
-              Vešanje, Book kviz i Kafanski kviz. Korišćenjem Servisa pristajete na ova pravila.
+              Vešanje, Book kviz i Osvajanje sveta. Korišćenjem Servisa pristajete na ova pravila.
             </p>
           </Section>
 
