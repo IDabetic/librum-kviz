@@ -12,7 +12,7 @@ struct Dijalog: View {
 
     var body: some View {
         ZStack {
-            Color.mastilo.opacity(0.55).ignoresSafeArea().onTapGesture(perform: zatvori)
+            Color.senka.opacity(0.55).ignoresSafeArea().onTapGesture(perform: zatvori)
             VStack(alignment: .leading, spacing: 14) {
                 Naslov(tekst: naslov, velicina: 26)
                 Text(tekst).font(.tekst(15)).foregroundStyle(Color.sivaTekst)

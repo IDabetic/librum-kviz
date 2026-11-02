@@ -104,7 +104,7 @@ struct MapaView: View {
                     mapa.stroke(put, with: .color(.zuta), style: StrokeStyle(lineWidth: 5 / k, lineJoin: .round))
                 }
                 // Značke se crtaju u tačkama ekrana, da ostanu iste veličine na svakom zumu.
-                let krupno = Mapa.sirina * k > velicina.width * 3 // neutralne značke i imena tek pri većem zumu
+                let krupno = Mapa.sirina * k > velicina.width * 5 // neutralne značke i imena tek pri većem zumu
                 let prestonice = Set(stanje.igraci.map(\.prestonica))
                 for o in Mapa.oblasti {
                     guard let st = stanje.oblasti[o.id] else { continue }

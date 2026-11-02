@@ -59,6 +59,34 @@ final class OsvajanjeModel {
         slucajno = s
     }
 
+    /// Partija iz čekaonice: igrači i timovi, početni kontinenti i tajne misije.
+    init(postavka p: OsvajanjePostavka) {
+        var s = Slucajno(seme: UInt32(truncatingIfNeeded: Int(Date().timeIntervalSince1970 * 1000)))
+        stanje = Stanje.nova(krugova: p.krugova, tezina: p.tezina, slucajno: &s, igraci: p.igraci, pocetak: p.pocetak, misije: true)
+        slucajno = s
+        postavka = p
+    }
+
+    private(set) var postavka: OsvajanjePostavka?
+
+    /// Tim čoveka (za misiju, odbranu i dodatne pomoći).
+    var mojTim: String? { stanje.igraci.first(where: \.covek)?.tim }
+    var jesamKapiten: Bool { stanje.igraci.first(where: \.covek)?.kapiten ?? false }
+
+    /// Kontinenti koje moj tim drži ceo, a još nemaju odbranu (kapiten bira).
+    var kontinentiBezOdbrane: [Kontinent] {
+        guard let t = mojTim, jesamKapiten else { return [] }
+        return Kontinenti.svi.filter { stanje.drziKontinent(t, $0.id) && stanje.odbrane[$0.id] == nil }
+    }
+
+    /// Kapiten bira odbranu na svom potezu (pravilo: jednom po krugu).
+    func postaviOdbranu(_ k: String, _ o: Odbrana) {
+        let novo = stanje.postaviOdbranu(k, o)
+        if novo == stanje { javi("Odbranu menja kapiten, jednom po krugu, na svom potezu"); return }
+        stanje = novo
+        javi("\(Kontinenti.svi.first { $0.id == k }?.ime ?? ""): \(o.naziv)")
+    }
+
     var covekNaPotezu: Bool { stanje.faza != .kraj && stanje.trenutni.covek }
 
     var mete: [String] {
@@ -81,7 +109,8 @@ final class OsvajanjeModel {
         do {
             spil = Spil(try await PaketPitanja.deljeni.ucitaj())
             spremno = true
-            pocniPotez(stanje)
+            // U partiji sa misijom prvi potez čeka da igrač pročita misiju.
+            if postavka == nil { pocniPotez(stanje) }
         } catch {
             greska = error.localizedDescription
         }
@@ -110,6 +139,12 @@ final class OsvajanjeModel {
             }
         default: break
         }
+    }
+
+    /// Posle lista sa misijom: kreće prvi potez.
+    func zapocni() {
+        guard spremno, stanje.krug == 1, stanje.faza == .snabdevanje, otvoreno == nil else { return }
+        pocniPotez(stanje)
     }
 
     func rasporediSam() { stanje = stanje.botRasporedi() }

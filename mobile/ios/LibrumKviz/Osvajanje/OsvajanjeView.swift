@@ -1,84 +1,5 @@
 import SwiftUI
 
-/// Uvod: izbor jačine i dužine partije, pravila.
-struct OsvajanjeUvodView: View {
-    @Environment(Sesija.self) private var sesija
-    @Environment(Napredak.self) private var napredak
-    @State private var partija: Partija?
-
-    struct Partija: Identifiable, Hashable { let id = UUID(); let tezina: Tezina; let krugova: Int }
-
-    private let pravila: [(String, String)] = [
-        ("Snabdevanje", "Na početku poteza jedno pitanje. Tačno donosi pune vojske, netačno pola."),
-        ("Napad", "Iz oblasti sa bar 2 vojske napadaš susednu. Protiv rivala odgovarate oboje, a izjednačenje rešava brzina."),
-        ("Proboj", "Posle osvajanja cepaš dalje iz nove oblasti. Svako treće osvajanje u nizu donosi +2 vojske."),
-        ("Regioni", "Svet je podeljen na 17 regiona. Ceo region donosi bonus vojske svakog poteza."),
-        ("Prestonica", "Počinješ sa prestonicom i pet susednih država. Tuđa prestonica nosi +5 vojski plena."),
-    ]
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                ZStack(alignment: .bottomTrailing) {
-                    Circle().fill(.white.opacity(0.14)).frame(width: 220).offset(x: 70, y: 60)
-                    MaskotaSlika(maskota: .mimi, velicina: 110).offset(x: 10, y: 14)
-                    VStack(alignment: .leading, spacing: 10) {
-                        Oznaka(tekst: "Glavna igra · 3 igrača", boja: .zuta)
-                        Text("Osvajanje\nsveta").font(.naslov(42)).foregroundStyle(.white)
-                        Text("171 država, 17 regiona i dva rivala. Svaku državu osvajaš pitanjem.")
-                            .font(.tekst(15, .semibold)).foregroundStyle(.white.opacity(0.9))
-                            .padding(.trailing, 100)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(22)
-                .clipped()
-                .pop(.teal)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Naslov(tekst: "Nova partija", velicina: 26).padding(.bottom, 8)
-                    ForEach(Tezina.allCases) { t in
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text(t.ime).font(.tekst(17, .bold))
-                            Text(t.opis).font(.tekst(13)).foregroundStyle(Color.sivaTekst)
-                            HStack(spacing: 10) {
-                                Button("8 krugova") { partija = Partija(tezina: t, krugova: 8) }.buttonStyle(.sekundarno)
-                                Button("12 krugova") { partija = Partija(tezina: t, krugova: 12) }.buttonStyle(.primarno)
-                            }
-                        }
-                        .padding(.vertical, 14)
-                        if t != .tesko { Divider().overlay(Color.kremTamnija) }
-                    }
-                }
-                .padding(20)
-                .mirna()
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Naslov(tekst: "Pravila", velicina: 26)
-                    ForEach(Array(pravila.enumerated()), id: \.offset) { i, p in
-                        HStack(alignment: .top, spacing: 12) {
-                            Text("\(i + 1)").font(.tekst(13, .bold)).frame(width: 28, height: 28)
-                                .background(Color.zuta, in: RoundedRectangle(cornerRadius: 8))
-                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.mastilo, lineWidth: 1.5))
-                            (Text(p.0 + ". ").font(.tekst(14, .bold)) + Text(p.1).font(.tekst(14)))
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-                .padding(20)
-                .mirna()
-            }
-            .padding(16)
-        }
-        .background(Papir())
-        .navigationTitle("Osvajanje")
-        .navigationBarTitleDisplayMode(.inline)
-        .fullScreenCover(item: $partija) { p in
-            OsvajanjeIgraView(model: OsvajanjeModel(krugova: p.krugova, tezina: p.tezina, ime: sesija.nadimak))
-        }
-    }
-}
-
 /// Partija: igrači gore, mapa u sredini, radnje dole, pitanje preko svega.
 struct OsvajanjeIgraView: View {
     @State var model: OsvajanjeModel
@@ -88,8 +9,14 @@ struct OsvajanjeIgraView: View {
     @State private var pomocIskoriscena = false
     @State private var eliminisani: Set<Int> = []
     @State private var potvrdaIzlaska = false
+    @State private var misija = false
+    @State private var odbranaZa: Kontinent?
+    @State private var videoMisiju = false
 
     private let maskota: [String: Maskota] = ["ti": .bloop, "mimi": .mimi, "zig": .zig]
+    private func maskotaZa(_ p: Igrac) -> Maskota {
+        maskota[p.id] ?? [Maskota.mimi, .zig, .bloop, .lumi][p.id.unicodeScalars.reduce(0) { $0 + Int($1.value) } % 4]
+    }
 
     var body: some View {
         ZStack {
@@ -138,13 +65,17 @@ struct OsvajanjeIgraView: View {
             }
             .padding(.horizontal, 16)
 
+            ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(model.stanje.igraci, id: \.id) { p in
                     let naPotezu = p.id == model.stanje.trenutni.id && model.stanje.faza != .kraj
                     HStack(spacing: 8) {
-                        MaskotaSlika(maskota: maskota[p.id] ?? .bloop, velicina: 30)
+                        MaskotaSlika(maskota: maskotaZa(p), velicina: 30)
                             .frame(width: 36, height: 36)
                             .background(Color(hex: p.boja), in: RoundedRectangle(cornerRadius: 10))
+                            .overlay(alignment: .topTrailing) {
+                                if p.kapiten && model.postavka?.nacin == .timovi { Image(systemName: "crown.fill").font(.system(size: 11)).foregroundStyle(Color.zuta).offset(x: 4, y: -4) }
+                            }
                         VStack(alignment: .leading, spacing: 0) {
                             Text(p.ime).font(.tekst(12, .bold)).lineLimit(1)
                             Text("\(model.stanje.poeni(p.id))").font(.naslov(16)).monospacedDigit()
@@ -157,9 +88,33 @@ struct OsvajanjeIgraView: View {
                     .opacity(p.ispao ? 0.4 : 1)
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(p.ime), \(model.stanje.poeni(p.id)) poena\(naPotezu ? ", na potezu" : "")")
+                    .frame(minWidth: 110)
                 }
             }
             .padding(.horizontal, 16)
+            }
+            if let t = model.mojTim, model.stanje.misije[t] != nil {
+                Button { misija = true } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "flag.checkered").font(.system(size: 15, weight: .bold))
+                        Text(Misije.tekst(model.stanje.misije[t])).font(.tekst(13, .semibold)).lineLimit(1)
+                        Spacer()
+                        Text("\(Int(model.stanje.napredakMisije(t) * 100))%").font(.tekst(13, .bold)).monospacedDigit()
+                    }
+                    .foregroundStyle(Color.tinta).padding(.horizontal, 12).padding(.vertical, 8).pop(.zuta, radijus: 14)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .accessibilityLabel("Tajna misija")
+            }
+            if let k = model.kontinentiBezOdbrane.first {
+                Button { odbranaZa = k } label: {
+                    Label("Držiš \(k.ime): izaberi odbranu", systemImage: "shield.lefthalf.filled").font(.tekst(14, .bold))
+                        .foregroundStyle(.white).frame(maxWidth: .infinity).padding(10).background(Color.teal, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mastilo, lineWidth: 2))
+                }
+                .buttonStyle(.plain).padding(.horizontal, 16)
+            }
 
             MapaView(stanje: model.stanje, izabrana: model.izabrana, mete: model.mete,
                      fokus: model.otvoreno?.kuda ?? model.izabrana ?? model.stanje.igraci.first(where: \.covek)?.prestonica) { model.dodir($0) }
@@ -195,6 +150,9 @@ struct OsvajanjeIgraView: View {
             }
         }
         .animation(.spring(duration: 0.3), value: model.poruka)
+        .overlay { if misija, let t = model.mojTim { misijaList(t) } }
+        .overlay { if let k = odbranaZa { odbranaList(k) } }
+        .onChange(of: model.spremno, initial: true) { _, da in if da && model.postavka != nil && !videoMisiju { videoMisiju = true; misija = true } }
         .overlay {
             if potvrdaIzlaska {
                 Dijalog(naslov: "Napuštaš partiju?", tekst: "Partija se ne čuva.", potvrda: "Izađi", odustani: "Ostani",
@@ -206,7 +164,7 @@ struct OsvajanjeIgraView: View {
     @ViewBuilder private var pitanje: some View {
         if let o = model.otvoreno {
             ZStack {
-                Color.mastilo.opacity(0.6).ignoresSafeArea()
+                Color.senka.opacity(0.6).ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 12) {
                         PitanjeKartica(
@@ -239,11 +197,13 @@ struct OsvajanjeIgraView: View {
     @ViewBuilder private var kraj: some View {
         if model.stanje.faza == .kraj {
             let poredak = model.stanje.poredak
-            let pobednik = poredak[0].igrac
+            let pobednik = model.stanje.pobednik.flatMap { t in model.stanje.igraci.first { $0.tim == t } } ?? poredak[0].igrac
             ZStack {
-                Color.mastilo.opacity(0.6).ignoresSafeArea()
+                Color.senka.opacity(0.6).ignoresSafeArea()
                 VStack(spacing: 14) {
-                    MaskotaSlika(maskota: maskota[pobednik.id] ?? .bloop, velicina: 120)
+                    MaskotaSlika(maskota: maskotaZa(pobednik), velicina: 120)
+                    let timPobednik = model.stanje.pobednik
+                    if let tp = timPobednik { Text("Misija ispunjena: \(Misije.tekst(model.stanje.misije[tp]))").font(.tekst(14, .bold)).multilineTextAlignment(.center) }
                     Text(pobednik.covek ? "Svet je tvoj!" : "Pobeđuje \(pobednik.ime)").font(.naslov(34))
                         .foregroundStyle(pobednik.covek ? .white : .mastilo).multilineTextAlignment(.center)
                     ForEach(Array(poredak.enumerated()), id: \.offset) { i, red in
@@ -256,13 +216,78 @@ struct OsvajanjeIgraView: View {
                         }
                         .padding(12).pop(.kartica, radijus: 16)
                     }
-                    Button("Nova partija") { model = OsvajanjeModel(krugova: model.stanje.ukupnoKrugova, tezina: tezina, ime: model.stanje.igraci[0].ime) }
+                    Button("Nova partija") {
+                        model = model.postavka.map { OsvajanjeModel(postavka: $0) } ?? OsvajanjeModel(krugova: model.stanje.ukupnoKrugova, tezina: tezina, ime: model.stanje.igraci[0].ime)
+                    }
                         .buttonStyle(.zuto)
                     Button("Nazad") { zatvori() }.buttonStyle(.sekundarno)
                 }
                 .padding(22)
                 .pop(pobednik.covek ? .teal : .kartica)
                 .padding(20)
+            }
+        }
+    }
+
+    private func misijaList(_ tim: String) -> some View {
+        DonjiList(zatvori: { misija = false; model.zapocni() }) {
+            VStack(alignment: .leading, spacing: 12) {
+                Oznaka(tekst: "Tajna misija · vidi je samo tvoj tim", boja: .roze)
+                Naslov(tekst: Misije.tekst(model.stanje.misije[tim]), velicina: 26)
+                if let meta = model.stanje.metaMisije[tim], let ime = model.stanje.igraci.first(where: { $0.tim == meta })?.ime {
+                    Text("Meta: \(ime)").font(.tekst(15, .bold))
+                }
+                let n = model.stanje.napredakMisije(tim)
+                GeometryReader { g in
+                    RoundedRectangle(cornerRadius: 6).fill(Color.udubljeno)
+                        .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 6).fill(Color.teal).frame(width: g.size.width * n) }
+                }
+                .frame(height: 12)
+                Text("Ispunjeno \(Int(n * 100))%. Prva ispunjena misija odmah pobeđuje; inače posle poslednjeg kruga pobeđuje najviše poena.")
+                    .font(.tekst(14)).foregroundStyle(Color.sivaTekst)
+                Text("Kontinenti").font(.tekst(15, .bold)).padding(.top, 4)
+                ForEach(Kontinenti.svi, id: \.id) { k in
+                    let drzi = model.stanje.igraci.first { model.stanje.drziKontinent($0.tim, k.id) }
+                    HStack {
+                        Text(k.ime).font(.tekst(14, .semibold))
+                        Spacer()
+                        if let d = drzi {
+                            Text(d.ime).font(.tekst(13, .bold)).foregroundStyle(Color(hex: d.boja))
+                            if let o = model.stanje.odbrane[k.id] { Image(systemName: o.ikonica).accessibilityLabel(o.naziv) }
+                        } else {
+                            Text("niko ceo").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
+                        }
+                    }
+                }
+                Button("Važi") { misija = false; model.zapocni() }.buttonStyle(.primarno)
+            }
+        }
+    }
+
+    private func odbranaList(_ k: Kontinent) -> some View {
+        DonjiList(zatvori: { odbranaZa = nil }) {
+            VStack(alignment: .leading, spacing: 10) {
+                Naslov(tekst: "Odbrana: \(k.ime)", velicina: 26)
+                Text("Važi dok držiš ceo kontinent. Menja se najviše jednom po krugu, na tvom potezu. Cena se plaća vojskama iz pojačanja svakog kruga.")
+                    .font(.tekst(13)).foregroundStyle(Color.sivaTekst)
+                ForEach(Odbrana.allCases) { o in
+                    Button { model.postaviOdbranu(k.id, o); odbranaZa = nil } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: o.ikonica).font(.system(size: 17, weight: .bold)).frame(width: 40, height: 40)
+                                .background(Color.udubljeno, in: RoundedRectangle(cornerRadius: 12))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(o.naziv).font(.tekst(15, .bold))
+                                Text(o.opis).font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                            }
+                            Spacer()
+                            Text(o.cena == 0 ? "besplatno" : "\(o.cena) vojske/krug").font(.tekst(12, .bold))
+                        }
+                        .foregroundStyle(Color.mastilo).padding(10)
+                        .background(Color.kartica, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.kremTamnija, lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }
