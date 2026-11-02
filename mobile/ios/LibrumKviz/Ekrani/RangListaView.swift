@@ -41,6 +41,8 @@ struct RangListaView: View {
     @Environment(Sesija.self) private var sesija
     @State private var igra: IgraListe = .osvajanje
     @State private var period: Period = .nedelja
+    /// „svi” ili „pratim” (ja i igrači koje pratim).
+    @State private var krug = "svi"
     @State private var stanje: Ucitano<[Red]> = .ucitava
     @State private var moje: MojeMesto?
 
@@ -50,6 +52,9 @@ struct RangListaView: View {
                 Text("Rang lista").font(.naslov(38)).padding(.top, 6)
                 ScrollView(.horizontal, showsIndicators: false) {
                     PodvuceniIzbor(izbor: $igra, opcije: IgraListe.allCases.map { ($0, $0.naziv) })
+                }
+                if sesija.prijavljen {
+                    PodvuceniIzbor(izbor: $krug, opcije: [("svi", "Svi igrači"), ("pratim", "Koje pratim")])
                 }
                 HStack(spacing: 8) {
                     ForEach(Period.allCases, id: \.self) { p in
@@ -70,7 +75,7 @@ struct RangListaView: View {
         }
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
-        .task(id: "\(igra.rawValue)-\(period.rawValue)") { await osvezi() }
+        .task(id: "\(igra.rawValue)-\(period.rawValue)-\(krug)") { await osvezi() }
         .refreshable { await osvezi() }
     }
 
@@ -177,7 +182,8 @@ struct RangListaView: View {
     private func osvezi() async {
         stanje = .ucitava
         do {
-            let redovi: [Red] = try await Supabase.deljeni.rpc("rang_lista_igre", ["p_igra": igra.rawValue, "p_period": period.rawValue, "p_broj": 50])
+            let redovi: [Red] = try await Supabase.deljeni.rpc("rang_lista_igre", ["p_igra": igra.rawValue, "p_period": period.rawValue, "p_broj": 50, "p_krug": krug],
+                                                            token: try? await sesija.vazeciToken())
             stanje = .gotovo(redovi)
         } catch {
             stanje = .greska(error.localizedDescription)
