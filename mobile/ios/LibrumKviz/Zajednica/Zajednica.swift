@@ -874,6 +874,7 @@ struct ServerskaObavestenja: View {
         case "pratilac": ("person.badge.plus", "te sada prati")
         case "komentar": ("bubble.right.fill", "je komentarisao tvoju objavu")
         case "odgovor": ("arrowshape.turn.up.left.fill", "ti je odgovorio")
+        case "ishod": ("flag.checkered", "je odigrao tvoj izazov")
         default: ("heart.fill", "voli tvoju objavu")
         }
         let sadrzaj = HStack(alignment: .top, spacing: 12) {
@@ -894,7 +895,9 @@ struct ServerskaObavestenja: View {
         .background(Color.kartica, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(r.novo ? Color.mastilo : Color.kremTamnija, lineWidth: r.novo ? 2.5 : 1.5))
         .accessibilityElement(children: .combine)
-        if r.vrsta == "izazov", let kod = r.kod_sobe {
+        if r.vrsta == "ishod" {
+            sadrzaj
+        } else if r.vrsta == "izazov", let kod = r.kod_sobe {
             Button { duelKod = kod } label: { sadrzaj }.buttonStyle(.plain)
         } else {
             NavigationLink { ProfilIgracaView(id: r.ko) } label: { sadrzaj }.buttonStyle(.plain)

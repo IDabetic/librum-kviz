@@ -37,8 +37,8 @@ struct DuelView: View {
                 m.kod = kod
                 await m.pridruzi()
             } else if let cilj = izazovi, m.faza == .lobi {
-                await m.napravi(brojPitanja: 10)
-                if let soba = m.soba { await Drustvo.posaljiIzazov(sesija, za: cilj.id, kod: soba.room_code) }
+                // Izazov bez čekanja: igram odmah, rival kad stigne (vidi DuelModel.izazovi).
+                await m.izazovi(cilj.id, ime: cilj.ime)
             }
         }
         .onChange(of: model?.faza) { _, f in if f == .kraj { model?.zabelezi(napredak) } }
@@ -90,6 +90,7 @@ private struct DuelArena: View {
                     plocica("Privatna\nsoba", "key", .nebo) { withAnimation { privatna.toggle() } }
                 }
                 if privatna { soba }
+                MojiIzazovi(model: model)
                 if let g = model.greska {
                     Label(g, systemImage: "exclamationmark.triangle").font(.tekst(14, .semibold)).foregroundStyle(Color.crvena)
                 }
@@ -502,12 +503,37 @@ private struct DuelKraj: View {
     let novi: () -> Void
     let zatvori: () -> Void
 
-    private var pobeda: Bool { model.mojiPoeni > model.njegoviPoeni }
+    private var pobeda: Bool { model.mojiPoeni > model.njegoviPoeni && !model.cekaRivala }
     private var nereseno: Bool { model.mojiPoeni == model.njegoviPoeni }
 
     var body: some View {
-        let boja: Color = nereseno ? .nebo : pobeda ? .teal : .roze
+        if model.cekaRivala { cekaRivala } else { ishod }
+    }
+
+    /// Izazivač je odigrao: rezultat stoji, ishod stiže kad rival odigra (Sanduče i lista izazova u Areni).
+    private var cekaRivala: some View {
         VStack(spacing: 14) {
+            HStack { KrugDugme(ikonica: "xmark", opis: "Zatvori", radnja: zatvori); Spacer() }
+            Spacer()
+            MaskotaSlika(maskota: .lumi, velicina: 130).frame(width: 170, height: 170)
+                .background(Color.zuta, in: Circle()).overlay(Circle().stroke(Color.tinta, lineWidth: 3))
+            Text("Izazov je poslat").font(.naslov(38)).foregroundStyle(.white)
+            Text("\(model.rivalIme) igra ista pitanja kad stigne, do 24 h. Ishod stiže u Sanduče.")
+                .font(.tekst(15, .semibold)).foregroundStyle(.white.opacity(0.9)).multilineTextAlignment(.center)
+            Text("\(model.mojiPoeni) poena").font(.naslov(40)).foregroundStyle(Color.tinta).monospacedDigit()
+                .frame(maxWidth: .infinity).padding(.vertical, 16).background(Color.white, in: RoundedRectangle(cornerRadius: 22))
+                .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.tinta, lineWidth: 2.5))
+            Spacer()
+            Button("Nazad", action: zatvori).buttonStyle(.primarno)
+        }
+        .padding(20)
+        .background(Color.ljubicasta.ignoresSafeArea())
+        .onAppear { Zvuk.pusti(.kraj, jacina: 0.5) }
+    }
+
+    private var ishod: some View {
+        let boja: Color = nereseno ? .nebo : pobeda ? .teal : .roze
+        return VStack(spacing: 14) {
             HStack {
                 KrugDugme(ikonica: "xmark", opis: "Zatvori", radnja: zatvori)
                 Spacer()
@@ -545,5 +571,46 @@ private struct DuelKraj: View {
             Text(naziv).font(.tekst(12, .semibold)).foregroundStyle(.white.opacity(0.8))
         }
         .frame(maxWidth: .infinity).padding(.vertical, 12).background(Color.tinta, in: RoundedRectangle(cornerRadius: 18))
+    }
+}
+
+
+/// Izazovi bez čekanja u Areni: koji čekaju mene (igraj), koje sam poslao (čeka se rival) i završeni (ishod).
+private struct MojiIzazovi: View {
+    let model: DuelModel
+    @State private var izazovi: [DuelModel.MojIzazov] = []
+    @State private var igraj: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if !izazovi.isEmpty {
+                Text("Izazovi").font(.tekst(15, .bold)).padding(.top, 4)
+                VStack(spacing: 0) {
+                    ForEach(Array(izazovi.enumerated()), id: \.element.id) { i, z in
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(z.rivalIme).font(.tekst(16, .bold))
+                                Text(z.naMeni ? "Izazvao te je · \(z.on) poena" : z.zavrsen ? "\(z.ja) – \(z.on)" : "Čeka se da odigra · ti \(z.ja)")
+                                    .font(.tekst(13)).foregroundStyle(Color.sivaTekst)
+                            }
+                            Spacer()
+                            if z.naMeni {
+                                Button("Igraj") { igraj = z.soba.room_code }.buttonStyle(.zuto).frame(width: 110)
+                            } else if z.zavrsen {
+                                Text(z.ja > z.on ? "Pobeda" : z.ja < z.on ? "Poraz" : "Nerešeno").font(.tekst(14, .bold))
+                                    .foregroundStyle(z.ja > z.on ? Color.teal : z.ja < z.on ? Color.crvena : Color.sivaTekst)
+                            } else {
+                                Image(systemName: "hourglass").foregroundStyle(Color.sivaTekst).accessibilityLabel("Čeka se")
+                            }
+                        }
+                        .padding(.horizontal, 14).padding(.vertical, 12)
+                        if i < izazovi.count - 1 { Divider().overlay(Color.kremTamnija) }
+                    }
+                }
+                .mirna()
+            }
+        }
+        .task { izazovi = await model.mojiIzazovi() }
+        .navigationDestination(item: $igraj) { kod in DuelView(kodSobe: kod) }
     }
 }

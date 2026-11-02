@@ -72,6 +72,13 @@ final class DuelModel {
     static let dugoTrazenje = 20
     static let bezRivala = 60
     static let formatBrzog = "brzi5"
+    /// Izazov bez čekanja: izazivač odigra odmah, rival kad stigne (do 24 h); ishod kad oba završe.
+    static let formatIzazova = "izazov"
+    static let pitanjaIzazova = 10
+
+    var jeIzazov: Bool { soba?.game_format == Self.formatIzazova }
+    /// Izazivač je odigrao, a rival još nije: ishod stiže kasnije.
+    var cekaRivala: Bool { jeIzazov && jaSamDomacin && (soba?.guest_answers ?? []).count < ukupno }
 
     private(set) var faza: Faza = .lobi
     private(set) var soba: Soba?
@@ -202,6 +209,30 @@ final class DuelModel {
                       kategorija: "Opšte znanje", pobeda: pobeda)
     }
 
+    // MARK: Izazov bez čekanja
+
+    /// Pravim izazov za igrača: soba je odmah „playing”, rival je upisan, ja igram svojih 10 pitanja sad.
+    func izazovi(_ rival: String, ime: String) async {
+        guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { greska = "Prijavi se da bi igrao duel."; return }
+        radi = true; defer { radi = false }
+        do {
+            let p: [Pitanje] = try await Supabase.deljeni.rpc("aplikacija_pitanja", ["p_igra": "opste", "p_broj": Self.pitanjaIzazova + 5], token: token)
+            guard p.count >= Self.pitanjaIzazova else { throw Supabase.Greska(poruka: "Nema dovoljno pitanja za duel.") }
+            let redovi: [Soba] = try await Supabase.deljeni.upisiVrati("game_rooms", [
+                "room_code": Self.noviKod(), "host_id": id, "guest_id": rival, "question_ids": p.prefix(Self.pitanjaIzazova).map(\.id),
+                "total_questions": Self.pitanjaIzazova, "status": "playing", "game_format": Self.formatIzazova, "quiz_type": "pro",
+                "game_start_time": ISO8601DateFormatter().string(from: Date()),
+            ], token: token)
+            soba = redovi.first
+            pitanja = Array(p.prefix(Self.pitanjaIzazova))
+            rivalIme = ime
+            if let s = soba { await Drustvo.posaljiIzazov(sesija, za: rival, kod: s.room_code) }
+            faza = .igra
+            pocetakPitanja = Date()
+            pratiSobu()
+        } catch { greska = error.localizedDescription }
+    }
+
     // MARK: Lobi
 
     func napravi(brojPitanja: Int) async {
@@ -230,6 +261,18 @@ final class DuelModel {
         do {
             let nadjene: [Soba] = try await Supabase.deljeni.citaj("game_rooms", upit: [.init(name: "select", value: "*"), .init(name: "room_code", value: "eq.\(k)")], token: token)
             guard let s = nadjene.first else { throw Supabase.Greska(poruka: "Soba sa tim kodom ne postoji.") }
+            if s.game_format == Self.formatIzazova {
+                // Izazov: rival igra ista pitanja; izazivačevi odgovori su već tu, pa se svaka runda otkriva odmah.
+                guard s.guest_id == id else { throw Supabase.Greska(poruka: "Ovaj izazov nije za tebe.") }
+                guard (s.guest_answers ?? []).count < (s.total_questions ?? Self.pitanjaIzazova) else { throw Supabase.Greska(poruka: "Ovaj izazov si već odigrao.") }
+                self.soba = s
+                try await ucitajPitanja(token: token)
+                await ucitajRivala(token: token)
+                faza = .igra
+                pocetakPitanja = Date()
+                pratiSobu()
+                return
+            }
             guard s.status == "waiting" else { throw Supabase.Greska(poruka: "Igra je već počela ili završena.") }
             guard s.host_id != id else { throw Supabase.Greska(poruka: "Ne možeš da se pridružiš sopstvenoj sobi.") }
             let azurirano: [Soba] = try await Supabase.deljeni.azuriraj("game_rooms",
@@ -300,11 +343,12 @@ final class DuelModel {
         case .cekanje where nova.status == "playing":
             faza = .igra
             pocetakPitanja = Date()
-        case .igra where nova.status == "finished":
+        case .igra where nova.status == "finished" && !jeIzazov:
             rivalOtisao = true
             zavrsi()
         case .igra:
-            if !otkriveno && ((odgovorioSam && odgovorioJe) || ostaloSekundi == 0) { otkrij() }
+            // U izazovu rival ne igra uživo: runda se otkriva čim ja odgovorim.
+            if !otkriveno && ((odgovorioSam && (odgovorioJe || jeIzazov)) || ostaloSekundi == 0) { otkrij() }
         default: break
         }
     }
@@ -338,7 +382,8 @@ final class DuelModel {
         guard faza == .igra else { return }
         let sledeci = tekuce + 1
         // Posle glavnog dela: nerešeno ide na zlatno pitanje dok ih ima.
-        if sledeci >= ukupno && !(mojiPoeni == njegoviPoeni && sledeci < pitanja.count) {
+        // Izazov nema zlatno pitanje: rival nije tu da ga odigra.
+        if sledeci >= ukupno && (jeIzazov || !(mojiPoeni == njegoviPoeni && sledeci < pitanja.count)) {
             Task { await zatvoriSobu(); zavrsi() }
             return
         }
@@ -350,7 +395,9 @@ final class DuelModel {
 
     private func zatvoriSobu() async {
         guard let s = soba, let token = try? await sesija.vazeciToken() else { return }
-        let _: [Soba]? = try? await Supabase.deljeni.azuriraj("game_rooms", filter: [.init(name: "id", value: "eq.\(s.id)")], polja: ["status": "finished"], token: token)
+        // Izazivač samo označava da je završio; sobu zatvara rival kad odigra.
+        let polja: [String: Any] = jeIzazov && jaSamDomacin ? ["host_finished": true] : jeIzazov ? ["guest_finished": true, "status": "finished"] : ["status": "finished"]
+        let _: [Soba]? = try? await Supabase.deljeni.azuriraj("game_rooms", filter: [.init(name: "id", value: "eq.\(s.id)")], polja: polja, token: token)
     }
 
     /// Napuštanje: rival dobija +50 i soba se zatvara, da bekstvo iz gubitka nije besplatno.
@@ -376,4 +423,30 @@ final class DuelModel {
     }
 
     func ocistiGresku() { greska = nil }
+
+    /// Moji izazovi (poslati i primljeni, 7 dana) za lobi: ko čeka koga i ishod.
+    struct MojIzazov: Identifiable { let soba: Soba; let rival: String; let rivalIme: String; let ja: Int; let on: Int; let zavrsen: Bool; let naMeni: Bool; var id: String { soba.id } }
+    func mojiIzazovi() async -> [MojIzazov] {
+        guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return [] }
+        let granica = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-7 * 86400))
+        guard let sobe: [Soba] = try? await Supabase.deljeni.citaj("game_rooms", upit: [
+            .init(name: "select", value: "*"), .init(name: "game_format", value: "eq.\(Self.formatIzazova)"),
+            .init(name: "or", value: "(host_id.eq.\(id),guest_id.eq.\(id))"), .init(name: "created_at", value: "gte.\(granica)"),
+            .init(name: "order", value: "created_at.desc"), .init(name: "limit", value: "20"),
+        ], token: token) else { return [] }
+        let drugi = Set(sobe.compactMap { $0.host_id == id ? $0.guest_id : $0.host_id })
+        struct P: Decodable { let id: String; let nickname: String?; let first_name: String? }
+        let profili: [P] = drugi.isEmpty ? [] : ((try? await Supabase.deljeni.citaj("public_profiles", upit: [
+            .init(name: "select", value: "id,nickname,first_name"), .init(name: "id", value: "in.(\(drugi.joined(separator: ",")))"),
+        ], token: token)) ?? [])
+        let ime = Dictionary(uniqueKeysWithValues: profili.map { ($0.id, $0.nickname ?? $0.first_name ?? "Igrač") })
+        return sobe.map { s in
+            let domacin = s.host_id == id
+            let rival = (domacin ? s.guest_id : s.host_id) ?? ""
+            let gostOdigrao = (s.guest_answers ?? []).count >= (s.total_questions ?? Self.pitanjaIzazova)
+            return MojIzazov(soba: s, rival: rival, rivalIme: ime[rival] ?? "Igrač",
+                             ja: (domacin ? s.host_score : s.guest_score) ?? 0, on: (domacin ? s.guest_score : s.host_score) ?? 0,
+                             zavrsen: gostOdigrao, naMeni: !domacin && !gostOdigrao)
+        }
+    }
 }
