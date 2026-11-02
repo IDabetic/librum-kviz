@@ -106,6 +106,13 @@ export default function PodesavanjaPage() {
     if (deleteConfirmText !== 'OBRISI') return
     setDeleting(true)
     const supabase = createClient()
+    // RPC briše nalog i (kaskadno) profil i rezultate; ranije je ovo samo odjavljivalo.
+    const { error } = await supabase.rpc('obrisi_moj_nalog')
+    if (error) {
+      setDeleting(false)
+      alert('Brisanje nije uspelo. Pokušaj ponovo ili piši na info@librum.club.')
+      return
+    }
     await supabase.auth.signOut()
     router.push('/')
   }
