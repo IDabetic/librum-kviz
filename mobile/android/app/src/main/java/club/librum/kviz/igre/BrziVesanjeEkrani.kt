@@ -77,6 +77,7 @@ import club.librum.kviz.ui.Maskota
 import club.librum.kviz.ui.MaskotaSlika
 import club.librum.kviz.ui.Oznaka
 import club.librum.kviz.ui.Papir
+import club.librum.kviz.ui.PomociTraka
 import club.librum.kviz.ui.VrstaDugmeta
 import club.librum.kviz.ui.mirna
 import club.librum.kviz.ui.naslov
@@ -131,11 +132,14 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
     var kraj by remember { mutableStateOf(false) }
     var greska by remember { mutableStateOf<String?>(null) }
     var sacuvano by remember { mutableStateOf(false) }
+    var pomocIskoriscena by remember { mutableStateOf(false) }
+    var stit by remember { mutableStateOf(false) }
+    var nagovestaj by remember { mutableStateOf<String?>(null) }
 
     fun sledeca() {
         if (pitanja.isEmpty()) return
         izjava = BrziKviz.Izjava.od(pitanja[indeks % pitanja.size]); indeks++
-        otkriveno = null; pocetakIzjave = System.currentTimeMillis()
+        otkriveno = null; nagovestaj = null; pocetakIzjave = System.currentTimeMillis()
     }
     suspend fun sacuvaj() {
         if (sacuvano || igra.tacnih + igra.netacnih == 0) return
@@ -146,13 +150,14 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
     }
     suspend fun ucitaj() {
         runCatching { pitanja = PaketPitanja(kontekst).ucitaj() }.onFailure { greska = it.message; return }
-        igra = BrziKviz(); indeks = 0; kraj = false; sacuvano = false; pocetak = System.currentTimeMillis()
+        igra = BrziKviz(); indeks = 0; kraj = false; sacuvano = false; pomocIskoriscena = false; stit = false; pocetak = System.currentTimeMillis()
         sledeca()
     }
     fun odgovori(kaze: Boolean?) {
         val iz = izjava ?: return
         if (otkriveno != null || kraj) return
-        otkriveno = igra.odgovor(iz, kaze)
+        otkriveno = igra.odgovor(iz, kaze, stit)
+        if (stit && otkriveno == false) stit = false
         opseg.launch { delay(700); if (!kraj) sledeca() }
     }
 
@@ -207,6 +212,12 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                     Dugme("Netačno", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO, omoguceno = otkriveno == null) { odgovori(false) }
                     Dugme("Tačno", Modifier.weight(1f), VrstaDugmeta.PRIMARNO, omoguceno = otkriveno == null) { odgovori(true) }
                 }
+                nagovestaj?.takeIf { otkriveno == null }?.let { Text(it, style = tekst(14.sp, FontWeight.SemiBold)) }
+                // Štit: sledeći promašaj se ne računa; nagoveštaj daje prvo slovo tačnog odgovora; vreme dodaje 10 s rundi.
+                val slobodno = otkriveno == null
+                PomociTraka(pomocIskoriscena, if (slobodno) ({ stit = true }) else null,
+                    if (slobodno) ({ nagovestaj = "Tačan odgovor počinje na „${iz.tacanOdgovor.take(1).uppercase()}”." }) else null,
+                    { pocetak += 10_000 }, if (slobodno) ({ sledeca() }) else null, polaPolaNaziv = "Štit") { pomocIskoriscena = true }
             }
         }
     }
@@ -228,12 +239,13 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
     var pokusaj by remember { mutableStateOf("") }
     var sacuvano by remember { mutableStateOf(false) }
     var unos by remember { mutableStateOf("") }
+    var pomocIskoriscena by remember { mutableStateOf(false) }
     val fokus = remember { FocusRequester() }
     val tastatura = LocalSoftwareKeyboardController.current
 
     fun sledeca() {
         if (reci.isEmpty()) return
-        unos = ""
+        unos = ""; pomocIskoriscena = false
         val r = reci[indeks % reci.size]; indeks++
         rec = r; igra = Vesanje(r.word); pocetak = System.currentTimeMillis(); sacuvano = false; celaRec = false
     }
@@ -307,7 +319,7 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                         if (iskoriscena.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             iskoriscena.forEach { sl ->
                                 val pogodak = r.word.uppercase(java.util.Locale.forLanguageTag("sr-Latn")).contains(sl)
-                                Text(sl, style = tekst(18.sp, FontWeight.Bold, if (pogodak) Boje.teal else Boje.crvena),
+                                Text(sl, style = tekst(18.sp, FontWeight.Bold, if (pogodak) Boje.teal else if (igra.ugaseno(sl)) Boje.kremTamnija else Boje.crvena),
                                     textDecoration = if (pogodak) null else TextDecoration.LineThrough)
                             }
                         }
@@ -321,6 +333,9 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                         Text("Pogrešna cela reč odnosi 2 života.", style = tekst(13.sp, boja = Boje.sivaTekst))
                     } else {
                         Dugme("Pogodi celu reč", vrsta = VrstaDugmeta.SEKUNDARNO) { tastatura?.hide(); celaRec = true }
+                        // 50/50 gasi pola suvišnih slova, nagoveštaj otkriva slovo, umesto vremena vraća se život.
+                        PomociTraka(pomocIskoriscena, { igra.skloniPolovinuSlova() }, { igra.otkrijSlovo(); posle() },
+                            if (igra.zivoti < Vesanje.POCETNI_ZIVOTI) ({ igra.dodajZivot() }) else null, { sledeca() }, vremeJeZivot = true) { pomocIskoriscena = true }
                     }
                 } else {
                     val pobeda = igra.status == Vesanje.Status.POBEDA

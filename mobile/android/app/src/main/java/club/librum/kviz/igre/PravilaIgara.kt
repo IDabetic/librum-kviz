@@ -41,9 +41,10 @@ class BrziKviz {
     var tacnih by mutableIntStateOf(0); private set
     var netacnih by mutableIntStateOf(0); private set
 
-    fun odgovor(izjava: Izjava, kaze: Boolean?): Boolean {
+    /** `stit`: pomoć Štit, promašaj se ne računa (ni poeni ni broj netačnih). */
+    fun odgovor(izjava: Izjava, kaze: Boolean?, stit: Boolean = false): Boolean {
         val pogodio = kaze == izjava.jeTacno
-        if (pogodio) { poeni += POENA_TACNO; tacnih++ } else { poeni = max(0, poeni - POENA_NETACNO); netacnih++ }
+        if (pogodio) { poeni += POENA_TACNO; tacnih++ } else if (!stit) { poeni = max(0, poeni - POENA_NETACNO); netacnih++ }
         return pogodio
     }
 
@@ -75,6 +76,7 @@ class Vesanje(val rec: String) {
 
     private var pogodjena by mutableStateOf(setOf<String>())
     private var promasena by mutableStateOf(setOf<String>())
+    private var ugasena by mutableStateOf(setOf<String>())
     var zivoti by mutableIntStateOf(POCETNI_ZIVOTI); private set
     var poeni by mutableIntStateOf(0); private set
     var status by mutableStateOf(Status.IGRA); private set
@@ -83,7 +85,28 @@ class Vesanje(val rec: String) {
     private val sveOtkriveno get() = rec.all { !it.isLetter() || norm(it.toString()) in pogodjena }
     private val bonusZaGreske get() = if (promasena.isEmpty()) BONUS_BEZ_GRESKE else if (promasena.size <= 2) BONUS_MALO_GRESAKA else 0
 
-    fun iskorisceno(slovo: String) = norm(slovo) in pogodjena || norm(slovo) in promasena
+    fun iskorisceno(slovo: String) = norm(slovo) in pogodjena || norm(slovo) in promasena || norm(slovo) in ugasena
+
+    fun ugaseno(slovo: String) = norm(slovo) in ugasena
+
+    /** Pomoć 50/50: gasi polovinu slova kojih nema u reči. */
+    fun skloniPolovinuSlova() {
+        if (status != Status.IGRA) return
+        val slovaReci = rec.map { norm(it.toString()) }.toSet()
+        val suvisna = AZBUKA.map(::norm).filter { it !in slovaReci && !iskorisceno(it) }
+        ugasena = ugasena + suvisna.shuffled().take(suvisna.size / 2)
+    }
+
+    /** Pomoć: jedan izgubljen život se vraća. */
+    fun dodajZivot() { if (status == Status.IGRA && zivoti < POCETNI_ZIVOTI) zivoti++ }
+
+    /** Pomoć: otkriva jedno skriveno slovo bez poena i bez trošenja života. */
+    fun otkrijSlovo() {
+        if (status != Status.IGRA) return
+        val c = rec.firstOrNull { it.isLetter() && norm(it.toString()) !in pogodjena } ?: return
+        pogodjena = pogodjena + norm(c.toString())
+        if (sveOtkriveno) { poeni += bonusZaGreske; status = Status.POBEDA }
+    }
 
     fun pogodi(slovo: String) {
         val n = norm(slovo)

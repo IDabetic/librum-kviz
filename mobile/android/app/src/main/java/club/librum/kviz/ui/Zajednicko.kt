@@ -26,6 +26,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -79,6 +83,28 @@ fun PomocDugme(ikonica: ImageVector, naziv: String, vrsta: String, iskoriscena: 
         Box(Modifier.align(Alignment.TopEnd).offset(6.dp, (-6).dp).size(20.dp).background(Boje.mastilo, CircleShape), contentAlignment = Alignment.Center) {
             Text("$ostalo", style = tekst(11.sp, FontWeight.Bold, Boje.naMastilu))
         }
+    }
+}
+
+/**
+ * Četiri pomoći iste za sve igre (kao iOS PomociTraka); null radnja = pomoć nema smisla u toj igri ili trenutku.
+ * Vešanje nema sat, pa umesto vremena vraća život; tačno/netačno umesto 50/50 ima „Štit”.
+ */
+@Composable
+fun PomociTraka(iskoriscena: Boolean, polaPola: (() -> Unit)?, nagovestaj: (() -> Unit)?, vreme: (() -> Unit)?, preskok: (() -> Unit)?,
+                vremeJeZivot: Boolean = false, polaPolaNaziv: String = "50/50", iskoristi: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(
+                Triple(IkonicaPolaPola, polaPolaNaziv to "polaPola", polaPola),
+                Triple(Icons.Rounded.Lightbulb, "Nagoveštaj" to "nagovestaj", nagovestaj),
+                Triple(if (vremeJeZivot) Icons.Rounded.Favorite else Icons.Rounded.Timer, (if (vremeJeZivot) "Još jedan život" to "zivot" else "Dodatno vreme" to "vreme"), vreme),
+                Triple(Icons.Rounded.SkipNext, "Preskok" to "preskok", preskok),
+            ).forEach { (ik, nv, radnja) ->
+                PomocDugme(ik, nv.first, nv.second, iskoriscena, radnja != null, Modifier.weight(1f)) { iskoristi(); radnja?.invoke() }
+            }
+        }
+        PomocNapomena(iskoriscena)
     }
 }
 

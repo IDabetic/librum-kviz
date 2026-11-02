@@ -52,6 +52,7 @@ import club.librum.kviz.ui.MaskotaSlika
 import club.librum.kviz.ui.OdgovorDugme
 import club.librum.kviz.ui.Oznaka
 import club.librum.kviz.ui.Papir
+import club.librum.kviz.ui.PomociTraka
 import club.librum.kviz.ui.StanjeOdgovora
 import club.librum.kviz.ui.VrstaDugmeta
 import club.librum.kviz.ui.mirna
@@ -102,6 +103,9 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
     var radi by mutableStateOf(false); private set
     var rivalOtisao by mutableStateOf(false); private set
     var pocetakPitanja by mutableStateOf(System.currentTimeMillis()); private set
+    /** Pomoć „Dodatno vreme” produžava samo moje tekuće pitanje. */
+    var dodatnoSekundi by mutableIntStateOf(0)
+    val rokMs get() = (SEKUNDI + dodatnoSekundi) * 1000L
     var kod by mutableStateOf("")
 
     private var osvezavanje: Job? = null
@@ -187,7 +191,7 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
             faza == Faza.CEKANJE && nova.status == "playing" -> { faza = Faza.IGRA; pocetakPitanja = System.currentTimeMillis() }
             faza == Faza.IGRA && nova.status == "finished" -> { rivalOtisao = true; zavrsi() }
             faza == Faza.IGRA && !otkriveno -> {
-                val isteklo = System.currentTimeMillis() - pocetakPitanja >= SEKUNDI * 1000L
+                val isteklo = System.currentTimeMillis() - pocetakPitanja >= rokMs
                 if ((odgovorioSam && odgovorioJe) || isteklo) otkrij()
             }
             else -> Unit
@@ -223,7 +227,7 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
         }
         tekuce = sledeci
         otkriveno = false
-        pocetakPitanja = System.currentTimeMillis()
+        pocetakPitanja = System.currentTimeMillis(); dodatnoSekundi = 0
     }
 
     /** Napuštanje: rival dobija +50 i soba se zatvara, da bekstvo iz gubitka nije besplatno. */
@@ -350,8 +354,10 @@ private fun Rezultati(m: DuelModel) {
 @Composable
 private fun Igra(m: DuelModel, izlaz: () -> Unit) {
     var sada by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(m.tekuce) { while (true) { sada = System.currentTimeMillis(); if (sada - m.pocetakPitanja >= DuelModel.SEKUNDI * 1000L && !m.odgovorioSam) m.odgovori(null); delay(500) } }
-    val ostalo = ((DuelModel.SEKUNDI * 1000L - (sada - m.pocetakPitanja)) / 1000).coerceAtLeast(0)
+    var eliminisani by remember(m.tekuce) { mutableStateOf(setOf<Int>()) }
+    var pomocIskoriscena by remember { mutableStateOf(false) }
+    LaunchedEffect(m.tekuce) { while (true) { sada = System.currentTimeMillis(); if (sada - m.pocetakPitanja >= m.rokMs && !m.odgovorioSam) m.odgovori(null); delay(500) } }
+    val ostalo = ((m.rokMs - (sada - m.pocetakPitanja)) / 1000).coerceAtLeast(0)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             KrugZatvori("Napusti duel", izlaz)
@@ -369,18 +375,22 @@ private fun Igra(m: DuelModel, izlaz: () -> Unit) {
             Text(p.tekst, style = naslov(23.sp))
             p.opcije.forEachIndexed { i, o ->
                 val stanje = when {
-                    !m.otkriveno -> if (m.odgovorioSam && moj != i) StanjeOdgovora.BLEDO else StanjeOdgovora.OBICNO
+                    !m.otkriveno -> if ((m.odgovorioSam && moj != i) || i in eliminisani) StanjeOdgovora.BLEDO else StanjeOdgovora.OBICNO
                     i == p.tacan -> StanjeOdgovora.TACNO
                     moj == i -> StanjeOdgovora.NETACNO
                     else -> StanjeOdgovora.BLEDO
                 }
                 Box {
-                    OdgovorDugme("ABCD"[i].toString(), o, stanje, omoguceno = !m.odgovorioSam) { m.odgovori(i) }
-                    if (njegov == i) Text("Rival", style = tekst(12.sp, FontWeight.Bold, Color.White),
-                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp).background(Boje.roze, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                    OdgovorDugme("ABCD"[i].toString(), o, stanje, omoguceno = !m.odgovorioSam && i !in eliminisani) { m.odgovori(i) }
+                    if (njegov == i) Text("Rival", style = tekst(13.sp, FontWeight.Bold, Boje.roze),
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 14.dp))
                 }
             }
             if (m.odgovorioSam && !m.otkriveno) Text("Čekamo rivala…", style = tekst(15.sp, FontWeight.SemiBold, Boje.sivaTekst))
         }
+        if (!m.odgovorioSam) PomociTraka(pomocIskoriscena,
+            { eliminisani = (0 until 4).filter { it != p.tacan }.shuffled().take(2).toSet() },
+            { (0 until 4).filter { it != p.tacan && it !in eliminisani }.randomOrNull()?.let { eliminisani = eliminisani + it } },
+            { m.dodatnoSekundi += 10 }, { m.odgovori(null) }) { pomocIskoriscena = true }
     }
 }
