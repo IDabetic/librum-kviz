@@ -37,3 +37,31 @@ final class ProfilTests: XCTestCase {
         XCTAssertGreaterThan(slika.size.height, 600)
     }
 }
+
+/// Izgled kartice Igrači sa primerom objava (crta se u sliku, bez servera).
+@MainActor
+final class IgraciMokapTests: XCTestCase {
+    func testTokObjavaSeCrta() throws {
+        func o(_ id: Int, _ ime: String, _ av: String, _ vrsta: String, _ igra: String?, _ tekst: String, _ poeni: Int?, srca: Int, kom: Int, moje: Bool = false) -> Zajednica.Objava {
+            Zajednica.Objava(id: id, ko: "u\(id)", nadimak: ime, avatar: av, vrsta: vrsta, igra: igra, tekst: tekst, poeni: poeni, kod_sobe: nil,
+                             created_at: ISO8601DateFormatter().string(from: Date().addingTimeInterval(Double(-id) * 1700)), srca: srca, moje_srce: moje, komentara: kom, moja: false)
+        }
+        let objave = [
+            o(1, "Milan", "animal_25.png", "poziv_duel", "duel", "Ko sme na duel iz geografije? Pobeđujem sve do Kine.", nil, srca: 4, kom: 3),
+            o(2, "Čiča", "animal_47.png", "rezultat", "osvajanje", "Osvojio sam celu Evropu za 6 krugova!", 2140, srca: 12, kom: 5, moje: true),
+            o(3, "Dabetić", "animal_10.png", "poziv_tim", "osvajanje", "Tražim saigrača za Osvajanje, timovi po dvoje. Večeras u 21h.", nil, srca: 2, kom: 1),
+        ]
+        let prikaz = VStack(alignment: .leading, spacing: 14) {
+            Naslov(tekst: "Igrači", velicina: 34)
+            ForEach(objave) { ob in KarticaObjave(o: ob, komentari: {}, promena: { _ in }, nestala: {}) }
+        }
+        .padding(16).frame(width: 402).background(Color(hex: 0xF3F0E6))
+        .environment(Sesija()).environment(Napredak())
+        let r = ImageRenderer(content: prikaz)
+        r.scale = 2
+        r.proposedSize = .init(width: 402, height: nil)
+        let slika = try XCTUnwrap(r.uiImage)
+        if let putanja = ProcessInfo.processInfo.environment["IGRACI_SLIKA"] { try slika.pngData()?.write(to: URL(fileURLWithPath: putanja)) }
+        XCTAssertGreaterThan(slika.size.height, 600)
+    }
+}
