@@ -1,0 +1,2 @@
+-- Dnevni izazov (PRIMENJENO 03.11): dnevni_izazov() = 10 pitanja po md5(id || beogradski datum), isti za sve;
+-- okidač dnevni_jednom: samo prvi rezultat dana ulazi u rezultati_igara; igra 'dnevni' i pomoć 'zivot' dodate u check.

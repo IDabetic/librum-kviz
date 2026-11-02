@@ -50,6 +50,11 @@ struct KvizStavka: Identifiable, Hashable {
         case .igra(.brzi): return [
             "Tajmer od 60 sekundi kreće odmah. Za svaku tvrdnju biraš tačno ili netačno, 10 sekundi po tvrdnji.",
             "Tačan odgovor +10, netačan −5. Tempo je sve.", pomoc + " Ovde pomoć dodaje 10 sekundi."]
+        case .tema(fond: "dnevni", _, _): return [
+            "Svakog dana u ponoć stiže novih 10 pitanja, ista za sve igrače.",
+            "Na rang listu dana ulazi samo prvi pokušaj; možeš da igraš opet, ali za vežbu.",
+            "Brzina se računa: ko odgovori tačno i brže, ide više.", pomoc,
+        ]
         case .tema(fond: "slikari", _, _): return [
             "Na svakoj slici je jedno delo. Biraš ko ga je naslikao, od četiri ponuđena slikara.",
             "Deset slika, 15 sekundi po slici; sat ne teče dok se slika ne učita.",
@@ -67,6 +72,7 @@ struct KvizStavka: Identifiable, Hashable {
         let kljuc: String? = switch vrsta {
         case .igra(let i): i.rawValue
         case .tema(fond: "slikari", _, _): "slikari"
+        case .tema(fond: "dnevni", _, _): "brzi"
         default: nil
         }
         return kljuc.map { "Igra_\($0)" }
@@ -103,6 +109,8 @@ enum KvizKatalog {
 
     static let sve: [KvizStavka] = {
         var l: [KvizStavka] = [
+            KvizStavka(id: "dnevni", naslov: "Dnevni izazov", opis: "Istih 10 pitanja za sve danas. Jedan pokušaj, rang lista dana.", kategorija: "Opšte znanje",
+                       boja: 0xFFD84D, maskota: .lumi, vrsta: .tema(fond: "dnevni", zanr: nil, tesko: false), tezina: "Dnevno", ikonica: "calendar"),
             KvizStavka(id: "osvajanje", naslov: "Osvajanje sveta", opis: "171 država, vojske i bitke znanja protiv dva rivala.", kategorija: "Geografija",
                        boja: 0x12907E, maskota: .mimi, vrsta: .igra(.osvajanje), tezina: "Strategija", ikonica: "globe.europe.africa"),
             KvizStavka(id: "opste", naslov: "Opšte znanje", opis: "Deset pitanja iz svega pomalo, 15 sekundi po pitanju.", kategorija: "Opšte znanje",

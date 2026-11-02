@@ -11,7 +11,7 @@ struct PocetnaView: View {
     @State private var vrh: Ucitano<[RangListaView.Red]> = .ucitava
     @State private var pravila: KvizStavka?
 
-    private let istaknuti = ["osvajanje", "slikari", "opste", "knjige"].compactMap(KvizKatalog.stavka)
+    private let istaknuti = ["dnevni", "osvajanje", "slikari", "opste", "knjige"].compactMap(KvizKatalog.stavka)
     /// Šest igara pored Osvajanja sveta.
     private let igre = ["pro", "book", "duel", "slikari", "brzi", "vesanje"].compactMap(KvizKatalog.stavka)
 

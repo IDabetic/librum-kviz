@@ -160,7 +160,7 @@ struct KvizIgraView: View {
         prethodniNajbolji = napredak.s.najbolje[stavka.id]
         let kat = stavka.kategorija == "Knjige" ? "Knjige · \(stavka.naslov)" : stavka.kategorija
         let mereni = kviz.zapisi.filter { !$0.preskoceno }
-        let rezultat = zavrsiPartiju(napredak, sesija, igra: stavka.id.hasPrefix("slikari") ? "slikari" : "tema", kviz: stavka.id, poeni: kviz.poeni,
+        let rezultat = zavrsiPartiju(napredak, sesija, igra: stavka.id == "dnevni" ? "dnevni" : stavka.id.hasPrefix("slikari") ? "slikari" : "tema", kviz: stavka.id, poeni: kviz.poeni,
                                      tacnih: kviz.tacnih, netacnih: kviz.netacnih, kategorija: kat, brzih: kviz.brzih,
                                      prosekMs: prosek(mereni.reduce(0) { $0 + $1.ms }, mereni.count))
         ishod = rezultat
@@ -517,7 +517,7 @@ struct KvizRezultatiView: View {
                 PodeliRezultat(igra: stavka.naslov, naslov: savrseno ? "Savršeno!" : "Moj rezultat", veliko: "\(kviz.tacnih)/\(ukupno)",
                                detalji: ["\(kviz.poeni) poena", "\(Int(Double(kviz.tacnih) / Double(max(1, ukupno)) * 100))% tačno"],
                                ilustracija: stavka.ilustracija, boja: Color(hex: stavka.boja),
-                               objava: (stavka.id.hasPrefix("slikari") ? "slikari" : "tema", kviz.poeni))
+                               objava: (stavka.id == "dnevni" ? "dnevni" : stavka.id.hasPrefix("slikari") ? "slikari" : "tema", kviz.poeni))
             }
             ScrollView {
                 VStack(spacing: 14) {

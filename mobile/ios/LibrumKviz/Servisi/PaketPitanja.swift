@@ -12,7 +12,7 @@ struct Pitanje: Codable, Identifiable, Equatable {
 }
 
 /// Fond pitanja po igri (RPC aplikacija_pitanja): opšti za PRO, Brzi, Duel i Osvajanje, Book za književnost.
-enum Fond: String { case opste, book, slikari }
+enum Fond: String { case opste, book, slikari, dnevni }
 
 /// Pitanje spremno za prikaz: ponude promešane, zna se koja je tačna.
 struct Prikaz: Equatable {
@@ -81,6 +81,12 @@ actor PaketPitanja {
     /// Bez mreže bira iz keša/rezerve istog fonda.
     func kviz(_ fond: Fond, zanr: String? = nil, tesko: Bool = false, broj: Int = 10) async throws -> [Pitanje] {
         if fond == .slikari { return try Self.slikari(broj: broj, tesko: tesko) }
+        // Dnevni izazov: isti 10 za sve tog dana; bez mreže nema izazova (bio bi drugačiji od ostalih).
+        if fond == .dnevni {
+            let p: [Pitanje] = try await Supabase.deljeni.rpc("dnevni_izazov", [:])
+            guard p.count >= 5 else { throw Supabase.Greska(poruka: "Dnevni izazov nije stigao. Proveri internet.") }
+            return p
+        }
         var parametri: [String: Any] = ["p_fond": fond.rawValue, "p_broj": broj]
         if let zanr { parametri["p_zanr"] = zanr }
         if tesko { parametri["p_tezina"] = "tesko" }

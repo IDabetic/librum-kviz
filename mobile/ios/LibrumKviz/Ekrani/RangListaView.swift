@@ -2,10 +2,11 @@ import SwiftUI
 
 /// Igre sa rang listom (ključ u tabeli rezultati_igara) i kako izgledaju u izboru.
 enum IgraListe: String, CaseIterable, Identifiable {
-    case osvajanje, pro, book, duel, slikari, brzi, vesanje
+    case dnevni, osvajanje, pro, book, duel, slikari, brzi, vesanje
     var id: String { rawValue }
     var naziv: String {
         switch self {
+        case .dnevni: "Dnevni"
         case .osvajanje: "Osvajanje"
         case .pro: "PRO"
         case .book: "Book"

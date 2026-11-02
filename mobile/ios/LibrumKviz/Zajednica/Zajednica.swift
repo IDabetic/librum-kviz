@@ -42,7 +42,7 @@ enum Zajednica {
     ]
     static func nazivVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.1 ?? "Objava" }
     static func ikonicaVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.2 ?? "text.bubble" }
-    static let nazivIgre = ["osvajanje": "Osvajanje sveta", "pro": "PRO kviz", "book": "Book kviz", "duel": "Duel", "slikari": "Slikari",
+    static let nazivIgre = ["dnevni": "Dnevni izazov", "osvajanje": "Osvajanje sveta", "pro": "PRO kviz", "book": "Book kviz", "duel": "Duel", "slikari": "Slikari",
                             "brzi": "Brzi kviz", "vesanje": "Vešanje", "tema": "Kviz po temi"]
 
     private static func token(_ s: Sesija) async -> String? { try? await s.vazeciToken() }
