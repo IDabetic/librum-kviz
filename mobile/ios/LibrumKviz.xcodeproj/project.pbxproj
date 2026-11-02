@@ -20,6 +20,7 @@
 		232A65EEA93A852EB5C5FB09 /* OsvajanjeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A888EF4247356C4BAE44843E /* OsvajanjeView.swift */; };
 		25600111DE23585B32DE0FBB /* PravilaIgara.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A3F1D8E5729330DA828B8E /* PravilaIgara.swift */; };
 		261B382FDDCAFAA8C53F2083 /* Stanja.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F64A8AFFE39B4C750940D /* Stanja.swift */; };
+		26D858BE8481581B323693B7 /* Obavestenja.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03A716D686174F9669BEE6D1 /* Obavestenja.swift */; };
 		2C4463F75E1A523C629CD94D /* rezervna-pitanja.json in Resources */ = {isa = PBXBuildFile; fileRef = ED18EE7D3B6358D185964D21 /* rezervna-pitanja.json */; };
 		2F2A5B2083A815BC2207536F /* SpaceGrotesk.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 54904A90E4F31096FFC39BC3 /* SpaceGrotesk.ttf */; };
 		3527521AD1FF0D977ABB364A /* ProKviz.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE4B80D0067FB0FF1E210FA7 /* ProKviz.swift */; };
@@ -44,6 +45,7 @@
 		9CD555FBE9D2697A940E4220 /* Deljenje.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2856025DB812ADE6E90E185 /* Deljenje.swift */; };
 		9CED7A42B00E80536D13BEE9 /* DeljenjeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26009EDFA71CD993EFB9CD91 /* DeljenjeTests.swift */; };
 		9E42BFA4679D26432E5E7329 /* KlasicniKviz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A28076E53EBB4D859B09B8 /* KlasicniKviz.swift */; };
+		A166947962195847D6554E88 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C252B80B896419F11D4AAC60 /* GoogleService-Info.plist */; };
 		A87F1B20734FF29CF0E7B773 /* Pravila.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FED500CF38EA749232AE59B /* Pravila.swift */; };
 		B56A496BE96619CA4DCC3E0D /* PrijavaTok.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D4930B06633BBCB815E047 /* PrijavaTok.swift */; };
 		BBCB7350D0962129AC532351 /* PitanjeKartica.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6EBAC1E7BB1A11085267361 /* PitanjeKartica.swift */; };
@@ -69,6 +71,7 @@
 
 /* Begin PBXFileReference section */
 		00104B1D862D97641324820C /* Dijalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dijalog.swift; sourceTree = "<group>"; };
+		03A716D686174F9669BEE6D1 /* Obavestenja.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Obavestenja.swift; sourceTree = "<group>"; };
 		05C7AF96D425523C288508F2 /* IstraziView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IstraziView.swift; sourceTree = "<group>"; };
 		096154B7FE7443B80C4E5CA7 /* PaketPitanja.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaketPitanja.swift; sourceTree = "<group>"; };
 		0D48064B32341C34B07F6ED9 /* OsvajanjeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OsvajanjeModel.swift; sourceTree = "<group>"; };
@@ -95,6 +98,7 @@
 		8E23BC38A1A6DF9E968C7A2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		92A49D2BE31CA5BBE238AC26 /* Tema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tema.swift; sourceTree = "<group>"; };
 		94A28076E53EBB4D859B09B8 /* KlasicniKviz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KlasicniKviz.swift; sourceTree = "<group>"; };
+		9AA1A6BD0343112C3C4A3D70 /* LibrumKviz.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LibrumKviz.entitlements; sourceTree = "<group>"; };
 		9FED500CF38EA749232AE59B /* Pravila.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pravila.swift; sourceTree = "<group>"; };
 		A888EF4247356C4BAE44843E /* OsvajanjeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OsvajanjeView.swift; sourceTree = "<group>"; };
 		AA657A4E3E3FACD279AAAFF6 /* Sesija.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sesija.swift; sourceTree = "<group>"; };
@@ -103,6 +107,7 @@
 		BABBAF67F52C5607DA7A66E0 /* KvizTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KvizTests.swift; sourceTree = "<group>"; };
 		BB7B9F3BC8EA4C361AEF287B /* VesanjeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VesanjeView.swift; sourceTree = "<group>"; };
 		C19BD79E1511E1ED3C5A3839 /* igre */ = {isa = PBXFileReference; lastKnownFileType = folder; name = igre; path = ../../src/lib/igre; sourceTree = SOURCE_ROOT; };
+		C252B80B896419F11D4AAC60 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C3149020E63844C84F392134 /* zvuci */ = {isa = PBXFileReference; lastKnownFileType = folder; name = zvuci; path = ../zvuci; sourceTree = SOURCE_ROOT; };
 		C46E3F9E4B91BE3482AF4C62 /* Mreza.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mreza.swift; sourceTree = "<group>"; };
 		CB9F64A8AFFE39B4C750940D /* Stanja.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stanja.swift; sourceTree = "<group>"; };
@@ -164,7 +169,9 @@
 			isa = PBXGroup;
 			children = (
 				11EB472B5832198C4CAE86B2 /* Assets.xcassets */,
+				C252B80B896419F11D4AAC60 /* GoogleService-Info.plist */,
 				8E23BC38A1A6DF9E968C7A2B /* Info.plist */,
+				9AA1A6BD0343112C3C4A3D70 /* LibrumKviz.entitlements */,
 				CC227D8E84CCA578950E363A /* LibrumKvizApp.swift */,
 				92A49D2BE31CA5BBE238AC26 /* Tema.swift */,
 				EF6D70F0CFF21107F30F514C /* Ekrani */,
@@ -233,6 +240,7 @@
 			children = (
 				C46E3F9E4B91BE3482AF4C62 /* Mreza.swift */,
 				D8DAF98DC73C562F246D261F /* Napredak.swift */,
+				03A716D686174F9669BEE6D1 /* Obavestenja.swift */,
 				096154B7FE7443B80C4E5CA7 /* PaketPitanja.swift */,
 				FF23D03C5EDB331D59A95605 /* Partija.swift */,
 				AA657A4E3E3FACD279AAAFF6 /* Sesija.swift */,
@@ -410,6 +418,7 @@
 			files = (
 				168AFC74242CD1A315C70869 /* ArchivoBlack-Regular.ttf in Resources */,
 				0A140B4E34C656314FDF1E71 /* Assets.xcassets in Resources */,
+				A166947962195847D6554E88 /* GoogleService-Info.plist in Resources */,
 				2F2A5B2083A815BC2207536F /* SpaceGrotesk.ttf in Resources */,
 				EEB388B84A027D625EC2BF06 /* avatari in Resources */,
 				70203C908BBD6D9059387F05 /* cinjenice.json in Resources */,
@@ -443,6 +452,7 @@
 				6E7C2DDB0843ED38A1D2642D /* MapaView.swift in Sources */,
 				C09D8D54B44C7B8854C34CBB /* Mreza.swift in Sources */,
 				E38F45BDB585442A35A140EC /* Napredak.swift in Sources */,
+				26D858BE8481581B323693B7 /* Obavestenja.swift in Sources */,
 				874B81797EA899D9CE393254 /* OsvajanjeModel.swift in Sources */,
 				232A65EEA93A852EB5C5FB09 /* OsvajanjeView.swift in Sources */,
 				043BF82E3453077BB6A12411 /* PaketPitanja.swift in Sources */,
@@ -491,6 +501,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = LibrumKviz/LibrumKviz.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LibrumKviz/Info.plist;
@@ -600,6 +611,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = LibrumKviz/LibrumKviz.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LibrumKviz/Info.plist;

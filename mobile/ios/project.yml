@@ -37,6 +37,10 @@ targets:
       - path: ../../public/avatari
         type: folder
         buildPhase: resources
+    entitlements:
+      path: LibrumKviz/LibrumKviz.entitlements
+      properties:
+        aps-environment: development
     info:
       path: LibrumKviz/Info.plist
       properties:
@@ -54,6 +58,7 @@ targets:
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight, UIInterfaceOrientationPortraitUpsideDown]
         UIAppFonts: [ArchivoBlack-Regular.ttf, SpaceGrotesk.ttf]
         ITSAppUsesNonExemptEncryption: false
+        UIBackgroundModes: [remote-notification]
         SUPABASE_URL: "$(SUPABASE_URL)"
         SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
     settings:

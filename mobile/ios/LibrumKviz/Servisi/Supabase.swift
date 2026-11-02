@@ -33,7 +33,7 @@ struct Supabase {
         let email: String?
     }
 
-    func zahtev(_ putanja: String, metod: String = "GET", telo: Any? = nil, token: String? = nil, upit: [URLQueryItem] = [], vratiRed: Bool = false) async throws -> Data {
+    func zahtev(_ putanja: String, metod: String = "GET", telo: Any? = nil, token: String? = nil, upit: [URLQueryItem] = [], vratiRed: Bool = false, dodatnaZaglavlja: [String: String] = [:]) async throws -> Data {
         var komponente = URLComponents(url: osnova.appendingPathComponent(putanja), resolvingAgainstBaseURL: false)!
         if !upit.isEmpty { komponente.queryItems = upit }
         var r = URLRequest(url: komponente.url!, timeoutInterval: 15)
@@ -42,6 +42,7 @@ struct Supabase {
         r.setValue("Bearer \(token ?? kljuc)", forHTTPHeaderField: "Authorization")
         r.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if vratiRed { r.setValue("return=representation", forHTTPHeaderField: "Prefer") }
+        for (k, v) in dodatnaZaglavlja { r.setValue(v, forHTTPHeaderField: k) }
         if let telo { r.httpBody = try JSONSerialization.data(withJSONObject: telo) }
         let data: Data, odgovor: URLResponse
         do {

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "814388351736",
+    "project_id": "librum-ebook-c0f24",
+    "storage_bucket": "librum-ebook-c0f24.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:814388351736:android:bf6bc487fd79784f01210d",
+        "android_client_info": {
+          "package_name": "club.librum.kviz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAGaNOYpMsw1v3jOp8gQmXbhDYFngC1wI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:814388351736:android:f71d64ca4110c7de01210d",
+        "android_client_info": {
+          "package_name": "market.librum.ebook"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAGaNOYpMsw1v3jOp8gQmXbhDYFngC1wI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

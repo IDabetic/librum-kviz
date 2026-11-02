@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct LibrumKvizApp: App {
+    @UIApplicationDelegateAdaptor(AplikacijaDelegat.self) private var delegat
     @State private var sesija = Sesija()
     @State private var napredak = Napredak.deljeni
     @State private var mreza = Mreza.deljena
@@ -18,6 +19,7 @@ struct LibrumKvizApp: App {
             .tint(.mastilo)
             .preferredColorScheme(tema == "svetla" ? .light : tema == "tamna" ? .dark : nil)
             .task { await sesija.ucitajNadimak() }
+            .task(id: sesija.korisnikId) { if sesija.prijavljen { await Obavestenja.prijavi() } }
         }
     }
 }
