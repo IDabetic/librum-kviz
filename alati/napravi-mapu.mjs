@@ -106,11 +106,51 @@ function kratka(d) {
   return d.replace(/(-?\d+\.\d+)/g, n => (Math.round(Number(n) * 10) / 10).toString())
 }
 
-// Natpis ide u središte najvećeg dela (Francuska ne sme da dobije broj u Gvajani).
+// Natpis ide u najveći deo (Francuska ne sme da dobije broj u Gvajani), i to u tačku
+// najdalju od granice (polylabel): težište razuđene države (Hrvatska, Čile) pada van nje.
 function sredina(f) {
   const delovi = f.geometry.type === 'MultiPolygon' ? f.geometry.coordinates.map(c => ({ type: 'Polygon', coordinates: c })) : [f.geometry]
   const najveci = delovi.reduce((a, b) => (putanja.area(b) > putanja.area(a) ? b : a))
-  return putanja.centroid(najveci).map(v => Math.round(v * 10) / 10)
+  const prstenovi = najveci.coordinates.map(r => r.map(t => projekcija(t)).filter(Boolean))
+  return poljeNedostupnosti(prstenovi, 0.5).map(v => Math.round(v * 10) / 10)
+}
+
+// Polylabel (Mapbox, ISC): tačka unutar poligona najdalja od ivica, preciznost u pikselima.
+function poljeNedostupnosti(prstenovi, preciznost) {
+  const spolja = prstenovi[0]
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity]
+  for (const [x, y] of spolja) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y) }
+  const sirina = x1 - x0, visina = y1 - y0
+  const celija = Math.min(sirina, visina)
+  if (celija === 0) return [x0, y0]
+  const udaljenost = (x, y) => {
+    let unutra = false, min = Infinity
+    for (const r of prstenovi) for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const [ax, ay] = r[i], [bx, by] = r[j]
+      if ((ay > y) !== (by > y) && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) unutra = !unutra
+      let dx = bx - ax, dy = by - ay, px = ax, py = ay
+      if (dx !== 0 || dy !== 0) {
+        const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)))
+        px = ax + dx * t; py = ay + dy * t
+      }
+      min = Math.min(min, (x - px) ** 2 + (y - py) ** 2)
+    }
+    return (unutra ? 1 : -1) * Math.sqrt(min)
+  }
+  const nova = (x, y, h) => { const d = udaljenost(x, y); return { x, y, h, d, max: d + h * Math.SQRT2 } }
+  const red = []
+  let h = celija / 2
+  for (let x = x0; x < x1; x += celija) for (let y = y0; y < y1; y += celija) red.push(nova(x + h, y + h, h))
+  let najbolja = nova(x0 + sirina / 2, y0 + visina / 2, 0)
+  while (red.length) {
+    red.sort((a, b) => a.max - b.max)
+    const c = red.pop()
+    if (c.d > najbolja.d) najbolja = c
+    if (c.max - najbolja.d <= preciznost) continue
+    h = c.h / 2
+    red.push(nova(c.x - h, c.y - h, h), nova(c.x + h, c.y - h, h), nova(c.x - h, c.y + h, h), nova(c.x + h, c.y + h, h))
+  }
+  return [najbolja.x, najbolja.y]
 }
 
 // Susedi po kopnenoj granici.

@@ -161,3 +161,66 @@ final class IgreTests: XCTestCase {
         XCTAssertEqual(DuelMesanje.red("abc"), IgreTests.vebRed2)
     }
 }
+
+/// Isti slučajevi kao v3 testovi u tests/osvajanje.test.mjs.
+final class OsvajanjeV3Tests: XCTestCase {
+    private func napad(_ vlasnici: [(String, String, Int)]) -> Stanje {
+        var r = Slucajno(seme: 1)
+        var s = Stanje.nova(krugova: 12, tezina: .normalno, slucajno: &r)
+        s.faza = .napad
+        for o in Mapa.oblasti { s.oblasti[o.id] = StanjeOblasti(vlasnik: nil, vojske: 1) }
+        for (id, v, n) in vlasnici { s.oblasti[id] = StanjeOblasti(vlasnik: v, vojske: n) }
+        return s
+    }
+
+    func testKontinenti() {
+        XCTAssertEqual(Kontinenti.svi.map { Kontinenti.oblasti($0.id).count }, [18, 12, 38, 50, 46, 7])
+    }
+
+    func testTimoviIMisije() {
+        var r = Slucajno(seme: 3)
+        let s = Stanje.nova(krugova: 12, tezina: .normalno, slucajno: &r, igraci: [
+            NoviIgrac(id: "a1", ime: "A1", boja: 0x12907E, covek: true, tim: "A"),
+            NoviIgrac(id: "b1", ime: "B1", boja: 0xFF5FA2, covek: false, tim: "B"),
+            NoviIgrac(id: "a2", ime: "A2", boja: 0x12907E, covek: false, tim: "A", kapiten: false),
+            NoviIgrac(id: "b2", ime: "B2", boja: 0xFF5FA2, covek: false, tim: "B", kapiten: false),
+        ], pocetak: ["A": "evr", "B": "jam"], misije: true)
+        for p in s.igraci { XCTAssertEqual(Kontinenti.od(p.prestonica).id, p.tim == "A" ? "evr" : "jam") }
+        XCTAssertEqual(s.oblastiIgraca("a1"), s.oblastiIgraca("a2"))
+        XCTAssertNotNil(s.misije["A"]); XCTAssertNotEqual(s.misije["A"], s.misije["B"])
+        XCTAssertEqual(s.napadaPoPotezu, 2)
+    }
+
+    func testBitkaSkorom() {
+        let s = napad([("ESP", "ti", 6), ("FRA", "mimi", 4)])
+        let (a, ishod) = s.razresiBitkuSkorom(odakle: "ESP", kuda: "FRA", napadac: Skor(tacnih: 4, ms: 40000), branilac: Skor(tacnih: 3, ms: 20000))
+        XCTAssertTrue(ishod.osvojeno)
+        XCTAssertEqual(a.oblasti["FRA"], StanjeOblasti(vlasnik: "ti", vojske: 5))
+        XCTAssertEqual(a.bonusPomoci["ti"], 2)
+        let (b, _) = s.razresiBitkuSkorom(odakle: "ESP", kuda: "FRA", napadac: Skor(tacnih: 3, ms: 30000), branilac: Skor(tacnih: 3, ms: 25000))
+        XCTAssertEqual(b.oblasti["FRA"]?.vlasnik, "mimi")
+        XCTAssertEqual(b.oblasti["ESP"]?.vojske, 4)
+        XCTAssertEqual(s.uslovBitke("FRA").pitanja, 5)
+        XCTAssertEqual(s.napadaPoPotezu, 5)
+    }
+
+    func testOdbrane() {
+        var s0 = napad([("MAR", "ti", 8)])
+        for id in Kontinenti.oblasti("evr") { s0.oblasti[id] = StanjeOblasti(vlasnik: "mimi", vojske: 3) }
+        func sa(_ o: Odbrana) -> Stanje { var s = s0; s.odbrane = ["evr": o]; return s }
+        XCTAssertEqual(sa(.prednost).razresiBitkuSkorom(odakle: "MAR", kuda: "ESP", napadac: Skor(tacnih: 4, ms: 1), branilac: Skor(tacnih: 3, ms: 9)).0.oblasti["ESP"]?.vlasnik, "mimi")
+        XCTAssertEqual(sa(.zamka).razresiBitkuSkorom(odakle: "MAR", kuda: "ESP", napadac: Skor(tacnih: 1, ms: 1), branilac: Skor(tacnih: 3, ms: 9)).0.oblasti["MAR"]?.vojske, 5)
+        let t = sa(.tvrdjava).razresiBitkuSkorom(odakle: "MAR", kuda: "ESP", napadac: Skor(tacnih: 5, ms: 1), branilac: Skor(tacnih: 0, ms: 9)).0
+        XCTAssertEqual(t.oblasti["ESP"], StanjeOblasti(vlasnik: "mimi", vojske: 2))
+        XCTAssertEqual(sa(.brzSat).uslovBitke("ESP").sekundi, Pravila.sekundiBrzSat)
+    }
+
+    func testMisijaPobedjujeOdmah() {
+        var s = napad([("ESP", "ti", 9), ("FRA", "mimi", 1)])
+        s.misije = ["ti": "evr-jam", "mimi": "drzava60"]
+        for id in Kontinenti.oblasti("evr") + Kontinenti.oblasti("jam") where id != "FRA" { s.oblasti[id] = StanjeOblasti(vlasnik: "ti", vojske: 2) }
+        let (posle, _) = s.razresiBitkuSkorom(odakle: "ESP", kuda: "FRA", napadac: Skor(tacnih: 5, ms: 1), branilac: Skor(tacnih: 0, ms: 1))
+        XCTAssertEqual(posle.pobednik, "ti")
+        XCTAssertEqual(posle.faza, .kraj)
+    }
+}

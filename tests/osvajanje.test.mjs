@@ -115,3 +115,82 @@ test('cela partija samih botova se završi i botovi osvajaju', () => {
   const zauzeto = P.OBLASTI.filter(o => s.oblasti[o.id].vlasnik).length
   assert.ok(zauzeto > 60, `zauzeto ${zauzeto} od 171`)
 })
+
+// ── v3: timovi, kontinenti, misije, odbrane, bitka od 5 pitanja ───────────────
+
+const tim2x2 = (seme = 3) => P.napraviPartiju({
+  krugova: 12, tezina: 'normalno', slucajno: P.napraviSlucajno(seme), misije: true,
+  igraci: [
+    { id: 'a1', ime: 'A1', boja: '#12907E', covek: true, tim: 'A', kapiten: true },
+    { id: 'b1', ime: 'B1', boja: '#FF5FA2', covek: false, tim: 'B', kapiten: true },
+    { id: 'a2', ime: 'A2', boja: '#12907E', covek: false, tim: 'A', kapiten: false },
+    { id: 'b2', ime: 'B2', boja: '#FF5FA2', covek: false, tim: 'B', kapiten: false },
+  ],
+  pocetak: { A: 'evr', B: 'jam' },
+})
+
+test('kontinenti: 6, svih 171 država tačno u jednom, broj država po dokumentu', () => {
+  assert.equal(P.KONTINENTI.length, 6)
+  const ukupno = P.KONTINENTI.map(k => P.oblastiKontinenta(k.id).length)
+  assert.deepEqual(ukupno, [18, 12, 38, 50, 46, 7])
+  assert.equal(ukupno.reduce((a, b) => a + b), 171)
+})
+
+test('timovi: saigrači dele države, počinju na izabranom kontinentu, svako dobija misiju', () => {
+  const s = tim2x2()
+  for (const p of s.igraci) assert.equal(P.kontinentOblasti(p.prestonica).id, p.tim === 'A' ? 'evr' : 'jam')
+  assert.equal(P.oblastiIgraca(s, 'a1').length, P.oblastiIgraca(s, 'a2').length)
+  assert.ok(P.oblastiIgraca(s, 'a1').length >= 10)
+  assert.ok(s.misije.A && s.misije.B && s.misije.A !== s.misije.B)
+  assert.ok(!Object.values(s.misije).includes('izbaci'), 'u timu nema misije „izbaci rivala”')
+  assert.equal(P.napadaPoPotezu(s), 2)
+  assert.equal(P.napadaPoPotezu(nova()), 5)
+})
+
+test('saveznik se ne napada', () => {
+  const s = { ...tim2x2(), faza: 'napad' }
+  for (const id of P.oblastiIgraca(s, 'a1')) assert.ok(P.mete(s, id).every(m => s.oblasti[m].vlasnik !== 'A'))
+})
+
+test('bitka od 5 pitanja: više tačnih osvaja, isto tačnih odlučuje brzina, pobednik dobija 2 pomoći', () => {
+  const s = napad([['ESP', 'ti', 6], ['FRA', 'mimi', 4]])
+  const { stanje, ishod } = P.razresiBitkuSkorom(s, 'ESP', 'FRA', { tacnih: 4, ms: 40000 }, { tacnih: 3, ms: 20000 })
+  assert.ok(ishod.osvojeno)
+  assert.equal(stanje.oblasti.FRA.vlasnik, 'ti')
+  assert.equal(stanje.oblasti.FRA.vojske, 5)
+  assert.equal(stanje.bonusPomoci.ti, P.BONUS_POMOCI_POBEDNIKU)
+  const brzina = P.razresiBitkuSkorom(s, 'ESP', 'FRA', { tacnih: 3, ms: 30000 }, { tacnih: 3, ms: 25000 })
+  assert.equal(brzina.stanje.oblasti.FRA.vlasnik, 'mimi', 'branilac brži')
+  assert.equal(brzina.stanje.oblasti.ESP.vojske, 6 - P.GUBITAK_PORAZENOG_NAPADACA)
+  assert.equal(brzina.stanje.bonusPomoci.mimi, 2)
+})
+
+test('odbrane: prednost traži +2 tačna, zamka uzima 3 vojske, tvrđava prašta prvi poraz u krugu', () => {
+  const evropa = P.oblastiKontinenta('evr')
+  const s0 = napad([['MAR', 'ti', 8]])
+  for (const id of evropa) s0.oblasti[id] = { vlasnik: 'mimi', vojske: 3 }
+  const sa = (o) => ({ ...s0, odbrane: { evr: o } })
+  assert.equal(P.razresiBitkuSkorom(sa('prednost'), 'MAR', 'ESP', { tacnih: 4, ms: 1 }, { tacnih: 3, ms: 9 }).stanje.oblasti.ESP.vlasnik, 'mimi')
+  assert.equal(P.razresiBitkuSkorom(sa('prednost'), 'MAR', 'ESP', { tacnih: 5, ms: 1 }, { tacnih: 3, ms: 9 }).stanje.oblasti.ESP.vlasnik, 'ti')
+  assert.equal(P.razresiBitkuSkorom(sa('zamka'), 'MAR', 'ESP', { tacnih: 1, ms: 1 }, { tacnih: 3, ms: 9 }).stanje.oblasti.MAR.vojske, 5)
+  const t = P.razresiBitkuSkorom(sa('tvrdjava'), 'MAR', 'ESP', { tacnih: 5, ms: 1 }, { tacnih: 0, ms: 9 }).stanje
+  assert.equal(t.oblasti.ESP.vlasnik, 'mimi')
+  assert.equal(t.oblasti.ESP.vojske, 2)
+  assert.equal(P.uslovBitke(sa('brzSat'), 'ESP').sekundi, P.SEKUNDI_BRZ_SAT)
+  assert.equal(P.uslovBitke(sa('brzSat'), 'ESP').pitanja, 5)
+  assert.equal(P.uslovBitke(s0, 'POL').pitanja, 5)
+})
+
+test('misija: ko osvoji oba kontinenta pobeđuje odmah', () => {
+  const s = napad([['ESP', 'ti', 9], ['FRA', 'mimi', 1]])
+  s.misije = { ti: 'evr-jam', mimi: 'drzava60' }
+  for (const id of [...P.oblastiKontinenta('evr'), ...P.oblastiKontinenta('jam')]) if (id !== 'FRA') s.oblasti[id] = { vlasnik: 'ti', vojske: 2 }
+  assert.ok(P.napredakMisije(s, 'ti') > 0.95 && P.napredakMisije(s, 'ti') < 1)
+  const { stanje } = P.razresiBitkuSkorom(s, 'ESP', 'FRA', { tacnih: 5, ms: 1 }, { tacnih: 0, ms: 1 })
+  assert.equal(stanje.pobednik, 'ti')
+  assert.equal(stanje.faza, 'kraj')
+})
+
+test('redosled izbora zmijom', () => {
+  assert.deepEqual(P.redosledIzbora(['A', 'B', 'C'], 2), ['A', 'B', 'C', 'C', 'B', 'A'])
+})

@@ -110,6 +110,7 @@ struct OsvajanjeIgraView: View {
         }
         .task(id: ObjectIdentifier(model)) { await model.pokreni() }
         .overlay { pitanje }
+        .overlay { if let b = model.bitka { BitkaView(model: model, bitka: b) } }
         .overlay { kraj }
         .onChange(of: model.stanje.faza == .kraj) { _, gotovo in
             guard gotovo, let covek = model.stanje.igraci.first(where: \.covek) else { return }
@@ -233,13 +234,7 @@ struct OsvajanjeIgraView: View {
         }
     }
 
-    private func oznaka(_ o: OsvajanjeModel.Otvoreno) -> String {
-        switch o.vrsta {
-        case .snabdevanje: "Snabdevanje"
-        case .napad: "Napad · \(Mapa.oblast(o.kuda ?? "").ime)"
-        case .odbrana: "Odbrana · \(Mapa.oblast(o.kuda ?? "").ime)"
-        }
-    }
+    private func oznaka(_ o: OsvajanjeModel.Otvoreno) -> String { "Snabdevanje" }
 
     @ViewBuilder private var kraj: some View {
         if model.stanje.faza == .kraj {

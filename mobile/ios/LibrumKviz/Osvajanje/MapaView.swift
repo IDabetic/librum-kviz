@@ -55,6 +55,8 @@ struct MapaView: View {
 
     private static let neutralne: [Color] = [Color(hex: 0xCFEDE6), Color(hex: 0xFFD9E6), Color(hex: 0xFFF0BF), Color(hex: 0xDED5F7), Color(hex: 0xD3ECFA)]
     private static let okean = Color(hex: 0xE3EDF2)
+    /// Jak zum da se i male države (Luksemburg, Liban) lepo vide i tapnu.
+    static let najveciZum: CGFloat = 20
     private static let morskiPut = Color(hex: 0x4F7486)
 
     var body: some View {
@@ -89,7 +91,7 @@ struct MapaView: View {
                 }
                 for o in Mapa.oblasti {
                     guard let put = PutanjeMape.sve[o.id], let st = stanje.oblasti[o.id] else { continue }
-                    let boja = stanje.igraci.first { $0.id == st.vlasnik }.map { Color(hex: $0.boja) } ?? Self.neutralne[o.boja % 5]
+                    let boja = stanje.igraci.first { $0.tim == st.vlasnik }.map { Color(hex: $0.boja) } ?? Self.neutralne[o.boja % 5]
                     mapa.fill(put, with: .color(boja))
                     mapa.stroke(put, with: .color(.white), lineWidth: tanko)
                 }
@@ -102,11 +104,11 @@ struct MapaView: View {
                     mapa.stroke(put, with: .color(.zuta), style: StrokeStyle(lineWidth: 5 / k, lineJoin: .round))
                 }
                 // Značke se crtaju u tačkama ekrana, da ostanu iste veličine na svakom zumu.
-                let krupno = Mapa.sirina * k > velicina.width * 4.5 // neutralne značke i imena tek pri jakom zumu
+                let krupno = Mapa.sirina * k > velicina.width * 3 // neutralne značke i imena tek pri većem zumu
                 let prestonice = Set(stanje.igraci.map(\.prestonica))
                 for o in Mapa.oblasti {
                     guard let st = stanje.oblasti[o.id] else { continue }
-                    let vlasnik = stanje.igraci.first { $0.id == st.vlasnik }
+                    let vlasnik = stanje.igraci.first { $0.tim == st.vlasnik }
                     guard vlasnik != nil || krupno || mete.contains(o.id) else { continue }
                     let c = CGPoint(x: pocetak.x + o.x * k, y: pocetak.y + o.y * k)
                     let r: CGFloat = 11
@@ -119,7 +121,7 @@ struct MapaView: View {
                         ctx.draw(Text(Image(systemName: "crown.fill")).font(.system(size: 11)).foregroundStyle(Color.zuta),
                                  at: CGPoint(x: c.x, y: c.y - r - 6))
                     }
-                    if krupno && (o.povrsina * k * k > 2200 || mete.contains(o.id) || o.id == izabrana) {
+                    if krupno && (o.povrsina * k * k > 1400 || mete.contains(o.id) || o.id == izabrana) {
                         ctx.draw(Text(o.ime).font(.tekst(11, .bold)).foregroundStyle(Color.mastilo), at: CGPoint(x: c.x, y: c.y + r + 9))
                     }
                 }
@@ -129,7 +131,7 @@ struct MapaView: View {
                 SimultaneousGesture(
                     MagnifyGesture().updating($zumPokret) { v, s, _ in s = v.magnification }
                         .onEnded { v in
-                            razmera = min(8, max(1, razmera * v.magnification))
+                            razmera = min(Self.najveciZum, max(1, razmera * v.magnification))
                             pomak = ogranici(pomak, k: osnova * razmera, velicina: g.size)
                         },
                     DragGesture(minimumDistance: 6).updating($prevlacenje) { v, s, _ in s = v.translation }
@@ -158,7 +160,7 @@ struct MapaView: View {
             }
             .overlay(alignment: .topTrailing) {
                 VStack(spacing: 8) {
-                    zumDugme("plus.magnifyingglass", "Uvećaj") { razmera = min(8, razmera * 1.5) }
+                    zumDugme("plus.magnifyingglass", "Uvećaj") { razmera = min(Self.najveciZum, razmera * 1.5) }
                     zumDugme("minus.magnifyingglass", "Umanji") { razmera = max(1, razmera / 1.5); if razmera == 1 { pomak = .zero } }
                     zumDugme("globe.europe.africa", "Ceo svet") { razmera = 1; pomak = .zero }
                 }
@@ -190,7 +192,7 @@ struct MapaView: View {
         let (y0, y1) = (t.map(\.y).min()!, t.map(\.y).max()!)
         let k = min(velicina.width / ((x1 - x0) * 1.5 + 140), velicina.height / ((y1 - y0) * 1.5 + 140))
         withAnimation(.easeInOut(duration: 0.45)) {
-            razmera = min(8, max(1, k / osnova))
+            razmera = min(Self.najveciZum, max(1, k / osnova))
             let kk = osnova * razmera
             pomak = ogranici(CGSize(width: (Mapa.sirina / 2 - (x0 + x1) / 2) * kk, height: (Mapa.visina / 2 - (y0 + y1) / 2) * kk), k: kk, velicina: velicina)
         }
