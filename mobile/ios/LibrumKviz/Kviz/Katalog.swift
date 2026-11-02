@@ -62,6 +62,15 @@ struct KvizStavka: Identifiable, Hashable {
         }
     }
     var sekundi: Int { 15 }
+    /// Ilustracija iz Assets (Igra_osvajanje…); teme po žanru je nemaju.
+    var ilustracija: String? {
+        let kljuc: String? = switch vrsta {
+        case .igra(let i): i.rawValue
+        case .tema(fond: "slikari", _, _): "slikari"
+        default: nil
+        }
+        return kljuc.map { "Igra_\($0)" }
+    }
     var tekstBoja: Color { [0xFFD84D, 0xF4A33C, 0x6EC3F2, 0xFF5FA2].contains(boja) ? .tinta : .white }
 }
 
@@ -98,7 +107,7 @@ enum KvizKatalog {
                        boja: 0x12907E, maskota: .mimi, vrsta: .igra(.osvajanje), tezina: "Strategija", ikonica: "globe.europe.africa"),
             KvizStavka(id: "opste", naslov: "Opšte znanje", opis: "Deset pitanja iz svega pomalo, 15 sekundi po pitanju.", kategorija: "Opšte znanje",
                        boja: 0xF4A33C, maskota: .bloop, vrsta: .tema(fond: "opste", zanr: nil, tesko: false), ikonica: "lightbulb", quizId: opsteZnanje),
-            KvizStavka(id: "duel", naslov: "Duel", opis: "Jedan na jedan, uživo, sa ulogom u novčićima.", kategorija: "Igre",
+            KvizStavka(id: "duel", naslov: "Duel", opis: "Jedan na jedan, uživo, ili izazovi drugara.", kategorija: "Igre",
                        boja: 0x151515, maskota: .zig, vrsta: .igra(.duel), tezina: "Uživo", ikonica: "person.2"),
             KvizStavka(id: "pro", naslov: "PRO kviz", opis: "Deset života, kombo bonusi i nedeljna rang lista.", kategorija: "Igre",
                        boja: 0x6D4BC9, maskota: .lumi, vrsta: .igra(.pro), tezina: "Preživljavanje", ikonica: "crown"),

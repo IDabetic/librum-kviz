@@ -25,7 +25,7 @@ struct PocetnaView: View {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
                     ForEach(igre) { s in
                         NavigationLink { KvizOdrediste(stavka: s) } label: {
-                            KarticaIgre(naslov: s.naslov, opis: s.opis, boja: Color(hex: s.boja), tekst: s.tekstBoja, maskota: s.maskota, velika: false)
+                            KarticaIgre(naslov: s.naslov, opis: s.opis, boja: Color(hex: s.boja), tekst: s.tekstBoja, maskota: s.maskota, velika: false, ilustracija: s.ilustracija)
                         }
                         .overlay(alignment: .topLeading) { infoDugme(s).padding(10) }
                     }
@@ -106,7 +106,12 @@ struct PocetnaView: View {
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: s.boja))
             Circle().fill(.white.opacity(0.2)).frame(width: 260).offset(x: 120, y: 110)
-            MaskotaSlika(maskota: s.maskota, velicina: 190).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing).padding(10)
+            Group {
+                if let ilu = s.ilustracija { Image(ilu).resizable().scaledToFit().frame(width: 170, height: 170).rotationEffect(.degrees(6)) }
+                else { MaskotaSlika(maskota: s.maskota, velicina: 190) }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing).padding(16)
+            .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(s.naslov).font(.naslov(28)).foregroundStyle(Color.tinta).lineLimit(2).minimumScaleFactor(0.7)
                 Text(s.tezina).font(.tekst(13, .bold)).foregroundStyle(Color.tinta.opacity(0.7))
@@ -182,13 +187,19 @@ struct KarticaIgre: View {
     let tekst: Color
     let maskota: Maskota
     let velika: Bool
+    /// Ilustracija igre (Freepik, mobile/ILUSTRACIJE.md); bez nje ostaje maskota.
+    var ilustracija: String? = nil
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Circle().fill(.white.opacity(0.22)).frame(width: velika ? 230 : 150)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .offset(x: velika ? 40 : 36, y: velika ? -30 : -34)
-            MaskotaSlika(maskota: maskota, velicina: velika ? 160 : 84)
+            Group {
+                if let ilustracija { Image(ilustracija).resizable().scaledToFit().frame(width: velika ? 150 : 76, height: velika ? 150 : 76).rotationEffect(.degrees(8)).padding(.top, 10).padding(.trailing, 6) }
+                else { MaskotaSlika(maskota: maskota, velicina: velika ? 160 : 84) }
+            }
+            .accessibilityHidden(true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .offset(x: velika ? 0 : 8, y: velika ? 4 : -8)
             VStack(alignment: .leading, spacing: 4) {
