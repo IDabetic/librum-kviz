@@ -36,6 +36,7 @@ object Supabase {
         telo: String? = null,
         token: String? = null,
         upit: List<Pair<String, String>> = emptyList(),
+        vratiRed: Boolean = false,
     ): String = withContext(Dispatchers.IO) {
         val q = if (upit.isEmpty()) "" else "?" + upit.joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }
         val veza = URL("$osnova/$putanja$q").openConnection() as HttpURLConnection
@@ -46,6 +47,7 @@ object Supabase {
             veza.setRequestProperty("apikey", kljuc)
             veza.setRequestProperty("Authorization", "Bearer ${token ?: kljuc}")
             veza.setRequestProperty("Content-Type", "application/json")
+            if (vratiRed) veza.setRequestProperty("Prefer", "return=representation")
             if (telo != null) {
                 veza.doOutput = true
                 veza.outputStream.use { it.write(telo.toByteArray()) }
@@ -86,6 +88,7 @@ object Supabase {
         is Number -> JsonPrimitive(v)
         is Boolean -> JsonPrimitive(v)
         is Map<*, *> -> JsonObject(v.entries.associate { (k, x) -> k.toString() to uJson(x) })
+        is List<*> -> kotlinx.serialization.json.JsonArray(v.map { uJson(it) })
         else -> JsonPrimitive(v.toString())
     }
 
@@ -113,6 +116,13 @@ object Supabase {
 
     suspend fun citaj(tabela: String, upit: List<Pair<String, String>>, token: String? = null): String =
         zahtev("rest/v1/$tabela", token = token, upit = upit)
+
+    /** PATCH sa filterom (npr. "room_code" to "eq.ABC"); vraća izmenjene redove kao JSON. */
+    suspend fun azuriraj(tabela: String, filter: List<Pair<String, String>>, polja: Map<String, Any?>, token: String): String =
+        zahtev("rest/v1/$tabela", "PATCH", json.encodeToString(JsonElement.serializer(), uJson(polja)), token, filter, vratiRed = true)
+
+    suspend fun upisiVrati(tabela: String, red: Map<String, Any?>, token: String): String =
+        zahtev("rest/v1/$tabela", "POST", json.encodeToString(JsonElement.serializer(), uJson(red)), token, vratiRed = true)
 
     suspend fun upisi(tabela: String, red: Map<String, Any?>, token: String) {
         zahtev("rest/v1/$tabela", "POST", json.encodeToString(JsonElement.serializer(), uJson(red)), token)

@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import club.librum.kviz.servisi.Fond
 import club.librum.kviz.servisi.PaketPitanja
 import club.librum.kviz.servisi.Prikaz
 import club.librum.kviz.servisi.Sesija
@@ -63,9 +64,15 @@ import club.librum.kviz.ui.tekst
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** PRO kviz: 10 života, survival, rezultat ide na rang listu za prijavljene. */
+/** Survival igre sa 10 života: PRO kviz (opšti fond, Risk) i Book kviz (književnost). */
+enum class Survival(val fond: Fond, val tabela: String, val imaRisk: Boolean, val maskota: Maskota) {
+    PRO(Fond.OPSTE, "survivor_sessions", true, Maskota.LUMI),
+    BOOK(Fond.BOOK, "book_sessions", false, Maskota.ZIG),
+}
+
+/** PRO i Book kviz: 10 života, survival, rezultat ide na rang listu za prijavljene. */
 @Composable
-fun ProKvizEkran(sesija: Sesija, izadji: () -> Unit) {
+fun ProKvizEkran(sesija: Sesija, vrsta: Survival = Survival.PRO, izadji: () -> Unit) {
     val kontekst = LocalContext.current.applicationContext
     val opseg = rememberCoroutineScope()
     var igra by remember { mutableStateOf(ProKviz()) }
@@ -89,13 +96,15 @@ fun ProKvizEkran(sesija: Sesija, izadji: () -> Unit) {
         val id = sesija.nalog.value?.id ?: return
         val token = sesija.vazeciToken() ?: return
         sacuvano = true
-        runCatching { Supabase.upisi("survivor_sessions", igra.red(id, ((System.currentTimeMillis() - pocetak) / 1000).toInt()), token) }
+        val sekundi = ((System.currentTimeMillis() - pocetak) / 1000).toInt()
+        runCatching { Supabase.upisi(vrsta.tabela, if (vrsta == Survival.PRO) igra.red(id, sekundi) else igra.redBook(id, sekundi), token) }
     }
 
     suspend fun ucitaj(ponovo: Boolean = false) {
         runCatching {
-            if (spil == null || ponovo) spil = Spil(PaketPitanja(kontekst).ucitaj())
+            if (spil == null || ponovo) spil = Spil(PaketPitanja(kontekst).ucitaj(vrsta.fond))
             if (ponovo) { igra = ProKviz(); sacuvano = false; pocetak = System.currentTimeMillis() }
+            if (vrsta == Survival.BOOK) igra.porukaZa50 = "Književni majstor!"
             sledece()
         }.onFailure { greska = it.message }
     }
@@ -117,7 +126,7 @@ fun ProKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                 Modifier.align(Alignment.Center).padding(20.dp).pop().padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                MaskotaSlika(Maskota.LUMI, 120.dp)
+                MaskotaSlika(vrsta.maskota, 120.dp)
                 Text("Kraj igre", style = naslov(36.sp))
                 Text("${igra.poeni}", style = naslov(64.sp))
                 Text("${igra.stigao} pitanja · ${igra.tacnih} tačnih · najbolji niz ${igra.najboljiKombo}", style = tekst(15.sp, FontWeight.SemiBold, Boje.sivaTekst))
@@ -140,7 +149,7 @@ fun ProKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                 }
                 if (igra.riskAktivan) Text("Risk aktivan: duplo dobit, duplo gubitak", style = tekst(14.sp, FontWeight.Bold),
                     modifier = Modifier.fillMaxWidth().pop(Boje.zuta, 14.dp).padding(12.dp))
-                PitanjeKartica("Pitanje ${igra.stigao + 1}", p, sekundi = sekundi, eliminisani = eliminisani) { izabran, _ ->
+                PitanjeKartica(p.zanr?.let { "Pitanje ${igra.stigao + 1} · $it" } ?: "Pitanje ${igra.stigao + 1}", p, sekundi = sekundi, eliminisani = eliminisani) { izabran, _ ->
                     igra.odgovor(izabran == p.tacan)?.let(::javi)
                     osvezi++
                     if (!igra.gotovo) sledece()
@@ -153,7 +162,7 @@ fun ProKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                     Pomoc("+15 s", "${igra.dodatnoVreme}×", igra.dodatnoVreme > 0 && sekundi == ProKviz.SEKUNDI, Modifier.weight(1f)) {
                         if (igra.iskoristiVreme()) { sekundi += 15; osvezi++ }
                     }
-                    Pomoc("Risk", "×2", igra.riskDostupan, Modifier.weight(1f)) { igra.aktivirajRisk(); osvezi++ }
+                    if (vrsta.imaRisk) Pomoc("Risk", "×2", igra.riskDostupan, Modifier.weight(1f)) { igra.aktivirajRisk(); osvezi++ }
                 }
             }
         }

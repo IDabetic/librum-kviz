@@ -38,6 +38,10 @@ import club.librum.kviz.osvajanje.OsvajanjeIgra
 import club.librum.kviz.osvajanje.OsvajanjeUvod
 import club.librum.kviz.osvajanje.Tezina
 import club.librum.kviz.prokviz.ProKvizEkran
+import club.librum.kviz.prokviz.Survival
+import club.librum.kviz.igre.BrziKvizEkran
+import club.librum.kviz.igre.DuelEkran
+import club.librum.kviz.igre.VesanjeEkran
 import club.librum.kviz.servisi.Sesija
 import club.librum.kviz.ui.Boje
 import club.librum.kviz.ui.Pocetna
@@ -96,7 +100,7 @@ private fun Aplikacija() {
     ) { razmak ->
         Box(Modifier.fillMaxSize().padding(bottom = if (ruta in KARTICE.map { it.ruta }) razmak.calculateBottomPadding() else 0.dp)) {
             NavHost(nav, startDestination = "igre") {
-                composable("igre") { Pocetna(nalog?.nadimak, osvajanje = { nav.navigate("osvajanje") }, proKviz = { nav.navigate("pro") }) }
+                composable("igre") { Pocetna(nalog?.nadimak) { nav.navigate(it) } }
                 composable("rang") { RangLista() }
                 composable("profil") { Profil(sesija) }
                 composable("osvajanje") { OsvajanjeUvod { t, k -> nav.navigate("osvajanje/${t.name}/$k") } }
@@ -105,7 +109,11 @@ private fun Aplikacija() {
                     val krugova = e.arguments?.getString("krugova")?.toIntOrNull() ?: 10
                     OsvajanjeIgra(tezina, krugova, nalog?.nadimak) { nav.popBackStack() }
                 }
-                composable("pro") { ProKvizEkran(sesija) { nav.popBackStack() } }
+                composable("pro") { ProKvizEkran(sesija, Survival.PRO) { nav.popBackStack() } }
+                composable("book") { ProKvizEkran(sesija, Survival.BOOK) { nav.popBackStack() } }
+                composable("brzi") { BrziKvizEkran(sesija) { nav.popBackStack() } }
+                composable("vesanje") { VesanjeEkran(sesija) { nav.popBackStack() } }
+                composable("duel") { DuelEkran(sesija) { nav.popBackStack() } }
             }
         }
     }

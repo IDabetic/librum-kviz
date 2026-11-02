@@ -21,6 +21,8 @@ class ProKviz {
         )
     }
 
+    /** Book kviz ima istu skalu, samo drugu poruku na 50. */
+    var porukaZa50 = "Librum mašina!"
     var zivoti = POCETNI_ZIVOTI; private set
     var poeni = 0; private set
     var stigao = 0; private set
@@ -54,7 +56,7 @@ class ProKviz {
             najboljiKombo = max(najboljiKombo, kombo)
             tacnih += 1
             if (riskAktivan) riskTacnih += 1
-            KOMBO_BONUSI[kombo]?.let { (bonus, tekst) -> poeni += bonus; poruka = "$tekst +$bonus" }
+            KOMBO_BONUSI[kombo]?.let { (bonus, tekst) -> poeni += bonus; poruka = "${if (kombo == 50) porukaZa50 else tekst} +$bonus" }
             if (stigao % SVAKIH_ZA_NAGRADU == 0) {
                 zivoti += ZIVOTA_NAGRADA
                 when (nagrada()) { 0 -> polaPola += 1; 1 -> preskoci += 1; else -> dodatnoVreme += 1 }
@@ -95,6 +97,9 @@ class ProKviz {
         dodatnoVreme -= 1; iskorisceno["extraTime"] = iskorisceno.getValue("extraTime") + 1
         return true
     }
+
+    /** Red za book_sessions: iste kolone kao PRO, bez Risk polja (Book nema Risk). */
+    fun redBook(korisnik: String, sekundi: Int): Map<String, Any> = red(korisnik, sekundi) - setOf("risk_attempts", "risk_correct", "risk_wrong")
 
     /** Red za tabelu survivor_sessions (iste kolone kao veb). */
     fun red(korisnik: String, sekundi: Int): Map<String, Any> {

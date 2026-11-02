@@ -123,3 +123,37 @@ class PravilaTest {
         assertFalse(p.riskDostupan)
     }
 }
+
+/** Pravila ostalih igara, isti brojevi kao na vebu i iOS-u. */
+class IgreTest {
+    @Test fun vesanjeSlovaIBonus() {
+        val v = club.librum.kviz.igre.Vesanje("kiša")
+        listOf("K", "I", "Š").forEach { v.pogodi(it) }
+        assertEquals(15, v.poeni)
+        v.pogodi("A")
+        assertEquals(club.librum.kviz.igre.Vesanje.Status.POBEDA, v.status)
+        assertEquals(20 + club.librum.kviz.igre.Vesanje.BONUS_BEZ_GRESKE, v.poeni)
+    }
+
+    @Test fun vesanjePromasajICelaRec() {
+        val v = club.librum.kviz.igre.Vesanje("berlinski zid")
+        v.pogodi("X"); assertEquals(5, v.zivoti)
+        v.pogodiRec("pogrešno"); assertEquals(3, v.zivoti)
+        v.pogodiRec("Berlinski zid")
+        assertEquals(club.librum.kviz.igre.Vesanje.BONUS_REC + club.librum.kviz.igre.Vesanje.BONUS_MALO_GRESAKA, v.poeni)
+    }
+
+    @Test fun brziKviz() {
+        val p = club.librum.kviz.servisi.Pitanje("x", "?", listOf("a", "b", "c", "d"), 2)
+        val iz = club.librum.kviz.igre.BrziKviz.Izjava.od(p) { 0.1 }
+        assertTrue(iz.jeTacno)
+        val b = club.librum.kviz.igre.BrziKviz()
+        assertTrue(b.odgovor(iz, true)); assertFalse(b.odgovor(iz, null))
+        assertEquals(5, b.poeni)
+    }
+
+    @Test fun duelMesanjeKaoVeb() {
+        assertEquals(listOf(2, 1, 0, 3), club.librum.kviz.igre.DuelMesanje.red("31628f47-f1e2-4f92-8be0-791c3cf231e3"))
+        assertEquals(listOf(3, 1, 2, 0), club.librum.kviz.igre.DuelMesanje.red("abc"))
+    }
+}

@@ -62,9 +62,9 @@ import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-/** Početna iz kita: veliki naslov (One UI ostavlja vazduh gore) i kartice igara. */
+/** Početna iz kita: veliki naslov (One UI ostavlja vazduh gore) i kartice igara; `idi` prima rutu igre. */
 @Composable
-fun Pocetna(nadimak: String?, osvajanje: () -> Unit, proKviz: () -> Unit) {
+fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
     Box(Modifier.fillMaxSize()) {
         Papir()
         Column(
@@ -79,24 +79,32 @@ fun Pocetna(nadimak: String?, osvajanje: () -> Unit, proKviz: () -> Unit) {
                 }
                 MaskotaSlika(Maskota.BLOOP, 92.dp)
             }
-            KarticaIgre("Osvajanje sveta", "Kontinenti, vojske i bitke znanja protiv dva rivala.", Boje.teal, Color.White, Maskota.MIMI, true, osvajanje)
-            KarticaIgre("PRO kviz", "Deset života. Survival. Rang lista.", Boje.ljubicasta, Color.White, Maskota.LUMI, false, proKviz)
+            KarticaIgre("Osvajanje sveta", "171 država, vojske i bitke znanja protiv dva rivala.", Boje.teal, Color.White, Maskota.MIMI, true) { idi("osvajanje") }
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                KarticaIgre("PRO kviz", "Deset života, rang lista.", Boje.ljubicasta, Color.White, Maskota.LUMI, false, Modifier.weight(1f)) { idi("pro") }
+                KarticaIgre("Book kviz", "Pisci, dela, žanrovi.", Color(0xFFF4A33C), Boje.mastilo, Maskota.ZIG, false, Modifier.weight(1f)) { idi("book") }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                KarticaIgre("Duel", "Jedan na jedan.", Boje.mastilo, Color.White, Maskota.BLOOP, false, Modifier.weight(1f)) { idi("duel") }
+                KarticaIgre("Vešanje", "Reč slovo po slovo.", Boje.roze, Boje.mastilo, Maskota.LUMI, false, Modifier.weight(1f)) { idi("vesanje") }
+            }
+            KarticaIgre("Brzi kviz", "Tačno ili netačno, 60 sekundi.", Boje.zuta, Boje.mastilo, Maskota.ZIG, false) { idi("brzi") }
             Spacer(Modifier.height(80.dp))
         }
     }
 }
 
 @Composable
-private fun KarticaIgre(naslovIgre: String, opis: String, boja: Color, bojaTeksta: Color, maskota: Maskota, velika: Boolean, radnja: () -> Unit) {
+private fun KarticaIgre(naslovIgre: String, opis: String, boja: Color, bojaTeksta: Color, maskota: Maskota, velika: Boolean, modifier: Modifier = Modifier, radnja: () -> Unit) {
     Box(
-        Modifier.fillMaxWidth().height(if (velika) 250.dp else 170.dp).pop(boja).clip(RoundedCornerShape(24.dp))
+        modifier.fillMaxWidth().height(if (velika) 250.dp else 160.dp).pop(boja).clip(RoundedCornerShape(24.dp))
             .clickable(role = Role.Button, onClick = radnja),
     ) {
         Box(Modifier.align(Alignment.TopEnd).offset(x = 40.dp, y = (-30).dp).size(if (velika) 230.dp else 150.dp).alpha(0.22f).background(Color.White, CircleShape))
-        MaskotaSlika(maskota, if (velika) 160.dp else 104.dp, Modifier.align(Alignment.TopEnd).offset(y = if (velika) 4.dp else (-8).dp))
+        MaskotaSlika(maskota, if (velika) 160.dp else 84.dp, Modifier.align(Alignment.TopEnd).offset(y = if (velika) 4.dp else (-6).dp))
         Column(Modifier.align(Alignment.BottomStart).padding(if (velika) 22.dp else 18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(naslovIgre, style = naslov(if (velika) 36.sp else 28.sp).copy(color = bojaTeksta))
-            Text(opis, style = tekst(14.sp, FontWeight.SemiBold, bojaTeksta.copy(alpha = 0.85f)), modifier = Modifier.fillMaxWidth(0.7f))
+            Text(naslovIgre, style = naslov(if (velika) 36.sp else 24.sp).copy(color = bojaTeksta), maxLines = 1)
+            Text(opis, style = tekst(14.sp, FontWeight.SemiBold, bojaTeksta.copy(alpha = 0.85f)), modifier = Modifier.fillMaxWidth(if (velika) 0.7f else 1f))
         }
     }
 }
