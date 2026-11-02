@@ -333,6 +333,7 @@ struct KvizPitanjaView: View {
                 Label(p.zanr ?? stavka.kategorija, systemImage: stavka.ikonica).font(.tekst(12, .bold)).foregroundStyle(Color.tinta)
                     .padding(.horizontal, 10).padding(.vertical, 5).overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.tinta, lineWidth: 1.5))
                 Spacer()
+                PrijaviPitanjeDugme(prikaz: p)
                 Label(String(format: "0:%02d", Int(ostalo.rounded(.up))), systemImage: "timer").font(.tekst(13, .bold)).monospacedDigit()
                     .foregroundStyle(.white).padding(.horizontal, 10).padding(.vertical, 5)
                     .background(zuri ? Color.crvena : Color.tinta, in: RoundedRectangle(cornerRadius: 9))

@@ -16,6 +16,8 @@ enum Fond: String { case opste, book, slikari }
 
 /// Pitanje spremno za prikaz: ponude promešane, zna se koja je tačna.
 struct Prikaz: Equatable {
+    /// Id pitanja u bazi (za prijavu netačnog); Slikari i rezervna pitanja ga nemaju u bazi.
+    var id: String? = nil
     let tekst: String
     let opcije: [String]
     let tacan: Int
@@ -25,6 +27,7 @@ struct Prikaz: Equatable {
 
     init(_ p: Pitanje) {
         let red = [0, 1, 2, 3].shuffled()
+        id = UUID(uuidString: p.id) != nil ? p.id : nil
         tekst = p.question_text
         zanr = p.genre.flatMap { $0 == "Razno" ? nil : $0 }
         slika = p.slika.flatMap(URL.init(string:))

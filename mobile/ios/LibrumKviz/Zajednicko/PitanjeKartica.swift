@@ -22,6 +22,7 @@ struct PitanjeKartica: View {
             HStack {
                 Oznaka(tekst: oznaka, boja: .mastilo)
                 Spacer()
+                PrijaviPitanjeDugme(prikaz: prikaz)
                 TimelineView(.periodic(from: .now, by: 0.25)) { kontekst in
                     let ostalo = max(0, Double(sekundi) - kontekst.date.timeIntervalSince(pocetak))
                     Text("\(Int(ostalo.rounded(.up)))").font(.naslov(22)).monospacedDigit()
@@ -120,5 +121,54 @@ struct OdgovorDugme: View {
 struct BezPrigusenja: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+
+/// Zastavica na kartici pitanja: prijava netačnog pitanja (RPC prijavi_pitanje; dve prijave gase pitanje do pregleda).
+struct PrijaviPitanjeDugme: View {
+    let prikaz: Prikaz
+    @Environment(Sesija.self) private var sesija
+    @State private var otvoreno = false
+    @State private var poslato = false
+    @State private var greska: String?
+    private static let razlozi = ["Tačan odgovor nije tačan", "Više odgovora je tačno", "Pitanje je nejasno", "Pravopis ili greška u kucanju", "Zastarelo"]
+
+    var body: some View {
+        if prikaz.id != nil && sesija.prijavljen {
+            Button { otvoreno = true } label: {
+                Image(systemName: poslato ? "flag.fill" : "flag").font(.system(size: 14, weight: .bold)).foregroundStyle(Color.tinta)
+                    .frame(width: 34, height: 34).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).disabled(poslato)
+            .accessibilityLabel(poslato ? "Pitanje je prijavljeno" : "Prijavi netačno pitanje")
+            .sheet(isPresented: $otvoreno) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Šta nije u redu?").font(.naslov(24))
+                    Text(prikaz.tekst).font(.tekst(14)).foregroundStyle(Color.sivaTekst).lineLimit(3)
+                    VStack(spacing: 0) {
+                        ForEach(Self.razlozi, id: \.self) { r in
+                            Button { Task { await posalji(r) } } label: {
+                                HStack { Text(r).font(.tekst(16, .semibold)); Spacer(); Image(systemName: "chevron.right").foregroundStyle(Color.sivaTekst) }
+                                    .foregroundStyle(Color.mastilo).padding(.vertical, 13).contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    if let greska { Text(greska).font(.tekst(14, .semibold)).foregroundStyle(Color.crvena) }
+                    Text("Kad dva igrača prijave isto pitanje, ono se sklanja dok ga urednik ne proveri.").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                }
+                .padding(20)
+                .presentationDetents([.medium])
+            }
+        }
+    }
+
+    private func posalji(_ razlog: String) async {
+        guard let id = prikaz.id, let t = try? await sesija.vazeciToken() else { return }
+        struct O: Decodable { let ok: Bool; let greska: String? }
+        if let r: O = try? await Supabase.deljeni.rpc("prijavi_pitanje", ["p_id": id, "p_razlog": razlog], token: t) {
+            if r.ok { poslato = true; otvoreno = false } else { greska = r.greska }
+        } else { greska = "Prijava nije poslata. Proveri internet." }
     }
 }
