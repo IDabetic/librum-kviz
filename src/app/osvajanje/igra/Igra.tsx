@@ -31,9 +31,9 @@ function pripremi(q: Pitanje): Prikaz {
 async function ucitajPaket(): Promise<Pitanje[]> {
   const { data, error } = await createClient().rpc('osvajanje_pitanja', { p_broj: PAKET })
   if (!error && data?.length) return data as Pitanje[]
-  // Samo za lokalni razvoj kad baza ne odgovara; produkcija pokazuje grešku.
-  if (process.env.NODE_ENV === 'development') return (await import('@/lib/osvajanje/probna-pitanja.json')).default as Pitanje[]
-  throw new Error(error?.message ?? 'Nema pitanja')
+  // Baza ne odgovara (npr. 402 kad se potroši izlaz): igra ide iz rezervnog paketa ugrađenog u sajt.
+  const rezerva = (await import('@/lib/osvajanje/rezervna-pitanja.json')).default as [string, string[], number][]
+  return rezerva.map(([question_text, options, correct_answer], i) => ({ id: `r${i}`, question_text, options, correct_answer }))
 }
 
 /**
