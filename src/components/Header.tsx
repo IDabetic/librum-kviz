@@ -15,19 +15,15 @@ import { jeAutorPitanja, PRAG_PODRAZUMEVANO } from '@/lib/bedzevi'
 type RecentUser = { id: string; first_name: string; last_name: string; nickname: string; avatar: string; created_at: string }
 type Contributor = { id: string; first_name: string | null; last_name: string | null; nickname: string | null; avatar: string | null; reports: number; submissions: number; total_contributions: number; accepted: number }
 
-// Top-level nav. "Igre" is a hub page (/igre) with a colorful card grid;
+// Top-level nav. Igre su samo u aplikaciji; "Aplikacija" vodi na landing,
 // the header itself stays a slim row of plain links — no dropdown.
 const NAV_LINKS = [
-  { href: '/igre',             label: 'Igre',             Icon: IconHome,    accent: '#12907E', tint: 'rgba(18,144,126,0.12)' },
+  { href: '/',                 label: 'Aplikacija',       Icon: IconHome,    accent: '#12907E', tint: 'rgba(18,144,126,0.12)' },
   { href: '/ranglista',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#8A6A12', tint: 'rgba(255,216,77,0.18)' },
   { href: '/nagrade',       label: 'Nagrade',       Icon: IconStar,     accent: '#FFD84D', tint: 'rgba(255,216,77,0.18)' },
   { href: '/dodaj-pitanja', label: 'Dodaj pitanja', Icon: IconQuestion, accent: '#0E6F61', tint: 'rgba(18,144,126,0.12)' },
 ]
 
-// Game routes the mobile drawer used to surface as a colored grid. Now
-// that /igre is a real page, mobile just sends users there too — the
-// drawer stays slim with the same 4 top links.
-const GAME_ROUTES = ['/osvajanje', '/pro-kviz', '/book-kviz', '/kafanski-kviz', '/igraj-zajedno', '/vesanje', '/brzi-kviz']
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -149,10 +145,6 @@ export default function Header() {
     router.refresh()
   }
 
-  // "Igre" pill should also light up when the user is inside any specific
-  // game route (e.g. /pro-kviz/start) — feels more right than only matching
-  // /igre exactly.
-  const inGameSection = GAME_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'))
 
   return (
     <>
@@ -172,7 +164,7 @@ export default function Header() {
               const active =
                 pathname === href ||
                 pathname.startsWith(href + '/') ||
-                (href === '/igre' && inGameSection)
+                (href === '/' && pathname === '/')
               return (
                 <Link key={href} href={href}
                   className="relative text-[13px] font-semibold tracking-wide py-1"
@@ -375,7 +367,7 @@ export default function Header() {
                   const active =
                     pathname === href ||
                     pathname.startsWith(href + '/') ||
-                    (href === '/igre' && inGameSection)
+                    (href === '/' && pathname === '/')
                   return (
                     <Link key={href} href={href}
                       className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"

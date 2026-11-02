@@ -16,23 +16,20 @@ export default function Footer() {
               Librum kviz
             </p>
             <p className="text-[12px] mt-3 leading-relaxed" style={{ color: '#8F8A80' }}>
-              Kviz platforma Librum kluba.<br />
-              Igraj, dodaj pitanje, penji se rang-listom.
+              Aplikacija sa igrama znanja Librum kluba.<br />
+              Osvoji svet, dodaj pitanje, penji se rang listom.
             </p>
           </div>
 
           <div>
             <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#12907E' }}>
-              Igre
+              Aplikacija
             </p>
             <ul className="space-y-2 text-[13px]">
-              <li><Link href="/pro-kviz" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>PRO kviz</Link></li>
-              <li><Link href="/book-kviz" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Book kviz</Link></li>
-              <li><Link href="/kafanski-kviz" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Kafanski kviz</Link></li>
-              <li><Link href="/igraj-zajedno" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Trivia duel</Link></li>
-              <li><Link href="/vesanje" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Vešanje</Link></li>
-              <li><Link href="/brzi-kviz" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Brzi kviz</Link></li>
+              <li><Link href="/" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Osvajanje sveta i igre</Link></li>
               <li><Link href="/ranglista" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Rang lista</Link></li>
+              <li><Link href="/autori-pitanja" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Autori pitanja</Link></li>
+              <li><Link href="/dodaj-pitanja" className="hover:opacity-70" style={{ color: '#FFFFFF' }}>Dodaj pitanje</Link></li>
             </ul>
           </div>
 
