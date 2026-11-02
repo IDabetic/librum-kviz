@@ -201,6 +201,8 @@ struct ProfilIgracaView: View {
     let id: String
     @Environment(Sesija.self) private var sesija
     @State private var duel = false
+    @State private var blokada = false
+    @Environment(\.dismiss) private var nazad
     /// Odgovor RPC profil_igraca (scripts/2026-11-03_profil-kao-ig.sql); ista struktura za moj i tuđi profil.
     struct Profil: Decodable {
         struct Igra: Decodable { let igra: String; let partija: Int; let najbolje: Int; let prosek_ms: Int?; let tacnost: Int?; let sa_pomoci: Int? }
@@ -256,6 +258,9 @@ struct ProfilIgracaView: View {
                                 } label: { Label((p.ja_pratim ?? false) ? "Pratiš" : "Prati", systemImage: (p.ja_pratim ?? false) ? "checkmark" : "person.badge.plus") }
                                     .buttonStyle(DugmeStil(vrsta: (p.ja_pratim ?? false) ? .sekundarno : .primarno))
                                 Button { duel = true } label: { Label("Izazovi", systemImage: "bolt") }.buttonStyle(.zuto)
+                                NavigationLink { RazgovorView(sa: id, nadimak: p.nadimak, avatar: p.avatar) } label: { ikonica("paperplane") }
+                                    .accessibilityLabel("Pošalji poruku")
+                                Button { blokada = true } label: { ikonica("hand.raised") }.accessibilityLabel("Blokiraj")
                             }
                         }
                     }
@@ -268,9 +273,24 @@ struct ProfilIgracaView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .task { await ucitaj() }
+        .overlay {
+            if blokada, case .gotovo(let p) = stanje {
+                Dijalog(naslov: "Blokirati \(p.nadimak)?", tekst: "Više se nećete videti: ni objave, ni komentari, ni poruke. Praćenje se briše.",
+                        potvrda: "Blokiraj", odustani: "Odustani", opasno: true) {
+                    blokada = false
+                    Task { if await Zajednica.radnja(sesija, "blokiraj", ["p_id": id, "p_da": true]) { nazad() } }
+                } zatvori: { blokada = false }
+            }
+        }
         .navigationDestination(isPresented: $duel) {
             if case .gotovo(let p) = stanje { DuelView(izazovi: (id, p.nadimak)) }
         }
+    }
+
+    private func ikonica(_ ime: String) -> some View {
+        Image(systemName: ime).font(.system(size: 17, weight: .bold)).foregroundStyle(Color.mastilo)
+            .frame(width: 54, height: 54).background(Color.kartica, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.mastilo, lineWidth: 2))
     }
 
     /// `tiho`: posle praćenja se brojevi osveže bez skeleta.

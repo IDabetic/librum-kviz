@@ -515,7 +515,8 @@ struct KvizRezultatiView: View {
                 Spacer()
                 PodeliRezultat(igra: stavka.naslov, naslov: savrseno ? "Savršeno!" : "Moj rezultat", veliko: "\(kviz.tacnih)/\(ukupno)",
                                detalji: ["\(kviz.poeni) poena", "\(Int(Double(kviz.tacnih) / Double(max(1, ukupno)) * 100))% tačno"],
-                               ilustracija: stavka.ilustracija, boja: Color(hex: stavka.boja))
+                               ilustracija: stavka.ilustracija, boja: Color(hex: stavka.boja),
+                               objava: (stavka.id.hasPrefix("slikari") ? "slikari" : "tema", kviz.poeni))
             }
             ScrollView {
                 VStack(spacing: 14) {

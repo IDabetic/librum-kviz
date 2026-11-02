@@ -24,17 +24,24 @@ struct LibrumKvizApp: App {
     }
 }
 
-/// Tri kartice kao svaka iOS aplikacija: igre, rang lista, profil.
+/// Četiri kartice: igrači (društvo), igre, rang lista, profil.
 struct Koren: View {
     @Environment(Napredak.self) private var napredak
+    @State private var kartica = 1
     var body: some View {
-        TabView {
+        TabView(selection: $kartica) {
+            NavigationStack { IgraciTabView() }
+                .tabItem { Label("Igrači", systemImage: "person.2") }
+                .tag(0)
             NavigationStack { PocetnaView() }
                 .tabItem { Label("Igre", systemImage: "gamecontroller") }
+                .tag(1)
             NavigationStack { RangListaView() }
                 .tabItem { Label("Rang lista", systemImage: "trophy") }
+                .tag(2)
             NavigationStack { ProfilView() }
                 .tabItem { Label("Profil", systemImage: "person") }
+                .tag(3)
                 .badge(napredak.neprocitanih)
         }
     }

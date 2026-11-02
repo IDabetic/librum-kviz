@@ -64,6 +64,9 @@ struct PodeliRezultat: View {
     let detalji: [String]
     var ilustracija: String? = nil
     var boja: Color = .zuta
+    /// Ključ igre i poeni za objavu u kartici Igrači (rezultat ostaje i u toku zajednice).
+    var objava: (igra: String, poeni: Int)? = nil
+    @State private var objavljeno = false
     @Environment(Sesija.self) private var sesija
     @Environment(Napredak.self) private var napredak
     @State private var izbor = false
@@ -91,9 +94,18 @@ struct PodeliRezultat: View {
                     }
                 }
                 Text("Izaberi format, pa Instagram ili gde god želiš.").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
+                if let objava, sesija.prijavljen {
+                    Button {
+                        Task {
+                            try? await Zajednica.objavi(sesija, vrsta: "rezultat", tekst: naslov, igra: objava.igra, poeni: objava.poeni)
+                            objavljeno = true
+                        }
+                    } label: { Label(objavljeno ? "Objavljeno u Igračima" : "Objavi u Igračima", systemImage: objavljeno ? "checkmark" : "person.2") }
+                    .buttonStyle(.zuto).disabled(objavljeno)
+                }
             }
             .padding(20)
-            .presentationDetents([.medium])
+            .presentationDetents([.fraction(0.62), .large])
         }
     }
 

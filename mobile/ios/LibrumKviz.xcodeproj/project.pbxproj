@@ -53,6 +53,7 @@
 		BBCB7350D0962129AC532351 /* PitanjeKartica.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6EBAC1E7BB1A11085267361 /* PitanjeKartica.swift */; };
 		BC9883237C17D6AFD2E2F27C /* DuelModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5B01F4A078C87D64CDF316 /* DuelModel.swift */; };
 		C09D8D54B44C7B8854C34CBB /* Mreza.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46E3F9E4B91BE3482AF4C62 /* Mreza.swift */; };
+		C36FD053D30EB4B0B092DD13 /* Zajednica.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91918B251164FE864A3ACAE6 /* Zajednica.swift */; };
 		C54B9D6BABAC640CC05CCDAF /* ProfilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A637CA3173D06B74590C1FC /* ProfilTests.swift */; };
 		E2485F1C49D34F7E21F4C64A /* LibrumKvizApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC227D8E84CCA578950E363A /* LibrumKvizApp.swift */; };
 		E38F45BDB585442A35A140EC /* Napredak.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8DAF98DC73C562F246D261F /* Napredak.swift */; };
@@ -101,6 +102,7 @@
 		81EA136C8D52FFD7F5E1877D /* KvizIgraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KvizIgraView.swift; sourceTree = "<group>"; };
 		8C4222EFF42A2FE500717495 /* LibrumKvizTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LibrumKvizTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E23BC38A1A6DF9E968C7A2B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		91918B251164FE864A3ACAE6 /* Zajednica.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zajednica.swift; sourceTree = "<group>"; };
 		92A49D2BE31CA5BBE238AC26 /* Tema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tema.swift; sourceTree = "<group>"; };
 		94A28076E53EBB4D859B09B8 /* KlasicniKviz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KlasicniKviz.swift; sourceTree = "<group>"; };
 		9AA1A6BD0343112C3C4A3D70 /* LibrumKviz.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LibrumKviz.entitlements; sourceTree = "<group>"; };
@@ -188,6 +190,7 @@
 				48A29603421E0369DDFDA5C2 /* ProKviz */,
 				9264D5CDAF59EBB750D88D7A /* Servisi */,
 				484EABD61678477105AE1E71 /* Uvod */,
+				8AEF404A633140F41A5EB9DC /* Zajednica */,
 				83332F763C8284A69B7728A2 /* Zajednicko */,
 			);
 			path = LibrumKviz;
@@ -239,6 +242,14 @@
 				CB9F64A8AFFE39B4C750940D /* Stanja.swift */,
 			);
 			path = Zajednicko;
+			sourceTree = "<group>";
+		};
+		8AEF404A633140F41A5EB9DC /* Zajednica */ = {
+			isa = PBXGroup;
+			children = (
+				91918B251164FE864A3ACAE6 /* Zajednica.swift */,
+			);
+			path = Zajednica;
 			sourceTree = "<group>";
 		};
 		9264D5CDAF59EBB750D88D7A /* Servisi */ = {
@@ -483,6 +494,7 @@
 				0CE75257CC63950632E2EF51 /* Tema.swift in Sources */,
 				169CB97CDDF9684EBEE9E499 /* UvodView.swift in Sources */,
 				FC3DB799164BCDB3F3F119D0 /* VesanjeView.swift in Sources */,
+				C36FD053D30EB4B0B092DD13 /* Zajednica.swift in Sources */,
 				90470CF5ABF49C8B3AB7515E /* Zvuk.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -292,7 +292,7 @@ struct OsvajanjeIgraView: View {
                     if let ja = model.stanje.igraci.first(where: \.covek) {
                         PodeliRezultat(igra: "Osvajanje sveta", naslov: pobednik.covek ? "Svet je moj!" : "Osvajanje sveta",
                                        veliko: "\(model.stanje.oblastiIgraca(ja.id).count) država", detalji: ["\(model.stanje.poeni(ja.id)) poena"],
-                                       ilustracija: "Igra_osvajanje", boja: .teal)
+                                       ilustracija: "Igra_osvajanje", boja: .teal, objava: ("osvajanje", model.stanje.poeni(ja.id)))
                     }
                 }
                 .padding(22)

@@ -512,7 +512,7 @@ private struct DuelKraj: View {
                 KrugDugme(ikonica: "xmark", opis: "Zatvori", radnja: zatvori)
                 Spacer()
                 PodeliRezultat(igra: "Duel", naslov: pobeda ? "Pobeda!" : nereseno ? "Nerešeno" : "Revanš?", veliko: "\(model.mojiPoeni)–\(model.njegoviPoeni)",
-                               detalji: ["protiv \(model.rivalIme)"], ilustracija: "Igra_duel", boja: pobeda ? .teal : .nebo)
+                               detalji: ["protiv \(model.rivalIme)"], ilustracija: "Igra_duel", boja: pobeda ? .teal : .nebo, objava: ("duel", model.mojiPoeni))
             }
             Spacer()
             MaskotaSlika(maskota: pobeda ? .bloop : nereseno ? .lumi : .zig, velicina: 130).frame(width: 170, height: 170)
