@@ -43,6 +43,14 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // Ista mapa i rezervna pitanja kao veb i iOS (alati/napravi-mapu.mjs); .ts fajlovi iz istog foldera se ne pakuju.
+    sourceSets {
+        getByName("main") { assets.srcDirs("../../../src/lib/osvajanje") }
+    }
+    androidResources {
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!*.ts"
+    }
 }
 
 dependencies {

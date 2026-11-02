@@ -33,6 +33,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import club.librum.kviz.osvajanje.Mapa
 import club.librum.kviz.osvajanje.OsvajanjeIgra
 import club.librum.kviz.osvajanje.OsvajanjeUvod
 import club.librum.kviz.osvajanje.Tezina
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Mapa.ucitaj(assets.open("svet.json").bufferedReader().use { it.readText() })
         setContent { Aplikacija() }
     }
 }

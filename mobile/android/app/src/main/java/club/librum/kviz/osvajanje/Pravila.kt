@@ -1,82 +1,60 @@
 package club.librum.kviz.osvajanje
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
 import kotlin.math.max
 import kotlin.math.min
 
 // Verni prevod src/lib/osvajanje/pravila.ts (i Pravila.swift). Kad se pravila
 // menjaju, menjaju se na sva tri mesta, zajedno sa testovima.
 
-data class Kontinent(val id: String, val ime: String, val bonus: Int)
-data class Oblast(val id: String, val ime: String, val kontinent: String, val x: Float, val y: Float)
+@Serializable data class Region(val id: String, val ime: String, val bonus: Int)
 
+/** Država sa tačkom za natpis i SVG putanjom (M/L/Z) u koordinatama mape. */
+@Serializable data class Oblast(
+    val id: String, val ime: String, val region: String, val x: Float, val y: Float,
+    val boja: Int, val povrsina: Float, val d: String,
+)
+
+@Serializable private data class Svet(val sirina: Float, val visina: Float, val regioni: List<Region>, val drzave: List<Oblast>, val veze: List<List<String>>)
+
+/** Mapa država iz svet.json (isti fajl kao veb i iOS); učitava se jednom pri pokretanju. */
 object Mapa {
-    val kontinenti = listOf(
-        Kontinent("sam", "Severna Amerika", 3),
-        Kontinent("jam", "Južna Amerika", 2),
-        Kontinent("evr", "Evropa", 3),
-        Kontinent("afr", "Afrika", 3),
-        Kontinent("azi", "Azija", 4),
-        Kontinent("oke", "Okeanija", 2),
-    )
+    private lateinit var svet: Svet
+    private lateinit var susedstvo: Map<String, List<String>>
+    private lateinit var poId: Map<String, Oblast>
 
-    val oblasti = listOf(
-        Oblast("aljaska", "Aljaska", "sam", 80f, 90f),
-        Oblast("kanada", "Kanada", "sam", 190f, 80f),
-        Oblast("sad", "SAD", "sam", 200f, 190f),
-        Oblast("meksiko", "Meksiko", "sam", 180f, 295f),
-        Oblast("kolumbija", "Kolumbija", "jam", 270f, 360f),
-        Oblast("peru", "Peru", "jam", 250f, 465f),
-        Oblast("brazil", "Brazil", "jam", 360f, 430f),
-        Oblast("argentina", "Argentina", "jam", 330f, 530f),
-        Oblast("skandinavija", "Skandinavija", "evr", 480f, 70f),
-        Oblast("zap-evropa", "Zapadna Evropa", "evr", 430f, 175f),
-        Oblast("sre-evropa", "Srednja Evropa", "evr", 535f, 165f),
-        Oblast("balkan", "Balkan", "evr", 575f, 260f),
-        Oblast("sev-afrika", "Severna Afrika", "afr", 475f, 310f),
-        Oblast("zap-afrika", "Zapadna Afrika", "afr", 440f, 415f),
-        Oblast("ist-afrika", "Istočna Afrika", "afr", 570f, 400f),
-        Oblast("juz-afrika", "Južna Afrika", "afr", 520f, 505f),
-        Oblast("sibir", "Sibir", "azi", 720f, 85f),
-        Oblast("bliski-istok", "Bliski istok", "azi", 670f, 285f),
-        Oblast("indija", "Indija", "azi", 770f, 335f),
-        Oblast("kina", "Kina", "azi", 810f, 210f),
-        Oblast("japan", "Japan", "azi", 925f, 150f),
-        Oblast("indonezija", "Indonezija", "oke", 870f, 400f),
-        Oblast("australija", "Australija", "oke", 920f, 505f),
-        Oblast("novi-zeland", "Novi Zeland", "oke", 1000f, 430f),
-    )
-
-    val veze = listOf(
-        "aljaska" to "kanada", "aljaska" to "sibir", "aljaska" to "sad", "kanada" to "sad", "kanada" to "skandinavija",
-        "sad" to "meksiko", "meksiko" to "kolumbija",
-        "kolumbija" to "peru", "kolumbija" to "brazil", "peru" to "brazil", "peru" to "argentina", "brazil" to "argentina",
-        "brazil" to "zap-afrika",
-        "skandinavija" to "zap-evropa", "skandinavija" to "sre-evropa", "skandinavija" to "sibir",
-        "zap-evropa" to "sre-evropa", "zap-evropa" to "sev-afrika", "sre-evropa" to "balkan", "sre-evropa" to "sibir",
-        "balkan" to "bliski-istok", "balkan" to "sev-afrika",
-        "sev-afrika" to "zap-afrika", "sev-afrika" to "ist-afrika", "sev-afrika" to "bliski-istok",
-        "zap-afrika" to "ist-afrika", "zap-afrika" to "juz-afrika", "ist-afrika" to "juz-afrika", "ist-afrika" to "bliski-istok",
-        "bliski-istok" to "indija", "bliski-istok" to "sibir", "sibir" to "kina", "sibir" to "japan",
-        "kina" to "indija", "kina" to "japan", "kina" to "indonezija", "indija" to "indonezija",
-        "indonezija" to "australija", "australija" to "novi-zeland", "indonezija" to "novi-zeland",
-    )
-
-    private val susedstvo: Map<String, List<String>> = buildMap<String, MutableList<String>> {
-        for ((a, b) in veze) {
-            getOrPut(a) { mutableListOf() }.add(b)
-            getOrPut(b) { mutableListOf() }.add(a)
+    fun ucitaj(json: String) {
+        if (::svet.isInitialized) return
+        svet = Json { ignoreUnknownKeys = true }.decodeFromString(Svet.serializer(), json)
+        susedstvo = buildMap<String, MutableList<String>> {
+            for ((a, b) in svet.veze) {
+                getOrPut(a) { mutableListOf() }.add(b)
+                getOrPut(b) { mutableListOf() }.add(a)
+            }
         }
+        poId = svet.drzave.associateBy { it.id }
     }
 
+    val sirina get() = svet.sirina
+    val visina get() = svet.visina
+    val regioni get() = svet.regioni
+    val oblasti get() = svet.drzave
+    val veze get() = svet.veze.map { it[0] to it[1] }
+
     fun susedi(id: String): List<String> = susedstvo[id].orEmpty()
-    fun oblast(id: String): Oblast = oblasti.first { it.id == id }
+    fun oblast(id: String): Oblast = poId.getValue(id)
 }
 
 object Pravila {
-    const val POCETNE_VOJSKE_PRESTONICE = 4
+    const val POCETNE_VOJSKE_PRESTONICE = 5
+    const val POCETNIH_DRZAVA = 6
+    const val POCETNE_VOJSKE_DRZAVE = 2
     const val NEUTRALNE_VOJSKE = 1
     const val NAJMANJE_POJACANJA = 3
-    const val BITAKA_PO_POTEZU = 6
+    const val TERITORIJA_PO_VOJSCI = 3
+    const val BITAKA_PO_POTEZU = 8
     const val PROBOJ_SVAKIH = 3
     const val PROBOJ_BONUS = 2
     const val PLEN_PRESTONICE = 5
@@ -144,12 +122,12 @@ data class Stanje(
 
     fun oblastiIgraca(id: String): List<String> = Mapa.oblasti.filter { oblasti[it.id]?.vlasnik == id }.map { it.id }
 
-    fun bonusKontinenata(id: String): Int = Mapa.kontinenti
-        .filter { k -> Mapa.oblasti.filter { it.kontinent == k.id }.all { oblasti[it.id]?.vlasnik == id } }
+    fun bonusRegiona(id: String): Int = Mapa.regioni
+        .filter { r -> Mapa.oblasti.filter { it.region == r.id }.all { oblasti[it.id]?.vlasnik == id } }
         .sumOf { it.bonus }
 
     fun pojacanja(id: String, tacno: Boolean): Int {
-        val puno = max(Pravila.NAJMANJE_POJACANJA, oblastiIgraca(id).size / 2) + bonusKontinenata(id)
+        val puno = max(Pravila.NAJMANJE_POJACANJA, oblastiIgraca(id).size / Pravila.TERITORIJA_PO_VOJSCI) + bonusRegiona(id)
         return if (tacno) puno else max(1, puno / 2)
     }
 
@@ -257,7 +235,7 @@ data class Stanje(
         val vojske = moje.sumOf { oblasti[it]?.vojske ?: 0 }
         val igrac = igraci.firstOrNull { it.id == id }
         val prestonica = if (igrac != null && oblasti[igrac.prestonica]?.vlasnik == id) Pravila.POENI_PRESTONICA else 0
-        return moje.size * Pravila.POENI_PO_OBLASTI + vojske + bonusKontinenata(id) * Pravila.POENI_PO_BONUSU + prestonica
+        return moje.size * Pravila.POENI_PO_OBLASTI + vojske + bonusRegiona(id) * Pravila.POENI_PO_BONUSU + prestonica
     }
 
     val poredak: List<Pair<Igrac, Int>> get() = igraci.map { it to poeni(it.id) }.sortedByDescending { it.second }
@@ -286,8 +264,8 @@ data class Stanje(
             for (kuda in mete(odakle)) {
                 val prednost = oblasti.getValue(odakle).vojske - oblasti.getValue(kuda).vojske
                 if (prednost < 1) continue
-                val kont = Mapa.oblast(kuda).kontinent
-                val fali = Mapa.oblasti.count { it.kontinent == kont && oblasti[it.id]?.vlasnik != id }
+                val reg = Mapa.oblast(kuda).region
+                val fali = Mapa.oblasti.count { it.region == reg && oblasti[it.id]?.vlasnik != id }
                 val ocena = prednost * 2 + (if (oblasti.getValue(kuda).vlasnik == null) 3 else 0) + (if (fali == 1) 5 else 0)
                 if (najbolji == null || ocena > najbolji.third) najbolji = Triple(odakle, kuda, ocena)
             }
@@ -296,24 +274,40 @@ data class Stanje(
     }
 
     companion object {
-        /** Nova partija: prestonice na različitim kontinentima, ostalo neutralno. */
+        /** Nova partija: prestonice u različitim regionima, po šest država oko njih, ostalo neutralno. */
         fun nova(krugova: Int, tezina: Tezina, slucajno: Slucajno, ime: String? = null): Stanje {
-            val kontinenti = Mapa.kontinenti.toMutableList()
-            for (i in kontinenti.size - 1 downTo 1) {
+            val regioni = Mapa.regioni.toMutableList()
+            for (i in regioni.size - 1 downTo 1) {
                 val j = (slucajno.sledeci() * (i + 1)).toInt()
-                val t = kontinenti[i]; kontinenti[i] = kontinenti[j]; kontinenti[j] = t
+                val t = regioni[i]; regioni[i] = regioni[j]; regioni[j] = t
             }
+            val oblasti = Mapa.oblasti.associate { it.id to StanjeOblasti(null, Pravila.NEUTRALNE_VOJSKE) }.toMutableMap()
             val osnova = listOf(
                 Triple("ti", "Ti", 0xFF12907E), Triple("mimi", "Mimi", 0xFFFF5FA2), Triple("zig", "Zig", 0xFF6D4BC9),
             )
-            val igraci = osnova.mapIndexed { i, (id, podrazumevano, boja) ->
-                val kandidati = Mapa.oblasti.filter { it.kontinent == kontinenti[i].id }
-                val prestonica = kandidati[(slucajno.sledeci() * kandidati.size).toInt()].id
+            val igraci = mutableListOf<Igrac>()
+            for ((i, p) in osnova.withIndex()) {
+                val (id, podrazumevano, boja) = p
+                // Prestonica je država sa bar 3 suseda, u regionu koji niko drugi nema.
+                fun kandidati(r: Region) = Mapa.oblasti.filter { it.region == r.id && Mapa.susedi(it.id).size >= 3 && oblasti[it.id]?.vlasnik == null }
+                val region = regioni.first { r -> igraci.none { Mapa.oblast(it.prestonica).region == r.id } && kandidati(r).isNotEmpty() }
+                val lista = kandidati(region)
+                val prestonica = lista[(slucajno.sledeci() * lista.size).toInt()].id
                 val covek = i == 0
-                Igrac(id, if (covek) ime ?: podrazumevano else podrazumevano, boja, covek, prestonica, false)
+                igraci += Igrac(id, if (covek) ime ?: podrazumevano else podrazumevano, boja, covek, prestonica, false)
+                // Početni posed: prestonica i najbliže slobodne države po vezama (pretraga u širinu).
+                val posed = mutableListOf(prestonica)
+                val red = ArrayDeque(listOf(prestonica))
+                val vidjeno = mutableSetOf(prestonica)
+                while (red.isNotEmpty() && posed.size < Pravila.POCETNIH_DRZAVA) {
+                    for (n in Mapa.susedi(red.removeFirst())) {
+                        if (!vidjeno.add(n)) continue
+                        red.add(n)
+                        if (oblasti[n]?.vlasnik == null && posed.size < Pravila.POCETNIH_DRZAVA) posed += n
+                    }
+                }
+                for (o in posed) oblasti[o] = StanjeOblasti(id, if (o == prestonica) Pravila.POCETNE_VOJSKE_PRESTONICE else Pravila.POCETNE_VOJSKE_DRZAVE)
             }
-            val oblasti = Mapa.oblasti.associate { it.id to StanjeOblasti(null, Pravila.NEUTRALNE_VOJSKE) }.toMutableMap()
-            for (p in igraci) oblasti[p.prestonica] = StanjeOblasti(p.id, Pravila.POCETNE_VOJSKE_PRESTONICE)
             return Stanje(igraci, oblasti, 1, krugova, 0, Faza.SNABDEVANJE, 0, 0, 0, false, tezina.tacnost)
         }
     }

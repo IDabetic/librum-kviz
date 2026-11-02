@@ -68,8 +68,8 @@ private val PRAVILA = listOf(
     "Snabdevanje" to "Na početku poteza jedno pitanje. Tačno donosi pune vojske, netačno pola.",
     "Napad" to "Iz oblasti sa bar 2 vojske napadaš susednu. Protiv rivala odgovarate oboje, a izjednačenje rešava brzina.",
     "Proboj" to "Posle osvajanja cepaš dalje iz nove oblasti. Svako treće osvajanje u nizu donosi +2 vojske.",
-    "Kontinenti" to "Ceo kontinent donosi bonus svakog poteza: Azija +4, Evropa, Afrika i Severna Amerika +3, ostali +2.",
-    "Prestonica" to "Tuđa prestonica nosi +5 vojski plena, a svoja na kraju 20 poena.",
+    "Regioni" to "Svet je podeljen na 17 regiona. Ceo region donosi bonus vojske svakog poteza.",
+    "Prestonica" to "Počinješ sa prestonicom i pet susednih država. Tuđa prestonica nosi +5 vojski plena.",
 )
 
 /** Uvod: izbor jačine i dužine partije, pravila. */
@@ -87,7 +87,7 @@ fun OsvajanjeUvod(pokreni: (Tezina, Int) -> Unit) {
                 Column(Modifier.padding(22.dp).padding(end = 110.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Oznaka("Glavna igra · 3 igrača", Boje.zuta)
                     Text("Osvajanje\nsveta", style = naslov(42.sp).copy(color = Color.White, lineHeight = 44.sp))
-                    Text("Šest kontinenata, 24 oblasti i dva rivala. Svaku bitku odlučuje pitanje.", style = tekst(15.sp, FontWeight.SemiBold, Color.White.copy(alpha = 0.9f)))
+                    Text("171 država, 17 regiona i dva rivala. Svaku državu osvajaš pitanjem.", style = tekst(15.sp, FontWeight.SemiBold, Color.White.copy(alpha = 0.9f)))
                 }
             }
             Column(Modifier.fillMaxWidth().mirna().padding(20.dp)) {
@@ -97,8 +97,8 @@ fun OsvajanjeUvod(pokreni: (Tezina, Int) -> Unit) {
                         Text(t.ime, style = tekst(17.sp, FontWeight.Bold))
                         Text(t.opis, style = tekst(13.sp, boja = Boje.sivaTekst))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Dugme("6 krugova", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO) { pokreni(t, 6) }
-                            Dugme("10 krugova", Modifier.weight(1f)) { pokreni(t, 10) }
+                            Dugme("8 krugova", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO) { pokreni(t, 8) }
+                            Dugme("12 krugova", Modifier.weight(1f)) { pokreni(t, 12) }
                         }
                     }
                     if (i < Tezina.entries.size - 1) HorizontalDivider(color = Boje.kremTamnija)
@@ -213,7 +213,8 @@ private fun Igra(model: OsvajanjeModel, izlaz: () -> Unit) {
                 }
             }
         }
-        MapaPrikaz(s, model.izabrana, model.mete, model::dodir, Modifier.weight(1f).fillMaxWidth())
+        MapaPrikaz(s, model.izabrana, model.mete, model.otvoreno?.kuda ?: model.izabrana ?: s.igraci.firstOrNull { it.covek }?.prestonica,
+            model::dodir, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp))
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp).fillMaxWidth().mirna().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(model.uputstvo, style = tekst(15.sp, FontWeight.SemiBold))
             if (model.covekNaPotezu && s.faza == Faza.RASPORED) Dugme("Rasporedi sam", vrsta = VrstaDugmeta.SEKUNDARNO, radnja = model::rasporediSam)

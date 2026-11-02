@@ -4,6 +4,9 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 
 @Serializable
@@ -23,7 +26,7 @@ data class Prikaz(val tekst: String, val opcije: List<String>, val tacan: Int) {
  * Paket pitanja iz RPC `osvajanje_pitanja`, keširan u fajlu. Bez mreže igra ide
  * iz poslednjeg paketa; jedna partija troši jedan mali zahtev.
  */
-class PaketPitanja(context: Context) {
+class PaketPitanja(private val context: Context) {
     private val fajl = File(context.filesDir, "paket-pitanja.json")
 
     suspend fun ucitaj(): List<Pitanje> = withContext(Dispatchers.IO) {
@@ -37,6 +40,15 @@ class PaketPitanja(context: Context) {
         }
         val kes = runCatching { Supabase.json.decodeFromString<List<Pitanje>>(fajl.readText()) }.getOrNull()
         if (!kes.isNullOrEmpty()) return@withContext kes.shuffled()
+        // Prvo pokretanje bez mreže ili baza ne odgovara: rezervni paket ugrađen u aplikaciju (isti kao veb).
+        val rezerva = runCatching {
+            Supabase.json.parseToJsonElement(context.assets.open("rezervna-pitanja.json").bufferedReader().use { it.readText() }).jsonArray
+                .mapIndexed { i, r ->
+                    val red = r.jsonArray
+                    Pitanje("r$i", red[0].jsonPrimitive.content, red[1].jsonArray.map { it.jsonPrimitive.content }, red[2].jsonPrimitive.int)
+                }
+        }.getOrNull()
+        if (!rezerva.isNullOrEmpty()) return@withContext rezerva.shuffled()
         throw Greska("Pitanja nisu stigla. Proveri internet i pokušaj ponovo.")
     }
 }
