@@ -3,6 +3,7 @@ import SwiftUI
 /// Uvod: izbor jačine i dužine partije, pravila.
 struct OsvajanjeUvodView: View {
     @Environment(Sesija.self) private var sesija
+    @Environment(Napredak.self) private var napredak
     @State private var partija: Partija?
 
     struct Partija: Identifiable, Hashable { let id = UUID(); let tezina: Tezina; let krugova: Int }
@@ -82,6 +83,7 @@ struct OsvajanjeUvodView: View {
 struct OsvajanjeIgraView: View {
     @State var model: OsvajanjeModel
     @Environment(\.dismiss) private var zatvori
+    @Environment(Napredak.self) private var napredak
     @State private var potvrdaIzlaska = false
 
     private let maskota: [String: Maskota] = ["ti": .bloop, "mimi": .mimi, "zig": .zig]
@@ -106,6 +108,9 @@ struct OsvajanjeIgraView: View {
         .task(id: ObjectIdentifier(model)) { await model.pokreni() }
         .overlay { pitanje }
         .overlay { kraj }
+        .onChange(of: model.stanje.faza == .kraj) { _, gotovo in
+            if gotovo { napredak.zabeleziIgru(kviz: "osvajanje", tacnih: model.tacnih, netacnih: model.netacnih, kategorija: "Geografija") }
+        }
     }
 
     private var igra: some View {
@@ -115,7 +120,7 @@ struct OsvajanjeIgraView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Oznaka(tekst: "Krug \(min(model.stanje.krug, model.stanje.ukupnoKrugova)) od \(model.stanje.ukupnoKrugova)")
                     GeometryReader { g in
-                        RoundedRectangle(cornerRadius: 5).fill(.white)
+                        RoundedRectangle(cornerRadius: 5).fill(Color.kartica)
                             .overlay(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 5).fill(Color.teal)
                                     .frame(width: g.size.width * Double(min(model.stanje.krug, model.stanje.ukupnoKrugova)) / Double(model.stanje.ukupnoKrugova))
@@ -141,7 +146,7 @@ struct OsvajanjeIgraView: View {
                         Spacer(minLength: 0)
                     }
                     .padding(6)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 14))
+                    .background(Color.kartica, in: RoundedRectangle(cornerRadius: 14))
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(naPotezu ? Color.mastilo : Color.kremTamnija, lineWidth: naPotezu ? 2.5 : 1.5))
                     .opacity(p.ispao ? 0.4 : 1)
                     .accessibilityElement(children: .combine)
@@ -238,14 +243,14 @@ struct OsvajanjeIgraView: View {
                             Spacer()
                             Text("\(red.poeni)").font(.naslov(20)).monospacedDigit()
                         }
-                        .padding(12).pop(.white, radijus: 16)
+                        .padding(12).pop(.kartica, radijus: 16)
                     }
                     Button("Nova partija") { model = OsvajanjeModel(krugova: model.stanje.ukupnoKrugova, tezina: tezina, ime: model.stanje.igraci[0].ime) }
                         .buttonStyle(.zuto)
                     Button("Nazad") { zatvori() }.buttonStyle(.sekundarno)
                 }
                 .padding(22)
-                .pop(pobednik.covek ? .teal : .white)
+                .pop(pobednik.covek ? .teal : .kartica)
                 .padding(20)
             }
         }

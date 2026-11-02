@@ -206,7 +206,7 @@ struct MapaView: View {
     private func zumDugme(_ ikonica: String, _ opis: String, radnja: @escaping () -> Void) -> some View {
         Button { withAnimation(.spring) { radnja() } } label: {
             Image(systemName: ikonica).font(.system(size: 16, weight: .bold)).foregroundStyle(Color.mastilo)
-                .frame(width: 44, height: 44).background(.white, in: Circle())
+                .frame(width: 44, height: 44).background(Color.kartica, in: Circle())
                 .overlay(Circle().stroke(Color.mastilo, lineWidth: 2))
         }
         .accessibilityLabel(opis)

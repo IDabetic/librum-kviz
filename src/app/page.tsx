@@ -11,7 +11,7 @@ const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
   mainEntity: [
-    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna aplikacija sa igrama znanja na srpskom, za iPhone i Android. Glavna igra je Osvajanje sveta, a tu su i PRO kviz, Book kviz, Trivia duel, Vešanje i Brzi kviz.' } },
+    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna aplikacija sa igrama znanja na srpskom, za iPhone i Android. Glavna igra je Osvajanje sveta, a tu je još šest igara: PRO kviz, Book kviz, Trivia duel, Slikari, Vešanje i Brzi kviz.' } },
     { '@type': 'Question', name: 'Kako se igra Osvajanje sveta?', acceptedAnswer: { '@type': 'Answer', text: 'Mapa ima 171 državu. Na početku poteza odgovaraš na pitanje i dobijaš vojske, pa napadaš susedne države; svaka bitka je jedno pitanje. Preko mora se ide samo morskim putevima. Ceo region donosi bonus vojske, a pobeđuje ko na kraju ima najviše poena.' } },
     { '@type': 'Question', name: 'Da li je Librum kviz besplatan?', acceptedAnswer: { '@type': 'Answer', text: 'Jeste — aplikacija i sve igre su besplatne. Nalog ti treba samo da bi se rezultati upisivali na rang listu; isti nalog važi i na sajtu.' } },
     { '@type': 'Question', name: 'Kako se igra PRO kviz?', acceptedAnswer: { '@type': 'Answer', text: 'PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove i gradi kombo niz, a svaka greška skida jedan život. Igra traje dok imaš života.' } },
@@ -115,11 +115,11 @@ export default async function Home() {
   }))
 
   const IGRE_U_APLIKACIJI = [
-    { ime: 'Osvajanje sveta', opis: '171 država, vojske i bitke znanja protiv dva rivala.', boja: '#12907E', tekst: '#FFFFFF', maskota: 'Mimi' },
     { ime: 'PRO kviz', opis: 'Deset života, kombo nizovi i rang lista.', boja: '#6D4BC9', tekst: '#FFFFFF', maskota: 'Lumi' },
     { ime: 'Book kviz', opis: 'Pisci, dela i žanrovi.', boja: '#F4A33C', tekst: '#151515', maskota: 'Zig' },
     { ime: 'Trivia duel', opis: 'Ista pitanja, jedan na jedan.', boja: '#151515', tekst: '#FFFFFF', maskota: 'Bloop' },
-    { ime: 'Vešanje', opis: 'Pogodi reč, slovo po slovo.', boja: '#FF5FA2', tekst: '#151515', maskota: 'Lumi' },
+    { ime: 'Slikari', opis: 'Ko je naslikao ovo delo? 1.177 slika, od Leonarda do Pikasa.', boja: '#FF5FA2', tekst: '#151515', maskota: 'Mimi' },
+    { ime: 'Vešanje', opis: 'Pogodi reč, slovo po slovo.', boja: '#6EC3F2', tekst: '#151515', maskota: 'Lumi' },
     { ime: 'Brzi kviz', opis: 'Tačno ili netačno, 60 sekundi.', boja: '#FFD84D', tekst: '#151515', maskota: 'Zig' },
   ]
   const KORACI = [
@@ -142,8 +142,8 @@ export default async function Home() {
             </p>
             <h1 style={{ fontSize: 'clamp(46px, 8.5vw, 92px)' }}>Osvoji svet<br />znanjem.</h1>
             <p className="mt-5 text-[18px] leading-relaxed max-w-lg" style={{ color: '#3B3832' }}>
-              Librum kviz je aplikacija u kojoj svaka država sveta pada pitanjem. Šest igara znanja na srpskom,
-              protiv rivala, prijatelja i cele rang liste.
+              Librum kviz je aplikacija u kojoj svaka država sveta pada pitanjem. Osvajanje sveta i još šest igara
+              znanja na srpskom, protiv rivala, prijatelja i cele rang liste.
             </p>
             <div className="mt-8"><Prodavnice /></div>
             <p className="mt-4 text-[14px]" style={{ color: '#6F6C66' }}>
@@ -186,7 +186,7 @@ export default async function Home() {
 
         {/* Sve igre u aplikaciji */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
-          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Šest igara u jednoj aplikaciji</h2>
+          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>I još šest igara</h2>
           <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {IGRE_U_APLIKACIJI.map(g => (
               <div key={g.ime} className="card-pop relative overflow-hidden min-h-[150px] p-5 flex flex-col justify-end" style={{ background: g.boja, color: g.tekst }}>

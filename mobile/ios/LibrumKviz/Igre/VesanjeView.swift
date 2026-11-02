@@ -3,6 +3,7 @@ import SwiftUI
 /// Vešanje: pogodi pojam slovo po slovo, uz opis i kategoriju.
 struct VesanjeView: View {
     @Environment(Sesija.self) private var sesija
+    @Environment(Napredak.self) private var napredak
     @Environment(\.dismiss) private var zatvori
 
     @State private var reci: [Rec] = []
@@ -69,7 +70,7 @@ struct VesanjeView: View {
                         Button { igra.pogodi(s) } label: {
                             Text(s).font(.tekst(17, .bold)).frame(maxWidth: .infinity, minHeight: 46)
                                 .foregroundStyle(iskorisceno ? Color.sivaTekst : Color.mastilo)
-                                .background(iskorisceno ? Color.kremTamnija : Color.white, in: RoundedRectangle(cornerRadius: 12))
+                                .background(iskorisceno ? Color.kremTamnija : Color.kartica, in: RoundedRectangle(cornerRadius: 12))
                                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(iskorisceno ? Color.clear : Color.mastilo, lineWidth: 1.5))
                         }
                         .buttonStyle(.plain).disabled(iskorisceno)
@@ -78,7 +79,7 @@ struct VesanjeView: View {
                 if celaRec {
                     HStack(spacing: 10) {
                         TextField("Cela reč", text: $pokusajReci).font(.tekst(16)).padding(14)
-                            .background(.white, in: RoundedRectangle(cornerRadius: 14))
+                            .background(Color.kartica, in: RoundedRectangle(cornerRadius: 14))
                             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mastilo, lineWidth: 1.5))
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
                         Button("Pogodi") { igra.pogodiRec(pokusajReci); pokusajReci = ""; celaRec = false }.buttonStyle(.primarno).frame(width: 110)
@@ -115,8 +116,10 @@ struct VesanjeView: View {
     }
 
     private func sacuvaj() async {
-        guard !sacuvano, let r = rec, let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
+        guard !sacuvano, let r = rec else { return }
         sacuvano = true
+        napredak.zabeleziIgru(kviz: "vesanje", tacnih: igra.status == .pobeda ? 1 : 0, netacnih: igra.status == .pobeda ? 0 : 1)
+        guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         try? await Supabase.deljeni.upisi("hangman_sessions",
             igra.red(korisnik: id, recId: r.id, hint: r.hint, kategorija: r.category, sekundi: Int(Date().timeIntervalSince(pocetak))), token: token)
     }

@@ -14,6 +14,7 @@ enum Survival {
 struct ProKvizView: View {
     var vrsta: Survival = .pro
     @Environment(Sesija.self) private var sesija
+    @Environment(Napredak.self) private var napredak
     @Environment(\.dismiss) private var zatvori
 
     @State private var igra = ProKviz()
@@ -84,7 +85,7 @@ struct ProKvizView: View {
     private var zaglavlje: some View {
         HStack(spacing: 10) {
             KrugDugme(ikonica: "xmark", opis: "Prekini") { potvrdaIzlaska = true }
-            pokazatelj("Životi", "\(igra.zivoti)", igra.zivoti <= 3 ? .crvenaSvetla : .white)
+            pokazatelj("Životi", "\(igra.zivoti)", igra.zivoti <= 3 ? .crvenaSvetla : .kartica)
             pokazatelj("Poeni", "\(igra.poeni)", .zuta)
             pokazatelj("Niz", "\(igra.kombo)", .tealSvetla)
         }
@@ -124,7 +125,7 @@ struct ProKvizView: View {
                 Text(ostalo).font(.tekst(11)).foregroundStyle(Color.sivaTekst)
             }
             .frame(maxWidth: .infinity, minHeight: 52)
-            .background(aktivno ? Color.white : Color.kremTamnija, in: RoundedRectangle(cornerRadius: 14))
+            .background(aktivno ? Color.kartica : Color.udubljeno, in: RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(aktivno ? Color.mastilo : .clear, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
@@ -145,7 +146,7 @@ struct ProKvizView: View {
             Button("Igraj ponovo") { Task { await ucitaj(ponovo: true) } }.buttonStyle(.zuto)
             Button("Nazad") { zatvori() }.buttonStyle(.sekundarno)
         }
-        .padding(24).pop(.white).padding(20)
+        .padding(24).pop(.kartica).padding(20)
         .task { await sacuvaj() }
     }
 
@@ -179,8 +180,10 @@ struct ProKvizView: View {
 
     /// Upis u survivor_sessions; samo jednom i samo ako je bar jedno pitanje odgovoreno.
     private func sacuvaj() async {
-        guard !sacuvano, igra.stigao > 0, let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
+        guard !sacuvano, igra.stigao > 0 else { return }
         sacuvano = true
+        napredak.zabeleziIgru(kviz: vrsta == .pro ? "pro" : "book", tacnih: igra.tacnih, netacnih: igra.netacnih, kategorija: vrsta == .pro ? "Opšte znanje" : "Knjige")
+        guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         let sekundi = Int(Date().timeIntervalSince(pocetak))
         let red = vrsta == .pro ? igra.red(korisnik: id, sekundi: sekundi) : igra.redBook(korisnik: id, sekundi: sekundi)
         try? await Supabase.deljeni.upisi(vrsta.tabela, red, token: token)

@@ -34,6 +34,34 @@ final class Sesija {
                                    ime: ime, prezime: prezime, nadimak: nadimak)
     }
 
+    /// Kod iz mejla posle registracije ili za novu lozinku; posle uspeha korisnik je prijavljen.
+    func potvrdiKod(email: String, kod: String, oporavak: Bool = false) async throws {
+        let t = try await api.potvrdiKod(email: email.trimmingCharacters(in: .whitespaces).lowercased(), kod: kod, vrsta: oporavak ? "recovery" : "signup")
+        primeni(t)
+        sacuvaj(t)
+        await ucitajNadimak()
+    }
+
+    func posaljiKodPonovo(email: String) async throws { try await api.posaljiKodPonovo(email: email.lowercased()) }
+    func zaboravljenaLozinka(email: String) async throws { try await api.zaboravljenaLozinka(email: email.trimmingCharacters(in: .whitespaces).lowercased()) }
+
+    func postaviLozinku(_ lozinka: String) async throws {
+        guard let t = try await vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se ponovo.") }
+        try await api.novaLozinka(lozinka, token: t)
+    }
+
+    /// Nadimak je jedinstven: provera u javnim profilima pre upisa.
+    func sacuvajNadimak(_ novi: String) async throws {
+        guard let id = korisnikId, let t = try await vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se ponovo.") }
+        struct Red: Decodable { let id: String }
+        let zauzet: [Red] = try await api.citaj("public_profiles", upit: [
+            URLQueryItem(name: "select", value: "id"), URLQueryItem(name: "nickname", value: "ilike.\(novi)"), URLQueryItem(name: "id", value: "neq.\(id)"),
+        ])
+        guard zauzet.isEmpty else { throw Supabase.Greska(poruka: "Nadimak „\(novi)” je zauzet.", vrsta: .postoji) }
+        let _: [Red] = try await api.azuriraj("profiles", filter: [URLQueryItem(name: "id", value: "eq.\(id)")], polja: ["nickname": novi], token: t)
+        nadimak = novi
+    }
+
     func odjava() async {
         if let t = token { await api.odjava(token: t.access_token) }
         ocisti()

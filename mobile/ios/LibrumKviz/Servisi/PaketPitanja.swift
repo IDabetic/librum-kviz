@@ -6,10 +6,13 @@ struct Pitanje: Codable, Identifiable, Equatable {
     let options: [String]
     let correct_answer: Int
     var genre: String? = nil
+    /// Slika uz pitanje (kviz Slikari) i opis dela posle odgovora.
+    var slika: String? = nil
+    var opis: String? = nil
 }
 
 /// Fond pitanja po igri (RPC aplikacija_pitanja): opšti za PRO, Brzi, Duel i Osvajanje, Book za književnost.
-enum Fond: String { case opste, book }
+enum Fond: String { case opste, book, slikari }
 
 /// Pitanje spremno za prikaz: ponude promešane, zna se koja je tačna.
 struct Prikaz: Equatable {
@@ -17,11 +20,15 @@ struct Prikaz: Equatable {
     let opcije: [String]
     let tacan: Int
     var zanr: String? = nil
+    var slika: URL? = nil
+    var opis: String? = nil
 
     init(_ p: Pitanje) {
         let red = [0, 1, 2, 3].shuffled()
         tekst = p.question_text
         zanr = p.genre.flatMap { $0 == "Razno" ? nil : $0 }
+        slika = p.slika.flatMap(URL.init(string:))
+        opis = p.opis
         opcije = red.map { p.options[$0] }
         tacan = red.firstIndex(of: p.correct_answer) ?? 0
     }
@@ -65,6 +72,44 @@ actor PaketPitanja {
             if !rezerva.isEmpty { return rezerva.shuffled() }
         }
         throw Supabase.Greska(poruka: "Pitanja nisu stigla. Proveri internet i pokušaj ponovo.")
+    }
+
+    /// Kviz po temi (RPC aplikacija_kviz): 10 pitanja iz fonda, žanra ili samo teških.
+    /// Bez mreže bira iz keša/rezerve istog fonda.
+    func kviz(_ fond: Fond, zanr: String? = nil, tesko: Bool = false, broj: Int = 10) async throws -> [Pitanje] {
+        if fond == .slikari { return try Self.slikari(broj: broj, tesko: tesko) }
+        var parametri: [String: Any] = ["p_fond": fond.rawValue, "p_broj": broj]
+        if let zanr { parametri["p_zanr"] = zanr }
+        if tesko { parametri["p_tezina"] = "tesko" }
+        if let svez: [Pitanje] = try? await Supabase.deljeni.rpc("aplikacija_kviz", parametri) {
+            let ispravna = svez.filter { $0.options.count == 4 && (0..<4).contains($0.correct_answer) }
+            if ispravna.count >= min(broj, 5) { return ispravna }
+        }
+        let rezerva = try await ucitaj(fond).filter { zanr == nil || $0.genre == zanr }
+        guard !rezerva.isEmpty else { throw Supabase.Greska(poruka: "Za ovu temu nema sačuvanih pitanja. Poveži se na internet i pokušaj ponovo.") }
+        return Array(rezerva.prefix(broj))
+    }
+
+    /// Slikari iz ugrađenog paketa (src/lib/igre/slikari.json, 1.177 dela): pet lakih/srednjih
+    /// i ostatak bilo kog nivoa, da prvi kviz ne bude samo nepoznata dela; „teško” uzima samo teška.
+    static func slikari(broj: Int, tesko: Bool) throws -> [Pitanje] {
+        struct Delo: Decodable { let id, naziv, slika: String; let ponude: [String]; let godina, pravac, muzej, tezina: String }
+        guard let url = Bundle.main.url(forResource: "slikari", withExtension: "json", subdirectory: "igre"),
+              let d = try? Data(contentsOf: url), let dela = try? JSONDecoder().decode([Delo].self, from: d), !dela.isEmpty else {
+            throw Supabase.Greska(poruka: "Paket slika nije pronađen u aplikaciji.")
+        }
+        let izbor: [Delo]
+        if tesko {
+            izbor = Array(dela.filter { $0.tezina == "teško" }.shuffled().prefix(broj))
+        } else {
+            let lakse = dela.filter { $0.tezina != "teško" }.shuffled().prefix(broj / 2)
+            let ostalo = dela.filter { d in !lakse.contains { $0.id == d.id } }.shuffled().prefix(broj - lakse.count)
+            izbor = (Array(lakse) + Array(ostalo)).shuffled()
+        }
+        return izbor.map { d in
+            Pitanje(id: d.id, question_text: "Ko je naslikao delo „\(d.naziv)”?", options: d.ponude, correct_answer: 0, genre: d.pravac,
+                    slika: d.slika, opis: [d.naziv, d.godina, d.muzej].filter { !$0.isEmpty }.joined(separator: " · "))
+        }
     }
 
     /// Reči za vešanje (RPC aplikacija_reci), sa istim redom rezervi.

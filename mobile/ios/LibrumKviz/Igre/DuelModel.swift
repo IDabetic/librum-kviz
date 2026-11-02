@@ -14,6 +14,8 @@ struct Soba: Decodable, Equatable {
     let host_score: Int?
     let guest_score: Int?
     let total_questions: Int?
+    var game_format: String? = nil
+    var created_at: String? = nil
 }
 
 /// Isto mešanje ponuda kao na vebu (seededShuffle), da oba igrača — i sa veba i iz
@@ -56,13 +58,21 @@ extension Prikaz {
 @Observable
 @MainActor
 final class DuelModel {
-    enum Faza: Equatable { case lobi, cekanje, igra, kraj }
+    enum Faza: Equatable { case lobi, trazenje, pronadjen, cekanje, igra, kraj }
+    /// Ishod jedne runde za list posle otkrivanja.
+    enum Runda: Equatable { case meni, rivalu, niko, oboje }
 
     static let poenaTacno = 10
     static let poenaNetacno = 5
     static let bonusNapustanja = 50
     static let sekundi = 15
     static let formati = [(10, "Brzi duel"), (25, "Standardni duel"), (50, "Veliki duel")]
+    static let brzihPitanja = 5
+    static let ulozi = [50, 100, 250, 500]
+    /// Posle ovoliko sekundi traženja kit pokazuje „Još tražimo”, posle drugog „Nema rivala”.
+    static let dugoTrazenje = 20
+    static let bezRivala = 60
+    static let formatBrzog = "brzi5"
 
     private(set) var faza: Faza = .lobi
     private(set) var soba: Soba?
@@ -72,7 +82,14 @@ final class DuelModel {
     private(set) var greska: String?
     private(set) var radi = false
     private(set) var rivalOtisao = false
+    private(set) var rivalIme = "Rival"
+    private(set) var trazimSekundi = 0
+    private(set) var slabaVeza = false
+    private(set) var rivalNeOdgovara = false
+    private(set) var ulog = 0
+    private(set) var isplaceno = false
     var kod = ""
+    private var neuspesnihOsvezavanja = 0
 
     private let sesija: Sesija
     private var osvezavanje: Task<Void, Never>?
@@ -92,6 +109,101 @@ final class DuelModel {
     var odgovorioJe: Bool { tekuce < njegovi.count }
     var ostaloSekundi: Int { max(0, Self.sekundi - Int(Date().timeIntervalSince(pocetakPitanja))) }
 
+    // MARK: Brzi meč
+
+    /// Brzi meč: uđe u tuđu sobu „brzi5” koja čeka (do 2 min stara), ili napravi svoju i čeka rivala.
+    func brziMec(ulog: Int, napredak: Napredak) async {
+        guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { greska = "Prijavi se da bi igrao duel."; return }
+        guard napredak.s.novcici >= ulog else { greska = "Nemaš dovoljno novčića za ovaj ulog."; return }
+        self.ulog = ulog
+        faza = .trazenje
+        trazimSekundi = 0
+        do {
+            let granica = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-120))
+            let slobodne: [Soba] = try await Supabase.deljeni.citaj("game_rooms", upit: [
+                .init(name: "select", value: "*"), .init(name: "status", value: "eq.waiting"), .init(name: "guest_id", value: "is.null"),
+                .init(name: "game_format", value: "eq.\(Self.formatBrzog)"), .init(name: "host_id", value: "neq.\(id)"),
+                .init(name: "created_at", value: "gte.\(granica)"), .init(name: "order", value: "created_at.asc"), .init(name: "limit", value: "5"),
+            ], token: token)
+            for kandidat in slobodne {
+                let zauzeta: [Soba] = try await Supabase.deljeni.azuriraj("game_rooms",
+                    filter: [.init(name: "id", value: "eq.\(kandidat.id)"), .init(name: "guest_id", value: "is.null")],
+                    polja: ["guest_id": id, "status": "playing", "game_start_time": ISO8601DateFormatter().string(from: Date())], token: token)
+                if let soba = zauzeta.first {
+                    self.soba = soba
+                    try await ucitajPitanja(token: token)
+                    await ucitajRivala(token: token)
+                    pronadjen()
+                    return
+                }
+            }
+            let p: [Pitanje] = try await Supabase.deljeni.rpc("aplikacija_pitanja", ["p_igra": "opste", "p_broj": Self.brzihPitanja + 5], token: token)
+            guard p.count >= Self.brzihPitanja else { throw Supabase.Greska(poruka: "Nema dovoljno pitanja za duel.") }
+            let redovi: [Soba] = try await Supabase.deljeni.upisiVrati("game_rooms", [
+                "room_code": Self.noviKod(), "host_id": id, "question_ids": p.map(\.id), "total_questions": Self.brzihPitanja,
+                "status": "waiting", "game_format": Self.formatBrzog, "quiz_type": "pro",
+            ], token: token)
+            soba = redovi.first
+            pitanja = p
+            pratiSobu()
+        } catch {
+            faza = .lobi
+            greska = error.localizedDescription
+        }
+    }
+
+    /// Prekid traženja: soba se zatvara da je niko drugi ne uzme.
+    func otkaziTrazenje() async {
+        osvezavanje?.cancel()
+        if let s = soba, s.guest_id == nil, let token = try? await sesija.vazeciToken() {
+            let _: [Soba]? = try? await Supabase.deljeni.azuriraj("game_rooms", filter: [.init(name: "id", value: "eq.\(s.id)")], polja: ["status": "finished"], token: token)
+        }
+        soba = nil
+        faza = .lobi
+    }
+
+    private func pronadjen() {
+        faza = .pronadjen
+        pratiSobu()
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            guard faza == .pronadjen else { return }
+            if soba?.status == "finished" { rivalOtisao = true; faza = .kraj; return }
+            faza = .igra
+            pocetakPitanja = Date()
+        }
+    }
+
+    private func ucitajRivala(token: String) async {
+        guard let s = soba, let rivalId = jaSamDomacin ? s.guest_id : s.host_id else { return }
+        struct Profil: Decodable { let nickname: String?; let first_name: String? }
+        let p: [Profil]? = try? await Supabase.deljeni.citaj("public_profiles", upit: [
+            .init(name: "select", value: "nickname,first_name"), .init(name: "id", value: "eq.\(rivalId)"),
+        ], token: token)
+        rivalIme = p?.first.flatMap { $0.nickname ?? $0.first_name } ?? "Rival"
+    }
+
+    static func noviKod() -> String { String((0..<5).map { _ in "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".randomElement()! }) }
+
+    /// Ishod runde iz upisanih odgovora (nil dok nije otkriveno).
+    var runda: Runda? {
+        guard otkriveno, let p = prikaz else { return nil }
+        let ja = tekuce < moji.count && moji[tekuce] == p.tacan
+        let on = tekuce < njegovi.count && njegovi[tekuce] == p.tacan
+        return ja && on ? .oboje : ja ? .meni : on ? .rivalu : .niko
+    }
+
+    /// Ulog: pobeda donosi duplo, poraz ga gubi, nerešeno vraća. Plaća se jednom.
+    func isplati(_ napredak: Napredak) {
+        guard faza == .kraj, !isplaceno else { return }
+        isplaceno = true
+        let pobeda = mojiPoeni > njegoviPoeni
+        let tacnih = zip(moji, pitanja.map(DuelMesanje.prikaz)).filter { $0.0 == $0.1.tacan }.count
+        napredak.zabeleziIgru(kviz: "duel", tacnih: tacnih, netacnih: max(0, moji.count - tacnih), kategorija: "Opšte znanje", pobeda: pobeda)
+        guard ulog > 0 else { return }
+        if pobeda { napredak.dodajNovcice(ulog) } else if mojiPoeni < njegoviPoeni { _ = napredak.oduzmiNovcice(ulog) }
+    }
+
     // MARK: Lobi
 
     func napravi(brojPitanja: Int) async {
@@ -100,7 +212,7 @@ final class DuelModel {
         do {
             let p: [Pitanje] = try await Supabase.deljeni.rpc("aplikacija_pitanja", ["p_igra": "opste", "p_broj": min(80, brojPitanja + 10)], token: token)
             guard p.count >= brojPitanja else { throw Supabase.Greska(poruka: "Nema dovoljno pitanja za duel.") }
-            let noviKod = String((0..<5).map { _ in "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".randomElement()! })
+            let noviKod = Self.noviKod()
             let redovi: [Soba] = try await Supabase.deljeni.upisiVrati("game_rooms", [
                 "room_code": noviKod, "host_id": id, "question_ids": p.map(\.id), "total_questions": brojPitanja,
                 "status": "waiting", "game_format": "q\(brojPitanja)", "quiz_type": "pro",
@@ -127,6 +239,7 @@ final class DuelModel {
             guard let soba = azurirano.first else { throw Supabase.Greska(poruka: "Neko je već zauzeo ovo mesto.") }
             self.soba = soba
             try await ucitajPitanja(token: token)
+            await ucitajRivala(token: token)
             faza = .cekanje
             pratiSobu()
         } catch { greska = error.localizedDescription }
@@ -158,11 +271,34 @@ final class DuelModel {
     }
 
     private func osvezi() async {
+        if faza == .trazenje { trazimSekundi += 1 }
         guard let s = soba, let token = try? await sesija.vazeciToken() else { return }
         guard let nove: [Soba] = try? await Supabase.deljeni.citaj("game_rooms", upit: [.init(name: "select", value: "*"), .init(name: "id", value: "eq.\(s.id)")], token: token),
-              let nova = nove.first else { return }
+              let nova = nove.first else {
+            neuspesnihOsvezavanja += 1
+            slabaVeza = neuspesnihOsvezavanja >= 3
+            return
+        }
+        neuspesnihOsvezavanja = 0
+        slabaVeza = false
         soba = nova
+        // Rival ćuti duže od pitanja + 5 s: verovatno je izgubio vezu.
+        rivalNeOdgovara = faza == .igra && odgovorioSam && !odgovorioJe && Date().timeIntervalSince(pocetakPitanja) > Double(Self.sekundi + 5)
         switch faza {
+        case .trazenje where nova.guest_id != nil:
+            await ucitajRivala(token: token)
+            if nova.status == "waiting" {
+                let _: [Soba]? = try? await Supabase.deljeni.azuriraj("game_rooms", filter: [.init(name: "id", value: "eq.\(nova.id)")],
+                    polja: ["status": "playing", "game_start_time": ISO8601DateFormatter().string(from: Date())], token: token)
+            }
+            pronadjen()
+        case .trazenje where trazimSekundi >= Self.bezRivala:
+            osvezavanje?.cancel()
+            let _: [Soba]? = try? await Supabase.deljeni.azuriraj("game_rooms", filter: [.init(name: "id", value: "eq.\(nova.id)")], polja: ["status": "finished"], token: token)
+        case .cekanje where nova.status == "playing" && rivalIme == "Rival":
+            await ucitajRivala(token: token)
+            faza = .igra
+            pocetakPitanja = Date()
         case .cekanje where nova.status == "playing":
             faza = .igra
             pocetakPitanja = Date()

@@ -19,6 +19,9 @@ final class OsvajanjeModel {
     private(set) var spremno = false
     private(set) var greska: String?
     var izabrana: String?
+    /// Tačni i netačni odgovori igrača u partiji, za napredak (XP, bedževi).
+    private(set) var tacnih = 0
+    private(set) var netacnih = 0
     var utvrdjivanje = false
     private(set) var otvoreno: Otvoreno?
     private(set) var poruka: String?
@@ -103,6 +106,7 @@ final class OsvajanjeModel {
         guard let o = otvoreno else { return }
         otvoreno = nil
         let moj = Odgovor(tacan: izabran == o.prikaz.tacan, ms: ms)
+        if moj.tacan { tacnih += 1 } else { netacnih += 1 }
         switch o.vrsta {
         case .snabdevanje:
             stanje = stanje.snabdevanje(tacno: moj.tacan)

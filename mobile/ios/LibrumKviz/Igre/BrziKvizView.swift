@@ -3,6 +3,7 @@ import SwiftUI
 /// Brzi kviz: 60 sekundi, za svaku izjavu „tačno” ili „netačno”.
 struct BrziKvizView: View {
     @Environment(Sesija.self) private var sesija
+    @Environment(Napredak.self) private var napredak
     @Environment(\.dismiss) private var zatvori
 
     @State private var igra = BrziKviz()
@@ -46,7 +47,7 @@ struct BrziKvizView: View {
             VStack(spacing: 16) {
                 HStack(spacing: 10) {
                     KrugDugme(ikonica: "xmark", opis: "Prekini") { Task { await sacuvaj(); zatvori() } }
-                    pokazatelj("Vreme", "\(Int(ostaloRunda.rounded(.up)))", ostaloRunda < 10 ? .crvenaSvetla : .white)
+                    pokazatelj("Vreme", "\(Int(ostaloRunda.rounded(.up)))", ostaloRunda < 10 ? .crvenaSvetla : .kartica)
                     pokazatelj("Poeni", "\(igra.poeni)", .zuta)
                     pokazatelj("Tačnih", "\(igra.tacnih)", .tealSvetla)
                 }
@@ -59,7 +60,7 @@ struct BrziKvizView: View {
                     Naslov(tekst: iz.pitanje, velicina: 22)
                     Text(iz.prikazano).font(.naslov(30)).foregroundStyle(Color.teal)
                         .frame(maxWidth: .infinity).padding(.vertical, 22)
-                        .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                        .background(Color.kartica, in: RoundedRectangle(cornerRadius: 18))
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.mastilo, lineWidth: 2))
                     if let otkriveno {
                         Text(otkriveno ? "Tačno!" : "Ne. Tačan odgovor: \(iz.tacanOdgovor)")
@@ -92,7 +93,7 @@ struct BrziKvizView: View {
             Button("Igraj ponovo") { Task { await ucitaj() } }.buttonStyle(.zuto)
             Button("Nazad") { zatvori() }.buttonStyle(.sekundarno)
         }
-        .padding(24).pop(.white).padding(20)
+        .padding(24).pop(.kartica).padding(20)
         .task { await sacuvaj() }
     }
 
@@ -136,8 +137,10 @@ struct BrziKvizView: View {
     private func zavrsi() { if !kraj { kraj = true } }
 
     private func sacuvaj() async {
-        guard !sacuvano, igra.tacnih + igra.netacnih > 0, let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
+        guard !sacuvano, igra.tacnih + igra.netacnih > 0 else { return }
         sacuvano = true
+        napredak.zabeleziIgru(kviz: "brzi", tacnih: igra.tacnih, netacnih: igra.netacnih, kategorija: "Opšte znanje")
+        guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         try? await Supabase.deljeni.upisi("quick_sessions", igra.red(korisnik: id, sekundi: Int(Date().timeIntervalSince(pocetak))), token: token)
     }
 }

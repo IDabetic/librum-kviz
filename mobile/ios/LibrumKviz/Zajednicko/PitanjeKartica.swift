@@ -84,10 +84,10 @@ struct OdgovorDugme: View {
 
     var body: some View {
         let (pozadina, ivica, slovoPozadina, slovoBoja): (Color, Color, Color, Color) = switch stanje {
-        case .obicno: (.white, .mastilo, .tealSvetla, .teal)
+        case .obicno: (.kartica, .mastilo, .tealSvetla, .teal)
         case .tacno: (.tealSvetla, .teal, .teal, .white)
         case .netacno: (.crvenaSvetla, .crvena, .crvena, .white)
-        case .bledo: (.white.opacity(0.45), .clear, .tealSvetla, .teal)
+        case .bledo: (Color.kartica.opacity(0.45), .clear, .tealSvetla, .teal)
         }
         Button(action: radnja) {
             HStack(spacing: 12) {
@@ -104,7 +104,14 @@ struct OdgovorDugme: View {
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(ivica, lineWidth: 2))
             .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(ivica).offset(y: stanje == .bledo ? 0 : 4))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(BezPrigusenja())
         .accessibilityLabel("\(slovo): \(tekst)")
+    }
+}
+
+/// Dugme koje ne bledi kad je onemogućeno: posle otkrivanja tačan odgovor mora ostati jarko zelen.
+struct BezPrigusenja: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }

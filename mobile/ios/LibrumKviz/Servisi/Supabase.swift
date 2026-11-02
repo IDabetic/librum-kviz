@@ -15,7 +15,9 @@ struct Supabase {
     }
 
     struct Greska: LocalizedError {
+        enum Vrsta { case mreza, zakljucano, pogresno, istekao, postoji, nepotvrdjen, ostalo }
         let poruka: String
+        var vrsta: Vrsta = .ostalo
         var errorDescription: String? { poruka }
     }
 
@@ -45,24 +47,31 @@ struct Supabase {
         do {
             (data, odgovor) = try await URLSession.shared.data(for: r)
         } catch is URLError {
-            throw Greska(poruka: "Nema veze sa serverom. Proveri internet i pokušaj ponovo.")
+            throw Greska(poruka: "Nema veze sa serverom. Proveri internet i pokušaj ponovo.", vrsta: .mreza)
         }
         let kod = (odgovor as? HTTPURLResponse)?.statusCode ?? 0
-        guard (200..<300).contains(kod) else { throw Greska(poruka: Self.prevedi(data, kod: kod)) }
+        guard (200..<300).contains(kod) else { throw Self.greska(data, kod: kod) }
         return data
     }
 
-    /// Poruke GoTrue/PostgREST na srpskom; nepoznate se prikazuju kako stignu.
-    static func prevedi(_ data: Data, kod: Int) -> String {
+    /// Poruke GoTrue/PostgREST na srpskom, sa vrstom za stanja ekrana iz kita.
+    static func greska(_ data: Data, kod: Int) -> Greska {
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         let poruka = (json?["error_description"] ?? json?["msg"] ?? json?["message"]) as? String ?? ""
+        let k = (json?["error_code"] ?? json?["code"]) as? String ?? ""
+        if kod == 429 || k.contains("rate_limit") || poruka.contains("only request this after") {
+            return Greska(poruka: "Previše pokušaja. Sačekaj malo pa probaj ponovo.", vrsta: .zakljucano)
+        }
+        if k == "otp_expired" || poruka.contains("expired") {
+            return Greska(poruka: "Kod je istekao ili nije tačan. Zatraži novi.", vrsta: .istekao)
+        }
         switch poruka {
-        case "Invalid login credentials": return "Pogrešan email ili lozinka."
-        case "User already registered": return "Ovaj email je već registrovan."
-        case "Email not confirmed": return "Potvrdi email preko linka koji smo ti poslali."
+        case "Invalid login credentials": return Greska(poruka: "Pogrešan email ili lozinka.", vrsta: .pogresno)
+        case "User already registered": return Greska(poruka: "Ovaj email je već registrovan.", vrsta: .postoji)
+        case "Email not confirmed": return Greska(poruka: "Potvrdi email kodom koji smo ti poslali.", vrsta: .nepotvrdjen)
         default:
-            if kod == 402 { return "Baza je trenutno nedostupna. Pokušaj kasnije." }
-            return poruka.isEmpty ? "Greška \(kod). Pokušaj ponovo." : poruka
+            if kod == 402 { return Greska(poruka: "Baza je trenutno nedostupna. Pokušaj kasnije.") }
+            return Greska(poruka: poruka.isEmpty ? "Nešto nije u redu (greška \(kod)). Pokušaj ponovo." : poruka)
         }
     }
 
@@ -85,6 +94,24 @@ struct Supabase {
             "email": email, "password": lozinka,
             "data": ["first_name": ime, "last_name": prezime, "nickname": nadimak],
         ])
+    }
+
+    /// Potvrda koda iz mejla (registracija ili zaboravljena lozinka); vraća sesiju.
+    func potvrdiKod(email: String, kod: String, vrsta: String) async throws -> Token {
+        let d = try await zahtev("auth/v1/verify", metod: "POST", telo: ["type": vrsta, "email": email, "token": kod])
+        return try JSONDecoder().decode(Token.self, from: d)
+    }
+
+    func posaljiKodPonovo(email: String) async throws {
+        _ = try await zahtev("auth/v1/resend", metod: "POST", telo: ["type": "signup", "email": email])
+    }
+
+    func zaboravljenaLozinka(email: String) async throws {
+        _ = try await zahtev("auth/v1/recover", metod: "POST", telo: ["email": email])
+    }
+
+    func novaLozinka(_ lozinka: String, token: String) async throws {
+        _ = try await zahtev("auth/v1/user", metod: "PUT", telo: ["password": lozinka], token: token)
     }
 
     func odjava(token: String) async {
