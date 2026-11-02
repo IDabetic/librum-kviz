@@ -1,7 +1,18 @@
 import SwiftUI
 
-/// PRO kviz: 10 života, survival, rezultat ide na rang listu za prijavljene.
+/// Survival igre sa 10 života: PRO kviz (opšti fond, Risk) i Book kviz (književnost).
+enum Survival {
+    case pro, book
+    var naslov: String { self == .pro ? "PRO kviz" : "Book kviz" }
+    var fond: Fond { self == .pro ? .opste : .book }
+    var tabela: String { self == .pro ? "survivor_sessions" : "book_sessions" }
+    var imaRisk: Bool { self == .pro }
+    var maskota: Maskota { self == .pro ? .lumi : .zig }
+}
+
+/// PRO i Book kviz: 10 života, survival, rezultat ide na rang listu za prijavljene.
 struct ProKvizView: View {
+    var vrsta: Survival = .pro
     @Environment(Sesija.self) private var sesija
     @Environment(\.dismiss) private var zatvori
 
@@ -37,7 +48,7 @@ struct ProKvizView: View {
                             Text("Risk aktivan: duplo dobit, duplo gubitak").font(.tekst(14, .bold))
                                 .frame(maxWidth: .infinity).padding(12).pop(.zuta, radijus: 14)
                         }
-                        PitanjeKartica(oznaka: "Pitanje \(igra.stigao + 1)", prikaz: pitanje, sekundi: sekundi, eliminisani: eliminisani) { izabran, _ in
+                        PitanjeKartica(oznaka: pitanje.zanr.map { "Pitanje \(igra.stigao + 1) · \($0)" } ?? "Pitanje \(igra.stigao + 1)", prikaz: pitanje, sekundi: sekundi, eliminisani: eliminisani) { izabran, _ in
                             odgovori(izabran == pitanje.tacan)
                         }
                         .id(kljuc)
@@ -102,7 +113,7 @@ struct ProKvizView: View {
             pomoc("+15 s", "\(igra.dodatnoVreme)×", aktivno: igra.dodatnoVreme > 0 && sekundi == ProKviz.sekundi) {
                 igra.dodatnoVreme -= 1; igra.iskorisceno.dodatnoVreme += 1; sekundi += 15
             }
-            pomoc("Risk", "×2", aktivno: igra.riskDostupan) { igra.aktivirajRisk() }
+            if vrsta.imaRisk { pomoc("Risk", "×2", aktivno: igra.riskDostupan) { igra.aktivirajRisk() } }
         }
     }
 
@@ -123,7 +134,7 @@ struct ProKvizView: View {
 
     private var kraj: some View {
         VStack(spacing: 16) {
-            MaskotaSlika(maskota: .lumi, velicina: 120)
+            MaskotaSlika(maskota: vrsta.maskota, velicina: 120)
             Text("Kraj igre").font(.naslov(36))
             Text("\(igra.poeni)").font(.naslov(64)).monospacedDigit()
             Text("\(igra.stigao) pitanja · \(igra.tacnih) tačnih · najbolji niz \(igra.najboljiKombo)")
@@ -140,8 +151,9 @@ struct ProKvizView: View {
 
     private func ucitaj(ponovo: Bool = false) async {
         do {
-            if spil == nil || ponovo { spil = Spil(try await PaketPitanja.deljeni.ucitaj()) }
+            if spil == nil || ponovo { spil = Spil(try await PaketPitanja.deljeni.ucitaj(vrsta.fond)) }
             if ponovo { igra = ProKviz(); sacuvano = false; pocetak = Date() }
+            if vrsta == .book { igra.porukaZa50 = "Književni majstor!" }
             sledece()
         } catch {
             greska = error.localizedDescription
@@ -169,6 +181,8 @@ struct ProKvizView: View {
     private func sacuvaj() async {
         guard !sacuvano, igra.stigao > 0, let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         sacuvano = true
-        try? await Supabase.deljeni.upisi("survivor_sessions", igra.red(korisnik: id, sekundi: Int(Date().timeIntervalSince(pocetak))), token: token)
+        let sekundi = Int(Date().timeIntervalSince(pocetak))
+        let red = vrsta == .pro ? igra.red(korisnik: id, sekundi: sekundi) : igra.redBook(korisnik: id, sekundi: sekundi)
+        try? await Supabase.deljeni.upisi(vrsta.tabela, red, token: token)
     }
 }

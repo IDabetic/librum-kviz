@@ -16,6 +16,9 @@ struct ProKviz: Equatable {
         5: (10, "Lep niz!"), 10: (25, "Odličan ritam!"), 20: (60, "Ozbiljno znanje!"),
         50: (150, "Librum mašina!"), 100: (400, "Živa enciklopedija!"),
     ]
+    /// Book kviz ima istu skalu, samo drugu poruku na 50.
+    var porukaZa50 = "Librum mašina!"
+
 
     var zivoti = pocetniZivoti
     var poeni = 0
@@ -56,7 +59,7 @@ struct ProKviz: Equatable {
             najboljiKombo = max(najboljiKombo, kombo)
             tacnih += 1
             if riskAktivan { riskTacnih += 1 }
-            if let b = Self.komboBonusi[kombo] { poeni += b.poena; poruka = "\(b.poruka) +\(b.poena)" }
+            if let b = Self.komboBonusi[kombo] { poeni += b.poena; poruka = "\(kombo == 50 ? porukaZa50 : b.poruka) +\(b.poena)" }
             if stigao % Self.svakihZaNagradu == 0 {
                 zivoti += Self.zivotaNagrada
                 switch nagrada() { case 0: polaPola += 1; case 1: preskoci += 1; default: dodatnoVreme += 1 }
@@ -84,6 +87,13 @@ struct ProKviz: Equatable {
         guard preskoci > 0 else { return false }
         preskoci -= 1; iskorisceno.preskoci += 1; preskoceno += 1; stigao += 1; riskAktivan = false
         return true
+    }
+
+    /// Red za book_sessions: iste kolone kao PRO, bez Risk polja (Book nema Risk).
+    func redBook(korisnik: String, sekundi: Int) -> [String: Any] {
+        var r = red(korisnik: korisnik, sekundi: sekundi)
+        for k in ["risk_attempts", "risk_correct", "risk_wrong"] { r.removeValue(forKey: k) }
+        return r
     }
 
     /// Red za tabelu survivor_sessions (iste kolone kao veb).

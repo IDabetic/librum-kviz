@@ -31,7 +31,7 @@ struct Supabase {
         let email: String?
     }
 
-    func zahtev(_ putanja: String, metod: String = "GET", telo: Any? = nil, token: String? = nil, upit: [URLQueryItem] = []) async throws -> Data {
+    func zahtev(_ putanja: String, metod: String = "GET", telo: Any? = nil, token: String? = nil, upit: [URLQueryItem] = [], vratiRed: Bool = false) async throws -> Data {
         var komponente = URLComponents(url: osnova.appendingPathComponent(putanja), resolvingAgainstBaseURL: false)!
         if !upit.isEmpty { komponente.queryItems = upit }
         var r = URLRequest(url: komponente.url!, timeoutInterval: 15)
@@ -39,6 +39,7 @@ struct Supabase {
         r.setValue(kljuc, forHTTPHeaderField: "apikey")
         r.setValue("Bearer \(token ?? kljuc)", forHTTPHeaderField: "Authorization")
         r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if vratiRed { r.setValue("return=representation", forHTTPHeaderField: "Prefer") }
         if let telo { r.httpBody = try JSONSerialization.data(withJSONObject: telo) }
         let data: Data, odgovor: URLResponse
         do {
@@ -100,6 +101,17 @@ struct Supabase {
     func citaj<T: Decodable>(_ tabela: String, upit: [URLQueryItem], token: String? = nil) async throws -> T {
         let d = try await zahtev("rest/v1/\(tabela)", token: token, upit: upit)
         return try JSONDecoder().decode(T.self, from: d)
+    }
+
+    /// PATCH sa filterom (npr. room_code=eq.ABC); vraća izmenjene redove.
+    func azuriraj<T: Decodable>(_ tabela: String, filter: [URLQueryItem], polja: [String: Any], token: String) async throws -> [T] {
+        let d = try await zahtev("rest/v1/\(tabela)", metod: "PATCH", telo: polja, token: token, upit: filter, vratiRed: true)
+        return try JSONDecoder().decode([T].self, from: d)
+    }
+
+    func upisiVrati<T: Decodable>(_ tabela: String, _ red: [String: Any], token: String) async throws -> [T] {
+        let d = try await zahtev("rest/v1/\(tabela)", metod: "POST", telo: red, token: token, vratiRed: true)
+        return try JSONDecoder().decode([T].self, from: d)
     }
 
     func upisi(_ tabela: String, _ red: [String: Any], token: String) async throws {

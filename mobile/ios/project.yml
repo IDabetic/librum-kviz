@@ -24,6 +24,9 @@ targets:
         buildPhase: resources
       - path: ../../src/lib/osvajanje/rezervna-pitanja.json
         buildPhase: resources
+      - path: ../../src/lib/igre
+        type: folder
+        buildPhase: resources
     info:
       path: LibrumKviz/Info.plist
       properties:

@@ -118,3 +118,46 @@ final class PravilaTests: XCTestCase {
         XCTAssertFalse(p.riskDostupan) // isti blok od 10
     }
 }
+
+/// Pravila ostalih igara, isti brojevi kao na vebu.
+final class IgreTests: XCTestCase {
+    static let vebRed1 = [2, 1, 0, 3]
+    static let vebRed2 = [3, 1, 2, 0]
+
+    func testVesanjeSlovaIBonus() {
+        var v = Vesanje(rec: "kiša")
+        v.pogodi("K"); v.pogodi("I"); v.pogodi("Š")
+        XCTAssertEqual(v.poeni, 15)
+        v.pogodi("A")
+        XCTAssertEqual(v.status, .pobeda)
+        XCTAssertEqual(v.poeni, 20 + Vesanje.bonusBezGreske)
+    }
+
+    func testVesanjePromasajICelaRec() {
+        var v = Vesanje(rec: "berlinski zid")
+        v.pogodi("X")
+        XCTAssertEqual(v.zivoti, 5)
+        XCTAssertEqual(v.prikaz.filter { $0 == " " }.count, 1)
+        v.pogodiRec("pogrešno")
+        XCTAssertEqual(v.zivoti, 3)
+        v.pogodiRec("Berlinski zid")
+        XCTAssertEqual(v.status, .pobeda)
+        XCTAssertEqual(v.poeni, Vesanje.bonusRec + Vesanje.bonusMaloGresaka)
+    }
+
+    func testBrziKviz() {
+        let p = Pitanje(id: "x", question_text: "?", options: ["a", "b", "c", "d"], correct_answer: 2)
+        let tacna = BrziKviz.Izjava(p) { 0.1 }
+        XCTAssertTrue(tacna.jeTacno)
+        var b = BrziKviz()
+        XCTAssertTrue(b.odgovor(tacna, kaze: true))
+        XCTAssertFalse(b.odgovor(tacna, kaze: nil))
+        XCTAssertEqual(b.poeni, 5)
+    }
+
+    func testDuelMesanjeKaoVeb() {
+        // Vrednosti iz seededShuffle na vebu (Node) za ova dva id-ja.
+        XCTAssertEqual(DuelMesanje.red("31628f47-f1e2-4f92-8be0-791c3cf231e3"), IgreTests.vebRed1)
+        XCTAssertEqual(DuelMesanje.red("abc"), IgreTests.vebRed2)
+    }
+}
