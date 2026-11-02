@@ -41,6 +41,8 @@ struct OsvajanjeIgraView: View {
         .overlay { kraj }
         .onChange(of: model.stanje.faza == .kraj) { _, gotovo in
             guard gotovo, let covek = model.stanje.igraci.first(where: \.covek) else { return }
+            let pobedio = (model.stanje.pobednik ?? model.stanje.poredak.first?.igrac.tim) == covek.tim
+            Zvuk.pusti(pobedio ? .pobeda : .kraj, jacina: 0.5)
             zavrsiPartiju(napredak, sesija, igra: "osvajanje", poeni: model.stanje.poeni(covek.id), tacnih: model.tacnih, netacnih: model.netacnih,
                           kategorija: "Geografija", prosekMs: prosek(model.zbirMs, model.tacnih + model.netacnih))
         }

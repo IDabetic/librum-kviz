@@ -37,7 +37,9 @@
 		73997394D3DA009D5F171A26 /* Supabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F7FFAE025C531368758B6B /* Supabase.swift */; };
 		874B81797EA899D9CE393254 /* OsvajanjeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D48064B32341C34B07F6ED9 /* OsvajanjeModel.swift */; };
 		903540472589505ABC4A05FF /* Sesija.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA657A4E3E3FACD279AAAFF6 /* Sesija.swift */; };
+		90470CF5ABF49C8B3AB7515E /* Zvuk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2483BC76902BF318AFB375A7 /* Zvuk.swift */; };
 		94A40F6389BB4BF54FD2D83C /* CekaonicaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7AE28C4768AD156522D1E9 /* CekaonicaView.swift */; };
+		96BA7A00456182AE56F945EE /* zvuci in Resources */ = {isa = PBXBuildFile; fileRef = C3149020E63844C84F392134 /* zvuci */; };
 		9E42BFA4679D26432E5E7329 /* KlasicniKviz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A28076E53EBB4D859B09B8 /* KlasicniKviz.swift */; };
 		A87F1B20734FF29CF0E7B773 /* Pravila.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FED500CF38EA749232AE59B /* Pravila.swift */; };
 		B56A496BE96619CA4DCC3E0D /* PrijavaTok.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D4930B06633BBCB815E047 /* PrijavaTok.swift */; };
@@ -68,6 +70,7 @@
 		096154B7FE7443B80C4E5CA7 /* PaketPitanja.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaketPitanja.swift; sourceTree = "<group>"; };
 		0D48064B32341C34B07F6ED9 /* OsvajanjeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OsvajanjeModel.swift; sourceTree = "<group>"; };
 		11EB472B5832198C4CAE86B2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2483BC76902BF318AFB375A7 /* Zvuk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zvuk.swift; sourceTree = "<group>"; };
 		2735B64623C0DCC699BAC21A /* Katalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Katalog.swift; sourceTree = "<group>"; };
 		2FF3937835EE161D1EC5C164 /* LibrumKviz.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LibrumKviz.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30A3F1D8E5729330DA828B8E /* PravilaIgara.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PravilaIgara.swift; sourceTree = "<group>"; };
@@ -95,6 +98,7 @@
 		BABBAF67F52C5607DA7A66E0 /* KvizTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KvizTests.swift; sourceTree = "<group>"; };
 		BB7B9F3BC8EA4C361AEF287B /* VesanjeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VesanjeView.swift; sourceTree = "<group>"; };
 		C19BD79E1511E1ED3C5A3839 /* igre */ = {isa = PBXFileReference; lastKnownFileType = folder; name = igre; path = ../../src/lib/igre; sourceTree = SOURCE_ROOT; };
+		C3149020E63844C84F392134 /* zvuci */ = {isa = PBXFileReference; lastKnownFileType = folder; name = zvuci; path = ../zvuci; sourceTree = SOURCE_ROOT; };
 		C46E3F9E4B91BE3482AF4C62 /* Mreza.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mreza.swift; sourceTree = "<group>"; };
 		CB9F64A8AFFE39B4C750940D /* Stanja.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stanja.swift; sourceTree = "<group>"; };
 		CC227D8E84CCA578950E363A /* LibrumKvizApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrumKvizApp.swift; sourceTree = "<group>"; };
@@ -190,6 +194,7 @@
 		80ECC8199A86528A75924A57 /* mobile */ = {
 			isa = PBXGroup;
 			children = (
+				C3149020E63844C84F392134 /* zvuci */,
 				C07D844869F2682159014641 /* fontovi */,
 			);
 			name = mobile;
@@ -225,6 +230,7 @@
 				FF23D03C5EDB331D59A95605 /* Partija.swift */,
 				AA657A4E3E3FACD279AAAFF6 /* Sesija.swift */,
 				31F7FFAE025C531368758B6B /* Supabase.swift */,
+				2483BC76902BF318AFB375A7 /* Zvuk.swift */,
 			);
 			path = Servisi;
 			sourceTree = "<group>";
@@ -401,6 +407,7 @@
 				1943C95750E68728C9455CFC /* igre in Resources */,
 				2C4463F75E1A523C629CD94D /* rezervna-pitanja.json in Resources */,
 				3D00D47993EFA8CC8E52EC12 /* svet.json in Resources */,
+				96BA7A00456182AE56F945EE /* zvuci in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -444,6 +451,7 @@
 				0CE75257CC63950632E2EF51 /* Tema.swift in Sources */,
 				169CB97CDDF9684EBEE9E499 /* UvodView.swift in Sources */,
 				FC3DB799164BCDB3F3F119D0 /* VesanjeView.swift in Sources */,
+				90470CF5ABF49C8B3AB7515E /* Zvuk.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

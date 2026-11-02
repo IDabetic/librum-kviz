@@ -100,7 +100,7 @@ private fun KarticaIgre(naslovIgre: String, opis: String, boja: Color, bojaTekst
         modifier.fillMaxWidth().height(if (velika) 250.dp else 160.dp).pop(boja).clip(RoundedCornerShape(24.dp))
             .clickable(role = Role.Button, onClick = radnja),
     ) {
-        Box(Modifier.align(Alignment.TopEnd).offset(x = 40.dp, y = (-30).dp).size(if (velika) 230.dp else 150.dp).alpha(0.22f).background(Color.White, CircleShape))
+        Box(Modifier.align(Alignment.TopEnd).offset(x = 40.dp, y = (-30).dp).size(if (velika) 230.dp else 150.dp).alpha(0.22f).background(Boje.kartica, CircleShape))
         MaskotaSlika(maskota, if (velika) 160.dp else 84.dp, Modifier.align(Alignment.TopEnd).offset(y = if (velika) 4.dp else (-6).dp))
         Column(Modifier.align(Alignment.BottomStart).padding(if (velika) 22.dp else 18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(naslovIgre, style = naslov(if (velika) 36.sp else 24.sp).copy(color = bojaTeksta), maxLines = 1)
@@ -320,7 +320,7 @@ private fun Polje(naziv: String, vrednost: String, tastatura: KeyboardType = Key
         shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Boje.mastilo, unfocusedBorderColor = Boje.kremTamnija, cursorColor = Boje.mastilo,
-            focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+            focusedContainerColor = Boje.kartica, unfocusedContainerColor = Boje.kartica,
         ),
     )
 }

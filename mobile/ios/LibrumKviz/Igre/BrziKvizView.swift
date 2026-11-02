@@ -139,13 +139,15 @@ struct BrziKvizView: View {
         guard let iz = izjava, otkriveno == nil, !kraj else { return }
         if kaze != nil { zbirMs += Int(Date().timeIntervalSince(pocetakIzjave) * 1000) }
         otkriveno = igra.odgovor(iz, kaze: kaze)
+        // Brzi kviz ima mnogo odgovora: tiše nego u ostalim igrama.
+        Zvuk.pusti(otkriveno == true ? .tacno : kaze == nil ? .isteklo : .netacno, jacina: 0.3)
         Task {
             try? await Task.sleep(for: .milliseconds(700))
             if !kraj { sledeca() }
         }
     }
 
-    private func zavrsi() { if !kraj { kraj = true } }
+    private func zavrsi() { if !kraj { kraj = true; Zvuk.pusti(.kraj, jacina: 0.45) } }
 
     private func sacuvaj() async {
         guard !sacuvano, igra.tacnih + igra.netacnih > 0 else { return }

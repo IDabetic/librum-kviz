@@ -26,6 +26,10 @@ targets:
         buildPhase: resources
       - path: ../../src/lib/osvajanje/cinjenice.json
         buildPhase: resources
+      # Zvukovi (isečeni i ujednačeni iz vlasnikovih paketa), isti za Android.
+      - path: ../zvuci
+        type: folder
+        buildPhase: resources
       - path: ../../src/lib/igre
         type: folder
         buildPhase: resources

@@ -151,6 +151,9 @@ struct CekaonicaView: View {
         }
         .background(Papir())
         .fullScreenCover(item: $igra) { p in OsvajanjeIgraView(model: OsvajanjeModel(postavka: p)) }
+        .onAppear { Zvuk.pusti(.cekanje, jacina: 0.2, ponavljaj: true) }
+        .onDisappear { Zvuk.stani(.cekanje) }
+        .onChange(of: igra == nil) { _, nema in if nema { Zvuk.pusti(.cekanje, jacina: 0.2, ponavljaj: true) } else { Zvuk.stani(.cekanje) } }
     }
 
     private var mesta: some View {

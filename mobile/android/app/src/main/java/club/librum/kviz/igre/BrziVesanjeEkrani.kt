@@ -76,7 +76,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 internal fun KrugZatvori(opis: String, radnja: () -> Unit) {
-    IconButton(onClick = radnja, modifier = Modifier.size(44.dp).background(Color.White, CircleShape).border(1.5.dp, Boje.kremTamnija, CircleShape)) {
+    IconButton(onClick = radnja, modifier = Modifier.size(44.dp).background(Boje.kartica, CircleShape).border(1.5.dp, Boje.kremTamnija, CircleShape)) {
         Icon(Icons.Rounded.Close, contentDescription = opis, tint = Boje.mastilo)
     }
 }
@@ -179,7 +179,7 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                 val ostaloIzjava = ((BrziKviz.SEKUNDI_PO_IZJAVI * 1000L - (sada - pocetakIzjave) + 999) / 1000).coerceAtLeast(0)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     KrugZatvori("Prekini") { opseg.launch { sacuvaj(); izadji() } }
-                    Pokazatelj("Vreme", "$ostaloRunda", if (ostaloRunda < 10) Boje.crvenaSvetla else Color.White, Modifier.weight(1f))
+                    Pokazatelj("Vreme", "$ostaloRunda", if (ostaloRunda < 10) Boje.crvenaSvetla else Boje.kartica, Modifier.weight(1f))
                     Pokazatelj("Poeni", "${igra.poeni}", Boje.zuta, Modifier.weight(1f))
                     Pokazatelj("Tačnih", "${igra.tacnih}", Boje.tealSvetla, Modifier.weight(1f))
                 }
@@ -187,7 +187,7 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                     Row { Oznaka("Tačno ili netačno?", Boje.mastilo); Spacer(Modifier.weight(1f)); Text("$ostaloIzjava", style = naslov(22.sp)) }
                     Text(iz.pitanje, style = naslov(22.sp))
                     Text(iz.prikazano, style = naslov(30.sp).copy(color = Boje.teal, textAlign = TextAlign.Center),
-                        modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(18.dp)).border(2.dp, Boje.mastilo, RoundedCornerShape(18.dp)).padding(vertical = 22.dp))
+                        modifier = Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(18.dp)).border(2.dp, Boje.mastilo, RoundedCornerShape(18.dp)).padding(vertical = 22.dp))
                     otkriveno?.let {
                         Text(if (it) "Tačno!" else "Ne. Tačan odgovor: ${iz.tacanOdgovor}", style = tekst(16.sp, FontWeight.Bold, if (it) Boje.teal else Boje.crvena))
                     }
@@ -276,7 +276,7 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                             val isk = igra.iskorisceno(s)
                             Box(
                                 Modifier.weight(1f).heightIn(min = 46.dp)
-                                    .background(if (isk) Boje.kremTamnija else Color.White, RoundedCornerShape(12.dp))
+                                    .background(if (isk) Boje.udubljeno else Boje.kartica, RoundedCornerShape(12.dp))
                                     .border(1.5.dp, if (isk) Color.Transparent else Boje.mastilo, RoundedCornerShape(12.dp))
                                     .clickable(enabled = !isk, role = Role.Button) { igra.pogodi(s); posle() },
                                 contentAlignment = Alignment.Center,
@@ -288,7 +288,7 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                     if (celaRec) {
                         OutlinedTextField(pokusaj, { pokusaj = it }, Modifier.fillMaxWidth(), label = { Text("Cela reč") }, singleLine = true,
                             shape = RoundedCornerShape(14.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Boje.mastilo, unfocusedBorderColor = Boje.mastilo,
-                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White))
+                                focusedContainerColor = Boje.kartica, unfocusedContainerColor = Boje.kartica))
                         Dugme("Pogodi") { igra.pogodiRec(pokusaj); pokusaj = ""; celaRec = false; posle() }
                         Text("Pogrešna cela reč odnosi 2 života.", style = tekst(13.sp, boja = Boje.sivaTekst))
                     } else {

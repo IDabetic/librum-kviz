@@ -245,7 +245,7 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
                 Triple(Icons.Rounded.Remove, "Umanji") { razmera = max(1f, razmera / 1.5f); pomak = ogranici(pomak, osnova * razmera) },
                 Triple(Icons.Rounded.Public, "Ceo svet") { razmera = 1f; pomak = Offset.Zero },
             ).forEach { (ikonica, opis, radnja) ->
-                IconButton(onClick = radnja, modifier = Modifier.size(44.dp).background(Color.White, CircleShape).border(2.dp, Boje.mastilo, CircleShape)) {
+                IconButton(onClick = radnja, modifier = Modifier.size(44.dp).background(Boje.kartica, CircleShape).border(2.dp, Boje.mastilo, CircleShape)) {
                     Icon(ikonica, contentDescription = opis, tint = Boje.mastilo)
                 }
             }

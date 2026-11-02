@@ -75,6 +75,7 @@ struct BitkaView: View {
         }
         .padding(20).pop(radijus: 26)
         .task {
+            Zvuk.pusti(.odbrojavanje, jacina: 0.4)
             for b in stride(from: 3, through: 0, by: -1) {
                 try? await Task.sleep(for: .seconds(1))
                 withAnimation { odbrojavanje = b }
@@ -153,6 +154,7 @@ struct BitkaView: View {
             .padding(22).frame(maxWidth: .infinity)
             .pop(pobedio ? .teal : .narandzasta, radijus: 26)
             .sensoryFeedback(pobedio ? .success : .error, trigger: bitka.id)
+            .onAppear { Zvuk.pusti(pobedio ? .osvojeno : .netacno, jacina: 0.45) }
         } else {
             VStack(spacing: 12) {
                 ProgressView().tint(Color.mastilo)

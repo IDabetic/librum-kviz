@@ -140,10 +140,10 @@ fun ProKvizEkran(sesija: Sesija, vrsta: Survival = Survival.PRO, izadji: () -> U
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { potvrdaIzlaska = true }, modifier = Modifier.size(44.dp).background(Color.White, CircleShape).border(1.5.dp, Boje.kremTamnija, CircleShape)) {
+                    IconButton(onClick = { potvrdaIzlaska = true }, modifier = Modifier.size(44.dp).background(Boje.kartica, CircleShape).border(1.5.dp, Boje.kremTamnija, CircleShape)) {
                         Icon(Icons.Rounded.Close, contentDescription = "Prekini", tint = Boje.mastilo)
                     }
-                    Pokazatelj("Životi", igra.zivoti, if (igra.zivoti <= 3) Boje.crvenaSvetla else Color.White, Modifier.weight(1f))
+                    Pokazatelj("Životi", igra.zivoti, if (igra.zivoti <= 3) Boje.crvenaSvetla else Boje.kartica, Modifier.weight(1f))
                     Pokazatelj("Poeni", igra.poeni, Boje.zuta, Modifier.weight(1f))
                     Pokazatelj("Niz", igra.kombo, Boje.tealSvetla, Modifier.weight(1f))
                 }
@@ -195,7 +195,7 @@ private fun Pokazatelj(naziv: String, vrednost: Int, boja: Color, modifier: Modi
 private fun Pomoc(naziv: String, ostalo: String, aktivno: Boolean, modifier: Modifier, radnja: () -> Unit) {
     Column(
         modifier.heightIn(min = 52.dp)
-            .background(if (aktivno) Color.White else Boje.kremTamnija, RoundedCornerShape(14.dp))
+            .background(if (aktivno) Boje.kartica else Boje.udubljeno, RoundedCornerShape(14.dp))
             .border(1.5.dp, if (aktivno) Boje.mastilo else Color.Transparent, RoundedCornerShape(14.dp))
             .clickable(enabled = aktivno, role = Role.Button, onClick = radnja)
             .padding(vertical = 8.dp),

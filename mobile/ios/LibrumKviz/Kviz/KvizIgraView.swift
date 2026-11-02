@@ -222,6 +222,7 @@ struct SpremiSeView: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: broj)
         .task(id: spremno) {
             guard spremno else { return }
+            Zvuk.pusti(.odbrojavanje, jacina: 0.45)
             for b in [2, 1, 0] { try? await Task.sleep(for: .milliseconds(800)); withAnimation { broj = b } }
             try? await Task.sleep(for: .milliseconds(500))
             kreni()
@@ -293,6 +294,9 @@ struct KvizPitanjaView: View {
             if ostalo == 0 { odgovori(nil) }
         }
         .sensoryFeedback(.warning, trigger: zuri) { _, novo in novo }
+        .onChange(of: zuri) { _, z in if z { Zvuk.pusti(.tikanje, jacina: 0.25, ponavljaj: true) } else { Zvuk.stani(.tikanje) } }
+        .onChange(of: pauza) { _, p in if p { Zvuk.stani(.tikanje) } }
+        .onDisappear { Zvuk.stani(.tikanje) }
         .sensoryFeedback(trigger: otkriveno) { _, novo in novo ? (izabran == p.tacan ? .success : .error) : nil }
         .animation(.spring(duration: 0.35), value: otkriveno)
     }
@@ -464,6 +468,8 @@ struct KvizPitanjaView: View {
         isteklo = i == nil
         poslednji = kviz.odgovor(p, izabran: i, ostaloSekundi: ostalo, ms: Int(Date().timeIntervalSince(pocetakPitanja) * 1000))
         otkriveno = true
+        Zvuk.stani(.tikanje)
+        Zvuk.pusti(i == nil ? .isteklo : i == p.tacan ? .tacno : .netacno, jacina: 0.5)
     }
 
     private func sledece() {
@@ -531,6 +537,7 @@ struct KvizRezultatiView: View {
             if let prvi = ishod?.noviBedzevi.first { try? await Task.sleep(for: .milliseconds(600)); withAnimation { bedz = prvi } }
         }
         .task { await sacuvaj() }
+        .onAppear { Zvuk.pusti(savrseno ? .pobeda : .kraj, jacina: savrseno ? 0.55 : 0.45) }
     }
 
     private var glavna: some View {

@@ -208,7 +208,11 @@ private struct DuelTrazenje: View {
         }
         .padding(20)
         .background(Color.ljubicasta.ignoresSafeArea())
-        .onAppear { withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) { ugao = 360 } }
+        .onAppear {
+            withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) { ugao = 360 }
+            Zvuk.pusti(.cekanje, jacina: 0.25, ponavljaj: true)
+        }
+        .onDisappear { Zvuk.stani(.cekanje) }
     }
 }
 
@@ -523,6 +527,7 @@ private struct DuelKraj: View {
         .padding(20)
         .background(boja.ignoresSafeArea())
         .overlay { if pobeda { Konfete() } }
+        .onAppear { Zvuk.pusti(pobeda ? .pobeda : nereseno ? .kraj : .netacno, jacina: 0.5) }
     }
 
     private func statistika(_ vrednost: String, _ naziv: String) -> some View {

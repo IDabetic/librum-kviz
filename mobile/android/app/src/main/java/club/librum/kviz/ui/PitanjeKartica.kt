@@ -89,17 +89,17 @@ fun PitanjeKartica(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Oznaka(oznaka, Boje.mastilo)
+            Oznaka(oznaka, Boje.tinta)
             Spacer(Modifier.weight(1f))
-            Text("${kotlin.math.ceil(ostalo).toInt()}", style = naslov(22.sp), modifier = Modifier.semantics { contentDescription = "${ostalo.toInt()} sekundi" })
+            Text("${kotlin.math.ceil(ostalo).toInt()}", style = naslov(22.sp, Boje.tinta), modifier = Modifier.semantics { contentDescription = "${ostalo.toInt()} sekundi" })
         }
         Box(Modifier.fillMaxWidth().height(8.dp).background(Color.White.copy(alpha = 0.6f), RoundedCornerShape(4.dp))) {
             Box(
                 Modifier.fillMaxWidth((ostalo / sekundi).toFloat()).fillMaxHeight()
-                    .background(if (ostalo / sekundi < 0.34) Boje.crvena else Boje.mastilo, RoundedCornerShape(4.dp)),
+                    .background(if (ostalo / sekundi < 0.34) Boje.crvena else Boje.tinta, RoundedCornerShape(4.dp)),
             )
         }
-        Text(prikaz.tekst, style = naslov(23.sp))
+        Text(prikaz.tekst, style = naslov(23.sp, Boje.tinta))
         prikaz.opcije.forEachIndexed { i, opcija ->
             val stanje = when {
                 !otkriveno -> StanjeOdgovora.OBICNO
@@ -110,7 +110,7 @@ fun PitanjeKartica(
             OdgovorDugme("ABCD"[i].toString(), opcija, stanje, omoguceno = !otkriveno && i !in eliminisani,
                 modifier = Modifier.alpha(if (i in eliminisani && !otkriveno) 0.3f else 1f)) { izaberi(i) }
         }
-        if (otkriveno && dodatak != null) Text(dodatak, style = tekst(15.sp, FontWeight.Bold))
+        if (otkriveno && dodatak != null) Text(dodatak, style = tekst(15.sp, FontWeight.Bold, Boje.tinta))
     }
 }
 
@@ -119,10 +119,10 @@ enum class StanjeOdgovora { OBICNO, TACNO, NETACNO, BLEDO }
 @Composable
 fun OdgovorDugme(slovo: String, natpis: String, stanje: StanjeOdgovora, omoguceno: Boolean, modifier: Modifier = Modifier, radnja: () -> Unit) {
     val (pozadina, ivica, slovoPozadina, slovoBoja) = when (stanje) {
-        StanjeOdgovora.OBICNO -> listOf(Color.White, Boje.mastilo, Boje.tealSvetla, Boje.teal)
+        StanjeOdgovora.OBICNO -> listOf(Boje.kartica, Boje.mastilo, Boje.tealSvetla, Boje.teal)
         StanjeOdgovora.TACNO -> listOf(Boje.tealSvetla, Boje.teal, Boje.teal, Color.White)
         StanjeOdgovora.NETACNO -> listOf(Boje.crvenaSvetla, Boje.crvena, Boje.crvena, Color.White)
-        StanjeOdgovora.BLEDO -> listOf(Color.White.copy(alpha = 0.45f), Color.Transparent, Boje.tealSvetla, Boje.teal)
+        StanjeOdgovora.BLEDO -> listOf(Boje.kartica.copy(alpha = 0.45f), Color.Transparent, Boje.tealSvetla, Boje.teal)
     }
     Row(
         modifier
@@ -150,7 +150,7 @@ fun OdgovorDugme(slovo: String, natpis: String, stanje: StanjeOdgovora, omogucen
 @Composable
 fun Dijalog(naslovTekst: String, opis: String, potvrda: String, odustani: String, potvrdi: () -> Unit, zatvori: () -> Unit) {
     Box(
-        Modifier.fillMaxSize().background(Boje.mastilo.copy(alpha = 0.55f)).clickable(onClick = zatvori),
+        Modifier.fillMaxSize().background(Boje.senka.copy(alpha = 0.55f)).clickable(onClick = zatvori),
         contentAlignment = Alignment.Center,
     ) {
         Column(

@@ -25,7 +25,11 @@ struct PitanjeKartica: View {
                 TimelineView(.periodic(from: .now, by: 0.25)) { kontekst in
                     let ostalo = max(0, Double(sekundi) - kontekst.date.timeIntervalSince(pocetak))
                     Text("\(Int(ostalo.rounded(.up)))").font(.naslov(22)).monospacedDigit()
-                        .onChange(of: Int(ostalo)) { _, sec in if sec == 0 && !otkriveno { izaberi(nil) } }
+                        .onChange(of: Int(ostalo)) { _, sec in
+                            if sec == 0 && !otkriveno { izaberi(nil) }
+                            // Tihi sat samo u poslednjih 5 sekundi.
+                            if sec == 5 && !otkriveno { Zvuk.pusti(.tikanje, jacina: 0.25, ponavljaj: true) }
+                        }
                         .accessibilityLabel("\(Int(ostalo)) sekundi")
                 }
             }
@@ -53,6 +57,7 @@ struct PitanjeKartica: View {
         .padding(20)
         .pop(.zuta)
         .onAppear { pocetak = Date() }
+        .onDisappear { Zvuk.stani(.tikanje) }
         .sensoryFeedback(trigger: otkriveno) { _, _ in izabran == prikaz.tacan ? .success : .error }
     }
 
@@ -67,6 +72,8 @@ struct PitanjeKartica: View {
         guard !otkriveno else { return }
         izabran = i
         otkriveno = true
+        Zvuk.stani(.tikanje)
+        Zvuk.pusti(i == nil ? .isteklo : i == prikaz.tacan ? .tacno : .netacno, jacina: 0.5)
         let ms = Int(Date().timeIntervalSince(pocetak) * 1000)
         Task {
             try? await Task.sleep(for: trajanjeOtkrivanja)

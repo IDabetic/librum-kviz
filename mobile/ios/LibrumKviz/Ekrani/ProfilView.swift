@@ -317,6 +317,7 @@ struct BedzOtkljucanView: View {
             .accessibilityAddTraits(.isModal)
         }
         .sensoryFeedback(.success, trigger: bedz.id)
+        .onAppear { if datum == nil { Zvuk.pusti(.bedz, jacina: 0.5) } }
     }
 }
 

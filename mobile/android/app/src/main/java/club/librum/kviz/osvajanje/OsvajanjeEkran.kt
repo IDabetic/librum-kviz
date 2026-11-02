@@ -82,7 +82,7 @@ fun OsvajanjeUvod(pokreni: (Tezina, Int) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Box(Modifier.fillMaxWidth().pop(Boje.teal).clip(RoundedCornerShape(24.dp))) {
-                Box(Modifier.align(Alignment.BottomEnd).padding(end = 0.dp).size(220.dp).alpha(0.14f).background(Color.White, CircleShape))
+                Box(Modifier.align(Alignment.BottomEnd).padding(end = 0.dp).size(220.dp).alpha(0.14f).background(Boje.kartica, CircleShape))
                 MaskotaSlika(Maskota.MIMI, 110.dp, Modifier.align(Alignment.BottomEnd).padding(8.dp))
                 Column(Modifier.padding(22.dp).padding(end = 110.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Oznaka("Glavna igra · 3 igrača", Boje.zuta)
@@ -181,13 +181,13 @@ private fun Igra(model: OsvajanjeModel, izlaz: () -> Unit) {
     val s = model.stanje
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconButton(onClick = izlaz, modifier = Modifier.size(44.dp).background(Color.White, CircleShape).border(1.5.dp, Boje.kremTamnija, CircleShape)) {
+            IconButton(onClick = izlaz, modifier = Modifier.size(44.dp).background(Boje.kartica, CircleShape).border(1.5.dp, Boje.kremTamnija, CircleShape)) {
                 Icon(Icons.Rounded.Close, contentDescription = "Izađi", tint = Boje.mastilo)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val krug = minOf(s.krug, s.ukupnoKrugova)
                 Oznaka("Krug $krug od ${s.ukupnoKrugova}")
-                Box(Modifier.fillMaxWidth().height(10.dp).background(Color.White, RoundedCornerShape(5.dp)).border(1.5.dp, Boje.mastilo, RoundedCornerShape(5.dp))) {
+                Box(Modifier.fillMaxWidth().height(10.dp).background(Boje.kartica, RoundedCornerShape(5.dp)).border(1.5.dp, Boje.mastilo, RoundedCornerShape(5.dp))) {
                     Box(Modifier.fillMaxWidth(krug.toFloat() / s.ukupnoKrugova).height(10.dp).background(Boje.teal, RoundedCornerShape(5.dp)))
                 }
             }
@@ -197,7 +197,7 @@ private fun Igra(model: OsvajanjeModel, izlaz: () -> Unit) {
                 val naPotezu = p.id == s.trenutni.id && s.faza != Faza.KRAJ
                 Row(
                     Modifier.weight(1f).alpha(if (p.ispao) 0.4f else 1f)
-                        .background(Color.White, RoundedCornerShape(14.dp))
+                        .background(Boje.kartica, RoundedCornerShape(14.dp))
                         .border(if (naPotezu) 2.5.dp else 1.5.dp, if (naPotezu) Boje.mastilo else Boje.kremTamnija, RoundedCornerShape(14.dp))
                         .padding(6.dp)
                         .semantics(mergeDescendants = true) { contentDescription = "${p.ime}, ${s.poeni(p.id)} poena${if (naPotezu) ", na potezu" else ""}" },
@@ -234,13 +234,13 @@ private fun Kraj(model: OsvajanjeModel, izadji: () -> Unit) {
     val pobednik = poredak.first().first
     Box(Modifier.fillMaxSize().background(Boje.mastilo.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
         Column(
-            Modifier.padding(20.dp).pop(if (pobednik.covek) Boje.teal else Color.White).padding(22.dp),
+            Modifier.padding(20.dp).pop(if (pobednik.covek) Boje.teal else Boje.kartica).padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             MaskotaSlika(MASKOTE[pobednik.id] ?: Maskota.BLOOP, 120.dp)
             Text(if (pobednik.covek) "Svet je tvoj!" else "Pobeđuje ${pobednik.ime}", style = naslov(34.sp).copy(color = if (pobednik.covek) Color.White else Boje.mastilo))
             poredak.forEachIndexed { i, (igrac, poeni) ->
-                Row(Modifier.fillMaxWidth().pop(Color.White, 16.dp).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth().pop(Boje.kartica, 16.dp).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("${i + 1}.", style = tekst(15.sp, FontWeight.Bold))
                     Box(Modifier.size(16.dp).background(Color(igrac.boja), RoundedCornerShape(4.dp)))
                     Text(igrac.ime, style = tekst(16.sp, FontWeight.SemiBold), modifier = Modifier.weight(1f))

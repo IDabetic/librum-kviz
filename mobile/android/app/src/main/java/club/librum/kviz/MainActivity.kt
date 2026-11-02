@@ -81,7 +81,7 @@ private fun Aplikacija() {
         containerColor = Boje.krem,
         bottomBar = {
             if (ruta in KARTICE.map { it.ruta }) {
-                NavigationBar(containerColor = Color.White) {
+                NavigationBar(containerColor = Boje.kartica) {
                     for (k in KARTICE) {
                         NavigationBarItem(
                             selected = trenutna?.destination?.hierarchy?.any { it.route == k.ruta } == true,

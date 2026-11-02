@@ -38,7 +38,10 @@ struct VesanjeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .task { await ucitaj() }
-        .onChange(of: igra.status) { _, s in if s != .igra { Task { await sacuvaj() } } }
+        .onChange(of: igra.status) { _, s in
+            if s != .igra { Task { await sacuvaj() } }
+            if s == .pobeda { Zvuk.pusti(.osvojeno, jacina: 0.5) } else if s == .poraz { Zvuk.pusti(.netacno, jacina: 0.5) }
+        }
     }
 
     private func sadrzaj(_ r: Rec) -> some View {

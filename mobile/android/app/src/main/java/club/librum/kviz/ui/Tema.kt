@@ -18,6 +18,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,18 +48,34 @@ import club.librum.kviz.R
 // Vizuelni jezik QuizPop kita, isti kao veb i iOS: krem papir, mastilo,
 // debele ivice sa tvrdom senkom, Archivo Black kurziv za naslove.
 
+/**
+ * Boje teme iz kita (Quizpop · Theme), svetla i tamna. `tamno` je Compose stanje,
+ * pa svaka boja koja se čita u kompoziciji prati promenu teme bez prosleđivanja.
+ */
 object Boje {
-    val krem = Color(0xFFF3F0E6)
-    val kremTamnija = Color(0xFFE7E1D0)
-    val mastilo = Color(0xFF151515)
-    val sivaTekst = Color(0xFF6F6C66)
+    var tamno by mutableStateOf(false)
+    private fun t(svetlo: Long, tamna: Long) = Color(if (tamno) tamna else svetlo)
+
+    val krem get() = t(0xFFF3F0E6, 0xFF12110F)          // surface/canvas
+    val kremTamnija get() = t(0xFFE7E1D0, 0xFF3B3832)   // border/default
+    val udubljeno get() = t(0xFFE7E1D0, 0xFF2E2B26)     // surface/sunken
+    val skelet get() = t(0xFFDDD6C6, 0xFF3B3832)        // surface/skeleton
+    val kartica get() = t(0xFFFFFFFF, 0xFF24221E)       // surface/card
+    val mastilo get() = t(0xFF151515, 0xFFF3F0E6)       // text/primary, border/strong
+    val naMastilu get() = t(0xFFFFFFFF, 0xFF151515)     // text/inverse
+    val senka get() = t(0xFF151515, 0xFF000000)
+    val sivaTekst get() = if (tamno) Color(0x99FFFFFF) else Color(0x99151515)
     val teal = Color(0xFF12907E)
-    val tealSvetla = Color(0xFFDFF3EE)
+    val tealSvetla get() = t(0xFFDFF3EE, 0xFF173A34)
     val roze = Color(0xFFFF5FA2)
     val ljubicasta = Color(0xFF6D4BC9)
     val zuta = Color(0xFFFFD84D)
-    val crvena = Color(0xFFE5385C)
-    val crvenaSvetla = Color(0xFFFFE3EA)
+    val narandzasta = Color(0xFFF4A33C)
+    val nebo = Color(0xFF6EC3F2)
+    val crvena get() = t(0xFFE5385C, 0xFFFF4D6D)
+    val crvenaSvetla get() = t(0xFFFFE3EA, 0xFF3D1D26)
+    /** Tekst na jarkim karticama (žuta, narandžasta, nebo) ostaje taman u obe teme. */
+    val tinta = Color(0xFF151515)
 }
 
 // Archivo Black nema kurzivni rez; Compose ga naginje sintezom (FontSynthesis.Style).
@@ -70,21 +88,21 @@ val SpaceGrotesk = FontFamily(
     },
 )
 
-fun naslov(velicina: TextUnit) = TextStyle(fontFamily = ArchivoBlack, fontStyle = FontStyle.Italic, fontSize = velicina, color = Boje.mastilo, letterSpacing = (-0.3).sp)
+fun naslov(velicina: TextUnit, boja: Color = Boje.mastilo) = TextStyle(fontFamily = ArchivoBlack, fontStyle = FontStyle.Italic, fontSize = velicina, color = boja, letterSpacing = (-0.3).sp)
 fun tekst(velicina: TextUnit, tezina: FontWeight = FontWeight.Medium, boja: Color = Boje.mastilo) =
     TextStyle(fontFamily = SpaceGrotesk, fontWeight = tezina, fontSize = velicina, color = boja)
 
 /** Izražena kartica: debela ivica i tvrda senka. */
-fun Modifier.pop(boja: Color = Color.White, radijus: Dp = 24.dp, senka: Dp = 5.dp): Modifier = this
+fun Modifier.pop(boja: Color = Boje.kartica, radijus: Dp = 24.dp, senka: Dp = 5.dp): Modifier = this
     .drawBehind {
-        drawRoundRect(Boje.mastilo, topLeft = Offset(0f, senka.toPx()), size = size, cornerRadius = CornerRadius(radijus.toPx()))
+        drawRoundRect(Boje.senka, topLeft = Offset(0f, senka.toPx()), size = size, cornerRadius = CornerRadius(radijus.toPx()))
     }
     .background(boja, RoundedCornerShape(radijus))
     .border(2.5.dp, Boje.mastilo, RoundedCornerShape(radijus))
 
 /** Mirna bela kartica bez senke. */
 fun Modifier.mirna(): Modifier = this
-    .background(Color.White, RoundedCornerShape(20.dp))
+    .background(Boje.kartica, RoundedCornerShape(20.dp))
     .border(1.5.dp, Boje.kremTamnija, RoundedCornerShape(20.dp))
 
 enum class VrstaDugmeta { PRIMARNO, SEKUNDARNO, ZUTO }
@@ -95,17 +113,17 @@ fun Dugme(natpis: String, modifier: Modifier = Modifier, vrsta: VrstaDugmeta = V
     val izvor = remember { MutableInteractionSource() }
     val pritisnuto by izvor.collectIsPressedAsState()
     val haptika = LocalHapticFeedback.current
-    val (pozadina, boja) = when (vrsta) {
-        VrstaDugmeta.PRIMARNO -> Boje.mastilo to Color.White
-        VrstaDugmeta.SEKUNDARNO -> Color.White to Boje.mastilo
-        VrstaDugmeta.ZUTO -> Boje.zuta to Boje.mastilo
+    val (pozadina, boja) = if (!omoguceno) Boje.skelet to Boje.sivaTekst else when (vrsta) {
+        VrstaDugmeta.PRIMARNO -> Boje.mastilo to Boje.naMastilu
+        VrstaDugmeta.SEKUNDARNO -> Boje.kartica to Boje.mastilo
+        VrstaDugmeta.ZUTO -> Boje.zuta to Boje.tinta
     }
     Box(
         modifier
             .fillMaxWidth()
             .heightIn(min = 54.dp)
             .offset(y = if (pritisnuto) 3.dp else 0.dp)
-            .pop(pozadina, 16.dp, if (pritisnuto) 1.dp else 4.dp)
+            .pop(pozadina, 16.dp, if (!omoguceno) 0.dp else if (pritisnuto) 1.dp else 4.dp)
             .clickable(izvor, null, enabled = omoguceno, role = Role.Button) {
                 haptika.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 radnja()
@@ -113,7 +131,7 @@ fun Dugme(natpis: String, modifier: Modifier = Modifier, vrsta: VrstaDugmeta = V
             .padding(horizontal = 16.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(natpis, style = tekst(16.sp, FontWeight.Bold, if (omoguceno) boja else boja.copy(alpha = 0.4f)))
+        Text(natpis, style = tekst(16.sp, FontWeight.Bold, boja))
     }
 }
 

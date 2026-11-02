@@ -310,7 +310,7 @@ private fun Lobi(m: DuelModel, izadji: () -> Unit) {
             Text("Napravi sobu", style = naslov(24.sp))
             DuelModel.FORMATI.forEach { (broj, opis) ->
                 Row(
-                    Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(16.dp)).border(1.5.dp, Boje.mastilo, RoundedCornerShape(16.dp))
+                    Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(16.dp)).border(1.5.dp, Boje.mastilo, RoundedCornerShape(16.dp))
                         .clickable(enabled = !m.radi, role = Role.Button) { m.napravi(broj) }.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -327,7 +327,7 @@ private fun Lobi(m: DuelModel, izadji: () -> Unit) {
             OutlinedTextField(m.kod, { m.kod = it.uppercase() }, Modifier.fillMaxWidth(), placeholder = { Text("KOD SOBE") }, singleLine = true,
                 textStyle = naslov(24.sp), keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                 shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Boje.mastilo, unfocusedBorderColor = Boje.mastilo,
-                    focusedContainerColor = Color.White, unfocusedContainerColor = Color.White))
+                    focusedContainerColor = Boje.kartica, unfocusedContainerColor = Boje.kartica))
             Dugme("Uđi u sobu", omoguceno = !m.radi && m.kod.isNotBlank()) { m.pridruzi() }
         }
         m.greska?.let { Text(it, style = tekst(15.sp, FontWeight.SemiBold, Boje.crvena)) }
