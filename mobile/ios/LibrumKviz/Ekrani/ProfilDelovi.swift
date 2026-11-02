@@ -37,8 +37,9 @@ struct ProfilZaglavlje<Radnje: View>: View {
                     if let od = profil.od?.prefix(4) { Label("od \(od).", systemImage: "calendar") }
                 }
                 .font(.tekst(13)).foregroundStyle(Color.sivaTekst)
-                if let a = profil.autor_pitanja, a > 0 {
-                    Label("Autor pitanja · \(a) prihvaćenih", systemImage: "rosette").font(.tekst(13, .bold)).foregroundStyle(Color.teal)
+                if let poslao = profil.poslao_pitanja, poslao > 0 {
+                    Label("Poslao \(poslao.srpski) \(poslao == 1 ? "pitanje" : "pitanja") · \((profil.u_igri_pitanja ?? 0).srpski) u igri", systemImage: "rosette")
+                        .font(.tekst(13, .bold)).foregroundStyle(Color.teal)
                 }
             }
             radnje

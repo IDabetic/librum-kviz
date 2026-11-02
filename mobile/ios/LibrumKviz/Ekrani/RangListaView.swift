@@ -224,6 +224,8 @@ struct ProfilIgracaView: View {
         var prati: Int?
         var ja_pratim: Bool?
         var autor_pitanja: Int?
+        var poslao_pitanja: Int?
+        var u_igri_pitanja: Int?
         var pitanja: Pitanja?
         var partija: Int?
         var veb: Veb?

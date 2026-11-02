@@ -27,6 +27,7 @@
 		37F25E7B50B965E5E85F1201 /* IstraziView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C7AF96D425523C288508F2 /* IstraziView.swift */; };
 		3C1CC6F402F2D11415801700 /* RangListaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F10249862B69C9DB1C2FE3C /* RangListaView.swift */; };
 		3D00D47993EFA8CC8E52EC12 /* svet.json in Resources */ = {isa = PBXBuildFile; fileRef = 7F1564D794D2693A00D0D719 /* svet.json */; };
+		3E662A73A9D855F28C5C8B02 /* DodajPitanjeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A374466371527B9D03EABDED /* DodajPitanjeView.swift */; };
 		428931F2312484F1CDD4C376 /* IgraciView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F0EABC211BDBE5F2FAA8CB /* IgraciView.swift */; };
 		45897423F282A9F4149E881A /* KvizIgraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EA136C8D52FFD7F5E1877D /* KvizIgraView.swift */; };
 		46F4F57BFFF9FC3D1614C520 /* PravilaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6710AA06B54EA34503FFA1 /* PravilaTests.swift */; };
@@ -104,6 +105,7 @@
 		94A28076E53EBB4D859B09B8 /* KlasicniKviz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KlasicniKviz.swift; sourceTree = "<group>"; };
 		9AA1A6BD0343112C3C4A3D70 /* LibrumKviz.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LibrumKviz.entitlements; sourceTree = "<group>"; };
 		9FED500CF38EA749232AE59B /* Pravila.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pravila.swift; sourceTree = "<group>"; };
+		A374466371527B9D03EABDED /* DodajPitanjeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DodajPitanjeView.swift; sourceTree = "<group>"; };
 		A888EF4247356C4BAE44843E /* OsvajanjeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OsvajanjeView.swift; sourceTree = "<group>"; };
 		AA657A4E3E3FACD279AAAFF6 /* Sesija.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sesija.swift; sourceTree = "<group>"; };
 		B2C5AC4CC3916A6E90BB355C /* PocetnaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PocetnaView.swift; sourceTree = "<group>"; };
@@ -330,6 +332,7 @@
 		EF6D70F0CFF21107F30F514C /* Ekrani */ = {
 			isa = PBXGroup;
 			children = (
+				A374466371527B9D03EABDED /* DodajPitanjeView.swift */,
 				54F0EABC211BDBE5F2FAA8CB /* IgraciView.swift */,
 				B2C5AC4CC3916A6E90BB355C /* PocetnaView.swift */,
 				3AD48DD303A60EBF63230C73 /* ProfilDelovi.swift */,
@@ -447,6 +450,7 @@
 				94A40F6389BB4BF54FD2D83C /* CekaonicaView.swift in Sources */,
 				9CD555FBE9D2697A940E4220 /* Deljenje.swift in Sources */,
 				0AFF14C7991FE2FB32F8C26A /* Dijalog.swift in Sources */,
+				3E662A73A9D855F28C5C8B02 /* DodajPitanjeView.swift in Sources */,
 				BC9883237C17D6AFD2E2F27C /* DuelModel.swift in Sources */,
 				06865E40A9FF1DACC1F4AE96 /* DuelView.swift in Sources */,
 				428931F2312484F1CDD4C376 /* IgraciView.swift in Sources */,

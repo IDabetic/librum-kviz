@@ -39,6 +39,11 @@ struct ProfilView: View {
                             }
                             .accessibilityLabel("Podeli profil")
                         }
+                        // Samo na mom profilu: predlog pitanja ili reči za vešanje.
+                        HStack(spacing: 10) {
+                            NavigationLink { DodajPitanjeView() } label: { Label("Dodaj pitanje", systemImage: "plus.bubble") }.buttonStyle(.sekundarno)
+                            NavigationLink { DodajPitanjeView(pocetnaVrsta: .vesanje) } label: { Label("Dodaj reč", systemImage: "textformat.abc") }.buttonStyle(.sekundarno)
+                        }
                     }
                     nivo
                     ProfilStatistike(profil: p)
