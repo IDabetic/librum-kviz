@@ -165,7 +165,10 @@ class OsvajanjeModel(
                         utvrdjivanje = false; izabrana = null; javi("Vojske prebačene")
                     }
                     utvrdjivanje -> izabrana = if (moja) id else null
-                    moja -> { izabrana = if (stanje.mete(id).isEmpty()) null else id; meta = null }
+                    moja -> {
+                        izabrana = if (stanje.mete(id).isEmpty()) null else id; meta = null
+                        if (izabrana == null) javi(razlogBezNapada(id))
+                    }
                     izvor != null && id in stanje.mete(izvor) -> meta = if (meta == id) null else id
                 }
             }
@@ -186,6 +189,16 @@ class OsvajanjeModel(
     }
 
     fun odustaniOdMete() { meta = null }
+
+    /** Zašto iz svoje države ne može da se napadne (inače bi dodir izgledao kao da ne radi). */
+    private fun razlogBezNapada(id: String): String {
+        val ime = Mapa.oblast(id).ime
+        return when {
+            stanje.bitaka >= stanje.napadaPoPotezu -> "Iskoristio si sve napade u ovom potezu. Završi potez."
+            (stanje.oblasti[id]?.vojske ?: 0) < 2 -> "$ime ima 1 vojsku, za napad trebaju 2. Prebaci vojske dugmetom Utvrdi."
+            else -> "$ime nema suseda za napad."
+        }
+    }
 
     /** Pomoć „Preskok”: tekuće pitanje bitke se menja novim iz špila. */
     fun zameniPitanje() {

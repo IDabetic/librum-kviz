@@ -143,6 +143,7 @@ final class OsvajanjeModel {
                 }
             } else if moja {
                 izabrana = stanje.mete(id).isEmpty ? nil : id
+                if izabrana == nil { javi(razlogBezNapada(id)) }
             } else if let izvor = izabrana, stanje.mete(izvor).contains(id) {
                 meta = meta == id ? nil : id
             }
@@ -174,6 +175,14 @@ final class OsvajanjeModel {
     }
 
     func odustaniOdMete() { meta = nil }
+
+    /// Zašto iz svoje države ne može da se napadne (inače bi dodir izgledao kao da ne radi).
+    private func razlogBezNapada(_ id: String) -> String {
+        let ime = Mapa.oblast(id).ime
+        if stanje.bitaka >= stanje.napadaPoPotezu { return "Iskoristio si sve napade u ovom potezu. Završi potez." }
+        if (stanje.oblasti[id]?.vojske ?? 0) < 2 { return "\(ime) ima 1 vojsku, za napad trebaju 2. Prebaci vojske dugmetom Utvrdi." }
+        return "\(ime) nema suseda za napad."
+    }
 
     func krajPoteza() {
         izabrana = nil; utvrdjivanje = false
