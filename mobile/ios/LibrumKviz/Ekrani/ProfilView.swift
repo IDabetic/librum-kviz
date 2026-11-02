@@ -472,7 +472,11 @@ struct PodesavanjaView: View {
                 VStack(spacing: 0) {
                     Link(destination: URL(string: "mailto:podrska@librum.rs?subject=Librum%20kviz")!) { RedListe(ikonica: "bubble.left", naziv: "Pomoć i utisci") }
                     Divider().overlay(Color.kremTamnija)
-                    Link(destination: URL(string: "https://kviz.librum.club/dodaj-pitanja")!) { RedListe(ikonica: "plus.bubble", naziv: "Pošalji pitanje") }
+                    NavigationLink { DodajPitanjeView() } label: { RedListe(ikonica: "plus.bubble", naziv: "Pošalji pitanje") }
+                    if sesija.prijavljen {
+                        Divider().overlay(Color.kremTamnija)
+                        NavigationLink { BlokiraniView() } label: { RedListe(ikonica: "hand.raised.slash", naziv: "Blokirani igrači") }
+                    }
                     Divider().overlay(Color.kremTamnija)
                     Link(destination: URL(string: "https://kviz.librum.club/politika-privatnosti")!) { RedListe(ikonica: "hand.raised", naziv: "Politika privatnosti") }
                     Divider().overlay(Color.kremTamnija)

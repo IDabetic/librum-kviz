@@ -89,6 +89,8 @@ enum Zajednica {
 /// Kartica „Igrači”: ko šta igra, tok objava (svi ili koje pratim), poruke, pretraga igrača i nova objava.
 struct IgraciTabView: View {
     @Environment(Sesija.self) private var sesija
+    @Environment(Napredak.self) private var napredak
+    @State private var pravila = false
     @State private var vrsta = "svi"
     @State private var objave: Ucitano<[Zajednica.Objava]> = .ucitava
     @State private var igraju: [Zajednica.Igra] = []
@@ -113,7 +115,7 @@ struct IgraciTabView: View {
                     .accessibilityLabel("Poruke, \(neprocitanih) nepročitanih")
                 }
                 if !igraju.isEmpty { sadIgraju }
-                Button { if sesija.prijavljen { nova = true } else { prijava = true } } label: {
+                Button { if !sesija.prijavljen { prijava = true } else if napredak.s.pravilaZajednice { nova = true } else { pravila = true } } label: {
                     HStack(spacing: 12) {
                         AvatarSlika(avatar: sesija.avatar, velicina: 40)
                         Text("Pozovi na duel, traži tim ili podeli rezultat…").font(.tekst(15)).foregroundStyle(Color.sivaTekst).lineLimit(1)
@@ -150,6 +152,11 @@ struct IgraciTabView: View {
         .sheet(isPresented: $nova) { NovaObjavaView { Task { await ucitaj() } } }
         .sheet(item: $komentariZa) { o in KomentariView(objava: o) { broj in var n = o; n.komentara = broj; zameni(n) } }
         .fullScreenCover(isPresented: $prijava) { PrijavaTok() }
+        .overlay {
+            if pravila {
+                PravilaZajedniceView(prihvati: { napredak.podesi { $0.pravilaZajednice = true }; pravila = false; nova = true }, odustani: { pravila = false })
+            }
+        }
     }
 
     private var sadIgraju: some View {
@@ -436,6 +443,8 @@ struct KomentariView: View {
     let objava: Zajednica.Objava
     var promenjenBroj: (Int) -> Void = { _ in }
     @Environment(Sesija.self) private var sesija
+    @Environment(Napredak.self) private var napredak
+    @State private var pravila = false
     @Environment(\.dismiss) private var zatvori
     @State private var stanje: Ucitano<[Zajednica.Komentar]> = .ucitava
     @State private var tekst = ""
@@ -472,6 +481,11 @@ struct KomentariView: View {
         }
         .background(Papir())
         .task { await ucitaj() }
+        .overlay {
+            if pravila {
+                PravilaZajedniceView(prihvati: { napredak.podesi { $0.pravilaZajednice = true }; pravila = false; Task { await posalji() } }, odustani: { pravila = false })
+            }
+        }
         .overlay {
             if let k = meniZa {
                 DonjiList(zatvori: { meniZa = nil }) {
@@ -565,6 +579,7 @@ struct KomentariView: View {
     }
 
     private func posalji() async {
+        guard napredak.s.pravilaZajednice else { pravila = true; return }
         let t = tekst
         tekst = ""
         do { try await Zajednica.komentarisi(sesija, objava: objava.id, tekst: t, roditelj: odgovorNa?.id); odgovorNa = nil; await ucitaj() }
@@ -646,6 +661,8 @@ struct RazgovorView: View {
     let nadimak: String
     let avatar: String?
     @Environment(Sesija.self) private var sesija
+    @Environment(Napredak.self) private var napredak
+    @State private var pravila = false
     @State private var poruke: [Zajednica.Poruka] = []
     @State private var tekst = ""
     @State private var greska: String?
@@ -698,6 +715,11 @@ struct RazgovorView: View {
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .overlay {
+            if pravila {
+                PravilaZajedniceView(prihvati: { napredak.podesi { $0.pravilaZajednice = true }; pravila = false; Task { await posalji() } }, odustani: { pravila = false })
+            }
+        }
         .task {
             // Novo stiže na svakih 5 s dok je razgovor otvoren (shortcut: bez realtime kanala; kad bude potrebno, Supabase Realtime).
             while !Task.isCancelled {
@@ -708,6 +730,7 @@ struct RazgovorView: View {
     }
 
     private func posalji() async {
+        guard napredak.s.pravilaZajednice else { pravila = true; return }
         let t = tekst
         tekst = ""
         do {
@@ -718,5 +741,89 @@ struct RazgovorView: View {
             tekst = t
             greska = (error as? Supabase.Greska)?.poruka ?? error.localizedDescription
         }
+    }
+}
+
+
+// MARK: Pravila zajednice i blokirani
+
+/// Pravila zajednice: jednom, pre prve objave, komentara ili poruke (Apple traži prihvatanje za sadržaj korisnika).
+struct PravilaZajedniceView: View {
+    let prihvati: () -> Void
+    let odustani: () -> Void
+    private static let pravila = [
+        ("hand.raised", "Bez uvreda, pretnji i govora mržnje. Ni prema kome, ni u šali."),
+        ("eye.slash", "Bez golotinje, nasilja i sadržaja neprikladnog za decu."),
+        ("megaphone", "Bez reklama, prevara i lažnih profila."),
+        ("lock", "Ne objavljuj tuđe lične podatke: telefon, adresu, mejl."),
+        ("flag", "Prijavi što krši pravila; tri prijave sakrivaju objavu odmah, urednik pregleda u roku od 24 h."),
+        ("person.crop.circle.badge.xmark", "Ko krši pravila gubi pravo na objave, a nalog može biti ugašen."),
+    ]
+
+    var body: some View {
+        DonjiList(zatvori: odustani) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Pravila zajednice").font(.naslov(26))
+                Text("Igrači je prostor za izazove, rezultate i druženje. Pre prve objave prihvati pravila:").font(.tekst(14)).foregroundStyle(Color.sivaTekst)
+                ForEach(Self.pravila, id: \.1) { p in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: p.0).font(.system(size: 16, weight: .bold)).frame(width: 24).foregroundStyle(Color.teal)
+                        Text(p.1).font(.tekst(15)).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Link("Uslovi korišćenja", destination: URL(string: "https://kviz.librum.club/uslovi-koriscenja")!).font(.tekst(14, .bold)).foregroundStyle(Color.teal)
+                Button("Prihvatam", action: prihvati).buttonStyle(.primarno)
+            }
+        }
+    }
+}
+
+/// Spisak blokiranih igrača sa odblokiranjem (Podešavanja → Blokirani).
+struct BlokiraniView: View {
+    @Environment(Sesija.self) private var sesija
+    struct Red: Decodable, Identifiable { let id: String; let nadimak: String; let avatar: String? }
+    @State private var stanje: Ucitano<[Red]> = .ucitava
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                GornjaTraka()
+                Naslov(tekst: "Blokirani", velicina: 30)
+                Text("Blokirani igrači ne vide tvoje objave, komentare i profil, i ne mogu da ti pišu.").font(.tekst(14)).foregroundStyle(Color.sivaTekst)
+                switch stanje {
+                case .ucitava: ForEach(0..<3, id: \.self) { _ in Skelet(visina: 56) }
+                case .greska(let p): StanjeEkrana(maskota: .lumi, naslov: "Spisak se nije učitao", tekst: p, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
+                case .gotovo(let l) where l.isEmpty: StanjeEkrana(maskota: .bloop, naslov: "Nikog nisi blokirao", tekst: "Blokiraš iz menija objave ili sa profila igrača.")
+                case .gotovo(let l):
+                    VStack(spacing: 0) {
+                        ForEach(Array(l.enumerated()), id: \.element.id) { i, r in
+                            HStack(spacing: 12) {
+                                AvatarSlika(avatar: r.avatar, velicina: 44)
+                                Text(r.nadimak).font(.tekst(16, .semibold))
+                                Spacer()
+                                Button("Odblokiraj") {
+                                    Task { if await Zajednica.radnja(sesija, "blokiraj", ["p_id": r.id, "p_da": false]) { await ucitaj() } }
+                                }
+                                .font(.tekst(14, .bold)).foregroundStyle(Color.mastilo).padding(.horizontal, 14).frame(height: 36)
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.mastilo, lineWidth: 1.5))
+                            }
+                            .padding(.horizontal, 14).padding(.vertical, 10)
+                            if i < l.count - 1 { Divider().overlay(Color.kremTamnija) }
+                        }
+                    }
+                    .mirna()
+                }
+            }
+            .padding(16)
+        }
+        .background(Papir())
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .task { await ucitaj() }
+    }
+
+    private func ucitaj() async {
+        do { stanje = .gotovo(try await Supabase.deljeni.rpc("moje_blokade", [:], token: try? await sesija.vazeciToken())) }
+        catch { stanje = .greska(error.localizedDescription) }
     }
 }

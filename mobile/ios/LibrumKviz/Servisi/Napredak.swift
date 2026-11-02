@@ -55,6 +55,8 @@ final class Napredak {
         var poruke: [Poruka] = []
         var cilj = 3
         var podsetnik = true
+        /// Prihvaćena pravila zajednice (pre prve objave, komentara ili poruke; Apple 1.2).
+        var pravilaZajednice = false
         var maskota = "Mimi"
         /// Avatar (oznaka „s3:2:4”); kod prijavljenog ide i u profiles.avatar.
         var avatar: String?
