@@ -119,7 +119,7 @@ actor PaketPitanja {
     /// Reči za vešanje (RPC aplikacija_reci), sa istim redom rezervi.
     func reci() async throws -> [Rec] {
         let fajl = fajl(.opste).deletingLastPathComponent().appendingPathComponent("paket-reci.json")
-        if let svez: [Rec] = try? await Supabase.deljeni.rpc("aplikacija_reci", ["p_broj": 40]), !svez.isEmpty {
+        if let sve: [Rec] = try? await Supabase.deljeni.rpc("aplikacija_reci", ["p_broj": 40]), case let svez = sve.filter(\.pogodiva), !svez.isEmpty {
             try? JSONEncoder().encode(svez).write(to: fajl, options: .atomic)
             return svez.shuffled()
         }
@@ -132,7 +132,11 @@ actor PaketPitanja {
     }
 }
 
-struct Rec: Codable, Equatable { let id: String; let word: String; let hint: String?; let category: String? }
+struct Rec: Codable, Equatable {
+    let id: String; let word: String; let hint: String?; let category: String?
+    /// Reč sa slovom van srpske azbuke (Q, W, X, Y: „maqam”) ne može da se pogodi, pa se preskače.
+    var pogodiva: Bool { word.uppercased().allSatisfy { !$0.isLetter || Vesanje.azbuka.contains(String($0)) } }
+}
 
 /// Špil koji se vrti u krug kad se pitanja potroše.
 struct Spil {

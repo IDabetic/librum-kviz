@@ -16,8 +16,10 @@ struct VesanjeView: View {
     @State private var celaRec = false
     @State private var pomocIskoriscena = false
     @State private var sacuvano = false
+    /// Slova se kucaju tastaturom telefona (vlasnik 03.11), ne dugmićima na ekranu.
+    @State private var unos = ""
+    @FocusState private var tastatura: Bool
 
-    private let kolone = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
 
     var body: some View {
         ZStack {
@@ -58,26 +60,43 @@ struct VesanjeView: View {
                 Text("\(igra.poeni)").font(.naslov(22)).monospacedDigit().padding(.leading, 8)
             }
             VStack(alignment: .leading, spacing: 12) {
-                if let k = r.category { Oznaka(tekst: k, boja: .mastilo) }
-                if let h = r.hint { Text(h).font(.tekst(17, .semibold)) }
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let k = r.category { Oznaka(tekst: k, boja: .mastilo) }
+                        if let h = r.hint { Text(h).font(.tekst(17, .semibold)).fixedSize(horizontal: false, vertical: true) }
+                    }
+                    Spacer(minLength: 0)
+                    VesalaCrtez(greske: Vesanje.pocetniZivoti - igra.zivoti, kraj: igra.status == .poraz)
+                        .frame(width: 96, height: 116)
+                }
                 FlowReci(znakovi: igra.prikaz)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .accessibilityLabel(igra.prikaz.map { $0 == "_" ? "prazno" : $0 }.joined(separator: " "))
             }
             .padding(20).pop(.zuta)
+            .contentShape(Rectangle())
+            .onTapGesture { if igra.status == .igra && !celaRec { tastatura = true } }
 
             if igra.status == .igra {
-                LazyVGrid(columns: kolone, spacing: 6) {
-                    ForEach(Vesanje.azbuka, id: \.self) { s in
-                        let iskorisceno = igra.iskorisceno(s)
-                        Button { igra.pogodi(s) } label: {
-                            Text(s).font(.tekst(17, .bold)).frame(maxWidth: .infinity, minHeight: 46)
-                                .foregroundStyle(iskorisceno ? Color.sivaTekst : Color.mastilo)
-                                .background(iskorisceno ? Color.kremTamnija : Color.kartica, in: RoundedRectangle(cornerRadius: 12))
-                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(iskorisceno ? Color.clear : Color.mastilo, lineWidth: 1.5))
+                if !celaRec {
+                    // Skriveno polje drži tastaturu telefona; svako otkucano slovo je pokušaj.
+                    TextField("", text: $unos)
+                        .focused($tastatura)
+                        .textInputAutocapitalization(.characters).autocorrectionDisabled().keyboardType(.default)
+                        .frame(width: 1, height: 1).opacity(0.01)
+                        .accessibilityLabel("Otkucaj slovo")
+                        .onChange(of: unos) { staro, novo in
+                            // Obrađuju se samo novododata slova; polje se ne briše dok se kuca (brisanje gubi slova u letu).
+                            guard novo.count > staro.count, novo.hasPrefix(staro) else { return }
+                            for z in novo.dropFirst(staro.count) where igra.status == .igra {
+                                let slovo = String(z).uppercased()
+                                if Vesanje.azbuka.contains(slovo) && !igra.iskorisceno(slovo) { igra.pogodi(slovo) }
+                            }
                         }
-                        .buttonStyle(.plain).disabled(iskorisceno)
+                    iskoriscenaSlova
+                    if !tastatura {
+                        Button { tastatura = true } label: { Label("Kucaj slova", systemImage: "keyboard") }.buttonStyle(.sekundarno)
                     }
                 }
                 if celaRec {
@@ -86,11 +105,11 @@ struct VesanjeView: View {
                             .background(Color.kartica, in: RoundedRectangle(cornerRadius: 14))
                             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mastilo, lineWidth: 1.5))
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        Button("Pogodi") { igra.pogodiRec(pokusajReci); pokusajReci = ""; celaRec = false }.buttonStyle(.primarno).frame(width: 110)
+                        Button("Pogodi") { igra.pogodiRec(pokusajReci); pokusajReci = ""; celaRec = false; tastatura = true }.buttonStyle(.primarno).frame(width: 110)
                     }
                     Text("Pogrešna cela reč odnosi 2 života.").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                 } else {
-                    Button("Pogodi celu reč") { celaRec = true }.buttonStyle(.sekundarno)
+                    Button("Pogodi celu reč") { tastatura = false; celaRec = true }.buttonStyle(.sekundarno)
                     // 50/50 gasi pola suvišnih slova, nagoveštaj otkriva slovo, umesto vremena vraća se život.
                     PomociTraka(iskoriscena: $pomocIskoriscena,
                                 polaPola: { igra.skloniPolovinuSlova() },
@@ -111,6 +130,31 @@ struct VesanjeView: View {
         }
     }
 
+    /// Pogođena i promašena slova (umesto tastature na ekranu).
+    private var iskoriscenaSlova: some View {
+        let pog = Vesanje.azbuka.filter { igra.iskorisceno($0) && igra.rec.uppercased().contains($0) }
+        let pro = Vesanje.azbuka.filter { igra.iskorisceno($0) && !igra.rec.uppercased().contains($0) }
+        return VStack(alignment: .leading, spacing: 6) {
+            if pog.isEmpty && pro.isEmpty {
+                Text("Kucaj slova na tastaturi telefona.").font(.tekst(14)).foregroundStyle(Color.sivaTekst)
+            }
+            if !pro.isEmpty {
+                HStack(spacing: 6) {
+                    Text("Nema:").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+                    Text(pro.joined(separator: " ")).font(.tekst(16, .bold)).foregroundStyle(Color.crvena).strikethrough()
+                }
+            }
+            if !pog.isEmpty {
+                HStack(spacing: 6) {
+                    Text("Ima:").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+                    Text(pog.joined(separator: " ")).font(.tekst(16, .bold)).foregroundStyle(Color.teal)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
     private func ucitaj() async {
         do { reci = try await PaketPitanja.deljeni.reci(); sledeca() } catch { greska = error.localizedDescription }
     }
@@ -125,6 +169,8 @@ struct VesanjeView: View {
         sacuvano = false
         celaRec = false
         pomocIskoriscena = false
+        unos = ""
+        tastatura = true
     }
 
     private func sacuvaj() async {
@@ -153,5 +199,41 @@ private struct FlowReci: View {
                 }
             }
         }
+    }
+}
+
+
+/// Vešala: konstrukcija stoji od početka, a svaki promašaj dodaje deo čoveka (glava, telo, ruke, noge).
+struct VesalaCrtez: View {
+    let greske: Int
+    var kraj = false
+
+    var body: some View {
+        Canvas { ctx, v in
+            let w = v.width, h = v.height
+            let debelo = StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+            var konstr = Path()
+            konstr.move(to: CGPoint(x: w * 0.08, y: h * 0.96)); konstr.addLine(to: CGPoint(x: w * 0.62, y: h * 0.96))
+            konstr.move(to: CGPoint(x: w * 0.22, y: h * 0.96)); konstr.addLine(to: CGPoint(x: w * 0.22, y: h * 0.05))
+            konstr.addLine(to: CGPoint(x: w * 0.72, y: h * 0.05))
+            konstr.move(to: CGPoint(x: w * 0.22, y: h * 0.22)); konstr.addLine(to: CGPoint(x: w * 0.38, y: h * 0.05))
+            konstr.move(to: CGPoint(x: w * 0.72, y: h * 0.05)); konstr.addLine(to: CGPoint(x: w * 0.72, y: h * 0.17))
+            ctx.stroke(konstr, with: .color(.tinta), style: debelo)
+            let boja: Color = kraj ? .crvena : .tinta
+            let cx = w * 0.72, glava = h * 0.09
+            if greske >= 1 { ctx.stroke(Path(ellipseIn: CGRect(x: cx - glava, y: h * 0.17, width: glava * 2, height: glava * 2)), with: .color(boja), style: debelo) }
+            var telo = Path()
+            let vrat = h * 0.17 + glava * 2, kuk = h * 0.62
+            if greske >= 2 { telo.move(to: CGPoint(x: cx, y: vrat)); telo.addLine(to: CGPoint(x: cx, y: kuk)) }
+            if greske >= 3 { telo.move(to: CGPoint(x: cx, y: vrat + h * 0.06)); telo.addLine(to: CGPoint(x: cx - w * 0.16, y: vrat + h * 0.2)) }
+            if greske >= 4 { telo.move(to: CGPoint(x: cx, y: vrat + h * 0.06)); telo.addLine(to: CGPoint(x: cx + w * 0.16, y: vrat + h * 0.2)) }
+            if greske >= 5 { telo.move(to: CGPoint(x: cx, y: kuk)); telo.addLine(to: CGPoint(x: cx - w * 0.14, y: h * 0.86)) }
+            if greske >= 6 { telo.move(to: CGPoint(x: cx, y: kuk)); telo.addLine(to: CGPoint(x: cx + w * 0.14, y: h * 0.86)) }
+            ctx.stroke(telo, with: .color(boja), style: debelo)
+        }
+        .animation(.spring(duration: 0.35), value: greske)
+        .sensoryFeedback(.error, trigger: greske)
+        .accessibilityElement()
+        .accessibilityLabel(greske == 0 ? "Vešala, još nijedan promašaj" : "Vešala, \(greske) od \(Vesanje.pocetniZivoti) delova")
     }
 }
