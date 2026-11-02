@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   robots: { index: false },
 }
 
-const DOZVOLJENI_KRUGOVI = [6, 10]
+const DOZVOLJENI_KRUGOVI = [8, 12]
 
 export default async function IgraPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const q = await searchParams
   const tezina: Tezina = q.tezina && q.tezina in TEZINE ? (q.tezina as Tezina) : 'normalno'
-  const krugova = DOZVOLJENI_KRUGOVI.includes(Number(q.krugova)) ? Number(q.krugova) : 10
+  const krugova = DOZVOLJENI_KRUGOVI.includes(Number(q.krugova)) ? Number(q.krugova) : 12
   return <Igra key={`${tezina}-${krugova}`} krugova={krugova} tezina={tezina} />
 }

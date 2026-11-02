@@ -14,8 +14,8 @@ const PRAVILA = [
   ['Snabdevanje', 'Na početku poteza jedno pitanje. Tačno donosi pune vojske, netačno pola. Raspoređuješ ih dodirom po svojim oblastima.'],
   ['Napad', 'Iz oblasti sa bar 2 vojske napadaš susednu. Svaka bitka je pitanje od 15 sekundi; protiv rivala odgovarate oboje, a izjednačenje rešava brzina.'],
   ['Proboj', 'Kad osvojiš oblast, vojske prelaze u nju i odmah možeš da cepaš dalje. Svako treće osvajanje u nizu donosi +2 vojske.'],
-  ['Kontinenti', 'Ceo kontinent donosi bonus vojske svakog poteza: Azija +4, Evropa, Afrika i Severna Amerika +3, Južna Amerika i Okeanija +2.'],
-  ['Prestonica', 'Svaki igrač počinje iz prestonice. Tuđa prestonica nosi +5 vojski plena, a svoja na kraju 20 poena.'],
+  ['Regioni', 'Svet je podeljen na 17 regiona (Severna Evropa, Balkan i Mediteran, Južna Amerika…). Ceo region donosi bonus vojske svakog poteza.'],
+  ['Prestonica', 'Svako počinje sa prestonicom i pet susednih država. Tuđa prestonica nosi +5 vojski plena, a svoja na kraju 20 poena.'],
 ] as const
 
 const TEZINE = [
@@ -35,7 +35,7 @@ export default function OsvajanjePage() {
           <p className="chip relative" style={{ color: '#FFD84D' }}>Glavna igra · 3 igrača</p>
           <h1 className="relative mt-3" style={{ fontSize: 'clamp(46px, 9vw, 92px)' }}>Osvajanje<br />sveta</h1>
           <p className="relative mt-4 text-[17px] font-semibold max-w-md opacity-90">
-            Šest kontinenata, dvadeset četiri oblasti i dva rivala. Svaku bitku odlučuje pitanje.
+            171 država, 17 regiona i dva rivala. Svaku državu osvajaš pitanjem.
           </p>
         </div>
 
@@ -49,8 +49,8 @@ export default function OsvajanjePage() {
                     <span className="block font-bold">{t.ime}</span>
                     <span className="block text-[13px]" style={{ color: '#6F6C66' }}>{t.opis}</span>
                   </span>
-                  <Link href={`/osvajanje/igra?tezina=${t.id}&krugova=6`} className="btn btn-secondary btn-sm">6 krugova</Link>
-                  <Link href={`/osvajanje/igra?tezina=${t.id}&krugova=10`} className="btn btn-primary btn-sm">10 krugova</Link>
+                  <Link href={`/osvajanje/igra?tezina=${t.id}&krugova=8`} className="btn btn-secondary btn-sm">8 krugova</Link>
+                  <Link href={`/osvajanje/igra?tezina=${t.id}&krugova=12`} className="btn btn-primary btn-sm">12 krugova</Link>
                 </li>
               ))}
             </ul>

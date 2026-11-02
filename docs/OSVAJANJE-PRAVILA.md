@@ -1,6 +1,6 @@
 # Osvajanje sveta — pravila
 
-Ažurirano: 02.11.2026 · verzija 1.0
+Ažurirano: 02.11.2026 · verzija 2.0 (mapa po državama)
 
 Glavna igra Librum kviza. Strateška igra na mapi sveta u kojoj svaku bitku
 odlučuje pitanje. Žanr je isti kao kod ConQUIZtadora i Riska (teritorije +
@@ -14,30 +14,27 @@ i u testu `tests/osvajanje.test.mjs`.
 
 ## Mapa
 
-24 oblasti u 6 kontinenata. Veze su nacrtane linijama (i preko mora:
-Aljaska–Sibir, Kanada–Skandinavija, Brazil–Zapadna Afrika).
+Prava mapa sveta: **171 država** iz Natural Earth 1:50m (javno dobro), u 17
+regiona sa bonusom kao kontinenti u Risku (Severna Evropa, Južna Evropa,
+Južna Amerika, Bliski istok…). Susedi su države sa kopnenom granicom, plus
+morske veze (SAD–Rusija, Velika Britanija–Francuska, Španija–Maroko, Brazil–
+Senegal, ostrva ka najbližim državama). Kosovo je deo Srbije, Severni Kipar
+deo Kipra, Somalilend deo Somalije.
 
-| Kontinent | Oblasti | Bonus po potezu |
-|---|---|---|
-| Severna Amerika | Aljaska, Kanada, SAD, Meksiko | +3 |
-| Južna Amerika | Kolumbija, Peru, Brazil, Argentina | +2 |
-| Evropa | Skandinavija, Zapadna Evropa, Srednja Evropa, Balkan | +3 |
-| Afrika | Severna, Zapadna, Istočna, Južna Afrika | +3 |
-| Azija | Sibir, Bliski istok, Indija, Kina, Japan | +4 |
-| Okeanija | Indonezija, Australija, Novi Zeland | +2 |
+Mapu pravi `alati/napravi-mapu.mjs` u `src/lib/osvajanje/svet.json`; isti fajl
+koriste iOS i Android. Bonus regiona = trećina broja država, najmanje 2.
 
 ## Početak
 
-- Igraju tri igrača: ti i dva rivala (Mimi i Zig). Rivali su botovi tri
-  jačine: lako (50% tačnih), normalno (62%), teško (75%).
-- Svako dobija **prestonicu** na drugom kontinentu sa 4 vojske.
-- Sve ostale oblasti su neutralne sa po 1 vojskom.
-- Partija traje **10 krugova** (brza partija 6). U krugu svako igra jedan potez.
+- Igraju tri igrača: ti i dva rivala (Mimi i Zig), tri jačine botova.
+- Svako dobija **prestonicu** (5 vojski) u drugom regionu i još **5 najbližih
+  država** (po 2 vojske). Sve ostale države su neutralne sa 1 vojskom.
+- Partija traje **8 ili 12 krugova**.
 
 ## Potez
 
 1. **Snabdevanje.** Jedno pitanje. Tačno: dobijaš
-   `max(3, oblasti / 2) + bonusi kontinenata` vojski. Netačno: pola toga
+   `max(3, države / 3) + bonusi regiona` vojski. Netačno: pola toga
    (najmanje 1). Vojske raspoređuješ dodirom po svojim oblastima.
 2. **Napad.** Biraš svoju oblast sa bar 2 vojske i susednu tuđu ili
    neutralnu oblast. Bitka je jedno pitanje od 15 sekundi.
@@ -52,7 +49,7 @@ Aljaska–Sibir, Kanada–Skandinavija, Brazil–Zapadna Afrika).
    - **Proboj:** posle osvajanja izabrana oblast postaje osvojena, pa možeš
      odmah da „cepaš dalje” iz nje. Svako treće osvajanje u nizu donosi
      **+2 vojske** na mestu proboja.
-   - Najviše **6 bitaka** po potezu, da potez ostane kratak.
+   - Najviše **8 bitaka** po potezu, da potez ostane kratak.
 3. **Utvrđivanje.** Jednom po potezu možeš da prebaciš vojske između dve
    susedne svoje oblasti (u izvoru ostaje bar 1).
 
@@ -66,7 +63,7 @@ oblasti ispada iz partije.
 Partija se završava posle poslednjeg kruga ili kad jedan igrač drži sve
 oblasti koje nisu neutralne, a ostali su ispali.
 
-Poeni = `oblasti × 10 + vojske + bonus kontinenata × 10 + 20 ako držiš svoju prestonicu`.
+Poeni = `države × 10 + vojske + bonus regiona × 10 + 20 ako držiš svoju prestonicu`.
 
 ## Pitanja
 
@@ -76,5 +73,5 @@ partije, umesto da povlači celu bazu. U aplikacijama se paket kešira.
 ## Šta namerno NIJE kao kod drugih
 
 - Nema kula/tornjeva na prestonici, nema procenjivanja broja kao razrešenja.
-- Mapa je ceo svet po kontinentima, ne jedna država.
+- Mapa je ceo svet po državama, ne jedna zemlja po oblastima.
 - Vojske i proboj umesto fiksne vrednosti teritorije.

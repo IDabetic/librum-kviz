@@ -180,7 +180,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
         const vlasnik = st.oblasti[napad.kuda].vlasnik
         let branilac: P.Odgovor | null = null
         if (vlasnik && st.igraci.find(p => p.id === vlasnik)?.covek) {
-          const oblast = P.OBLASTI.find(o => o.id === napad!.kuda)!.ime
+          const oblast = P.oblast(napad!.kuda).ime
           javi(`${P.trenutni(st).ime} napada ${oblast}! Brani se`)
           branilac = await new Promise<P.Odgovor>(resi => {
             odbranaResi.current = resi
@@ -235,8 +235,8 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
     : 'Snabdevanje…'
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="px-4 sm:px-6 pt-4 pb-2 max-w-6xl w-full mx-auto flex items-center gap-3">
+    <div className="h-[100dvh] flex flex-col overflow-hidden">
+      <header className="px-4 sm:px-6 pt-4 pb-2 max-w-7xl w-full mx-auto flex items-center gap-3">
         <Link href="/osvajanje" aria-label="Izađi" className="w-11 h-11 grid place-items-center rounded-full bg-white shrink-0" style={{ border: '1.5px solid #E7E1D0' }}>
           <IconClose size={20} />
         </Link>
@@ -248,7 +248,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
         </div>
       </header>
 
-      <div className="px-4 sm:px-6 max-w-6xl w-full mx-auto grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="px-4 sm:px-6 max-w-7xl w-full mx-auto grid grid-cols-3 gap-2 sm:gap-3">
         {s.igraci.map(p => (
           <div key={p.id} className="flex items-center gap-2 rounded-2xl px-2.5 py-2"
             style={{ background: '#FFFFFF', border: p.id === naPotezu.id && s.faza !== 'kraj' ? '2.5px solid #151515' : '1.5px solid #E7E1D0', opacity: p.ispao ? 0.4 : 1 }}>
@@ -263,11 +263,12 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
         ))}
       </div>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-2 sm:px-6 py-2">
-        <Mapa stanje={s} izabrana={izabrana} mete={mete} onOblast={naOblast} />
+      <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-6 pt-3 pb-2">
+        <Mapa stanje={s} izabrana={izabrana} mete={mete} onOblast={naOblast}
+          fokus={otvoreno?.kuda ?? izabrana ?? ti.prestonica} />
       </main>
 
-      <footer className="sticky bottom-0 px-4 sm:px-6 pb-4 pt-2 max-w-6xl w-full mx-auto">
+      <footer className="px-4 sm:px-6 pb-4 pt-2 max-w-7xl w-full mx-auto">
         <div className="card-soft px-4 py-3 flex flex-wrap items-center gap-3">
           <p className="flex-1 min-w-[180px] text-[14px] font-semibold" aria-live="polite">{uputstvo}</p>
           {covekNaPotezu && s.faza === 'raspored' && (
@@ -298,8 +299,8 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
               <div className="flex items-center justify-between gap-3 mb-3">
                 <p className="chip">
                   {otvoreno.vrsta === 'snabdevanje' ? 'Snabdevanje'
-                    : otvoreno.vrsta === 'odbrana' ? `Odbrana · ${P.OBLASTI.find(o => o.id === otvoreno.kuda)?.ime}`
-                    : `Napad · ${P.OBLASTI.find(o => o.id === otvoreno.kuda)?.ime}`}
+                    : otvoreno.vrsta === 'odbrana' ? `Odbrana · ${P.oblast(otvoreno.kuda!).ime}`
+                    : `Napad · ${P.oblast(otvoreno.kuda!).ime}`}
                 </p>
                 <span className="naslov text-[22px] tabular-nums" aria-label={`${preostalo} sekundi`}>{preostalo}</span>
               </div>

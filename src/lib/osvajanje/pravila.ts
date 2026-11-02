@@ -1,66 +1,24 @@
-// Osvajanje sveta: mapa, pravila i botovi u jednom fajlu bez spoljnih zavisnosti.
-// Namerno samostalan: test ga uvozi direktno kroz Node (type stripping), a iOS
+// Osvajanje sveta: mapa država, pravila i botovi bez spoljnih zavisnosti.
+// Test ga uvozi direktno kroz Node (type stripping), a iOS
 // (Pravila.swift) i Android (Pravila.kt) su njegovi verni prevodi. Pravila u
 // rečima: docs/OSVAJANJE-PRAVILA.md.
 
+import svet from './svet.json' with { type: 'json' }
+
 // ── Mapa ─────────────────────────────────────────────────────────────────────
+// Države sveta iz Natural Earth (alati/napravi-mapu.mjs → svet.json). Region je
+// grupa država sa bonusom kao kontinent u Risku; veze su kopnene granice i more.
 
-export type Kontinent = { id: string; ime: string; bonus: number }
+export type Region = { id: string; ime: string; bonus: number }
 
-export const KONTINENTI: Kontinent[] = [
-  { id: 'sam', ime: 'Severna Amerika', bonus: 3 },
-  { id: 'jam', ime: 'Južna Amerika', bonus: 2 },
-  { id: 'evr', ime: 'Evropa', bonus: 3 },
-  { id: 'afr', ime: 'Afrika', bonus: 3 },
-  { id: 'azi', ime: 'Azija', bonus: 4 },
-  { id: 'oke', ime: 'Okeanija', bonus: 2 },
-]
+/** Država sa tačkom za natpis i SVG putanjom u koordinatama mape SIRINA_MAPE × VISINA_MAPE. */
+export type Oblast = { id: string; ime: string; region: string; x: number; y: number; boja: number; povrsina: number; d: string }
 
-/** Oblast sa središtem u koordinatama mape 1040 × 580. */
-export type Oblast = { id: string; ime: string; kontinent: string; x: number; y: number }
-
-export const OBLASTI: Oblast[] = [
-  { id: 'aljaska', ime: 'Aljaska', kontinent: 'sam', x: 80, y: 90 },
-  { id: 'kanada', ime: 'Kanada', kontinent: 'sam', x: 190, y: 80 },
-  { id: 'sad', ime: 'SAD', kontinent: 'sam', x: 200, y: 190 },
-  { id: 'meksiko', ime: 'Meksiko', kontinent: 'sam', x: 180, y: 295 },
-  { id: 'kolumbija', ime: 'Kolumbija', kontinent: 'jam', x: 270, y: 360 },
-  { id: 'peru', ime: 'Peru', kontinent: 'jam', x: 250, y: 465 },
-  { id: 'brazil', ime: 'Brazil', kontinent: 'jam', x: 360, y: 430 },
-  { id: 'argentina', ime: 'Argentina', kontinent: 'jam', x: 330, y: 530 },
-  { id: 'skandinavija', ime: 'Skandinavija', kontinent: 'evr', x: 480, y: 70 },
-  { id: 'zap-evropa', ime: 'Zapadna Evropa', kontinent: 'evr', x: 430, y: 175 },
-  { id: 'sre-evropa', ime: 'Srednja Evropa', kontinent: 'evr', x: 535, y: 165 },
-  { id: 'balkan', ime: 'Balkan', kontinent: 'evr', x: 575, y: 260 },
-  { id: 'sev-afrika', ime: 'Severna Afrika', kontinent: 'afr', x: 475, y: 310 },
-  { id: 'zap-afrika', ime: 'Zapadna Afrika', kontinent: 'afr', x: 440, y: 415 },
-  { id: 'ist-afrika', ime: 'Istočna Afrika', kontinent: 'afr', x: 570, y: 400 },
-  { id: 'juz-afrika', ime: 'Južna Afrika', kontinent: 'afr', x: 520, y: 505 },
-  { id: 'sibir', ime: 'Sibir', kontinent: 'azi', x: 720, y: 85 },
-  { id: 'bliski-istok', ime: 'Bliski istok', kontinent: 'azi', x: 670, y: 285 },
-  { id: 'indija', ime: 'Indija', kontinent: 'azi', x: 770, y: 335 },
-  { id: 'kina', ime: 'Kina', kontinent: 'azi', x: 810, y: 210 },
-  { id: 'japan', ime: 'Japan', kontinent: 'azi', x: 925, y: 150 },
-  { id: 'indonezija', ime: 'Indonezija', kontinent: 'oke', x: 870, y: 400 },
-  { id: 'australija', ime: 'Australija', kontinent: 'oke', x: 920, y: 505 },
-  { id: 'novi-zeland', ime: 'Novi Zeland', kontinent: 'oke', x: 1000, y: 430 },
-]
-
-/** Veze između oblasti (neusmerene). Morske veze su obične veze. */
-export const VEZE: [string, string][] = [
-  ['aljaska', 'kanada'], ['aljaska', 'sibir'], ['aljaska', 'sad'], ['kanada', 'sad'], ['kanada', 'skandinavija'],
-  ['sad', 'meksiko'], ['meksiko', 'kolumbija'],
-  ['kolumbija', 'peru'], ['kolumbija', 'brazil'], ['peru', 'brazil'], ['peru', 'argentina'], ['brazil', 'argentina'],
-  ['brazil', 'zap-afrika'],
-  ['skandinavija', 'zap-evropa'], ['skandinavija', 'sre-evropa'], ['skandinavija', 'sibir'],
-  ['zap-evropa', 'sre-evropa'], ['zap-evropa', 'sev-afrika'], ['sre-evropa', 'balkan'], ['sre-evropa', 'sibir'],
-  ['balkan', 'bliski-istok'], ['balkan', 'sev-afrika'],
-  ['sev-afrika', 'zap-afrika'], ['sev-afrika', 'ist-afrika'], ['sev-afrika', 'bliski-istok'],
-  ['zap-afrika', 'ist-afrika'], ['zap-afrika', 'juz-afrika'], ['ist-afrika', 'juz-afrika'], ['ist-afrika', 'bliski-istok'],
-  ['bliski-istok', 'indija'], ['bliski-istok', 'sibir'], ['sibir', 'kina'], ['sibir', 'japan'],
-  ['kina', 'indija'], ['kina', 'japan'], ['kina', 'indonezija'], ['indija', 'indonezija'],
-  ['indonezija', 'australija'], ['australija', 'novi-zeland'], ['indonezija', 'novi-zeland'],
-]
+export const SIRINA_MAPE: number = svet.sirina
+export const VISINA_MAPE: number = svet.visina
+export const REGIONI: Region[] = svet.regioni
+export const OBLASTI: Oblast[] = svet.drzave
+export const VEZE: [string, string][] = svet.veze as [string, string][]
 
 const SUSEDI: Record<string, string[]> = {}
 for (const [a, b] of VEZE) {
@@ -68,17 +26,25 @@ for (const [a, b] of VEZE) {
   ;(SUSEDI[b] ??= []).push(a)
 }
 
-/** @example susedi('balkan') // ['sre-evropa', 'bliski-istok', 'sev-afrika'] */
+/** @example susedi('SRB') // ['BGR', 'BIH', 'HRV', 'HUN', 'MKD', 'MNE', 'ROU', …] */
 export function susedi(oblastId: string): string[] {
   return SUSEDI[oblastId] ?? []
 }
 
+const PO_ID = new Map(OBLASTI.map(o => [o.id, o]))
+export function oblast(id: string): Oblast {
+  return PO_ID.get(id)!
+}
+
 // ── Konstante pravila ────────────────────────────────────────────────────────
 
-export const POCETNE_VOJSKE_PRESTONICE = 4
+export const POCETNE_VOJSKE_PRESTONICE = 5
+export const POCETNIH_DRZAVA = 6
+export const POCETNE_VOJSKE_DRZAVE = 2
 export const NEUTRALNE_VOJSKE = 1
 export const NAJMANJE_POJACANJA = 3
-export const BITAKA_PO_POTEZU = 6
+export const TERITORIJA_PO_VOJSCI = 3
+export const BITAKA_PO_POTEZU = 8
 export const PROBOJ_SVAKIH = 3
 export const PROBOJ_BONUS = 2
 export const PLEN_PRESTONICE = 5
@@ -138,26 +104,43 @@ const IGRACI_PODRAZUMEVANO = [
 ]
 
 /**
- * Nova partija: prestonice na različitim kontinentima, ostalo neutralno.
+ * Nova partija: prestonice u različitim regionima, po šest država oko njih, ostalo neutralno.
  *
  * @example napraviPartiju({ krugova: 10, tezina: 'normalno', slucajno: napraviSlucajno(7) })
  */
 export function napraviPartiju(opcije: { krugova: number; tezina: Tezina; slucajno: () => number; ime?: string }): Stanje {
   const { krugova, tezina, slucajno } = opcije
   // Fisher–Yates: sort sa nasumičnim poređenjem je pristrasan.
-  const kontinenti = [...KONTINENTI]
-  for (let i = kontinenti.length - 1; i > 0; i--) {
+  const regioni = [...REGIONI]
+  for (let i = regioni.length - 1; i > 0; i--) {
     const j = Math.floor(slucajno() * (i + 1))
-    ;[kontinenti[i], kontinenti[j]] = [kontinenti[j], kontinenti[i]]
+    ;[regioni[i], regioni[j]] = [regioni[j], regioni[i]]
   }
-  const igraci: Igrac[] = IGRACI_PODRAZUMEVANO.map((p, i) => {
-    const kandidati = OBLASTI.filter(o => o.kontinent === kontinenti[i].id)
-    const prestonica = kandidati[Math.floor(slucajno() * kandidati.length)].id
-    return { ...p, ime: p.covek && opcije.ime ? opcije.ime : p.ime, prestonica, ispao: false }
-  })
   const oblasti: Record<string, StanjeOblasti> = {}
   for (const o of OBLASTI) oblasti[o.id] = { vlasnik: null, vojske: NEUTRALNE_VOJSKE }
-  for (const p of igraci) oblasti[p.prestonica] = { vlasnik: p.id, vojske: POCETNE_VOJSKE_PRESTONICE }
+
+  const igraci: Igrac[] = []
+  for (const p of IGRACI_PODRAZUMEVANO) {
+    // Prestonica je država sa bar 3 suseda (ne ostrvo), u regionu koji niko drugi nema.
+    const region = regioni.find(r => !igraci.some(x => oblast(x.prestonica).region === r.id)
+      && OBLASTI.some(o => o.region === r.id && susedi(o.id).length >= 3 && oblasti[o.id].vlasnik === null))!
+    const kandidati = OBLASTI.filter(o => o.region === region.id && susedi(o.id).length >= 3 && oblasti[o.id].vlasnik === null)
+    const prestonica = kandidati[Math.floor(slucajno() * kandidati.length)].id
+    igraci.push({ ...p, ime: p.covek && opcije.ime ? opcije.ime : p.ime, prestonica, ispao: false })
+    // Početni posed: prestonica i najbliže slobodne države po vezama (pretraga u širinu).
+    const posed = [prestonica]
+    const red = [prestonica]
+    const vidjeno = new Set(red)
+    while (red.length && posed.length < POCETNIH_DRZAVA) {
+      for (const n of susedi(red.shift()!)) {
+        if (vidjeno.has(n)) continue
+        vidjeno.add(n)
+        red.push(n)
+        if (oblasti[n].vlasnik === null && posed.length < POCETNIH_DRZAVA) posed.push(n)
+      }
+    }
+    for (const id of posed) oblasti[id] = { vlasnik: p.id, vojske: id === prestonica ? POCETNE_VOJSKE_PRESTONICE : POCETNE_VOJSKE_DRZAVE }
+  }
   return {
     igraci, oblasti, krug: 1, ukupnoKrugova: krugova, naPotezu: 0, faza: 'snabdevanje',
     zaRaspored: 0, bitaka: 0, niz: 0, utvrdjeno: false, tacnostBota: TEZINE[tezina],
@@ -172,16 +155,16 @@ export function oblastiIgraca(s: Stanje, igracId: string): string[] {
   return OBLASTI.filter(o => s.oblasti[o.id].vlasnik === igracId).map(o => o.id)
 }
 
-/** Zbir bonusa kontinenata koje igrač drži u celosti. */
-export function bonusKontinenata(s: Stanje, igracId: string): number {
-  return KONTINENTI
-    .filter(k => OBLASTI.filter(o => o.kontinent === k.id).every(o => s.oblasti[o.id].vlasnik === igracId))
-    .reduce((zbir, k) => zbir + k.bonus, 0)
+/** Zbir bonusa regiona koje igrač drži u celosti. */
+export function bonusRegiona(s: Stanje, igracId: string): number {
+  return REGIONI
+    .filter(r => OBLASTI.filter(o => o.region === r.id).every(o => s.oblasti[o.id].vlasnik === igracId))
+    .reduce((zbir, r) => zbir + r.bonus, 0)
 }
 
-/** @example pojacanja(s, 'ti', true) // 3 na početku */
+/** @example pojacanja(s, 'ti', true) // 3 na početku (6 država / 3 = 2, najmanje 3) */
 export function pojacanja(s: Stanje, igracId: string, tacno: boolean): number {
-  const puno = Math.max(NAJMANJE_POJACANJA, Math.floor(oblastiIgraca(s, igracId).length / 2)) + bonusKontinenata(s, igracId)
+  const puno = Math.max(NAJMANJE_POJACANJA, Math.floor(oblastiIgraca(s, igracId).length / TERITORIJA_PO_VOJSCI)) + bonusRegiona(s, igracId)
   return tacno ? puno : Math.max(1, Math.floor(puno / 2))
 }
 
@@ -227,7 +210,7 @@ export type Ishod = {
 /**
  * Razrešava bitku. Branilac je `null` kad je oblast neutralna.
  *
- * @example razresiBitku(s, 'balkan', 'bliski-istok', { tacan: true, ms: 4000 }, null)
+ * @example razresiBitku(s, 'SRB', 'BGR', { tacan: true, ms: 4000 }, null)
  */
 export function razresiBitku(s: Stanje, odakle: string, kuda: string, napadac: Odgovor, branilac: Odgovor | null): { stanje: Stanje; ishod: Ishod } {
   if (!mete(s, odakle).includes(kuda)) throw new Error(`Napad ${odakle} → ${kuda} nije dozvoljen`)
@@ -319,7 +302,7 @@ export function poeni(s: Stanje, igracId: string): number {
   const vojske = moje.reduce((zbir, id) => zbir + s.oblasti[id].vojske, 0)
   const igrac = s.igraci.find(p => p.id === igracId)
   const prestonica = igrac && s.oblasti[igrac.prestonica].vlasnik === igracId ? POENI_PRESTONICA : 0
-  return moje.length * POENI_PO_OBLASTI + vojske + bonusKontinenata(s, igracId) * POENI_PO_BONUSU + prestonica
+  return moje.length * POENI_PO_OBLASTI + vojske + bonusRegiona(s, igracId) * POENI_PO_BONUSU + prestonica
 }
 
 /** Igrači od prvog do poslednjeg po poenima. */
@@ -349,7 +332,7 @@ export function botRasporedi(s: Stanje): Stanje {
 
 /**
  * Sledeći napad bota ili `null` kad staje: napada samo uz brojčanu prednost,
- * neutralne i kontinente koje skoro drži pretpostavlja ostalima.
+ * neutralne i regione koje skoro drži pretpostavlja ostalima.
  */
 export function botSledeciNapad(s: Stanje): { odakle: string; kuda: string } | null {
   const id = trenutni(s).id
@@ -358,8 +341,8 @@ export function botSledeciNapad(s: Stanje): { odakle: string; kuda: string } | n
     for (const kuda of mete(s, odakle)) {
       const prednost = s.oblasti[odakle].vojske - s.oblasti[kuda].vojske
       if (prednost < 1) continue
-      const kont = OBLASTI.find(o => o.id === kuda)!.kontinent
-      const fali = OBLASTI.filter(o => o.kontinent === kont && s.oblasti[o.id].vlasnik !== id).length
+      const reg = oblast(kuda).region
+      const fali = OBLASTI.filter(o => o.region === reg && s.oblasti[o.id].vlasnik !== id).length
       const ocena = prednost * 2 + (s.oblasti[kuda].vlasnik === null ? 3 : 0) + (fali === 1 ? 5 : 0)
       if (!najbolji || ocena > najbolji.ocena) najbolji = { odakle, kuda, ocena }
     }
