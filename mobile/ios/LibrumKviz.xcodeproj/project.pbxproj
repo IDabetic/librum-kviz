@@ -37,6 +37,7 @@
 		70203C908BBD6D9059387F05 /* cinjenice.json in Resources */ = {isa = PBXBuildFile; fileRef = D370A58A8A6F237287D8C8A5 /* cinjenice.json */; };
 		71712F6A7F4A8B220A1D668A /* ProKvizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 439C9475647BD63A6D08009F /* ProKvizView.swift */; };
 		73997394D3DA009D5F171A26 /* Supabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F7FFAE025C531368758B6B /* Supabase.swift */; };
+		7DA75BC772EC4344C84E7F74 /* ProfilDelovi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AD48DD303A60EBF63230C73 /* ProfilDelovi.swift */; };
 		874B81797EA899D9CE393254 /* OsvajanjeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D48064B32341C34B07F6ED9 /* OsvajanjeModel.swift */; };
 		903540472589505ABC4A05FF /* Sesija.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA657A4E3E3FACD279AAAFF6 /* Sesija.swift */; };
 		90470CF5ABF49C8B3AB7515E /* Zvuk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2483BC76902BF318AFB375A7 /* Zvuk.swift */; };
@@ -51,6 +52,7 @@
 		BBCB7350D0962129AC532351 /* PitanjeKartica.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6EBAC1E7BB1A11085267361 /* PitanjeKartica.swift */; };
 		BC9883237C17D6AFD2E2F27C /* DuelModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5B01F4A078C87D64CDF316 /* DuelModel.swift */; };
 		C09D8D54B44C7B8854C34CBB /* Mreza.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46E3F9E4B91BE3482AF4C62 /* Mreza.swift */; };
+		C54B9D6BABAC640CC05CCDAF /* ProfilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A637CA3173D06B74590C1FC /* ProfilTests.swift */; };
 		E2485F1C49D34F7E21F4C64A /* LibrumKvizApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC227D8E84CCA578950E363A /* LibrumKvizApp.swift */; };
 		E38F45BDB585442A35A140EC /* Napredak.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8DAF98DC73C562F246D261F /* Napredak.swift */; };
 		EC98C10A81AEE13704265DA7 /* BrziKvizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4398B59F97C72B843ADF0FC9 /* BrziKvizView.swift */; };
@@ -83,6 +85,7 @@
 		30A3F1D8E5729330DA828B8E /* PravilaIgara.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PravilaIgara.swift; sourceTree = "<group>"; };
 		31F7FFAE025C531368758B6B /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
 		377BF226B4D8E93DA5296310 /* ProfilView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilView.swift; sourceTree = "<group>"; };
+		3AD48DD303A60EBF63230C73 /* ProfilDelovi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilDelovi.swift; sourceTree = "<group>"; };
 		4398B59F97C72B843ADF0FC9 /* BrziKvizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrziKvizView.swift; sourceTree = "<group>"; };
 		439C9475647BD63A6D08009F /* ProKvizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProKvizView.swift; sourceTree = "<group>"; };
 		4C5B01F4A078C87D64CDF316 /* DuelModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuelModel.swift; sourceTree = "<group>"; };
@@ -91,6 +94,7 @@
 		5BC122E2F95BBB621DCED093 /* ArchivoBlack-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ArchivoBlack-Regular.ttf"; sourceTree = "<group>"; };
 		5F6710AA06B54EA34503FFA1 /* PravilaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PravilaTests.swift; sourceTree = "<group>"; };
 		5F7AE28C4768AD156522D1E9 /* CekaonicaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CekaonicaView.swift; sourceTree = "<group>"; };
+		6A637CA3173D06B74590C1FC /* ProfilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilTests.swift; sourceTree = "<group>"; };
 		6F10249862B69C9DB1C2FE3C /* RangListaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RangListaView.swift; sourceTree = "<group>"; };
 		7F1564D794D2693A00D0D719 /* svet.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = svet.json; sourceTree = "<group>"; };
 		81EA136C8D52FFD7F5E1877D /* KvizIgraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KvizIgraView.swift; sourceTree = "<group>"; };
@@ -256,6 +260,7 @@
 				26009EDFA71CD993EFB9CD91 /* DeljenjeTests.swift */,
 				BABBAF67F52C5607DA7A66E0 /* KvizTests.swift */,
 				5F6710AA06B54EA34503FFA1 /* PravilaTests.swift */,
+				6A637CA3173D06B74590C1FC /* ProfilTests.swift */,
 			);
 			path = LibrumKvizTests;
 			sourceTree = "<group>";
@@ -327,6 +332,7 @@
 			children = (
 				54F0EABC211BDBE5F2FAA8CB /* IgraciView.swift */,
 				B2C5AC4CC3916A6E90BB355C /* PocetnaView.swift */,
+				3AD48DD303A60EBF63230C73 /* ProfilDelovi.swift */,
 				377BF226B4D8E93DA5296310 /* ProfilView.swift */,
 				6F10249862B69C9DB1C2FE3C /* RangListaView.swift */,
 			);
@@ -464,6 +470,7 @@
 				B56A496BE96619CA4DCC3E0D /* PrijavaTok.swift in Sources */,
 				3527521AD1FF0D977ABB364A /* ProKviz.swift in Sources */,
 				71712F6A7F4A8B220A1D668A /* ProKvizView.swift in Sources */,
+				7DA75BC772EC4344C84E7F74 /* ProfilDelovi.swift in Sources */,
 				1AC6AB3BE9D9BED5ADE6093B /* ProfilView.swift in Sources */,
 				3C1CC6F402F2D11415801700 /* RangListaView.swift in Sources */,
 				903540472589505ABC4A05FF /* Sesija.swift in Sources */,
@@ -483,6 +490,7 @@
 				9CED7A42B00E80536D13BEE9 /* DeljenjeTests.swift in Sources */,
 				FA014B7195A7B3453DF34F47 /* KvizTests.swift in Sources */,
 				46F4F57BFFF9FC3D1614C520 /* PravilaTests.swift in Sources */,
+				C54B9D6BABAC640CC05CCDAF /* ProfilTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

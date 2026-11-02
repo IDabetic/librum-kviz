@@ -27,6 +27,22 @@ struct ProfilView: View {
                     .accessibilityLabel("Sanduče, \(napredak.neprocitanih) novih")
                     NavigationLink { PodesavanjaView() } label: { krug("gearshape") }.accessibilityLabel("Podešavanja")
                 }
+                if sesija.prijavljen, let p = serverski {
+                    // Moj profil izgleda kao što ga vide drugi (Instagram, Librum eBook), plus Uredi profil.
+                    ProfilZaglavlje(profil: p, nivo: napredak.nivo) {
+                        HStack(spacing: 10) {
+                            NavigationLink { IzmenaProfilaView() } label: { Text("Uredi profil") }.buttonStyle(.sekundarno)
+                            ShareLink(item: "Igram Librum kviz: \(p.nadimak), nivo \(napredak.nivo). https://kviz.librum.club") {
+                                Image(systemName: "square.and.arrow.up").font(.system(size: 17, weight: .bold)).foregroundStyle(Color.mastilo)
+                                    .frame(width: 54, height: 54).background(Color.kartica, in: RoundedRectangle(cornerRadius: 16))
+                                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.mastilo, lineWidth: 2))
+                            }
+                            .accessibilityLabel("Podeli profil")
+                        }
+                    }
+                    nivo
+                    ProfilStatistike(profil: p)
+                } else {
                 glava
                 nivo
                 HStack(spacing: 10) {
@@ -34,14 +50,15 @@ struct ProfilView: View {
                     Plocica(ikonica: "checkmark.circle", vrednost: tacnost, naziv: "Tačnost", boja: .roze)
                     Plocica(ikonica: "flame", vrednost: "\(napredak.s.najduziNiz)", naziv: "Najduži niz", boja: .narandzasta)
                 }
-                if let serverski {
-                    StatistikaPoIgrama(profil: serverski)
+                if sesija.prijavljen {
+                    Skelet(visina: 160)
                 } else {
                     if let b = napredak.prosecnaBrzina {
                         Label(String(format: "Prosečno %.1f s po odgovoru · pomoć u %d od %d partija", b, napredak.s.partijaSaPomoci, napredak.s.igara), systemImage: "bolt")
                             .font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity, alignment: .leading)
                     }
                     PomocUpotreba(poVrsti: napredak.s.pomociPoVrsti)
+                }
                 }
                 NavigationLink { BedzeviView() } label: { bedzevi }.buttonStyle(.plain)
                 VStack(spacing: 0) {
@@ -57,8 +74,6 @@ struct ProfilView: View {
                 if !sesija.prijavljen {
                     NavigationLink { IzmenaProfilaView() } label: { Text("Izaberi avatar") }.buttonStyle(.sekundarno)
                     Button("Napravi nalog ili se prijavi") { prijava = true }.buttonStyle(.primarno)
-                } else {
-                    NavigationLink { IzmenaProfilaView() } label: { Text("Izmeni profil") }.buttonStyle(.primarno)
                 }
             }
             .padding(16)
@@ -68,7 +83,7 @@ struct ProfilView: View {
         .fullScreenCover(isPresented: $prijava) { PrijavaTok() }
         .task(id: sesija.korisnikId) {
             guard let id = sesija.korisnikId else { serverski = nil; return }
-            serverski = try? await Supabase.deljeni.rpc("profil_igraca", ["p_id": id])
+            serverski = try? await Supabase.deljeni.rpc("profil_igraca", ["p_id": id], token: try? await sesija.vazeciToken())
         }
     }
 
@@ -520,9 +535,17 @@ struct IzmenaProfilaView: View {
     @State private var stanje: Stanje = .unos
     @State private var odbaci = false
     @State private var sviAvatari = false
+    @State private var licni = Sesija.LicniPodaci()
+    @State private var licniPocetni = Sesija.LicniPodaci()
+    private static let bioNajvise = 160
 
     private var trenutniAvatar: String? { sesija.avatar ?? napredak.s.avatar }
-    private var izmenjeno: Bool { (sesija.prijavljen && nadimak != (sesija.nadimak ?? "")) || maskota.rawValue != napredak.s.maskota || avatar != trenutniAvatar }
+    private var izmenjeno: Bool {
+        (sesija.prijavljen && nadimak != (sesija.nadimak ?? "")) || maskota.rawValue != napredak.s.maskota || avatar != trenutniAvatar || licni != licniPocetni
+    }
+    private func polje(_ k: WritableKeyPath<Sesija.LicniPodaci, String?>) -> Binding<String> {
+        Binding(get: { licni[keyPath: k] ?? "" }, set: { licni[keyPath: k] = $0; if stanje != .cuva { stanje = .unos } })
+    }
 
     var body: some View {
         ScrollView {
@@ -530,7 +553,7 @@ struct IzmenaProfilaView: View {
                 HStack {
                     KrugDugme(ikonica: "chevron.left", opis: "Nazad") { if izmenjeno && stanje != .sacuvano { odbaci = true } else { nazad() } }
                     Spacer()
-                    Text("Izmeni profil").font(.naslov(22))
+                    Text("Uredi profil").font(.naslov(22))
                     Spacer()
                     Color.clear.frame(width: 44)
                 }
@@ -565,6 +588,20 @@ struct IzmenaProfilaView: View {
                 .frame(maxWidth: .infinity)
                 if sesija.prijavljen {
                     PoljeUnosa(naziv: "Nadimak", tekst: $nadimak, stanje: nadimakStanje, sadrzaj: .nickname)
+                    HStack(spacing: 10) {
+                        PoljeUnosa(naziv: "Ime", tekst: polje(\.first_name), sadrzaj: .givenName)
+                        PoljeUnosa(naziv: "Prezime", tekst: polje(\.last_name), sadrzaj: .familyName)
+                    }
+                    PoljeUnosa(naziv: "Grad", tekst: polje(\.city), sadrzaj: .addressCity)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("O meni").font(.tekst(14, .semibold))
+                        TextField("Par reči o sebi: omiljene knjige, teme, grad…", text: polje(\.bio), axis: .vertical)
+                            .font(.tekst(16)).lineLimit(3...5).padding(14)
+                            .background(Color.kartica, in: RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke((licni.bio?.count ?? 0) > Self.bioNajvise ? Color.crvena : Color.kremTamnija, lineWidth: 1.5))
+                        Text("\(licni.bio?.count ?? 0) / \(Self.bioNajvise)").font(.tekst(12)).monospacedDigit()
+                            .foregroundStyle((licni.bio?.count ?? 0) > Self.bioNajvise ? Color.crvena : Color.sivaTekst)
+                    }
                     PoljeUnosa(naziv: "Email", tekst: .constant(sesija.email ?? ""), onemoguceno: true)
                     Text("Email se menja preko podrške, da nalog ostane bezbedan.").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
                 } else {
@@ -582,6 +619,10 @@ struct IzmenaProfilaView: View {
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .task {
+            guard sesija.prijavljen, let l = try? await sesija.licniPodaci() else { return }
+            licni = l; licniPocetni = l
+        }
         .onAppear {
             nadimak = sesija.nadimak ?? ""
             maskota = Maskota(rawValue: napredak.s.maskota) ?? .mimi
@@ -610,6 +651,10 @@ struct IzmenaProfilaView: View {
         napredak.podesi { $0.maskota = maskota.rawValue; $0.avatar = avatar }
         if let avatar, avatar != sesija.avatar, sesija.prijavljen {
             do { try await sesija.sacuvajAvatar(avatar) } catch { stanje = .greska(error.localizedDescription); return }
+        }
+        if sesija.prijavljen, licni != licniPocetni {
+            guard (licni.bio?.count ?? 0) <= Self.bioNajvise else { stanje = .greska("„O meni” može da ima najviše \(Self.bioNajvise) znakova."); return }
+            do { try await sesija.sacuvajLicnePodatke(licni); licniPocetni = licni } catch { stanje = .greska(error.localizedDescription); return }
         }
         guard sesija.prijavljen, nadimak != (sesija.nadimak ?? "") else { stanje = .sacuvano; return }
         guard NalogEkranPravila.ispravanNadimak(nadimak) else { return }

@@ -68,6 +68,25 @@ final class Sesija {
         nadimak = novi
     }
 
+    /// Lični podaci profila koje vide i drugi (ime, prezime, grad, „o meni”).
+    struct LicniPodaci: Codable, Equatable { var first_name: String?; var last_name: String?; var city: String?; var bio: String? }
+
+    func licniPodaci() async throws -> LicniPodaci {
+        guard let id = korisnikId, let t = try await vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se ponovo.") }
+        let r: [LicniPodaci] = try await api.citaj("profiles", upit: [URLQueryItem(name: "select", value: "first_name,last_name,city,bio"),
+                                                                       URLQueryItem(name: "id", value: "eq.\(id)")], token: t)
+        return r.first ?? LicniPodaci()
+    }
+
+    func sacuvajLicnePodatke(_ p: LicniPodaci) async throws {
+        guard let id = korisnikId, let t = try await vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se ponovo.") }
+        struct Red: Decodable { let id: String }
+        // Prazno polje se čuva kao null, da profil ne prikazuje prazan red.
+        func ili(_ s: String?) -> Any { s.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0.trimmingCharacters(in: .whitespaces) } ?? NSNull() }
+        let _: [Red] = try await api.azuriraj("profiles", filter: [URLQueryItem(name: "id", value: "eq.\(id)")],
+                                             polja: ["first_name": ili(p.first_name), "last_name": ili(p.last_name), "city": ili(p.city), "bio": ili(p.bio)], token: t)
+    }
+
     func sacuvajAvatar(_ novi: String) async throws {
         guard let id = korisnikId, let t = try await vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se ponovo.") }
         struct Red: Decodable { let id: String }

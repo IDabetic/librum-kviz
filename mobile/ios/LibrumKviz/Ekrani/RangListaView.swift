@@ -200,15 +200,34 @@ struct RangListaView: View {
 struct ProfilIgracaView: View {
     let id: String
     @Environment(Sesija.self) private var sesija
-    @State private var brojevi: Drustvo.Brojevi?
     @State private var duel = false
+    /// Odgovor RPC profil_igraca (scripts/2026-11-03_profil-kao-ig.sql); ista struktura za moj i tuđi profil.
     struct Profil: Decodable {
         struct Igra: Decodable { let igra: String; let partija: Int; let najbolje: Int; let prosek_ms: Int?; let tacnost: Int?; let sa_pomoci: Int? }
+        struct Pitanja: Decodable { let odgovora: Int; let jedinstvenih: Int; let ponovljenih: Int; let tacnost: Int?; let prosek_ms: Int? }
+        struct VebIgra: Decodable {
+            let partija: Int?; let rekord: Int?; let max_pitanja: Int?; let niz: Int?; let zanr: String?
+            let pobeda: Int?; let bodovi: Int?; let tacnih: Int?; let tacnost: Int?; let poraza: Int?; let nereseno: Int?
+        }
+        struct Veb: Decodable { let pro: VebIgra?; let book: VebIgra?; let vesanje: VebIgra?; let brzi: VebIgra?; let duel: VebIgra? }
+        struct Skoro: Decodable { let igra: String; let poeni: Int?; let kad: String }
+        var id: String?
         let nadimak: String
         let avatar: String?
         let od: String?
         let igre: [Igra]
         let pomoci: [String: Int]?
+        var ime: String?
+        var grad: String?
+        var bio: String?
+        var pratilaca: Int?
+        var prati: Int?
+        var ja_pratim: Bool?
+        var autor_pitanja: Int?
+        var pitanja: Pitanja?
+        var partija: Int?
+        var veb: Veb?
+        var skoro: [Skoro]?
     }
     @State private var stanje: Ucitano<Profil> = .ucitava
 
@@ -224,25 +243,21 @@ struct ProfilIgracaView: View {
                 case .greska(let poruka):
                     StanjeEkrana(maskota: .lumi, naslov: "Profil se nije učitao", tekst: poruka, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
                 case .gotovo(let p):
-                    AvatarSlika(avatar: p.avatar, velicina: 120)
-                    Text(p.nadimak).font(.naslov(30))
-                    if let od = p.od?.prefix(4) { Text("Igra od \(od).").font(.tekst(13)).foregroundStyle(Color.sivaTekst) }
-                    if let b = brojevi {
-                        Text("\(b.pratilaca) pratilaca · prati \(b.prati)").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
-                    }
-                    if sesija.prijavljen && sesija.korisnikId != id {
-                        HStack(spacing: 10) {
-                            Button {
-                                Task {
-                                    let prati = !(brojevi?.pratim ?? false)
-                                    if await Drustvo.prati(sesija, id: id, da: prati) { brojevi = await Drustvo.brojevi(id) }
-                                }
-                            } label: { Label((brojevi?.pratim ?? false) ? "Pratiš" : "Prati", systemImage: (brojevi?.pratim ?? false) ? "checkmark" : "person.badge.plus") }
-                                .buttonStyle(DugmeStil(vrsta: (brojevi?.pratim ?? false) ? .sekundarno : .primarno))
-                            Button { duel = true } label: { Label("Izazovi", systemImage: "bolt") }.buttonStyle(.zuto)
+                    ProfilZaglavlje(profil: p) {
+                        if sesija.prijavljen && sesija.korisnikId != id {
+                            HStack(spacing: 10) {
+                                Button {
+                                    Task {
+                                        let prati = !(p.ja_pratim ?? false)
+                                        if await Drustvo.prati(sesija, id: id, da: prati) { await ucitaj(tiho: true) }
+                                    }
+                                } label: { Label((p.ja_pratim ?? false) ? "Pratiš" : "Prati", systemImage: (p.ja_pratim ?? false) ? "checkmark" : "person.badge.plus") }
+                                    .buttonStyle(DugmeStil(vrsta: (p.ja_pratim ?? false) ? .sekundarno : .primarno))
+                                Button { duel = true } label: { Label("Izazovi", systemImage: "bolt") }.buttonStyle(.zuto)
+                            }
                         }
                     }
-                    StatistikaPoIgrama(profil: p)
+                    ProfilStatistike(profil: p)
                 }
             }
             .padding(16)
@@ -251,16 +266,16 @@ struct ProfilIgracaView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .task { await ucitaj() }
-        .task { brojevi = await Drustvo.brojevi(id) }
         .navigationDestination(isPresented: $duel) {
             if case .gotovo(let p) = stanje { DuelView(izazovi: (id, p.nadimak)) }
         }
     }
 
-    private func ucitaj() async {
-        stanje = .ucitava
+    /// `tiho`: posle praćenja se brojevi osveže bez skeleta.
+    private func ucitaj(tiho: Bool = false) async {
+        if !tiho { stanje = .ucitava }
         do {
-            let p: Profil = try await Supabase.deljeni.rpc("profil_igraca", ["p_id": id])
+            let p: Profil = try await Supabase.deljeni.rpc("profil_igraca", ["p_id": id], token: try? await sesija.vazeciToken())
             stanje = .gotovo(p)
         } catch {
             stanje = .greska(error.localizedDescription)
