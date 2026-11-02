@@ -6,7 +6,7 @@ struct OsvajanjeIgraView: View {
     @Environment(\.dismiss) private var zatvori
     @Environment(Napredak.self) private var napredak
     @Environment(Sesija.self) private var sesija
-    @State private var pomocIskoriscena = false
+    @State private var dodatno = 0
     @State private var eliminisani: Set<Int> = []
     @State private var potvrdaIzlaska = false
     @State private var misija = false
@@ -118,17 +118,21 @@ struct OsvajanjeIgraView: View {
                 .buttonStyle(.plain).padding(.horizontal, 16)
             }
 
-            MapaView(stanje: model.stanje, izabrana: model.izabrana, mete: model.mete,
+            MapaView(stanje: model.stanje, izabrana: model.izabrana, mete: model.mete, meta: model.meta, izvori: model.izvori,
                      fokus: model.otvoreno?.kuda ?? model.izabrana ?? model.stanje.igraci.first(where: \.covek)?.prestonica) { model.dodir($0) }
                 .padding(.horizontal, 12)
 
             VStack(spacing: 10) {
+                if let izvor = model.izabrana, let meta = model.meta {
+                    panelNapada(izvor, meta)
+                } else {
                 Text(model.uputstvo).font(.tekst(15, .semibold)).frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityAddTraits(.updatesFrequently)
-                if model.covekNaPotezu && model.stanje.faza == .raspored {
+                }
+                if model.meta == nil && model.covekNaPotezu && model.stanje.faza == .raspored {
                     Button("Rasporedi sam") { model.rasporediSam() }.buttonStyle(.sekundarno)
                 }
-                if model.covekNaPotezu && model.stanje.faza == .napad {
+                if model.meta == nil && model.covekNaPotezu && model.stanje.faza == .napad {
                     HStack(spacing: 10) {
                         if !model.stanje.utvrdjeno {
                             Button(model.utvrdjivanje ? "Odustani" : "Utvrdi") { model.prekidacUtvrdjivanja() }.buttonStyle(.sekundarno)
@@ -154,7 +158,12 @@ struct OsvajanjeIgraView: View {
         .animation(.spring(duration: 0.3), value: model.poruka)
         .overlay { if misija, let t = model.mojTim { misijaList(t) } }
         .overlay { if let k = odbranaZa { odbranaList(k) } }
-        .onChange(of: model.spremno, initial: true) { _, da in if da && model.postavka != nil && !videoMisiju { videoMisiju = true; misija = true } }
+        .onChange(of: model.spremno, initial: true) { _, da in
+            guard da, model.postavka != nil, !videoMisiju else { return }
+            videoMisiju = true
+            // Na jednom kontinentu nema tajne misije: cilj je ceo kontinent, partija kreće odmah.
+            if model.postavka?.teren == nil { misija = true } else { model.zapocni(); model.javi("Cilj: osvoji ceo kontinent") }
+        }
         .overlay {
             if potvrdaIzlaska {
                 Dijalog(naslov: "Napuštaš partiju?", tekst: "Partija se ne čuva.", potvrda: "Izađi", odustani: "Ostani",
@@ -172,18 +181,19 @@ struct OsvajanjeIgraView: View {
                         PitanjeKartica(
                             oznaka: oznaka(o),
                             prikaz: o.prikaz,
+                            sekundi: Pravila.sekundiPoPitanju + dodatno,
                             dodatak: o.rival.map { "Rival je odgovorio \($0.tacan ? "tačno" : "netačno") za \(String(format: "%.1f", Double($0.ms) / 1000)) s" },
                             eliminisani: eliminisani
-                        ) { izabran, ms in eliminisani = []; model.odgovoreno(izabran, ms: ms) }
+                        ) { izabran, ms in eliminisani = []; dodatno = 0; model.odgovoreno(izabran, ms: ms) }
                         .id(o.id)
-                        HStack {
-                            PomocDugme(ikonica: "circle.lefthalf.filled", naziv: "50/50", iskoriscenaUPartiji: $pomocIskoriscena, tamno: true) {
-                                eliminisani = Set((0..<4).filter { $0 != o.prikaz.tacan }.shuffled().prefix(2))
-                            }
-                            .frame(width: 80)
-                            Text(pomocIskoriscena ? "Pomoć je iskorišćena u ovoj partiji." : "Jedna pomoć po partiji, iz dnevnog fonda.")
-                                .font(.tekst(13, .semibold)).foregroundStyle(.white)
-                        }
+                        PomociTraka(iskoriscena: Binding(get: { model.pomocIskoriscena }, set: { model.pomocIskoriscena = $0 }),
+                                    polaPola: { eliminisani = Set((0..<4).filter { $0 != o.prikaz.tacan }.shuffled().prefix(2)) },
+                                    nagovestaj: { if let i = (0..<4).filter({ $0 != o.prikaz.tacan && !eliminisani.contains($0) }).randomElement() { eliminisani.insert(i) } },
+                                    vreme: { dodatno += 10 },
+                                    preskok: { eliminisani = []; dodatno = 0; model.zameniPitanje() },
+                                    tamno: true, napomena: false)
+                        Text(model.pomocIskoriscena ? "Pomoć je iskorišćena u ovoj partiji." : "Jedna pomoć po partiji, iz dnevnog fonda.")
+                            .font(.tekst(13, .semibold)).foregroundStyle(.white)
                     }
                     .padding(16)
                     .padding(.top, 40)
@@ -192,6 +202,52 @@ struct OsvajanjeIgraView: View {
             }
             .transition(.opacity.combined(with: .scale(scale: 0.96)))
         }
+    }
+
+    /// Pre bitke: iz koje države, šta (prazno polje ili igrač), pod kojim uslovom i šta se rizikuje.
+    private func panelNapada(_ izvor: String, _ meta: String) -> some View {
+        let s = model.stanje
+        let mojaVojska = s.oblasti[izvor]?.vojske ?? 0
+        let cilj = s.oblasti[meta]
+        let vlasnik = s.igraci.first { $0.tim == cilj?.vlasnik }
+        let uslov = s.uslovBitke(meta)
+        return VStack(alignment: .leading, spacing: 10) {
+            redDrzave("Napadaš iz", Mapa.oblast(izvor).ime, vojski(mojaVojska), boja: s.igraci.first { $0.tim == s.trenutni.tim }.map { Color(hex: $0.boja) } ?? .teal)
+            redDrzave("Meta", Mapa.oblast(meta).ime,
+                      vlasnik.map { "\($0.ime) · \(vojski(cilj?.vojske ?? 0))" } ?? "prazno polje · \(vojski(cilj?.vojske ?? 0))",
+                      boja: vlasnik.map { Color(hex: $0.boja) } ?? Color.kremTamnija)
+            if let o = s.odbranaMete(meta) {
+                Label("Odbrana: \(o.naziv)", systemImage: o.ikonica).font(.tekst(13, .bold)).foregroundStyle(Color.crvena)
+            }
+            Label(vlasnik == nil
+                  ? "\(uslov.pitanja == 1 ? "Jedno pitanje" : "\(uslov.pitanja) pitanja"), \(uslov.sekundi) s. Ako pogrešiš, gubiš vojsku, a država ostaje prazna."
+                  : "\(uslov.pitanja) pitanja po \(uslov.sekundi) s protiv igrača \(vlasnik!.ime). Ako izgubiš, \(vlasnik!.ime) uzima \(Mapa.oblast(izvor).ime).",
+                  systemImage: vlasnik == nil ? "flag" : "exclamationmark.triangle")
+                .font(.tekst(13, .semibold)).foregroundStyle(vlasnik == nil ? Color.sivaTekst : Color.crvena)
+            HStack(spacing: 10) {
+                Button("Odustani") { model.odustaniOdMete() }.buttonStyle(.sekundarno)
+                Button("Napadni") { model.napadni() }.buttonStyle(.primarno)
+            }
+        }
+    }
+
+    /// 1 vojska, 2–4 vojske, 5+ vojski (i 21 vojska, 22 vojske…).
+    private func vojski(_ n: Int) -> String {
+        let (d, s) = (n % 10, n % 100)
+        return "\(n) " + (d == 1 && s != 11 ? "vojska" : (2...4).contains(d) && !(12...14).contains(s) ? "vojske" : "vojski")
+    }
+
+    private func redDrzave(_ oznaka: String, _ ime: String, _ opis: String, boja: Color) -> some View {
+        HStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 4).fill(boja).frame(width: 14, height: 14).overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.mastilo, lineWidth: 1.5))
+            VStack(alignment: .leading, spacing: 1) {
+                Oznaka(tekst: oznaka)
+                Text(ime).font(.tekst(16, .bold))
+            }
+            Spacer()
+            Text(opis).font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func oznaka(_ o: OsvajanjeModel.Otvoreno) -> String { "Snabdevanje" }

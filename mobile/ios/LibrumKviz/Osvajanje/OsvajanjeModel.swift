@@ -23,7 +23,9 @@ final class OsvajanjeModel {
         let odakle: String
         let kuda: String
         let uslov: Stanje.Uslov
-        let prikazi: [Prikaz]
+        var prikazi: [Prikaz]
+        /// Raste kad pomoć „Preskok” zameni pitanje, da se kartica pitanja nacrta iznova.
+        var zamena = 0
         var korak: Korak = .uvod
         var redni = 0
         var tacnih = 0
@@ -39,13 +41,17 @@ final class OsvajanjeModel {
     private var cekaOdbranu: CheckedContinuation<Skor, Never>?
     private(set) var spremno = false
     private(set) var greska: String?
-    var izabrana: String?
+    var izabrana: String? { didSet { if izabrana != oldValue { meta = nil } } }
+    /// Izabrana meta napada: pre bitke igrač vidi iz koje države napada, šta napada i šta rizikuje.
+    private(set) var meta: String?
     /// Tačni i netačni odgovori igrača u partiji, za napredak (XP, bedževi).
     private(set) var tacnih = 0
     private(set) var netacnih = 0
     private(set) var zbirMs = 0
     var utvrdjivanje = false
     private(set) var otvoreno: Otvoreno?
+    /// Jedna pomoć po partiji važi za celo Osvajanje, ne za svako pitanje posebno.
+    var pomocIskoriscena = false
     private(set) var poruka: String?
 
     private var slucajno: Slucajno
@@ -62,7 +68,9 @@ final class OsvajanjeModel {
     /// Partija iz čekaonice: igrači i timovi, početni kontinenti i tajne misije.
     init(postavka p: OsvajanjePostavka) {
         var s = Slucajno(seme: UInt32(truncatingIfNeeded: Int(Date().timeIntervalSince1970 * 1000)))
-        stanje = Stanje.nova(krugova: p.krugova, tezina: p.tezina, slucajno: &s, igraci: p.igraci, pocetak: p.pocetak, misije: true)
+        // Na jednom kontinentu nema misija: pobeđuje ko ga ceo osvoji ili ima više država na kraju.
+        stanje = Stanje.nova(krugova: p.krugova, tezina: p.tezina, slucajno: &s, igraci: p.igraci, pocetak: p.pocetak,
+                             misije: p.teren == nil, teren: p.teren)
         slucajno = s
         postavka = p
     }
@@ -100,7 +108,8 @@ final class OsvajanjeModel {
         case .raspored: return "Dodirni svoje oblasti: još \(stanje.zaRaspored)"
         case .napad:
             if utvrdjivanje { return "Izaberi oblast, pa susednu svoju" }
-            return izabrana == nil ? "Izaberi oblast sa 2+ vojske · bitka \(stanje.bitaka)/\(stanje.napadaPoPotezu)" : "Izaberi metu"
+            if izabrana == nil { return "1. Dodirni svoju državu sa žutom ivicom: odatle napadaš · bitka \(stanje.bitaka + 1)/\(stanje.napadaPoPotezu)" }
+            return meta == nil ? "2. Napadaš iz: \(Mapa.oblast(izabrana!).ime). Dodirni koga napadaš (isprekidana ivica)." : ""
         default: return "Snabdevanje…"
         }
     }
@@ -135,7 +144,7 @@ final class OsvajanjeModel {
             } else if moja {
                 izabrana = stanje.mete(id).isEmpty ? nil : id
             } else if let izvor = izabrana, stanje.mete(izvor).contains(id) {
-                bitka = novaBitka(napadam: true, odakle: izvor, kuda: id)
+                meta = meta == id ? nil : id
             }
         default: break
         }
@@ -150,6 +159,21 @@ final class OsvajanjeModel {
     func rasporediSam() { stanje = stanje.botRasporedi() }
 
     func prekidacUtvrdjivanja() { utvrdjivanje.toggle(); izabrana = nil }
+
+    /// Države iz kojih čovek sada može da napadne (žuta isprekidana ivica dok ništa nije izabrano).
+    var izvori: [String] {
+        guard covekNaPotezu, stanje.faza == .napad, izabrana == nil, !utvrdjivanje else { return [] }
+        return stanje.oblastiIgraca(stanje.trenutni.id).filter { !stanje.mete($0).isEmpty }
+    }
+
+    /// Potvrda napada sa panela mete.
+    func napadni() {
+        guard let izvor = izabrana, let kuda = meta, stanje.mete(izvor).contains(kuda) else { return }
+        meta = nil
+        bitka = novaBitka(napadam: true, odakle: izvor, kuda: kuda)
+    }
+
+    func odustaniOdMete() { meta = nil }
 
     func krajPoteza() {
         izabrana = nil; utvrdjivanje = false
@@ -181,6 +205,17 @@ final class OsvajanjeModel {
 
     /// Kraj uvoda (odbrojavanje): kreću pitanja.
     func pocniPitanja() { bitka?.korak = .pitanja }
+
+    /// Pomoć „Preskok”: tekuće pitanje se menja novim iz špila, bez odgovora.
+    func zameniPitanje() {
+        if var b = bitka, b.korak == .pitanja {
+            b.prikazi[b.redni] = spil.sledece()
+            b.zamena += 1
+            bitka = b
+        } else if let o = otvoreno {
+            otvoreno = Otvoreno(vrsta: o.vrsta, prikaz: spil.sledece(), odakle: o.odakle, kuda: o.kuda)
+        }
+    }
 
     /// Odgovor na pitanje u bitki (nil = isteklo vreme).
     func odgovorUBitci(_ izabran: Int?, ms: Int) {
@@ -251,7 +286,13 @@ final class OsvajanjeModel {
         stanje = novo
         guard novo.faza == .snabdevanje else { return }
         if novo.trenutni.covek {
-            otvoreno = Otvoreno(vrsta: .snabdevanje, prikaz: spil.sledece())
+            // Potez čoveka počinje napadom (vlasnik 02.11): pojačanja stižu sama i idu na granice, bez pitanja.
+            let tim = novo.trenutni.tim
+            var s = novo.snabdevanje(tacno: true)
+            s.tacnih[tim, default: 1] -= 1 // pojačanje nije tačan odgovor (misije broje tačne)
+            let dobio = s.zaRaspored
+            stanje = s.botRasporedi()
+            javi("+\(dobio) vojski na granicama. Biraj odakle napadaš.")
         } else {
             Task { await potezBota() }
         }
@@ -293,7 +334,7 @@ final class OsvajanjeModel {
         pocniPotez(stanje.zavrsiPotez())
     }
 
-    private func javi(_ tekst: String) {
+    func javi(_ tekst: String) {
         poruka = tekst
         Task {
             try? await Task.sleep(for: .seconds(2.2))

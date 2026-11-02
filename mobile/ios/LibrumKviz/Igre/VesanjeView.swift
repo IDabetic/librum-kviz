@@ -90,12 +90,14 @@ struct VesanjeView: View {
                     }
                     Text("Pogrešna cela reč odnosi 2 života.").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                 } else {
-                    HStack(spacing: 10) {
-                        Button("Pogodi celu reč") { celaRec = true }.buttonStyle(.sekundarno)
-                        PomocDugme(vrsta: "slovo", ikonica: "character.cursor.ibeam", naziv: "Otkrij slovo", iskoriscenaUPartiji: $pomocIskoriscena) { igra.otkrijSlovo() }
-                            .frame(width: 70)
-                    }
-                    PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
+                    Button("Pogodi celu reč") { celaRec = true }.buttonStyle(.sekundarno)
+                    // 50/50 gasi pola suvišnih slova, nagoveštaj otkriva slovo, umesto vremena vraća se život.
+                    PomociTraka(iskoriscena: $pomocIskoriscena,
+                                polaPola: { igra.skloniPolovinuSlova() },
+                                nagovestaj: { igra.otkrijSlovo() },
+                                vreme: igra.zivoti < Vesanje.pocetniZivoti ? { igra.dodajZivot() } : nil,
+                                preskok: { sledeca() },
+                                vremeJeZivot: true)
                 }
             } else {
                 VStack(spacing: 12) {

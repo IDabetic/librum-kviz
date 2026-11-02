@@ -124,6 +124,18 @@ final class IgreTests: XCTestCase {
     static let vebRed1 = [2, 1, 0, 3]
     static let vebRed2 = [3, 1, 2, 0]
 
+    func testVesanjePomoci() {
+        var v = Vesanje(rec: "kiša")
+        v.skloniPolovinuSlova()
+        let ugaseno = Vesanje.azbuka.filter { v.iskorisceno($0) }
+        XCTAssertEqual(ugaseno.count, (Vesanje.azbuka.count - 4) / 2)
+        XCTAssertFalse(ugaseno.contains("K"))
+        XCTAssertEqual(v.zivoti, Vesanje.pocetniZivoti)
+        let promasaj = Vesanje.azbuka.first { !v.iskorisceno($0) && !"KIŠA".contains($0) }!
+        v.pogodi(promasaj); v.dodajZivot(); v.dodajZivot()
+        XCTAssertEqual(v.zivoti, Vesanje.pocetniZivoti)
+    }
+
     func testVesanjeSlovaIBonus() {
         var v = Vesanje(rec: "kiša")
         v.pogodi("K"); v.pogodi("I"); v.pogodi("Š")
@@ -197,9 +209,11 @@ final class OsvajanjeV3Tests: XCTestCase {
         XCTAssertTrue(ishod.osvojeno)
         XCTAssertEqual(a.oblasti["FRA"], StanjeOblasti(vlasnik: "ti", vojske: 5))
         XCTAssertEqual(a.bonusPomoci["ti"], 2)
-        let (b, _) = s.razresiBitkuSkorom(odakle: "ESP", kuda: "FRA", napadac: Skor(tacnih: 3, ms: 30000), branilac: Skor(tacnih: 3, ms: 25000))
+        let (b, poraz) = s.razresiBitkuSkorom(odakle: "ESP", kuda: "FRA", napadac: Skor(tacnih: 3, ms: 30000), branilac: Skor(tacnih: 3, ms: 25000))
         XCTAssertEqual(b.oblasti["FRA"]?.vlasnik, "mimi")
-        XCTAssertEqual(b.oblasti["ESP"]?.vojske, 4)
+        // Izgubljena bitka protiv igrača: on uzima državu iz koje se napadalo.
+        XCTAssertEqual(b.oblasti["ESP"], StanjeOblasti(vlasnik: "mimi", vojske: 4))
+        XCTAssertTrue(poraz.izgubljenaDrzava)
         XCTAssertEqual(s.uslovBitke("FRA").pitanja, 5)
         XCTAssertEqual(s.napadaPoPotezu, 5)
     }
@@ -222,5 +236,20 @@ final class OsvajanjeV3Tests: XCTestCase {
         let (posle, _) = s.razresiBitkuSkorom(odakle: "ESP", kuda: "FRA", napadac: Skor(tacnih: 5, ms: 1), branilac: Skor(tacnih: 0, ms: 1))
         XCTAssertEqual(posle.pobednik, "ti")
         XCTAssertEqual(posle.faza, .kraj)
+    }
+}
+
+final class OsvajanjeKontinentTests: XCTestCase {
+    /// Igra na jednom kontinentu: države van njega ne postoje, pa se na njih ne može ni napasti.
+    func testKontinentImaSamoSvojeDrzave() {
+        var r = Slucajno(seme: 7)
+        let s = Stanje.nova(krugova: 8, tezina: .normalno, slucajno: &r, igraci: Array(Stanje.podrazumevani.prefix(2)), teren: "evr")
+        let evropa = Set(Kontinenti.oblasti("evr"))
+        XCTAssertEqual(Set(s.oblasti.keys), evropa)
+        XCTAssertTrue(s.igraci.allSatisfy { evropa.contains($0.prestonica) })
+        XCTAssertTrue(s.misije.isEmpty)
+        var napad = s
+        napad.faza = .napad
+        for id in napad.oblastiIgraca(napad.trenutni.id) { XCTAssertTrue(Set(napad.mete(id)).isSubset(of: evropa)) }
     }
 }

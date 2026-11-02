@@ -86,7 +86,12 @@ final class SlikariTests: XCTestCase {
     func testPaketSlikaDajeDesetIspravnihPitanja() throws {
         let p = try PaketPitanja.slikari(broj: 10, tesko: false)
         XCTAssertEqual(p.count, 10)
-        XCTAssertTrue(p.allSatisfy { $0.options.count == 4 && $0.slika?.hasPrefix("https://") == true })
+        // Slika je link ili je nema (tekstualno pitanje); nikad prazan niz.
+        XCTAssertTrue(p.allSatisfy { $0.options.count == 4 && ($0.slika == nil || $0.slika?.hasPrefix("https://") == true) })
         XCTAssertEqual(Set(p.map(\.id)).count, 10)
+        let sva = try PaketPitanja.slikari(broj: 2000, tesko: false)
+        XCTAssertGreaterThan(sva.count, 1400)
+        XCTAssertTrue(sva.contains { $0.slika == nil }, "dela bez slike treba da budu tekstualna pitanja")
+        XCTAssertFalse(sva.contains { $0.question_text.contains("„The ") }, "naziv ne sme ostati na engleskom")
     }
 }

@@ -101,6 +101,7 @@ struct ProKvizView: View {
             Oznaka(tekst: naziv)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 8)
+        .modifier(SvetlaTema(ukljuceno: boja != .kartica))
         .background(boja, in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mastilo, lineWidth: 1.5))
         .accessibilityElement(children: .combine)
@@ -108,21 +109,21 @@ struct ProKvizView: View {
 
     private func pomoci(_ p: Prikaz) -> some View {
         VStack(spacing: 8) {
-        HStack(spacing: 8) {
-            pomoc("50/50", "\(igra.polaPola)×", aktivno: igra.polaPola > 0 && eliminisani.isEmpty) {
-                igra.polaPola -= 1; igra.iskorisceno.polaPola += 1
-                eliminisani = Set((0..<4).filter { $0 != p.tacan }.shuffled().prefix(2))
-            }
-            pomoc("Preskoči", "\(igra.preskoci)×", aktivno: igra.preskoci > 0, vrsta: "preskok") {
-                if igra.iskoristiPreskok() { sledece() }
-            }
-            pomoc("+15 s", "\(igra.dodatnoVreme)×", aktivno: igra.dodatnoVreme > 0 && sekundi == ProKviz.sekundi, vrsta: "vreme") {
-                igra.dodatnoVreme -= 1; igra.iskorisceno.dodatnoVreme += 1; sekundi += 15
-            }
+            // PRO broji svoje pomoći (osvajaju se na pragovima); nagoveštaj sklanja jedan netačan odgovor.
+            PomociTraka(iskoriscena: $pomocIskoriscena,
+                        polaPola: igra.polaPola > 0 && eliminisani.isEmpty ? {
+                            igra.polaPola -= 1; igra.iskorisceno.polaPola += 1
+                            eliminisani = Set((0..<4).filter { $0 != p.tacan }.shuffled().prefix(2))
+                        } : nil,
+                        nagovestaj: eliminisani.count < 2 ? {
+                            if let i = (0..<4).filter({ $0 != p.tacan && !eliminisani.contains($0) }).randomElement() { eliminisani.insert(i) }
+                        } : nil,
+                        vreme: igra.dodatnoVreme > 0 && sekundi == ProKviz.sekundi ? {
+                            igra.dodatnoVreme -= 1; igra.iskorisceno.dodatnoVreme += 1; sekundi += 15
+                        } : nil,
+                        preskok: igra.preskoci > 0 ? { if igra.iskoristiPreskok() { sledece() } } : nil)
             // Risk je ulog, ne pomoć: ne troši dnevni fond.
             if vrsta.imaRisk { pomoc("Risk", "×2", aktivno: igra.riskDostupan, izFonda: false) { igra.aktivirajRisk() } }
-        }
-        PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
         }
     }
 

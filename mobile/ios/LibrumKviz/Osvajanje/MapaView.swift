@@ -45,10 +45,17 @@ struct MapaView: View {
     let stanje: Stanje
     let izabrana: String?
     let mete: [String]
+    /// Izabrana meta pre potvrde napada: crvena puna ivica.
+    var meta: String? = nil
+    /// Države iz kojih se može napasti (korak 1 poteza).
+    var izvori: [String] = []
     let fokus: String?
     let dodir: (String) -> Void
 
     @State private var razmera: CGFloat = 1
+    @State private var uokvirenKontinent = false
+    /// Partija na jednom kontinentu: u stanju su samo njegove države.
+    private var naKontinentu: Bool { stanje.oblasti.count < Mapa.oblasti.count }
     @State private var pomak: CGSize = .zero
     @GestureState private var zumPokret: CGFloat = 1
     @GestureState private var prevlacenje: CGSize = .zero
@@ -90,7 +97,9 @@ struct MapaView: View {
                     mapa.stroke(linija, with: .color(boja), style: stil)
                 }
                 for o in Mapa.oblasti {
-                    guard let put = PutanjeMape.sve[o.id], let st = stanje.oblasti[o.id] else { continue }
+                    guard let put = PutanjeMape.sve[o.id] else { continue }
+                    // Igra na jednom kontinentu: ostale države su bleda pozadina, bez znački.
+                    guard let st = stanje.oblasti[o.id] else { mapa.fill(put, with: .color(Self.neutralne[o.boja % 5].opacity(0.25))); continue }
                     let boja = stanje.igraci.first { $0.tim == st.vlasnik }.map { Color(hex: $0.boja) } ?? Self.neutralne[o.boja % 5]
                     mapa.fill(put, with: .color(boja))
                     mapa.stroke(put, with: .color(.white), lineWidth: tanko)
@@ -100,11 +109,27 @@ struct MapaView: View {
                     mapa.fill(put, with: .color(Color.mastilo.opacity(0.08)))
                     mapa.stroke(put, with: .color(.mastilo), style: StrokeStyle(lineWidth: 2.5 / k, dash: [6 / k, 5 / k]))
                 }
+                for id in izvori {
+                    guard let put = PutanjeMape.sve[id] else { continue }
+                    mapa.stroke(put, with: .color(.zuta), style: StrokeStyle(lineWidth: 3.5 / k, lineJoin: .round, dash: [6 / k, 4 / k]))
+                }
                 if let izabrana, let put = PutanjeMape.sve[izabrana] {
                     mapa.stroke(put, with: .color(.zuta), style: StrokeStyle(lineWidth: 5 / k, lineJoin: .round))
                 }
+                if let meta, let put = PutanjeMape.sve[meta] {
+                    mapa.fill(put, with: .color(Color.crvena.opacity(0.35)))
+                    mapa.stroke(put, with: .color(.crvena), style: StrokeStyle(lineWidth: 5 / k, lineJoin: .round))
+                }
+                // Strelica napada: od države iz koje se napada do mete.
+                if let izabrana, let meta {
+                    let a = Mapa.oblast(izabrana), b = Mapa.oblast(meta)
+                    var strela = Path()
+                    strela.move(to: CGPoint(x: a.x, y: a.y)); strela.addLine(to: CGPoint(x: b.x, y: b.y))
+                    mapa.stroke(strela, with: .color(.crvena), style: StrokeStyle(lineWidth: 3.5 / k, lineCap: .round, dash: [8 / k, 5 / k]))
+                }
                 // Značke se crtaju u tačkama ekrana, da ostanu iste veličine na svakom zumu.
-                let krupno = Mapa.sirina * k > velicina.width * 5 // neutralne značke i imena tek pri većem zumu
+                // Neutralne značke i imena tek pri većem zumu; na jednom kontinentu uvek (malo država).
+                let krupno = naKontinentu || Mapa.sirina * k > velicina.width * 5
                 let prestonice = Set(stanje.igraci.map(\.prestonica))
                 for o in Mapa.oblasti {
                     guard let st = stanje.oblasti[o.id] else { continue }
@@ -152,7 +177,16 @@ struct MapaView: View {
                     dodir(blizu.id)
                 }
             })
-            .onChange(of: fokus, initial: true) { _, novi in centriraj(novi, velicina: g.size, osnova: osnova) }
+            .onChange(of: fokus, initial: true) { _, novi in
+                // Prvi kadar partije na kontinentu je ceo kontinent, da se vide sve njegove države.
+                // Na kontinentu kadar ostaje ceo kontinent (malo država); mete posebno uokviruje izbor države.
+                if naKontinentu {
+                    if !uokvirenKontinent || novi != izabrana { uokviri(Array(stanje.oblasti.keys), velicina: g.size, osnova: osnova, tesno: true) }
+                    uokvirenKontinent = true
+                } else {
+                    centriraj(novi, velicina: g.size, osnova: osnova)
+                }
+            }
             .onChange(of: mete) { _, nove in
                 // Izabrana država i sve njene mete staju u kadar, da se vidi kuda se može dalje.
                 guard let izabrana, !nove.isEmpty else { return }
@@ -162,7 +196,11 @@ struct MapaView: View {
                 VStack(spacing: 8) {
                     zumDugme("plus.magnifyingglass", "Uvećaj") { razmera = min(Self.najveciZum, razmera * 1.5) }
                     zumDugme("minus.magnifyingglass", "Umanji") { razmera = max(1, razmera / 1.5); if razmera == 1 { pomak = .zero } }
-                    zumDugme("globe.europe.africa", "Ceo svet") { razmera = 1; pomak = .zero }
+                    if naKontinentu {
+                        zumDugme("globe.europe.africa", "Ceo kontinent") { uokviri(Array(stanje.oblasti.keys), velicina: g.size, osnova: osnova, tesno: true) }
+                    } else {
+                        zumDugme("globe.europe.africa", "Ceo svet") { razmera = 1; pomak = .zero }
+                    }
                 }
                 .padding(10)
             }
@@ -186,11 +224,19 @@ struct MapaView: View {
         }
     }
 
-    private func uokviri(_ ids: [String], velicina: CGSize, osnova: CGFloat) {
+    /// `tesno` za ceo kontinent: manje vazduha oko ivica, da države budu krupnije.
+    private func uokviri(_ ids: [String], velicina: CGSize, osnova: CGFloat, tesno: Bool = false) {
         let t = ids.map(Mapa.oblast)
-        let (x0, x1) = (t.map(\.x).min()!, t.map(\.x).max()!)
-        let (y0, y1) = (t.map(\.y).min()!, t.map(\.y).max()!)
-        let k = min(velicina.width / ((x1 - x0) * 1.5 + 140), velicina.height / ((y1 - y0) * 1.5 + 140))
+        // Ceo kontinent: bez krajnjih 10% država (Rusija, Island), da jezgro bude dovoljno krupno za dodir.
+        func opseg(_ v: [Double]) -> (Double, Double) {
+            let l = v.sorted()
+            let odsek = tesno && l.count >= 10 ? l.count / 10 : 0
+            return (l[odsek], l[l.count - 1 - odsek])
+        }
+        let (x0, x1) = opseg(t.map(\.x))
+        let (y0, y1) = opseg(t.map(\.y))
+        let (puta, rub): (CGFloat, CGFloat) = tesno ? (1.15, 60) : (1.5, 140)
+        let k = min(velicina.width / ((x1 - x0) * puta + rub), velicina.height / ((y1 - y0) * puta + rub))
         withAnimation(.easeInOut(duration: 0.45)) {
             razmera = min(Self.najveciZum, max(1, k / osnova))
             let kk = osnova * razmera

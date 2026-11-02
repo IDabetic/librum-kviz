@@ -363,13 +363,11 @@ private struct DuelIgra: View {
                 if let p = model.prikaz {
                     DuelPitanje(model: model, prikaz: p, eliminisani: eliminisani).id(model.tekuce)
                     if !model.odgovorioSam {
-                        HStack(spacing: 12) {
-                            PomocDugme(ikonica: "circle.lefthalf.filled", naziv: "50/50", iskoriscenaUPartiji: $pomocIskoriscena) {
-                                eliminisani = Set((0..<4).filter { $0 != p.tacan }.shuffled().prefix(2))
-                            }
-                            .frame(width: 80)
-                            PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
-                        }
+                        PomociTraka(iskoriscena: $pomocIskoriscena,
+                                    polaPola: { eliminisani = Set((0..<4).filter { $0 != p.tacan }.shuffled().prefix(2)) },
+                                    nagovestaj: { if let i = (0..<4).filter({ $0 != p.tacan && !eliminisani.contains($0) }).randomElement() { eliminisani.insert(i) } },
+                                    vreme: { model.dodatnoSekundi += 10 },
+                                    preskok: { Task { await model.odgovori(nil, preskok: true) } })
                     }
                 } else {
                     Skelet(visina: 360, radijus: 24)

@@ -119,6 +119,8 @@ struct Ishod: Equatable {
     let osvojeno: Bool
     let proboj: Bool
     let plen: Bool
+    /// Napadač je izgubio bitku protiv igrača, pa branilac uzima državu iz koje je napadnut.
+    var izgubljenaDrzava = false
 }
 
 /// Deterministički generator (mulberry32), isti kao na vebu.
@@ -234,28 +236,30 @@ struct Stanje: Equatable {
 
     /// Nova partija: prestonica na izabranom kontinentu (ili u regionu koji niko nema),
     /// po šest država oko nje, ostalo neutralno; po želji tajne misije.
+    /// `teren` = id kontinenta: igra se samo na njemu (1 na 1 ili protiv računara), države van njega ne postoje.
     static func nova(krugova: Int, tezina: Tezina, slucajno: inout Slucajno, ime: String? = nil,
-                     igraci spisak: [NoviIgrac]? = nil, pocetak: [String: String] = [:], misije: Bool = false) -> Stanje {
+                     igraci spisak: [NoviIgrac]? = nil, pocetak: [String: String] = [:], misije: Bool = false, teren: String? = nil) -> Stanje {
         var regioni = Mapa.regioni
         for i in stride(from: regioni.count - 1, to: 0, by: -1) {
             let j = Int(slucajno.sledeci() * Double(i + 1))
             regioni.swapAt(i, j)
         }
         var oblasti: [String: StanjeOblasti] = [:]
-        for o in Mapa.oblasti { oblasti[o.id] = StanjeOblasti(vlasnik: nil, vojske: Pravila.neutralneVojske) }
+        let naTerenu = teren.map { Set(Kontinenti.oblasti($0)) }
+        for o in Mapa.oblasti where naTerenu?.contains(o.id) ?? true { oblasti[o.id] = StanjeOblasti(vlasnik: nil, vojske: Pravila.neutralneVojske) }
         var igraci: [Igrac] = []
         for p in spisak ?? podrazumevani {
             let tim = p.tim ?? p.id
-            func slobodna(_ o: Oblast) -> Bool { Mapa.susedi(o.id).count >= 3 && oblasti[o.id]?.vlasnik == nil }
+            func slobodna(_ o: Oblast) -> Bool { Mapa.susedi(o.id).filter { oblasti[$0] != nil }.count >= 3 && oblasti[o.id] != nil && oblasti[o.id]?.vlasnik == nil }
             var lista: [Oblast]
-            if let k = pocetak[tim] {
+            if let k = teren ?? pocetak[tim] {
                 lista = Mapa.oblasti.filter { Kontinenti.od($0.id).id == k && slobodna($0) }
             } else if let region = regioni.first(where: { r in !igraci.contains { Mapa.oblast($0.prestonica).region == r.id } && Mapa.oblasti.contains { $0.region == r.id && slobodna($0) } }) {
                 lista = Mapa.oblasti.filter { $0.region == region.id && slobodna($0) }
             } else {
                 lista = []
             }
-            if lista.isEmpty { lista = Mapa.oblasti.filter { oblasti[$0.id]?.vlasnik == nil } }
+            if lista.isEmpty { lista = Mapa.oblasti.filter { oblasti[$0.id] != nil && oblasti[$0.id]?.vlasnik == nil } }
             let prestonica = lista[Int(slucajno.sledeci() * Double(lista.count))].id
             igraci.append(Igrac(id: p.id, ime: p.covek && spisak == nil ? (ime ?? p.ime) : p.ime, boja: p.boja, covek: p.covek,
                                 prestonica: prestonica, ispao: false, tim: tim, kapiten: p.kapiten))
@@ -267,7 +271,7 @@ struct Stanje: Equatable {
                 for n in Mapa.susedi(red.removeFirst()) where !vidjeno.contains(n) {
                     vidjeno.insert(n)
                     red.append(n)
-                    if oblasti[n]?.vlasnik == nil && posed.count < Pravila.pocetnihDrzava { posed.append(n) }
+                    if oblasti[n] != nil && oblasti[n]?.vlasnik == nil && posed.count < Pravila.pocetnihDrzava { posed.append(n) }
                 }
             }
             for id in posed {
@@ -334,7 +338,7 @@ struct Stanje: Equatable {
     func mete(_ odakle: String) -> [String] {
         guard faza == .napad, bitaka < napadaPoPotezu,
               let izvor = oblasti[odakle], izvor.vlasnik == trenutni.tim, izvor.vojske >= 2 else { return [] }
-        return Mapa.susedi(odakle).filter { oblasti[$0]?.vlasnik != izvor.vlasnik }
+        return Mapa.susedi(odakle).filter { oblasti[$0] != nil && oblasti[$0]?.vlasnik != izvor.vlasnik }
     }
 
     var mozeDaNapada: Bool { oblastiIgraca(trenutni.id).contains { !mete($0).isEmpty } }
@@ -425,17 +429,21 @@ struct Stanje: Equatable {
             s.oblasti[odakle] = StanjeOblasti(vlasnik: napadaTim, vojske: 1)
             s.oblasti[kuda] = StanjeOblasti(vlasnik: napadaTim,
                                             vojske: max(1, izvor.vojske - 1) + (proboj ? Pravila.probojBonus : 0) + (plen ? Pravila.plenPrestonice : 0))
-        } else {
-            let ostaje = max(1, izvor.vojske - Pravila.gubitakPorazenogNapadaca - (odbrana == .zamka ? 1 : 0))
-            gubitakNapadaca = izvor.vojske - ostaje
-            s.oblasti[odakle]!.vojske = ostaje
+        } else if gubitakBranioca > 0 {
+            // Tvrđava je izdržala: napadač ostaje u svojoj državi, branilac gubi vojsku.
             s.oblasti[kuda]!.vojske = meta.vojske - gubitakBranioca
+        } else {
+            // Izgubljena bitka protiv igrača: branilac uzima državu iz koje se napadalo, sa preživelim vojskama.
+            let ostaje = max(1, izvor.vojske - Pravila.gubitakPorazenogNapadaca - (odbrana == .zamka ? 1 : 0))
+            gubitakNapadaca = izvor.vojske
+            s.oblasti[odakle] = StanjeOblasti(vlasnik: braniTim, vojske: ostaje)
         }
         s.tacnih[napadaTim, default: 0] += napadac.tacnih
         s.tacnih[braniTim, default: 0] += branilac.tacnih
         s.bonusPomoci[pobedio ? napadaTim : braniTim, default: 0] += Pravila.bonusPomociPobedniku
         s.posleBitke()
-        return (s, Ishod(gubitakNapadaca: gubitakNapadaca, gubitakBranioca: gubitakBranioca, osvojeno: pobedio, proboj: proboj, plen: plen))
+        return (s, Ishod(gubitakNapadaca: gubitakNapadaca, gubitakBranioca: gubitakBranioca, osvojeno: pobedio, proboj: proboj, plen: plen,
+                         izgubljenaDrzava: !pobedio && gubitakBranioca == 0))
     }
 
     private mutating func posleBitke() {
@@ -611,7 +619,7 @@ struct Stanje: Equatable {
         while s.faza == .raspored {
             let tim = s.trenutni.tim
             let moje = s.oblastiIgraca(s.trenutni.id)
-            func pretnja(_ o: String) -> Int { Mapa.susedi(o).filter { s.oblasti[$0]?.vlasnik != tim }.count }
+            func pretnja(_ o: String) -> Int { Mapa.susedi(o).filter { s.oblasti[$0] != nil && s.oblasti[$0]?.vlasnik != tim }.count }
             let cilj = moje.reduce(moje[0]) { pretnja($1) > pretnja($0) ? $1 : $0 }
             s = s.rasporedi(cilj)
         }

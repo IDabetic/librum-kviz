@@ -68,6 +68,8 @@ struct Vesanje: Equatable {
     let rec: String
     private(set) var pogodjena: Set<String> = []
     private(set) var promasena: Set<String> = []
+    /// Slova ugašena pomoći 50/50: nisu promašaji, ne kvare bonus.
+    private(set) var ugasena: Set<String> = []
     private(set) var zivoti = pocetniZivoti
     private(set) var poeni = 0
     private(set) var status: Status = .igra
@@ -87,7 +89,7 @@ struct Vesanje: Equatable {
 
     var sveOtkriveno: Bool { rec.allSatisfy { !Self.jeSlovo($0) || pogodjena.contains(Self.norm(String($0))) } }
 
-    func iskorisceno(_ slovo: String) -> Bool { pogodjena.contains(Self.norm(slovo)) || promasena.contains(Self.norm(slovo)) }
+    func iskorisceno(_ slovo: String) -> Bool { let n = Self.norm(slovo); return pogodjena.contains(n) || promasena.contains(n) || ugasena.contains(n) }
 
     private var bonusZaGreske: Int { promasena.isEmpty ? Self.bonusBezGreske : promasena.count <= 2 ? Self.bonusMaloGresaka : 0 }
 
@@ -105,6 +107,20 @@ struct Vesanje: Equatable {
             poeni = max(0, poeni - Self.poenaPromasaj)
             if zivoti <= 0 { status = .poraz }
         }
+    }
+
+    /// Pomoć 50/50: polovina neiskorišćenih slova kojih nema u reči se gasi, bez trošenja života.
+    mutating func skloniPolovinuSlova() {
+        guard status == .igra else { return }
+        let reci = Set(rec.map { Self.norm(String($0)) })
+        let suvisna = Self.azbuka.map(Self.norm).filter { !reci.contains($0) && !iskorisceno($0) }
+        ugasena.formUnion(suvisna.shuffled().prefix(suvisna.count / 2))
+    }
+
+    /// Pomoć: jedan izgubljen život se vraća.
+    mutating func dodajZivot() {
+        guard status == .igra, zivoti < Self.pocetniZivoti else { return }
+        zivoti += 1
     }
 
     /// Pomoć: otkriva jedno skriveno slovo bez poena i bez trošenja života.

@@ -255,6 +255,8 @@ struct KvizPitanjaView: View {
     @State private var pocetakPitanja = Date()
     /// Sat ne teče dok slika ne stigne (Picture Round), da spora mreža ne krade vreme.
     @State private var slikaSpremna = false
+    /// Visina ekrana: slika dobija četvrtinu, da kartica sa 4 odgovora i pomoć stanu bez pomeranja.
+    @State private var visina: CGFloat = 800
     /// Jedna pomoć po partiji (vlasnikovo pravilo), iz dnevnog fonda za sve igre.
     @State private var pomocIskoriscena = false
 
@@ -270,15 +272,18 @@ struct KvizPitanjaView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     kartica
                     if let nagovestaj, !otkriveno { MaskotaKaze(maskota: Maskota(rawValue: napredak.s.maskota) ?? .mimi, tekst: nagovestaj) }
-                    if !otkriveno { pomoci }
                     if kviz.niz >= 2 && !otkriveno {
                         Label("\(kviz.niz) zaredom · čuvaj niz!", systemImage: "flame").font(.tekst(13, .bold)).frame(maxWidth: .infinity)
                     }
                 }
                 .padding(.bottom, otkriveno ? 220 : 12)
             }
+            .scrollBounceBehavior(.basedOnSize)
+            // Pomoć je prikovana dole, da je duga slika ili dugo pitanje nikad ne gurnu van ekrana.
+            if !otkriveno { pomoci.padding(.bottom, 6) }
         }
         .padding(.horizontal, 16)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { visina = $0 }
         .background(Papir())
         .overlay(alignment: .bottom) { if otkriveno { listOdgovora.transition(.move(edge: .bottom)) } }
         .overlay { if pauza { pauzaSloj } }
@@ -362,7 +367,7 @@ struct KvizPitanjaView: View {
                 // Okvir prati oblik slike (cela slika, bez sečenja); kad uska uspravna slika
                 // udari u najveću visinu, ivice puni zamućena kopija iste slike umesto belog.
                 s.resizable().scaledToFit()
-                    .frame(maxHeight: Self.najvecaVisinaSlike)
+                    .frame(maxHeight: max(120, min(Self.najvecaVisinaSlike, visina * 0.26)))
                     .frame(maxWidth: .infinity)
                     .background { s.resizable().scaledToFill().blur(radius: 22).overlay(Color.black.opacity(0.12)) }
                     .clipped()

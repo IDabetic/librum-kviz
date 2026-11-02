@@ -90,7 +90,7 @@ actor PaketPitanja {
         return Array(rezerva.prefix(broj))
     }
 
-    /// Slikari iz ugrađenog paketa (src/lib/igre/slikari.json, 1.177 dela): pet lakih/srednjih
+    /// Slikari iz ugrađenog paketa (src/lib/igre/slikari.json, alati/slikari-u-json.py): pet lakih/srednjih
     /// i ostatak bilo kog nivoa, da prvi kviz ne bude samo nepoznata dela; „teško” uzima samo teška.
     static func slikari(broj: Int, tesko: Bool) throws -> [Pitanje] {
         struct Delo: Decodable { let id, naziv, slika: String; let ponude: [String]; let godina, pravac, muzej, tezina: String }
@@ -106,9 +106,13 @@ actor PaketPitanja {
             let ostalo = dela.filter { d in !lakse.contains { $0.id == d.id } }.shuffled().prefix(broj - lakse.count)
             izbor = (Array(lakse) + Array(ostalo)).shuffled()
         }
-        return izbor.map { d in
-            Pitanje(id: d.id, question_text: "Ko je naslikao delo „\(d.naziv)”?", options: d.ponude, correct_answer: 0, genre: d.pravac,
-                    slika: d.slika, opis: [d.naziv, d.godina, d.muzej].filter { !$0.isEmpty }.joined(separator: " · "))
+        return izbor.map { d -> Pitanje in
+            // Delo bez slike je tekstualno pitanje: godina pomaže da naziv ne bude jedini trag.
+            let imaSliku = !d.slika.isEmpty
+            let godina = d.godina.isEmpty ? "" : " (\(d.godina))"
+            return Pitanje(id: d.id, question_text: imaSliku ? "Ko je naslikao delo „\(d.naziv)”?" : "Ko je naslikao delo „\(d.naziv)”\(godina)?",
+                           options: d.ponude, correct_answer: 0, genre: d.pravac, slika: imaSliku ? d.slika : nil,
+                           opis: ([d.naziv, d.godina, d.muzej] + (imaSliku ? ["Slika: Wikimedia Commons"] : [])).filter { !$0.isEmpty }.joined(separator: " · "))
         }
     }
 

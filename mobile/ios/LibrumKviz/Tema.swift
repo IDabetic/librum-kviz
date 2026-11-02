@@ -78,7 +78,8 @@ struct PopKartica: ViewModifier {
 struct SvetlaTema: ViewModifier {
     let ukljuceno: Bool
     @ViewBuilder func body(content: Content) -> some View {
-        if ukljuceno { content.environment(\.colorScheme, .light) } else { content }
+        // Crna slova kao podrazumevana: tekst bez svoje boje inače nasledi belu od roditelja (Osvajanje, Duel).
+        if ukljuceno { content.foregroundStyle(Color.tinta).environment(\.colorScheme, .light) } else { content }
     }
 }
 

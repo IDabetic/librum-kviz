@@ -105,7 +105,10 @@ final class DuelModel {
     var prikaz: Prikaz? { tekuce < pitanja.count ? DuelMesanje.prikaz(pitanja[tekuce]) : nil }
     var odgovorioSam: Bool { tekuce < moji.count }
     var odgovorioJe: Bool { tekuce < njegovi.count }
-    var ostaloSekundi: Int { max(0, Self.sekundi - Int(Date().timeIntervalSince(pocetakPitanja))) }
+    var ostaloSekundi: Int { max(0, Self.sekundi + dodatnoSekundi - Int(Date().timeIntervalSince(pocetakPitanja))) }
+    /// Pomoć „vreme” produžava samo moj sat.
+    /// shortcut: rival vidi otkrivanje po svom satu, pa moj kasniji odgovor ne vidi u toj rundi; ako smeta, server da drži rok.
+    var dodatnoSekundi = 0
 
     // MARK: Brzi meč
 
@@ -306,11 +309,11 @@ final class DuelModel {
         }
     }
 
-    /// Tačan odgovor +10, netačan ili istek −5 (najmanje 0), kao na vebu.
-    func odgovori(_ izabran: Int?) async {
+    /// Tačan odgovor +10, netačan ili istek −5 (najmanje 0), kao na vebu. Preskok (pomoć) ne menja poene.
+    func odgovori(_ izabran: Int?, preskok: Bool = false) async {
         guard faza == .igra, !odgovorioSam, let p = prikaz, let s = soba, let token = try? await sesija.vazeciToken() else { return }
         let tacan = izabran == p.tacan
-        let novi = max(0, mojiPoeni + (tacan ? Self.poenaTacno : -Self.poenaNetacno))
+        let novi = preskok ? mojiPoeni : max(0, mojiPoeni + (tacan ? Self.poenaTacno : -Self.poenaNetacno))
         var odgovori = moji
         while odgovori.count < tekuce { odgovori.append(nil) }
         odgovori.append(izabran)
@@ -341,6 +344,7 @@ final class DuelModel {
         }
         tekuce = sledeci
         otkriveno = false
+        dodatnoSekundi = 0
         pocetakPitanja = Date()
     }
 

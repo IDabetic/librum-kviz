@@ -15,6 +15,9 @@ struct BrziKvizView: View {
     @State private var otkriveno: Bool?
     @State private var kraj = false
     @State private var pomocIskoriscena = false
+    /// „Štit”: sledeći promašaj se ne računa (u tačno/netačno 50/50 nema smisla).
+    @State private var stit = false
+    @State private var nagovestaj: String?
     @State private var zbirMs = 0
     @State private var greska: String?
     @State private var sacuvano = false
@@ -77,14 +80,16 @@ struct BrziKvizView: View {
                         .buttonStyle(.tealDugme)
                 }
                 .disabled(otkriveno != nil)
-                HStack {
-                    Spacer()
-                    // Pomoć pomera početak runde, pa sat dobija 10 sekundi.
-                    PomocDugme(vrsta: "vreme", ikonica: "timer", naziv: "+10 sekundi", iskoriscenaUPartiji: $pomocIskoriscena) { pocetak = pocetak.addingTimeInterval(10) }
-                        .frame(width: 80)
-                    Spacer()
+                if let nagovestaj, otkriveno == nil {
+                    Label(nagovestaj, systemImage: "lightbulb").font(.tekst(14, .semibold)).foregroundStyle(Color.mastilo)
                 }
-                PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
+                // Vreme pomera početak runde, pa sat dobija 10 sekundi.
+                PomociTraka(iskoriscena: $pomocIskoriscena,
+                            polaPola: otkriveno == nil ? { stit = true } : nil,
+                            nagovestaj: otkriveno == nil ? { nagovestaj = "Tačan odgovor počinje na „\(iz.tacanOdgovor.prefix(1).uppercased())”." } : nil,
+                            vreme: { pocetak = pocetak.addingTimeInterval(10) },
+                            preskok: otkriveno == nil ? { sledeca() } : nil,
+                            polaPolaNaziv: "Štit")
                 Spacer()
             }
             .padding(16)
@@ -113,6 +118,7 @@ struct BrziKvizView: View {
             Oznaka(tekst: naziv)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 8)
+        .modifier(SvetlaTema(ukljuceno: boja != .kartica))
         .background(boja, in: RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mastilo, lineWidth: 1.5))
         .accessibilityElement(children: .combine)
@@ -121,7 +127,7 @@ struct BrziKvizView: View {
     private func ucitaj() async {
         do {
             pitanja = try await PaketPitanja.deljeni.ucitaj(.opste)
-            igra = BrziKviz(); indeks = 0; kraj = false; sacuvano = false; otkriveno = nil; pomocIskoriscena = false; zbirMs = 0
+            igra = BrziKviz(); indeks = 0; kraj = false; sacuvano = false; otkriveno = nil; pomocIskoriscena = false; stit = false; zbirMs = 0
             pocetak = Date()
             sledeca()
         } catch { greska = error.localizedDescription }
@@ -132,13 +138,19 @@ struct BrziKvizView: View {
         izjava = BrziKviz.Izjava(pitanja[indeks % pitanja.count])
         indeks += 1
         otkriveno = nil
+        nagovestaj = nil
         pocetakIzjave = Date()
     }
 
     private func odgovori(_ kaze: Bool?) {
         guard let iz = izjava, otkriveno == nil, !kraj else { return }
         if kaze != nil { zbirMs += Int(Date().timeIntervalSince(pocetakIzjave) * 1000) }
+        let pre = igra
         otkriveno = igra.odgovor(iz, kaze: kaze)
+        if stit, otkriveno == false {
+            igra = pre
+            stit = false
+        }
         // Brzi kviz ima mnogo odgovora: tiše nego u ostalim igrama.
         Zvuk.pusti(otkriveno == true ? .tacno : kaze == nil ? .isteklo : .netacno, jacina: 0.3)
         Task {

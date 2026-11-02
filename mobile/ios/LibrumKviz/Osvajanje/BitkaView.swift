@@ -15,8 +15,8 @@ struct BitkaView: View {
     let model: OsvajanjeModel
     let bitka: OsvajanjeModel.Bitka
     @State private var odbrojavanje = 4
-    @State private var pomocIskoriscena = false
     @State private var eliminisani: Set<Int> = []
+    @State private var dodatno = 0
 
     private var drzava: Oblast { Mapa.oblast(bitka.kuda) }
 
@@ -97,11 +97,12 @@ struct BitkaView: View {
                 Text("Tačno \(bitka.tacnih) od \(bitka.redni)").font(.tekst(14, .bold)).foregroundStyle(.white).monospacedDigit()
             }
             PitanjeKartica(oznaka: bitka.prikazi.count > 1 ? "Pitanje \(bitka.redni + 1) od \(bitka.prikazi.count)" : "Bitka",
-                           prikaz: p, sekundi: bitka.uslov.sekundi, eliminisani: eliminisani) { izabran, ms in
+                           prikaz: p, sekundi: bitka.uslov.sekundi + dodatno, eliminisani: eliminisani) { izabran, ms in
                 eliminisani = []
+                dodatno = 0
                 model.odgovorUBitci(izabran, ms: ms)
             }
-            .id("\(bitka.id)-\(bitka.redni)")
+            .id("\(bitka.id)-\(bitka.redni)-\(bitka.zamena)")
             if bitka.uslov.bezPomoci {
                 Label("Odbrana „Bez pomoći”: ovde ne možeš da koristiš pomoć.", systemImage: "nosign").font(.tekst(13, .semibold)).foregroundStyle(.white)
             } else {
@@ -117,12 +118,19 @@ struct BitkaView: View {
                         .disabled(!eliminisani.isEmpty)
                         .accessibilityLabel("Dodatna pomoć 50/50, ostalo \(model.bonusPomoci)")
                     }
-                    PomocDugme(ikonica: "circle.lefthalf.filled", naziv: "50/50", iskoriscenaUPartiji: $pomocIskoriscena,
-                               dostupno: eliminisani.isEmpty, tamno: true) { pedesetPedeset(p) }
-                        .frame(width: 80)
-                    Text(model.bonusPomoci > 0 ? "Dodatne pomoći su osvojene u bitkama." : "Jedna pomoć po partiji, iz dnevnog fonda.")
-                        .font(.tekst(12, .semibold)).foregroundStyle(.white)
+                    if model.bonusPomoci > 0 {
+                        Text("Dodatne pomoći su osvojene u bitkama.").font(.tekst(12, .semibold)).foregroundStyle(.white)
+                    }
                 }
+                // „Brz sat” odbrane skraćuje vreme; pomoć „vreme” ga vraća za 10 s.
+                PomociTraka(iskoriscena: Binding(get: { model.pomocIskoriscena }, set: { model.pomocIskoriscena = $0 }),
+                            polaPola: eliminisani.isEmpty ? { pedesetPedeset(p) } : nil,
+                            nagovestaj: { if let i = (0..<4).filter({ $0 != p.tacan && !eliminisani.contains($0) }).randomElement() { eliminisani.insert(i) } },
+                            vreme: { dodatno += 10 },
+                            preskok: { eliminisani = []; dodatno = 0; model.zameniPitanje() },
+                            tamno: true, napomena: false)
+                Text(model.pomocIskoriscena ? "Pomoć je iskorišćena u ovoj partiji." : "Jedna pomoć po partiji, iz dnevnog fonda.")
+                    .font(.tekst(12, .semibold)).foregroundStyle(.white)
             }
         }
     }
@@ -146,6 +154,10 @@ struct BitkaView: View {
                     if pobedio { Label("+\(Pravila.bonusPomociPobedniku) dodatne pomoći za ovu partiju", systemImage: "gift").font(.tekst(14, .bold)).foregroundStyle(.white) }
                 } else {
                     Text(pobedio ? "Tačno! Država je tvoja." : "Netačno. Gubiš jednu vojsku.").font(.tekst(15, .semibold)).foregroundStyle(pobedio ? Color.white : Color.tinta)
+                }
+                if ishod.izgubljenaDrzava {
+                    Label(bitka.napadam ? "\(bitka.rivalIme) uzima \(Mapa.oblast(bitka.odakle).ime)" : "Uzimaš \(Mapa.oblast(bitka.odakle).ime)",
+                          systemImage: "flag.2.crossed").font(.tekst(15, .bold)).foregroundStyle(pobedio ? Color.white : Color.tinta)
                 }
                 if ishod.plen { Label("Prestonica pala: +\(Pravila.plenPrestonice) vojski", systemImage: "crown").font(.tekst(14, .bold)).foregroundStyle(.white) }
                 if ishod.proboj { Label("Proboj: +\(Pravila.probojBonus) vojske", systemImage: "bolt").font(.tekst(14, .bold)).foregroundStyle(.white) }

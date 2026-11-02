@@ -358,3 +358,35 @@ struct AvatarSlika: View {
         .accessibilityHidden(true)
     }
 }
+
+/// Četiri pomoći koje ima svaka igra (vlasnik 02.11): 50/50, nagoveštaj, vreme, preskok.
+/// Jedna po partiji, iz dnevnog fonda (7 za sve igre). Radnja nil = ta pomoć sada ne važi.
+struct PomociTraka: View {
+    @Binding var iskoriscena: Bool
+    var polaPola: (() -> Void)?
+    var nagovestaj: (() -> Void)?
+    var vreme: (() -> Void)?
+    var preskok: (() -> Void)?
+    /// Vešanje nema sat: umesto vremena dobija se život.
+    var vremeJeZivot = false
+    /// Gde 50/50 nema smisla (tačno/netačno), ista pomoć se zove drugačije, npr. „Štit”.
+    var polaPolaNaziv = "50/50"
+    var tamno = false
+    var napomena = true
+
+    var body: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 10) {
+                dugme("polaPola", "circle.lefthalf.filled", polaPolaNaziv, polaPola)
+                dugme("nagovestaj", "lightbulb", "Nagoveštaj", nagovestaj)
+                dugme(vremeJeZivot ? "zivot" : "vreme", vremeJeZivot ? "heart" : "timer", vremeJeZivot ? "Još jedan život" : "Dodatno vreme", vreme)
+                dugme("preskok", "forward.end", "Preskok", preskok)
+            }
+            if napomena { PomocNapomena(iskoriscenaUPartiji: iskoriscena) }
+        }
+    }
+
+    private func dugme(_ vrsta: String, _ ikonica: String, _ naziv: String, _ radnja: (() -> Void)?) -> some View {
+        PomocDugme(vrsta: vrsta, ikonica: ikonica, naziv: naziv, iskoriscenaUPartiji: $iskoriscena, dostupno: radnja != nil, tamno: tamno) { radnja?() }
+    }
+}

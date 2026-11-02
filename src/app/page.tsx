@@ -118,7 +118,7 @@ export default async function Home() {
     { ime: 'PRO kviz', opis: 'Deset života, kombo nizovi i rang lista.', boja: '#6D4BC9', tekst: '#FFFFFF', maskota: 'Lumi' },
     { ime: 'Book kviz', opis: 'Pisci, dela i žanrovi.', boja: '#F4A33C', tekst: '#151515', maskota: 'Zig' },
     { ime: 'Trivia duel', opis: 'Ista pitanja, jedan na jedan.', boja: '#151515', tekst: '#FFFFFF', maskota: 'Bloop' },
-    { ime: 'Slikari', opis: 'Ko je naslikao ovo delo? 1.177 slika, od Leonarda do Pikasa.', boja: '#FF5FA2', tekst: '#151515', maskota: 'Mimi' },
+    { ime: 'Slikari', opis: 'Ko je naslikao ovo delo? 1.439 dela, od Leonarda do Pikasa.', boja: '#FF5FA2', tekst: '#151515', maskota: 'Mimi' },
     { ime: 'Vešanje', opis: 'Pogodi reč, slovo po slovo.', boja: '#6EC3F2', tekst: '#151515', maskota: 'Lumi' },
     { ime: 'Brzi kviz', opis: 'Tačno ili netačno, 60 sekundi.', boja: '#FFD84D', tekst: '#151515', maskota: 'Zig' },
   ]

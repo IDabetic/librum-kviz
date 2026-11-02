@@ -119,7 +119,7 @@ enum KvizKatalog {
                        boja: 0xFFD84D, maskota: .zig, vrsta: .igra(.brzi), tezina: "Brzina", ikonica: "bolt"),
             KvizStavka(id: "vesanje", naslov: "Vešanje", opis: "Pogodi reč slovo po slovo.", kategorija: "Igre",
                        boja: 0x6EC3F2, maskota: .lumi, vrsta: .igra(.vesanje), tezina: "Reči", ikonica: "textformat.abc"),
-            KvizStavka(id: "slikari", naslov: "Slikari", opis: "Ko je naslikao ovo delo? 1.177 slika od Leonarda do Pikasa.", kategorija: "Umetnost",
+            KvizStavka(id: "slikari", naslov: "Slikari", opis: "Ko je naslikao ovo delo? 1.439 dela, od Leonarda do Pikasa.", kategorija: "Umetnost",
                        boja: 0xFF5FA2, maskota: .lumi, vrsta: .tema(fond: "slikari", zanr: nil, tesko: false), tezina: "Mešovito",
                        ikonica: "paintpalette", quizId: kulturaUmetnost),
             KvizStavka(id: "slikari-tesko", naslov: "Slikari: majstori", opis: "Samo manje poznata dela. Za one koji idu po muzejima.", kategorija: "Umetnost",
