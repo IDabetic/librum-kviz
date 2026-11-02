@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: 01 Profil
 
-/// Profil iz kita: drugar, nivo i XP, tri broja, bedževi, novčići, sanduče.
+/// Profil iz kita: avatar, nivo i XP, tri broja, statistika, pomoći, bedževi, sanduče.
 /// Stanja: gost (bez naloga), učitavanje nadimka.
 struct ProfilView: View {
     @Environment(Sesija.self) private var sesija
@@ -478,7 +478,7 @@ struct PodesavanjaView: View {
         .fullScreenCover(isPresented: $prijava) { PrijavaTok(pocetak: sesija.prijavljen ? .zaboravljena : nil) }
         .overlay {
             if odjava {
-                Dijalog(naslov: "Odjaviti se?", tekst: "Niz i novčići ostaju na ovom telefonu. Prijavi se ponovo kad hoćeš.",
+                Dijalog(naslov: "Odjaviti se?", tekst: "Niz i napredak ostaju na ovom telefonu. Prijavi se ponovo kad hoćeš.",
                         potvrda: "Odjavi se", odustani: "Ostani") { odjava = false; Task { await sesija.odjava() } } zatvori: { odjava = false }
             }
             if brisanje {

@@ -513,11 +513,8 @@ private struct DuelKraj: View {
             HStack {
                 KrugDugme(ikonica: "xmark", opis: "Zatvori", radnja: zatvori)
                 Spacer()
-                ShareLink(item: "\(pobeda ? "Pobedio sam" : "Odigrao sam") duel u Librum kvizu: \(model.mojiPoeni)–\(model.njegoviPoeni). https://kviz.librum.club") {
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 17, weight: .bold)).foregroundStyle(Color.mastilo)
-                        .frame(width: 44, height: 44).background(Color.kartica, in: Circle())
-                }
-                .accessibilityLabel("Podeli")
+                PodeliRezultat(igra: "Duel", naslov: pobeda ? "Pobeda!" : nereseno ? "Nerešeno" : "Revanš?", veliko: "\(model.mojiPoeni)–\(model.njegoviPoeni)",
+                               detalji: ["protiv \(model.rivalIme)"], ilustracija: "Igra_duel", boja: pobeda ? .teal : .nebo)
             }
             Spacer()
             MaskotaSlika(maskota: pobeda ? .bloop : nereseno ? .lumi : .zig, velicina: 130).frame(width: 170, height: 170)

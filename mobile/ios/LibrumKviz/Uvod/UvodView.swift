@@ -73,7 +73,7 @@ private struct UvodSlajdovi: View {
     private let slajdovi: [(String, String, String, Color, Maskota)] = [
         ("Kviz o svemu,\nkad god!", "Opšte znanje, knjige, geografija i svet. Nova pitanja stižu svaki dan.", "6.700+\npitanja", .narandzasta, .bloop),
         ("Izazovi društvo\nuživo!", "Duel jedan na jedan u realnom vremenu. Vidi ko stvarno zna.", "Duel sa\ndrugarima", .ljubicasta, .zig),
-        ("Skupljaj novčiće,\npenji se!", "Zaradi novčiće, otključaj bedževe i popni se na nedeljnu rang listu.", "Popni se\nna vrh", .zuta, .lumi),
+        ("Sakupljaj bedževe,\npenji se!", "Čuvaj niz, otključaj bedževe i popni se na nedeljnu rang listu.", "Popni se\nna vrh", .zuta, .lumi),
     ]
 
     var body: some View {
@@ -447,7 +447,7 @@ private struct UvodZagrevanje: View {
                 Button(redni < 2 ? "Sledeće pitanje" : "Završi zagrevanje") { sledece() }.buttonStyle(.primarno)
             } else {
                 MaskotaKaze(maskota: maskota, tekst: nagovestaj ? "Dva netačna su sklonjena. Ostala su dva, biraj pametno." :
-                                "Zapelo? Tapni sijalicu za nagoveštaj. Inače košta 20 novčića, sada je besplatno.")
+                                "Zapelo? Tapni sijalicu za nagoveštaj. U igri imaš 7 pomoći dnevno.")
                 Button { withAnimation { iskoristiNagovestaj() } } label: { Image(systemName: "lightbulb") }
                     .buttonStyle(.zuto).disabled(nagovestaj).accessibilityLabel("Nagoveštaj")
             }

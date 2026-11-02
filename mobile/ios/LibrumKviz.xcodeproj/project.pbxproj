@@ -41,6 +41,8 @@
 		90470CF5ABF49C8B3AB7515E /* Zvuk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2483BC76902BF318AFB375A7 /* Zvuk.swift */; };
 		94A40F6389BB4BF54FD2D83C /* CekaonicaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F7AE28C4768AD156522D1E9 /* CekaonicaView.swift */; };
 		96BA7A00456182AE56F945EE /* zvuci in Resources */ = {isa = PBXBuildFile; fileRef = C3149020E63844C84F392134 /* zvuci */; };
+		9CD555FBE9D2697A940E4220 /* Deljenje.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2856025DB812ADE6E90E185 /* Deljenje.swift */; };
+		9CED7A42B00E80536D13BEE9 /* DeljenjeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26009EDFA71CD993EFB9CD91 /* DeljenjeTests.swift */; };
 		9E42BFA4679D26432E5E7329 /* KlasicniKviz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A28076E53EBB4D859B09B8 /* KlasicniKviz.swift */; };
 		A87F1B20734FF29CF0E7B773 /* Pravila.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FED500CF38EA749232AE59B /* Pravila.swift */; };
 		B56A496BE96619CA4DCC3E0D /* PrijavaTok.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D4930B06633BBCB815E047 /* PrijavaTok.swift */; };
@@ -72,6 +74,7 @@
 		0D48064B32341C34B07F6ED9 /* OsvajanjeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OsvajanjeModel.swift; sourceTree = "<group>"; };
 		11EB472B5832198C4CAE86B2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2483BC76902BF318AFB375A7 /* Zvuk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zvuk.swift; sourceTree = "<group>"; };
+		26009EDFA71CD993EFB9CD91 /* DeljenjeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeljenjeTests.swift; sourceTree = "<group>"; };
 		2735B64623C0DCC699BAC21A /* Katalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Katalog.swift; sourceTree = "<group>"; };
 		2FF3937835EE161D1EC5C164 /* LibrumKviz.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LibrumKviz.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30A3F1D8E5729330DA828B8E /* PravilaIgara.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PravilaIgara.swift; sourceTree = "<group>"; };
@@ -104,6 +107,7 @@
 		C46E3F9E4B91BE3482AF4C62 /* Mreza.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mreza.swift; sourceTree = "<group>"; };
 		CB9F64A8AFFE39B4C750940D /* Stanja.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stanja.swift; sourceTree = "<group>"; };
 		CC227D8E84CCA578950E363A /* LibrumKvizApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrumKvizApp.swift; sourceTree = "<group>"; };
+		D2856025DB812ADE6E90E185 /* Deljenje.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deljenje.swift; sourceTree = "<group>"; };
 		D370A58A8A6F237287D8C8A5 /* cinjenice.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = cinjenice.json; sourceTree = "<group>"; };
 		D8DAF98DC73C562F246D261F /* Napredak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Napredak.swift; sourceTree = "<group>"; };
 		E02146981A810C211882E971 /* DuelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuelView.swift; sourceTree = "<group>"; };
@@ -216,6 +220,7 @@
 		83332F763C8284A69B7728A2 /* Zajednicko */ = {
 			isa = PBXGroup;
 			children = (
+				D2856025DB812ADE6E90E185 /* Deljenje.swift */,
 				00104B1D862D97641324820C /* Dijalog.swift */,
 				E6EBAC1E7BB1A11085267361 /* PitanjeKartica.swift */,
 				CB9F64A8AFFE39B4C750940D /* Stanja.swift */,
@@ -240,6 +245,7 @@
 		95291A26459921304969DE91 /* LibrumKvizTests */ = {
 			isa = PBXGroup;
 			children = (
+				26009EDFA71CD993EFB9CD91 /* DeljenjeTests.swift */,
 				BABBAF67F52C5607DA7A66E0 /* KvizTests.swift */,
 				5F6710AA06B54EA34503FFA1 /* PravilaTests.swift */,
 			);
@@ -424,6 +430,7 @@
 				0217F5CB6F824AFF3B0DB6C1 /* BitkaView.swift in Sources */,
 				EC98C10A81AEE13704265DA7 /* BrziKvizView.swift in Sources */,
 				94A40F6389BB4BF54FD2D83C /* CekaonicaView.swift in Sources */,
+				9CD555FBE9D2697A940E4220 /* Deljenje.swift in Sources */,
 				0AFF14C7991FE2FB32F8C26A /* Dijalog.swift in Sources */,
 				BC9883237C17D6AFD2E2F27C /* DuelModel.swift in Sources */,
 				06865E40A9FF1DACC1F4AE96 /* DuelView.swift in Sources */,
@@ -463,6 +470,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9CED7A42B00E80536D13BEE9 /* DeljenjeTests.swift in Sources */,
 				FA014B7195A7B3453DF34F47 /* KvizTests.swift in Sources */,
 				46F4F57BFFF9FC3D1614C520 /* PravilaTests.swift in Sources */,
 			);

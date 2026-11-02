@@ -47,7 +47,7 @@ struct KvizDetaljiView: View {
                         obavestenje("lock.fill", "Otključava se na nivou \(stavka.nivo)",
                                     "Ti si na nivou \(napredak.nivo). Još \(napredak.xpUNivou.treba - napredak.xpUNivou.imam) XP do sledećeg.", .udubljeno)
                     } else if let naj = napredak.s.najbolje[stavka.id] {
-                        obavestenje("trophy", "Tvoj najbolji: \(naj)/10", naj == 10 ? "Savršeno. Možeš li opet?" : "Nadmaši ga i uzmi +50 novčića za 10/10.", .zuta)
+                        obavestenje("trophy", "Tvoj najbolji: \(naj)/10", naj == 10 ? "Savršeno. Možeš li opet?" : "Nadmaši ga; 10/10 donosi bedž.", .zuta)
                     }
                     if case .greska(let poruka) = start {
                         obavestenje("exclamationmark.triangle", "Kviz nije mogao da počne", poruka, .crvenaSvetla)
@@ -508,11 +508,9 @@ struct KvizRezultatiView: View {
             HStack {
                 KrugDugme(ikonica: "xmark", opis: "Zatvori", radnja: zatvori)
                 Spacer()
-                ShareLink(item: "Odgovorio sam \(kviz.tacnih)/\(ukupno) u kvizu „\(stavka.naslov)” (\(kviz.poeni) poena). Librum kviz: https://kviz.librum.club") {
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 17, weight: .bold)).foregroundStyle(Color.mastilo)
-                        .frame(width: 44, height: 44).background(Color.kartica, in: Circle()).overlay(Circle().stroke(Color.kremTamnija, lineWidth: 1.5))
-                }
-                .accessibilityLabel("Podeli rezultat")
+                PodeliRezultat(igra: stavka.naslov, naslov: savrseno ? "Savršeno!" : "Moj rezultat", veliko: "\(kviz.tacnih)/\(ukupno)",
+                               detalji: ["\(kviz.poeni) poena", "\(Int(Double(kviz.tacnih) / Double(max(1, ukupno)) * 100))% tačno"],
+                               ilustracija: stavka.ilustracija, boja: Color(hex: stavka.boja))
             }
             ScrollView {
                 VStack(spacing: 14) {

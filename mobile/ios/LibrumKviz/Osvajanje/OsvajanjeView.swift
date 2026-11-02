@@ -223,6 +223,11 @@ struct OsvajanjeIgraView: View {
                     }
                         .buttonStyle(.zuto)
                     Button("Nazad") { zatvori() }.buttonStyle(.sekundarno)
+                    if let ja = model.stanje.igraci.first(where: \.covek) {
+                        PodeliRezultat(igra: "Osvajanje sveta", naslov: pobednik.covek ? "Svet je moj!" : "Osvajanje sveta",
+                                       veliko: "\(model.stanje.oblastiIgraca(ja.id).count) država", detalji: ["\(model.stanje.poeni(ja.id)) poena"],
+                                       ilustracija: "Igra_osvajanje", boja: .teal)
+                    }
                 }
                 .padding(22)
                 .pop(pobednik.covek ? .teal : .kartica)

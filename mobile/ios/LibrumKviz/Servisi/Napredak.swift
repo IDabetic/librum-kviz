@@ -11,7 +11,7 @@ struct Bedz: Identifiable, Equatable {
     let boja: UInt32
 }
 
-/// Lokalni napredak igrača: novčići, XP, niz dana, pomoći, bedževi, statistika i sanduče.
+/// Lokalni napredak igrača: XP, niz dana, pomoći, bedževi, statistika i sanduče.
 /// Čuva se na uređaju (UserDefaults), radi i bez naloga i bez mreže.
 /// shortcut: samo na uređaju; kad Supabase proradi, sinhronizacija ide u tabelu po nalogu.
 @Observable
