@@ -46,12 +46,19 @@ android {
 
     // Ista mapa i rezervna pitanja kao veb i iOS (alati/napravi-mapu.mjs); .ts fajlovi iz istog foldera se ne pakuju.
     sourceSets {
-        getByName("main") { assets.srcDirs("../../../src/lib/osvajanje", "../../../src/lib/igre") }
+        // Avatari sa Knjigopolisa (public/avatari) idu u assets/avatari kroz kopiju ispod.
+        getByName("main") { assets.srcDirs("../../../src/lib/osvajanje", "../../../src/lib/igre", "../../zvuci", layout.buildDirectory.dir("generated/avatari")) }
     }
     androidResources {
         ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!*.ts"
     }
 }
+
+val kopirajAvatare by tasks.registering(Copy::class) {
+    from("../../../public/avatari")
+    into(layout.buildDirectory.dir("generated/avatari/avatari"))
+}
+tasks.named("preBuild") { dependsOn(kopirajAvatare) }
 
 dependencies {
     implementation(libs.androidx.core.ktx)

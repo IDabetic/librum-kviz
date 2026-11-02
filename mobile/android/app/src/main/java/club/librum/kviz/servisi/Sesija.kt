@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
 @Serializable
-private data class Profil(val nickname: String? = null, val first_name: String? = null)
+private data class Profil(val nickname: String? = null, val first_name: String? = null, val avatar: String? = null)
 
-data class Nalog(val id: String, val email: String?, val nadimak: String?)
+data class Nalog(val id: String, val email: String?, val nadimak: String?, val avatar: String? = null)
 
 /**
  * Prijavljen korisnik. Tokeni su u privatnim podešavanjima aplikacije (MODE_PRIVATE),
@@ -57,13 +57,45 @@ class Sesija(context: Context) {
         val id = token?.user?.id ?: return
         val redovi = runCatching {
             Supabase.json.decodeFromString<List<Profil>>(
-                Supabase.citaj("public_profiles", listOf("select" to "nickname,first_name", "id" to "eq.$id")),
+                Supabase.citaj("public_profiles", listOf("select" to "nickname,first_name,avatar", "id" to "eq.$id")),
             )
         }.getOrNull() ?: return
         val nadimak = redovi.firstOrNull()?.let { it.nickname ?: it.first_name }
         prefs.edit().putString("nadimak", nadimak).apply()
-        _nalog.value = _nalog.value?.copy(nadimak = nadimak)
+        _nalog.value = _nalog.value?.copy(nadimak = nadimak, avatar = redovi.firstOrNull()?.avatar)
     }
+
+    suspend fun sacuvajAvatar(avatar: String) {
+        val id = token?.user?.id ?: return
+        val t = vazeciToken() ?: return
+        Supabase.azuriraj("profiles", listOf("id" to "eq.$id"), mapOf("avatar" to avatar), t)
+        _nalog.value = _nalog.value?.copy(avatar = avatar)
+    }
+
+    /** Rezultat partije za rang liste po igri (rezultati_igara); bez naloga se ne šalje. */
+    suspend fun upisiRezultat(igra: String, poeni: Int, tacnih: Int, netacnih: Int, prosekMs: Int?, pomoc: String?) {
+        val id = token?.user?.id ?: return
+        val t = vazeciToken() ?: return
+        runCatching {
+            Supabase.upisi("rezultati_igara", buildMap {
+                put("user_id", id); put("igra", igra); put("poeni", maxOf(0, poeni)); put("tacnih", tacnih); put("netacnih", netacnih)
+                prosekMs?.let { put("prosek_ms", it.coerceIn(0, 120_000)) }
+                pomoc?.let { put("pomoc", it) }
+            }, t)
+        }
+    }
+
+    /** Push token uređaja (FCM) za obaveštenja o izazovima i pratiocima. */
+    suspend fun sacuvajPushToken(push: String) {
+        val id = token?.user?.id ?: return
+        val t = vazeciToken() ?: return
+        runCatching {
+            Supabase.zahtev("rest/v1/push_tokeni", "POST", Supabase.objekat("user_id" to id, "token" to push, "platforma" to "android"), t,
+                listOf("on_conflict" to "user_id,token"), dodatnaZaglavlja = mapOf("Prefer" to "resolution=merge-duplicates"))
+        }
+    }
+
+    val id: String? get() = token?.user?.id
 
     private fun sacuvaj(t: Token) {
         token = t

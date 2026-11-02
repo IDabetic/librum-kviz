@@ -34,7 +34,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import club.librum.kviz.osvajanje.Mapa
-import club.librum.kviz.osvajanje.OsvajanjeIgra
+import club.librum.kviz.osvajanje.OsvajanjeTok
+import club.librum.kviz.osvajanje.OsvajanjeTokEkran
 import club.librum.kviz.osvajanje.OsvajanjeUvod
 import club.librum.kviz.osvajanje.Tezina
 import club.librum.kviz.prokviz.ProKvizEkran
@@ -43,6 +44,9 @@ import club.librum.kviz.igre.BrziKvizEkran
 import club.librum.kviz.igre.DuelEkran
 import club.librum.kviz.igre.VesanjeEkran
 import club.librum.kviz.servisi.Sesija
+import club.librum.kviz.servisi.Napredak
+import club.librum.kviz.ui.Cinjenice
+import club.librum.kviz.servisi.Zvuk
 import club.librum.kviz.ui.Boje
 import club.librum.kviz.ui.Pocetna
 import club.librum.kviz.ui.Profil
@@ -54,6 +58,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         Mapa.ucitaj(assets.open("svet.json").bufferedReader().use { it.readText() })
+        Cinjenice.ucitaj(assets.open("cinjenice.json").bufferedReader().use { it.readText() })
+        Napredak.deljeni = Napredak(applicationContext)
+        Zvuk.init(applicationContext)
         setContent { Aplikacija() }
     }
 }
@@ -103,12 +110,8 @@ private fun Aplikacija() {
                 composable("igre") { Pocetna(nalog?.nadimak) { nav.navigate(it) } }
                 composable("rang") { RangLista() }
                 composable("profil") { Profil(sesija) }
-                composable("osvajanje") { OsvajanjeUvod { t, k -> nav.navigate("osvajanje/${t.name}/$k") } }
-                composable("osvajanje/{tezina}/{krugova}") { e ->
-                    val tezina = Tezina.valueOf(e.arguments?.getString("tezina") ?: Tezina.NORMALNO.name)
-                    val krugova = e.arguments?.getString("krugova")?.toIntOrNull() ?: 10
-                    OsvajanjeIgra(tezina, krugova, nalog?.nadimak) { nav.popBackStack() }
-                }
+                composable("osvajanje") { OsvajanjeUvod(nalog?.nadimak) { p -> OsvajanjeTok.postavka = p; nav.navigate("osvajanje/igra") } }
+                composable("osvajanje/igra") { OsvajanjeTokEkran(sesija) { nav.popBackStack() } }
                 composable("pro") { ProKvizEkran(sesija, Survival.PRO) { nav.popBackStack() } }
                 composable("book") { ProKvizEkran(sesija, Survival.BOOK) { nav.popBackStack() } }
                 composable("brzi") { BrziKvizEkran(sesija) { nav.popBackStack() } }

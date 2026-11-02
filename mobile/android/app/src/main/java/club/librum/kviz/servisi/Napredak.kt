@@ -12,10 +12,10 @@ import java.time.ZoneId
 import java.util.UUID
 
 /** Bedž iz kita: uslov se proverava nad stanjem napretka posle svake igre. */
-data class Bedz(val id: String, val naziv: String, val opis: String, val boja: Long, val nagrada: Int)
+data class Bedz(val id: String, val naziv: String, val opis: String, val boja: Long)
 
 /**
- * Lokalni napredak igrača (isto kao Napredak.swift): novčići, XP, niz dana, pomoći,
+ * Lokalni napredak igrača (isto kao Napredak.swift): XP, niz dana, dnevni fond pomoći,
  * bedževi, statistika i sanduče. Čuva se na uređaju; radi i bez naloga i bez mreže.
  * shortcut: samo na uređaju; kad Supabase proradi, sinhronizacija ide u tabelu po nalogu.
  */
@@ -30,26 +30,30 @@ class Napredak(context: Context) {
         val tekst: String,
         val vreme: Long,
         var procitano: Boolean = false,
-        val novcici: Int = 0,
-        var pokupljeno: Boolean = false,
+        /** Za izazov: kod sobe duela. */
+        val kodSobe: String? = null,
     )
 
     @Serializable
     data class Stanje(
-        var novcici: Int = 100,
         var xp: Int = 0,
         var nizDana: Int = 0,
         var najduziNiz: Int = 0,
         var poslednjiDanIgre: String? = null,
-        var poslednjaNagrada: String? = null,
-        var danaNagrade: Int = 0,
         var igara: Int = 0,
         var tacnih: Int = 0,
         var netacnih: Int = 0,
         var savrsenih: Int = 0,
         var brzihOdgovora: Int = 0,
         var pobedaDuel: Int = 0,
-        val pomoci: MutableMap<String, Int> = mutableMapOf("polaPola" to 2, "nagovestaj" to 2, "vreme" to 2, "preskok" to 1),
+        var zbirMs: Int = 0,
+        var brojMs: Int = 0,
+        /** Dnevni fond pomoći: ciklus počinje prvom pomoći, posle 24 h fond je opet pun. */
+        var pocetakCiklusaPomoci: Long? = null,
+        var pomociIskorisceno: Int = 0,
+        val pomociPoVrsti: MutableMap<String, Int> = mutableMapOf(),
+        var partijaSaPomoci: Int = 0,
+        var avatar: String? = null,
         val bedzevi: MutableMap<String, Long> = mutableMapOf(),
         val dani: MutableMap<String, Dan> = mutableMapOf(),
         val kategorije: MutableMap<String, List<Int>> = mutableMapOf(),
@@ -87,9 +91,12 @@ class Napredak(context: Context) {
 
     // Igra
 
-    data class Ishod(val xp: Int, val novcici: Int, val noviBedzevi: List<Bedz>)
+    data class Ishod(val xp: Int, val noviBedzevi: List<Bedz>)
 
-    fun zabeleziIgru(kviz: String, tacnih: Int, netacnih: Int, kategorija: String? = null, brzih: Int = 0, pobeda: Boolean = false, danas: Instant = Instant.now()): Ishod {
+    /** Pomoć iskorišćena u partiji koja traje; zavrsiPartiju je upisuje uz rezultat. */
+    var pomocUPartiji: String? = null
+
+    fun zabeleziIgru(kviz: String, tacnih: Int, netacnih: Int, kategorija: String? = null, brzih: Int = 0, pobeda: Boolean = false, prosekMs: Int? = null, danas: Instant = Instant.now()): Ishod {
         val dan = dan(danas)
         if (s.poslednjiDanIgre != dan) {
             s.nizDana = if (s.poslednjiDanIgre == dan(danas.minusSeconds(86_400))) s.nizDana + 1 else 1
@@ -97,13 +104,13 @@ class Napredak(context: Context) {
             s.poslednjiDanIgre = dan
         }
         val xp = tacnih + 5
-        val novcici = tacnih * 2 + if (netacnih == 0 && tacnih >= 10) 50 else 0
         s.xp += xp
-        s.novcici += novcici
         s.igara += 1
         s.tacnih += tacnih
         s.netacnih += netacnih
         s.brzihOdgovora += brzih
+        if (prosekMs != null && tacnih + netacnih > 0) { s.zbirMs += prosekMs * (tacnih + netacnih); s.brojMs += tacnih + netacnih }
+        if (pomocUPartiji != null) s.partijaSaPomoci += 1
         if (pobeda) s.pobedaDuel += 1
         if (netacnih == 0 && tacnih >= 10) s.savrsenih += 1
         val d = s.dani.getOrPut(dan) { Dan() }
@@ -115,69 +122,36 @@ class Napredak(context: Context) {
         s.najbolje[kviz] = maxOf(s.najbolje[kviz] ?: 0, tacnih)
         val novi = proveriBedzeve(danas)
         sacuvaj()
-        return Ishod(xp, novcici, novi)
+        return Ishod(xp, novi)
     }
 
-    // Dnevna nagrada
+    /** Prosečna brzina odgovora u sekundama (null dok nema merenja). */
+    val prosecnaBrzina: Double? get() = if (s.brojMs > 0) s.zbirMs.toDouble() / s.brojMs / 1000 else null
 
-    val dnevnaNagradaSpremna get() = s.poslednjaNagrada != dan(Instant.now())
-    val sledecaNagrada get() = NAGRADE_NIZA[minOf(s.danaNagrade, NAGRADE_NIZA.size - 1)]
+    // Pomoć: 7 dnevno za svih 7 igara, jedna po partiji (to čuva igra), novi fond 24 h posle prve.
 
-    fun pokupiDnevnuNagradu(danas: Instant = Instant.now()): Int {
-        if (s.poslednjaNagrada == dan(danas)) return 0
-        s.danaNagrade = if (s.poslednjaNagrada == dan(danas.minusSeconds(86_400))) s.danaNagrade + 1 else 0
-        val iznos = NAGRADE_NIZA[minOf(s.danaNagrade, NAGRADE_NIZA.size - 1)]
-        s.novcici += iznos
-        s.poslednjaNagrada = dan(danas)
-        s.poruke.firstOrNull { it.vrsta == "nagrada" && !it.pokupljeno }?.let { it.pokupljeno = true; it.procitano = true }
-        sacuvaj()
-        return iznos
-    }
+    private fun ciklusIstekao(sada: Long) = s.pocetakCiklusaPomoci?.let { sada - it >= CIKLUS_POMOCI_MS } ?: true
 
-    // Prodavnica
+    fun pomociOstalo(sada: Long = System.currentTimeMillis()): Int = if (ciklusIstekao(sada)) POMOCI_DNEVNO else maxOf(0, POMOCI_DNEVNO - s.pomociIskorisceno)
 
-    enum class Pomoc(val kljuc: String, val naziv: String, val cena: Int, val opis: String) {
-        POLA_POLA("polaPola", "50/50 ×5", 100, "Uklanja dva netačna odgovora."),
-        NAGOVESTAJ("nagovestaj", "Nagoveštaj ×5", 150, "Maskota sklanja jedan netačan odgovor i daje trag."),
-        VREME("vreme", "+10 s ×5", 120, "Deset sekundi više na jednom pitanju."),
-        PRESKOK("preskok", "Preskok ×5", 200, "Preskače pitanje bez gubitka niza."),
-    }
+    fun sledeciFondPomoci(sada: Long = System.currentTimeMillis()): Long? =
+        if (ciklusIstekao(sada)) null else s.pocetakCiklusaPomoci?.plus(CIKLUS_POMOCI_MS)
 
-    enum class Kupovina { USPEH, NEMA_NOVCICA }
-
-    fun kupi(p: Pomoc): Kupovina {
-        if (s.novcici < p.cena) return Kupovina.NEMA_NOVCICA
-        s.novcici -= p.cena
-        s.pomoci[p.kljuc] = (s.pomoci[p.kljuc] ?: 0) + 5
-        sacuvaj()
-        return Kupovina.USPEH
-    }
-
-    fun imaPomoc(p: Pomoc) = s.pomoci[p.kljuc] ?: 0
-
-    fun potrosi(p: Pomoc): Boolean {
-        if (imaPomoc(p) <= 0) return false
-        s.pomoci[p.kljuc] = imaPomoc(p) - 1
+    fun iskoristiPomoc(vrsta: String = "pomoc", sada: Long = System.currentTimeMillis()): Boolean {
+        if (ciklusIstekao(sada)) { s.pocetakCiklusaPomoci = sada; s.pomociIskorisceno = 0 }
+        if (s.pomociIskorisceno >= POMOCI_DNEVNO) return false
+        s.pomociIskorisceno += 1
+        s.pomociPoVrsti[vrsta] = (s.pomociPoVrsti[vrsta] ?: 0) + 1
+        pomocUPartiji = vrsta
         sacuvaj()
         return true
     }
-
-    fun dodajNovcice(n: Int) { s.novcici += n; sacuvaj() }
-    fun oduzmiNovcice(n: Int): Boolean { if (s.novcici < n) return false; s.novcici -= n; sacuvaj(); return true }
 
     // Sanduče
 
     val neprocitanih get() = s.poruke.count { !it.procitano }
     fun procitajSve() { s.poruke.forEach { it.procitano = true }; sacuvaj() }
     fun obrisiPoruku(id: String) { s.poruke.removeAll { it.id == id }; sacuvaj() }
-
-    /** Jednom dnevno, ako nagrada čeka, ubacuje podsetnik u sanduče. */
-    fun osveziSanduce() {
-        if (!dnevnaNagradaSpremna || s.poruke.any { it.vrsta == "nagrada" && !it.pokupljeno }) return
-        s.poruke.add(0, Poruka(vrsta = "nagrada", naslov = "Dnevna nagrada je spremna",
-            tekst = "Dan ${s.danaNagrade + 1} niza: $sledecaNagrada novčića čeka.", vreme = System.currentTimeMillis(), novcici = sledecaNagrada))
-        sacuvaj()
-    }
 
     // Statistika
 
@@ -223,8 +197,7 @@ class Napredak(context: Context) {
         val novi = SVI_BEDZEVI.filter { s.bedzevi[it.id] == null && ispunjen(it.id) }
         for (b in novi) {
             s.bedzevi[b.id] = danas.toEpochMilli()
-            s.novcici += b.nagrada
-            s.poruke.add(0, Poruka(vrsta = "bedz", naslov = "Novi bedž: ${b.naziv}", tekst = "${b.opis} +${b.nagrada} novčića.", vreme = danas.toEpochMilli()))
+            s.poruke.add(0, Poruka(vrsta = "bedz", naslov = "Novi bedž: ${b.naziv}", tekst = b.opis, vreme = danas.toEpochMilli()))
         }
         return novi
     }
@@ -233,8 +206,11 @@ class Napredak(context: Context) {
     fun resetuj() { s = Stanje(); sacuvaj() }
 
     companion object {
+        /** Jedan napredak za celu aplikaciju (pravi ga MainActivity). */
+        lateinit var deljeni: Napredak
         const val XP_PO_NIVOU = 250
-        val NAGRADE_NIZA = listOf(10, 20, 30, 40, 50, 60, 100)
+        const val POMOCI_DNEVNO = 7
+        const val CIKLUS_POMOCI_MS = 24 * 3600 * 1000L
         private val ZONA: ZoneId = ZoneId.of("Europe/Belgrade")
 
         /** Nivo n traži 250 × n XP da se pređe u n+1 (1→2 = 250, 12→13 = 3.000). */
@@ -248,22 +224,22 @@ class Napredak(context: Context) {
         fun dan(t: Instant): String = t.atZone(ZONA).toLocalDate().toString()
 
         val SVI_BEDZEVI = listOf(
-            Bedz("prvi", "Prvi korak", "Odigraj prvi kviz.", 0xFF12907E, 50),
-            Bedz("niz3", "Na vatri", "Igraj 3 dana zaredom.", 0xFFFF5FA2, 100),
-            Bedz("niz7", "Nedelja znanja", "Igraj 7 dana zaredom.", 0xFFF4A33C, 200),
-            Bedz("niz30", "Mesec bez pauze", "Igraj 30 dana zaredom.", 0xFFFFD84D, 500),
-            Bedz("tacnih100", "Veliki mozak", "100 tačnih odgovora.", 0xFF6D4BC9, 100),
-            Bedz("tacnih1000", "Enciklopedija", "1.000 tačnih odgovora.", 0xFF6D4BC9, 300),
-            Bedz("savrseno", "Savršenih 10", "10 od 10 u jednom kvizu.", 0xFFFFD84D, 150),
-            Bedz("brzina", "Munja", "10 tačnih odgovora za manje od 2 sekunde.", 0xFF12907E, 100),
-            Bedz("igara25", "Stalni gost", "Odigraj 25 kvizova.", 0xFF6EC3F2, 100),
-            Bedz("igara100", "Kvizomanija", "Odigraj 100 kvizova.", 0xFFF4A33C, 300),
-            Bedz("duel1", "Prva pobeda", "Pobedi u duelu.", 0xFFFF5FA2, 100),
-            Bedz("duel10", "Šampion", "Pobedi u 10 duela.", 0xFFFFD84D, 300),
-            Bedz("svet", "Svetski putnik", "Odigraj Osvajanje sveta.", 0xFF6EC3F2, 100),
-            Bedz("knjige", "Knjiški moljac", "50 tačnih u Book kvizu.", 0xFFF4A33C, 150),
-            Bedz("nivo5", "Nivo 5", "Dostigni nivo 5.", 0xFF12907E, 200),
-            Bedz("nivo10", "Nivo 10", "Dostigni nivo 10.", 0xFF6D4BC9, 500),
+            Bedz("prvi", "Prvi korak", "Odigraj prvi kviz.", 0xFF12907E),
+            Bedz("niz3", "Na vatri", "Igraj 3 dana zaredom.", 0xFFFF5FA2),
+            Bedz("niz7", "Nedelja znanja", "Igraj 7 dana zaredom.", 0xFFF4A33C),
+            Bedz("niz30", "Mesec bez pauze", "Igraj 30 dana zaredom.", 0xFFFFD84D),
+            Bedz("tacnih100", "Veliki mozak", "100 tačnih odgovora.", 0xFF6D4BC9),
+            Bedz("tacnih1000", "Enciklopedija", "1.000 tačnih odgovora.", 0xFF6D4BC9),
+            Bedz("savrseno", "Savršenih 10", "10 od 10 u jednom kvizu.", 0xFFFFD84D),
+            Bedz("brzina", "Munja", "10 tačnih odgovora za manje od 2 sekunde.", 0xFF12907E),
+            Bedz("igara25", "Stalni gost", "Odigraj 25 kvizova.", 0xFF6EC3F2),
+            Bedz("igara100", "Kvizomanija", "Odigraj 100 kvizova.", 0xFFF4A33C),
+            Bedz("duel1", "Prva pobeda", "Pobedi u duelu.", 0xFFFF5FA2),
+            Bedz("duel10", "Šampion", "Pobedi u 10 duela.", 0xFFFFD84D),
+            Bedz("svet", "Svetski putnik", "Odigraj Osvajanje sveta.", 0xFF6EC3F2),
+            Bedz("knjige", "Knjiški moljac", "50 tačnih u Book kvizu.", 0xFFF4A33C),
+            Bedz("nivo5", "Nivo 5", "Dostigni nivo 5.", 0xFF12907E),
+            Bedz("nivo10", "Nivo 10", "Dostigni nivo 10.", 0xFF6D4BC9),
         )
     }
 }

@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.sp
 import club.librum.kviz.servisi.Prikaz
 import kotlinx.coroutines.delay
 
-private const val TRAJANJE_OTKRIVANJA_MS = 1400L
+private const val TRAJANJE_OTKRIVANJA_MS = 3000L
 
 /**
  * Žuta kartica pitanja iz kita sa tajmerom. Javlja odgovor (indeks ili null

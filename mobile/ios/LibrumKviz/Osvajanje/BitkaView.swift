@@ -22,7 +22,7 @@ struct BitkaView: View {
 
     var body: some View {
         ZStack {
-            Color.senka.opacity(0.88).ignoresSafeArea()
+            Color.senka.opacity(0.96).ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 14) {
                     switch bitka.korak {
@@ -44,7 +44,7 @@ struct BitkaView: View {
         VStack(alignment: .leading, spacing: 12) {
             Oznaka(tekst: bitka.napadam ? "Napadaš" : "\(bitka.rivalIme) napada tvoju državu", boja: .roze)
             Text(drzava.ime).font(.naslov(38)).foregroundStyle(Color.mastilo)
-            Text("\(Kontinenti.od(bitka.kuda).ime) · \(bitka.napadam ? (model.stanje.oblasti[bitka.kuda]?.vlasnik == nil ? "neutralna država" : "drži je \(bitka.rivalIme)") : "brani je tvoj tim")")
+            Text("\(Kontinenti.od(bitka.kuda).ime) · \(bitka.napadam ? (model.stanje.oblasti[bitka.kuda]?.vlasnik == nil ? "prazno polje" : "drži je \(bitka.rivalIme)") : "brani je tvoj tim")")
                 .font(.tekst(14, .semibold)).foregroundStyle(Color.sivaTekst)
             let cinjenice = Cinjenice.sve[bitka.kuda] ?? []
             if !cinjenice.isEmpty {
@@ -65,7 +65,8 @@ struct BitkaView: View {
                 .font(.tekst(14)).foregroundStyle(Color.sivaTekst)
             HStack {
                 Spacer()
-                Text(odbrojavanje > 0 ? "\(odbrojavanje)" : "Kreni!").font(.naslov(54)).foregroundStyle(Color.tinta)
+                Text(odbrojavanje > 0 ? "\(odbrojavanje)" : "Kreni!").font(.naslov(odbrojavanje > 0 ? 54 : 28)).lineLimit(1).minimumScaleFactor(0.6)
+                    .foregroundStyle(Color.tinta).padding(.horizontal, 8)
                     .frame(width: 120, height: 120).background(Color.zuta, in: Circle()).overlay(Circle().stroke(Color.mastilo, lineWidth: 3))
                     .contentTransition(.numericText(countsDown: true))
                     .accessibilityLabel("Počinje za \(odbrojavanje)")

@@ -107,11 +107,11 @@ struct MapaView: View {
                 for id in mete {
                     guard let put = PutanjeMape.sve[id] else { continue }
                     mapa.fill(put, with: .color(Color.mastilo.opacity(0.08)))
-                    mapa.stroke(put, with: .color(.mastilo), style: StrokeStyle(lineWidth: 2.5 / k, dash: [6 / k, 5 / k]))
+                    mapa.stroke(put, with: .color(.tinta), style: StrokeStyle(lineWidth: 2 / k, dash: [5 / k, 4 / k]))
                 }
                 for id in izvori {
                     guard let put = PutanjeMape.sve[id] else { continue }
-                    mapa.stroke(put, with: .color(.zuta), style: StrokeStyle(lineWidth: 3.5 / k, lineJoin: .round, dash: [6 / k, 4 / k]))
+                    mapa.stroke(put, with: .color(.zuta), style: StrokeStyle(lineWidth: 2.5 / k, lineJoin: .round))
                 }
                 if let izabrana, let put = PutanjeMape.sve[izabrana] {
                     mapa.stroke(put, with: .color(.zuta), style: StrokeStyle(lineWidth: 5 / k, lineJoin: .round))
@@ -127,27 +127,29 @@ struct MapaView: View {
                     strela.move(to: CGPoint(x: a.x, y: a.y)); strela.addLine(to: CGPoint(x: b.x, y: b.y))
                     mapa.stroke(strela, with: .color(.crvena), style: StrokeStyle(lineWidth: 3.5 / k, lineCap: .round, dash: [8 / k, 5 / k]))
                 }
-                // Značke se crtaju u tačkama ekrana, da ostanu iste veličine na svakom zumu.
-                // Neutralne značke i imena tek pri većem zumu; na jednom kontinentu uvek (malo država).
-                let krupno = naKontinentu || Mapa.sirina * k > velicina.width * 5
+                // Značke (pločice sa brojem vojski) u tačkama ekrana, iste veličine na svakom zumu.
+                // Bez imena država i bez znački praznih polja: ime, vojske i zanimljivost stižu u listu kad se država dodirne.
+                // Pločica koja bi prekrila već nacrtanu se preskače (veće države imaju prednost), da ništa ne bude nabacano.
                 let prestonice = Set(stanje.igraci.map(\.prestonica))
-                for o in Mapa.oblasti {
+                var zauzeto: [CGRect] = []
+                let redom = Mapa.oblasti.filter { stanje.oblasti[$0.id] != nil }
+                    .sorted { ($0.id == izabrana || $0.id == meta ? 1 : 0, $0.povrsina) > ($1.id == izabrana || $1.id == meta ? 1 : 0, $1.povrsina) }
+                for o in redom {
                     guard let st = stanje.oblasti[o.id] else { continue }
                     let vlasnik = stanje.igraci.first { $0.tim == st.vlasnik }
-                    guard vlasnik != nil || krupno || mete.contains(o.id) else { continue }
+                    guard vlasnik != nil || mete.contains(o.id) else { continue }
                     let c = CGPoint(x: pocetak.x + o.x * k, y: pocetak.y + o.y * k)
-                    let r: CGFloat = 11
-                    ctx.fill(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r + 2, width: 2 * r, height: 2 * r)), with: .color(.mastilo))
-                    let krug = Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
-                    ctx.fill(krug, with: .color(vlasnik.map { Color(hex: $0.boja) } ?? .white))
-                    ctx.stroke(krug, with: .color(.mastilo), lineWidth: 1.8)
-                    ctx.draw(Text("\(st.vojske)").font(.naslov(12)).foregroundStyle(vlasnik == nil ? Color.mastilo : .white), at: c)
+                    let okvir = CGRect(x: c.x - 11, y: c.y - 9, width: 22, height: 18)
+                    guard !zauzeto.contains(where: { $0.insetBy(dx: 2, dy: 2).intersects(okvir) }) else { continue }
+                    zauzeto.append(okvir)
+                    let plocica = Path(roundedRect: okvir, cornerRadius: 6)
+                    ctx.fill(plocica.offsetBy(dx: 0, dy: 1.5), with: .color(.tinta.opacity(0.55)))
+                    ctx.fill(plocica, with: .color(vlasnik.map { Color(hex: $0.boja) } ?? .white))
+                    ctx.stroke(plocica, with: .color(.tinta), lineWidth: 1.2)
+                    ctx.draw(Text("\(st.vojske)").font(.naslov(11)).foregroundStyle(vlasnik == nil ? Color.tinta : .white), at: c)
                     if prestonice.contains(o.id) {
-                        ctx.draw(Text(Image(systemName: "crown.fill")).font(.system(size: 11)).foregroundStyle(Color.zuta),
-                                 at: CGPoint(x: c.x, y: c.y - r - 6))
-                    }
-                    if krupno && (o.povrsina * k * k > 1400 || mete.contains(o.id) || o.id == izabrana) {
-                        ctx.draw(Text(o.ime).font(.tekst(11, .bold)).foregroundStyle(Color.mastilo), at: CGPoint(x: c.x, y: c.y + r + 9))
+                        ctx.draw(Text(Image(systemName: "crown.fill")).font(.system(size: 9)).foregroundStyle(Color.zuta),
+                                 at: CGPoint(x: c.x + 11, y: c.y - 10))
                     }
                 }
             }

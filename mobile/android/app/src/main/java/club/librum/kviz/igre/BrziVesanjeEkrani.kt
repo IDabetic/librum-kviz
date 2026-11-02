@@ -88,8 +88,8 @@ internal fun Pokazatelj(naziv: String, vrednost: String, boja: Color, modifier: 
             .semantics(mergeDescendants = true) {},
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(vrednost, style = naslov(20.sp))
-        Oznaka(naziv)
+        Text(vrednost, style = naslov(20.sp, if (boja == Boje.kartica) Boje.mastilo else Boje.tinta))
+        Oznaka(naziv, if (boja == Boje.kartica) Boje.sivaTekst else Boje.tinta)
     }
 }
 
@@ -184,8 +184,8 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                     Pokazatelj("Tačnih", "${igra.tacnih}", Boje.tealSvetla, Modifier.weight(1f))
                 }
                 Column(Modifier.fillMaxWidth().pop(Boje.zuta).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row { Oznaka("Tačno ili netačno?", Boje.mastilo); Spacer(Modifier.weight(1f)); Text("$ostaloIzjava", style = naslov(22.sp)) }
-                    Text(iz.pitanje, style = naslov(22.sp))
+                    Row { Oznaka("Tačno ili netačno?", Boje.tinta); Spacer(Modifier.weight(1f)); Text("$ostaloIzjava", style = naslov(22.sp, Boje.tinta)) }
+                    Text(iz.pitanje, style = naslov(22.sp, Boje.tinta))
                     Text(iz.prikazano, style = naslov(30.sp).copy(color = Boje.teal, textAlign = TextAlign.Center),
                         modifier = Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(18.dp)).border(2.dp, Boje.mastilo, RoundedCornerShape(18.dp)).padding(vertical = 22.dp))
                     otkriveno?.let {
@@ -257,8 +257,8 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                     Text("${igra.poeni}", style = naslov(22.sp), modifier = Modifier.padding(start = 10.dp))
                 }
                 Column(Modifier.fillMaxWidth().pop(Boje.zuta).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    r.category?.let { Oznaka(it, Boje.mastilo) }
-                    r.hint?.let { Text(it, style = tekst(17.sp, FontWeight.SemiBold)) }
+                    r.category?.let { Oznaka(it, Boje.tinta) }
+                    r.hint?.let { Text(it, style = tekst(17.sp, FontWeight.SemiBold, Boje.tinta)) }
                     FlowRow(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         igra.prikaz.forEach { z ->

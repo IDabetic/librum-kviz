@@ -412,9 +412,11 @@ struct Stanje: Equatable {
         var pobedio = razlika >= potrebno || (potrebno == 1 && razlika == 0 && napadac.ms < branilac.ms)
         var s = self
         var gubitakBranioca = 0
+        var tvrdjavaDrzi = false
         if pobedio && odbrana == .tvrdjava && tvrdjava[k] != krug {
             // Prvi poraz u krugu: branilac zadržava državu, ali gubi jednu vojsku.
             pobedio = false
+            tvrdjavaDrzi = true
             gubitakBranioca = min(1, meta.vojske - 1)
             s.tvrdjava[k] = krug
         }
@@ -429,7 +431,7 @@ struct Stanje: Equatable {
             s.oblasti[odakle] = StanjeOblasti(vlasnik: napadaTim, vojske: 1)
             s.oblasti[kuda] = StanjeOblasti(vlasnik: napadaTim,
                                             vojske: max(1, izvor.vojske - 1) + (proboj ? Pravila.probojBonus : 0) + (plen ? Pravila.plenPrestonice : 0))
-        } else if gubitakBranioca > 0 {
+        } else if tvrdjavaDrzi {
             // Tvrđava je izdržala: napadač ostaje u svojoj državi, branilac gubi vojsku.
             s.oblasti[kuda]!.vojske = meta.vojske - gubitakBranioca
         } else {
@@ -443,7 +445,7 @@ struct Stanje: Equatable {
         s.bonusPomoci[pobedio ? napadaTim : braniTim, default: 0] += Pravila.bonusPomociPobedniku
         s.posleBitke()
         return (s, Ishod(gubitakNapadaca: gubitakNapadaca, gubitakBranioca: gubitakBranioca, osvojeno: pobedio, proboj: proboj, plen: plen,
-                         izgubljenaDrzava: !pobedio && gubitakBranioca == 0))
+                         izgubljenaDrzava: !pobedio && !tvrdjavaDrzi))
     }
 
     private mutating func posleBitke() {

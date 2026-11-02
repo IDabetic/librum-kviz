@@ -37,6 +37,7 @@ object Supabase {
         token: String? = null,
         upit: List<Pair<String, String>> = emptyList(),
         vratiRed: Boolean = false,
+        dodatnaZaglavlja: Map<String, String> = emptyMap(),
     ): String = withContext(Dispatchers.IO) {
         val q = if (upit.isEmpty()) "" else "?" + upit.joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }
         val veza = URL("$osnova/$putanja$q").openConnection() as HttpURLConnection
@@ -48,6 +49,7 @@ object Supabase {
             veza.setRequestProperty("Authorization", "Bearer ${token ?: kljuc}")
             veza.setRequestProperty("Content-Type", "application/json")
             if (vratiRed) veza.setRequestProperty("Prefer", "return=representation")
+            for ((k, v) in dodatnaZaglavlja) veza.setRequestProperty(k, v)
             if (telo != null) {
                 veza.doOutput = true
                 veza.outputStream.use { it.write(telo.toByteArray()) }

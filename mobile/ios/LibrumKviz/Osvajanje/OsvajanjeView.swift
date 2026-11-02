@@ -123,12 +123,8 @@ struct OsvajanjeIgraView: View {
                 .padding(.horizontal, 12)
 
             VStack(spacing: 10) {
-                if let izvor = model.izabrana, let meta = model.meta {
-                    panelNapada(izvor, meta)
-                } else {
                 Text(model.uputstvo).font(.tekst(15, .semibold)).frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityAddTraits(.updatesFrequently)
-                }
                 if model.meta == nil && model.covekNaPotezu && model.stanje.faza == .raspored {
                     Button("Rasporedi sam") { model.rasporediSam() }.buttonStyle(.sekundarno)
                 }
@@ -146,6 +142,13 @@ struct OsvajanjeIgraView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 8)
         }
+        // Dodir mete otvara list: ime, vlasnik, zanimljivost, uslov bitke, pa Odustani ili Napadni.
+        .overlay {
+            if let izvor = model.izabrana, let meta = model.meta {
+                DonjiList(zatvori: { withAnimation { model.odustaniOdMete() } }) { panelNapada(izvor, meta) }
+            }
+        }
+        .animation(.easeOut(duration: 0.25), value: model.meta)
         .overlay(alignment: .top) {
             if let poruka = model.poruka {
                 Text(poruka).font(.tekst(15, .bold)).padding(.horizontal, 18).padding(.vertical, 12)
@@ -211,10 +214,17 @@ struct OsvajanjeIgraView: View {
         let cilj = s.oblasti[meta]
         let vlasnik = s.igraci.first { $0.tim == cilj?.vlasnik }
         let uslov = s.uslovBitke(meta)
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Oznaka(tekst: vlasnik.map { "Drži \($0.ime)" } ?? "Prazno polje", boja: vlasnik.map { Color(hex: $0.boja) } ?? .sivaTekst)
+                Text(Mapa.oblast(meta).ime).font(.naslov(34)).foregroundStyle(Color.mastilo)
+            }
+            // Dve zanimljivosti; glavni grad je najmanje zanimljiv, pa ide poslednji.
+            ForEach((Cinjenice.sve[meta] ?? []).sorted { !$0.hasPrefix("Glavni grad") && $1.hasPrefix("Glavni grad") }.prefix(2), id: \.self) { c in
+                Label(c, systemImage: "lightbulb").font(.tekst(14)).foregroundStyle(Color.mastilo)
+            }
             redDrzave("Napadaš iz", Mapa.oblast(izvor).ime, vojski(mojaVojska), boja: s.igraci.first { $0.tim == s.trenutni.tim }.map { Color(hex: $0.boja) } ?? .teal)
-            redDrzave("Meta", Mapa.oblast(meta).ime,
-                      vlasnik.map { "\($0.ime) · \(vojski(cilj?.vojske ?? 0))" } ?? "prazno polje · \(vojski(cilj?.vojske ?? 0))",
+            redDrzave("Brani", vlasnik?.ime ?? "Niko (prazno polje)", vojski(cilj?.vojske ?? 0),
                       boja: vlasnik.map { Color(hex: $0.boja) } ?? Color.kremTamnija)
             if let o = s.odbranaMete(meta) {
                 Label("Odbrana: \(o.naziv)", systemImage: o.ikonica).font(.tekst(13, .bold)).foregroundStyle(Color.crvena)

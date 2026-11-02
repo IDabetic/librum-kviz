@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -105,7 +107,10 @@ private object PutanjeMape {
  * Zum i pomeranje prstima, dodir bira državu (male države i preko značke).
  */
 @Composable
-fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: String?, dodir: (String) -> Unit, modifier: Modifier = Modifier) {
+fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: String?, dodir: (String) -> Unit, modifier: Modifier = Modifier,
+               meta: String? = null, izvori: List<String> = emptyList()) {
+    // Partija na jednom kontinentu: u stanju su samo njegove države.
+    val naKontinentu = stanje.oblasti.size < Mapa.oblasti.size
     val merac = rememberTextMeasurer()
     val gustina = LocalDensity.current.density
     var razmera by remember { mutableFloatStateOf(1f) }
@@ -127,8 +132,21 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
         }
         fun pocetak(k: Float) = Offset((sirinaPx - Mapa.sirina * k) / 2 + pomak.x, (visinaPx - Mapa.visina * k) / 2 + pomak.y)
 
-        // Telefon: mapa krene uvećana oko prestonice ili mesta bitke.
+        /** Ceo kontinent u kadru, bez krajnjih 10% država (Rusija, Island), da jezgro bude krupno za dodir. */
+        fun uokviriKontinent() {
+            val xs = stanje.oblasti.keys.map { Mapa.oblast(it).x }.sorted()
+            val ys = stanje.oblasti.keys.map { Mapa.oblast(it).y }.sorted()
+            val odsek = if (xs.size >= 10) xs.size / 10 else 0
+            val x0 = xs[odsek]; val x1 = xs[xs.size - 1 - odsek]; val y0 = ys[odsek]; val y1 = ys[ys.size - 1 - odsek]
+            val kk = min(sirinaPx / ((x1 - x0) * 1.15f + 60), visinaPx / ((y1 - y0) * 1.15f + 60))
+            razmera = (kk / osnova).coerceIn(1f, 8f)
+            val k = osnova * razmera
+            pomak = ogranici(Offset((Mapa.sirina / 2 - (x0 + x1) / 2) * k, (Mapa.visina / 2 - (y0 + y1) / 2) * k), k)
+        }
+
+        // Telefon: mapa krene uvećana oko prestonice ili mesta bitke; na kontinentu ostaje ceo kontinent.
         LaunchedEffect(fokus) {
+            if (naKontinentu) { if (fokus != izabrana || fokus == null) uokviriKontinent(); return@LaunchedEffect }
             val id = fokus ?: return@LaunchedEffect
             val o = Mapa.oblast(id)
             if (sirinaPx / gustina < 700) razmera = max(razmera, max(2.4f, visinaPx / (Mapa.visina * osnova)))
@@ -195,8 +213,9 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
                     }
                     for (o in Mapa.oblasti) {
                         val put = PutanjeMape.sve[o.id] ?: continue
-                        val st = stanje.oblasti[o.id] ?: continue
-                        val boja = stanje.igraci.firstOrNull { it.id == st.vlasnik }?.let { Color(it.boja) } ?: NEUTRALNE[o.boja % 5]
+                        // Igra na jednom kontinentu: ostale države su bleda pozadina, bez znački.
+                        val st = stanje.oblasti[o.id] ?: run { drawPath(put, NEUTRALNE[o.boja % 5].copy(alpha = 0.25f)); null } ?: continue
+                        val boja = stanje.igraci.firstOrNull { it.tim == st.vlasnik }?.let { Color(it.boja) } ?: NEUTRALNE[o.boja % 5]
                         drawPath(put, boja)
                         drawPath(put, Color.White, style = Stroke(1.1f * gustina / k))
                     }
@@ -205,36 +224,54 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
                         drawPath(put, Boje.mastilo.copy(alpha = 0.08f))
                         drawPath(put, Boje.mastilo, style = Stroke(2.5f * gustina / k, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f * gustina / k, 5f * gustina / k))))
                     }
+                    for (id in izvori) {
+                        val put = PutanjeMape.sve[id] ?: continue
+                        drawPath(put, Boje.zuta, style = Stroke(2.5f * gustina / k, join = StrokeJoin.Round))
+                    }
                     izabrana?.let { id -> PutanjeMape.sve[id]?.let { drawPath(it, Boje.zuta, style = Stroke(5f * gustina / k, join = StrokeJoin.Round)) } }
+                    meta?.let { id ->
+                        PutanjeMape.sve[id]?.let {
+                            drawPath(it, Boje.crvena.copy(alpha = 0.35f))
+                            drawPath(it, Boje.crvena, style = Stroke(5f * gustina / k, join = StrokeJoin.Round))
+                        }
+                        // Strelica napada: od države iz koje se napada do mete.
+                        izabrana?.let { iz ->
+                            val a = Mapa.oblast(iz); val b = Mapa.oblast(id)
+                            drawLine(Boje.crvena, Offset(a.x, a.y), Offset(b.x, b.y), 3.5f * gustina / k,
+                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f * gustina / k, 5f * gustina / k)))
+                        }
+                    }
                 }
             }
-            // Značke u pikselima ekrana, iste veličine na svakom zumu.
-            val krupno = Mapa.sirina * k > sirinaPx * 4.5f
+            // Pločice sa brojem vojski, iste veličine na svakom zumu. Bez imena država i bez znački praznih polja:
+            // ime, vojske i zanimljivost stižu u list kad se država dodirne. Pločica koja bi prekrila nacrtanu se preskače.
             val prestonice = stanje.igraci.map { it.prestonica }.toSet()
-            val r = 11f * gustina
-            for (o in Mapa.oblasti) {
+            val zauzeto = mutableListOf<Rect>()
+            val redom = Mapa.oblasti.filter { it.id in stanje.oblasti }
+                .sortedWith(compareByDescending<Oblast> { it.id == izabrana || it.id == meta }.thenByDescending { it.povrsina })
+            for (o in redom) {
                 val st = stanje.oblasti[o.id] ?: continue
-                val vlasnik = stanje.igraci.firstOrNull { it.id == st.vlasnik }
-                if (vlasnik == null && !krupno && o.id !in mete) continue
+                val vlasnik = stanje.igraci.firstOrNull { it.tim == st.vlasnik }
+                if (vlasnik == null && o.id !in mete) continue
                 val c = Offset(p.x + o.x * k, p.y + o.y * k)
-                drawCircle(Boje.mastilo, r, c + Offset(0f, 2f * gustina))
-                drawCircle(vlasnik?.let { Color(it.boja) } ?: Color.White, r, c)
-                drawCircle(Boje.mastilo, r, c, style = Stroke(1.8f * gustina))
-                val broj = merac.measure("${st.vojske}", naslov(12.sp).copy(color = if (vlasnik == null) Boje.mastilo else Color.White))
+                val okvir = Rect(c.x - 11 * gustina, c.y - 9 * gustina, c.x + 11 * gustina, c.y + 9 * gustina)
+                if (zauzeto.any { it.deflate(2 * gustina).overlaps(okvir) }) continue
+                zauzeto += okvir
+                val ugao = CornerRadius(6 * gustina)
+                drawRoundRect(Boje.tinta.copy(alpha = 0.55f), okvir.topLeft + Offset(0f, 1.5f * gustina), okvir.size, ugao)
+                drawRoundRect(vlasnik?.let { Color(it.boja) } ?: Color.White, okvir.topLeft, okvir.size, ugao)
+                drawRoundRect(Boje.tinta, okvir.topLeft, okvir.size, ugao, style = Stroke(1.2f * gustina))
+                val broj = merac.measure("${st.vojske}", naslov(11.sp).copy(color = if (vlasnik == null) Boje.tinta else Color.White))
                 drawText(broj, topLeft = c - Offset(broj.size.width / 2f, broj.size.height / 2f))
                 if (o.id in prestonice) {
                     val kruna = Path().apply {
-                        val y0 = c.y - r - 2 * gustina
-                        moveTo(c.x - 7 * gustina, y0); lineTo(c.x - 7 * gustina, y0 - 7 * gustina); lineTo(c.x - 3.5f * gustina, y0 - 3.5f * gustina)
-                        lineTo(c.x, y0 - 8 * gustina); lineTo(c.x + 3.5f * gustina, y0 - 3.5f * gustina); lineTo(c.x + 7 * gustina, y0 - 7 * gustina)
-                        lineTo(c.x + 7 * gustina, y0); close()
+                        val x0 = c.x + 11 * gustina; val y0 = c.y - 8 * gustina
+                        moveTo(x0 - 5 * gustina, y0); lineTo(x0 - 5 * gustina, y0 - 5 * gustina); lineTo(x0 - 2.5f * gustina, y0 - 2.5f * gustina)
+                        lineTo(x0, y0 - 6 * gustina); lineTo(x0 + 2.5f * gustina, y0 - 2.5f * gustina); lineTo(x0 + 5 * gustina, y0 - 5 * gustina)
+                        lineTo(x0 + 5 * gustina, y0); close()
                     }
                     drawPath(kruna, Boje.zuta)
-                    drawPath(kruna, Boje.mastilo, style = Stroke(1.4f * gustina))
-                }
-                if ((krupno && o.povrsina * k * k > 2200 * gustina * gustina) || o.id in mete || o.id == izabrana) {
-                    val ime = merac.measure(o.ime, TextStyle(fontFamily = SpaceGrotesk, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Boje.mastilo))
-                    drawText(ime, topLeft = Offset(c.x - ime.size.width / 2f, c.y + r + 2 * gustina))
+                    drawPath(kruna, Boje.tinta, style = Stroke(1.2f * gustina))
                 }
             }
         }
@@ -243,7 +280,7 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
             listOf(
                 Triple(Icons.Rounded.Add, "Uvećaj") { razmera = min(8f, razmera * 1.5f) },
                 Triple(Icons.Rounded.Remove, "Umanji") { razmera = max(1f, razmera / 1.5f); pomak = ogranici(pomak, osnova * razmera) },
-                Triple(Icons.Rounded.Public, "Ceo svet") { razmera = 1f; pomak = Offset.Zero },
+                Triple(Icons.Rounded.Public, if (naKontinentu) "Ceo kontinent" else "Ceo svet") { if (naKontinentu) uokviriKontinent() else { razmera = 1f; pomak = Offset.Zero } },
             ).forEach { (ikonica, opis, radnja) ->
                 IconButton(onClick = radnja, modifier = Modifier.size(44.dp).background(Boje.kartica, CircleShape).border(2.dp, Boje.mastilo, CircleShape)) {
                     Icon(ikonica, contentDescription = opis, tint = Boje.mastilo)

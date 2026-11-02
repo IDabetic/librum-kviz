@@ -197,7 +197,7 @@ final class OsvajanjeModel {
     private func novaBitka(napadam: Bool, odakle: String, kuda: String) -> Bitka {
         let uslov = stanje.uslovBitke(kuda)
         let rival = napadam
-            ? stanje.igraci.first { $0.tim == stanje.oblasti[kuda]?.vlasnik }?.ime ?? "Neutralna"
+            ? stanje.igraci.first { $0.tim == stanje.oblasti[kuda]?.vlasnik }?.ime ?? "niko (prazno polje)"
             : stanje.trenutni.ime
         return Bitka(napadam: napadam, odakle: odakle, kuda: kuda, uslov: uslov,
                      prikazi: (0..<uslov.pitanja).map { _ in spil.sledece() }, rivalIme: rival)
@@ -337,7 +337,7 @@ final class OsvajanjeModel {
     func javi(_ tekst: String) {
         poruka = tekst
         Task {
-            try? await Task.sleep(for: .seconds(2.2))
+            try? await Task.sleep(for: .seconds(4))
             if poruka == tekst { poruka = nil }
         }
     }

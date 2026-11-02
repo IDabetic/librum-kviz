@@ -147,7 +147,7 @@ fun ProKvizEkran(sesija: Sesija, vrsta: Survival = Survival.PRO, izadji: () -> U
                     Pokazatelj("Poeni", igra.poeni, Boje.zuta, Modifier.weight(1f))
                     Pokazatelj("Niz", igra.kombo, Boje.tealSvetla, Modifier.weight(1f))
                 }
-                if (igra.riskAktivan) Text("Risk aktivan: duplo dobit, duplo gubitak", style = tekst(14.sp, FontWeight.Bold),
+                if (igra.riskAktivan) Text("Risk aktivan: duplo dobit, duplo gubitak", style = tekst(14.sp, FontWeight.Bold, Boje.tinta),
                     modifier = Modifier.fillMaxWidth().pop(Boje.zuta, 14.dp).padding(12.dp))
                 PitanjeKartica(p.zanr?.let { "Pitanje ${igra.stigao + 1} · $it" } ?: "Pitanje ${igra.stigao + 1}", p, sekundi = sekundi, eliminisani = eliminisani) { izabran, _ ->
                     igra.odgovor(izabran == p.tacan)?.let(::javi)
@@ -167,7 +167,7 @@ fun ProKvizEkran(sesija: Sesija, vrsta: Survival = Survival.PRO, izadji: () -> U
             }
         }
         poruka?.let {
-            Text(it, style = tekst(15.sp, FontWeight.Bold), modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 70.dp, start = 24.dp, end = 24.dp).pop(Boje.zuta, 16.dp).padding(horizontal = 18.dp, vertical = 12.dp))
+            Text(it, style = tekst(15.sp, FontWeight.Bold, Boje.tinta), modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 70.dp, start = 24.dp, end = 24.dp).pop(Boje.zuta, 16.dp).padding(horizontal = 18.dp, vertical = 12.dp))
         }
         if (potvrdaIzlaska) Dijalog(
             "Prekidaš partiju?",
@@ -186,8 +186,8 @@ private fun Pokazatelj(naziv: String, vrednost: Int, boja: Color, modifier: Modi
             .semantics(mergeDescendants = true) {},
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("$vrednost", style = naslov(20.sp))
-        Oznaka(naziv)
+        Text("$vrednost", style = naslov(20.sp, if (boja == Boje.kartica) Boje.mastilo else Boje.tinta))
+        Oznaka(naziv, if (boja == Boje.kartica) Boje.sivaTekst else Boje.tinta)
     }
 }
 

@@ -15,7 +15,7 @@ struct PitanjeKartica: View {
     @State private var otkriveno = false
     @State private var preostalo: Double = 1
 
-    private let trajanjeOtkrivanja: Duration = .milliseconds(1400)
+    private let trajanjeOtkrivanja: Duration = .milliseconds(3000)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
