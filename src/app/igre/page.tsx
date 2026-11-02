@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/Header'
-import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { IGRE } from '@/lib/igre-katalog'
+import { KarticaIgre } from '@/components/KarticaIgre'
 
 export const metadata: Metadata = {
   title: 'Igre znanja – izaberi kviz, online kviz na srpskom',
@@ -23,38 +23,13 @@ export default async function IgrePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div className="page-ink min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-20 w-full">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] mb-4" style={{ color: '#A39E95' }}>
-          Sadržaj
-        </p>
-        <h1 className="leading-[0.9] mb-14" style={{ color: '#F4EFE6', fontSize: 'clamp(56px, 12vw, 120px)', fontWeight: 500 }}>
-          Igre.
-        </h1>
-
-        <div className="grid md:grid-cols-2" style={{ borderTop: '1px solid rgba(244,239,230,0.14)' }}>
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
+        <h1 className="mb-8" style={{ fontSize: 'clamp(44px, 9vw, 88px)' }}>Igre</h1>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {IGRE.map(g => (
-            <Link
-              key={g.href}
-              href={user ? g.href : `/auth/prijava?redirect=${g.href}`}
-              className="group p-6 sm:p-8 flex flex-col justify-between min-h-[200px] sm:min-h-[240px] transition-colors"
-              style={{
-                borderBottom: '1px solid rgba(244,239,230,0.14)',
-                borderRight: '1px solid rgba(244,239,230,0.14)',
-              }}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-[11px] font-semibold tabular-nums" style={{ color: g.accent }}>{g.n}</span>
-                <span className="text-[13px] font-semibold" style={{ color: g.accent }}>{g.cta} →</span>
-              </div>
-              <div>
-                <h2 className="leading-none mb-3" style={{ color: '#F4EFE6', fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 500 }}>
-                  {g.kratko}
-                </h2>
-                <p className="text-[15px]" style={{ color: '#A39E95' }}>{g.desc}</p>
-              </div>
-            </Link>
+            <KarticaIgre key={g.href} igra={g} href={user ? g.href : `/auth/prijava?redirect=${g.href}`} />
           ))}
         </div>
       </main>

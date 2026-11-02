@@ -25,10 +25,10 @@ export default async function AdminSettingsPage() {
   return (
     <div className="max-w-2xl space-y-5">
       <div>
-        <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+        <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>
           Podešavanja administratora
         </h1>
-        <p className="text-[13px] mt-1" style={{ color: '#6B6760' }}>
+        <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
           Tvoj profil i lozinka.
         </p>
       </div>

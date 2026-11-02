@@ -100,19 +100,19 @@ export default function PredloziPodesavanja({ pocetne }: { pocetne: Vrednosti })
 
   return (
     <section className="card-soft p-6">
-      <h2 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#1A1A1E' }}>
+      <h2 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#151515' }}>
         Prijem korisničkih pitanja
       </h2>
-      <p className="text-[13px] mb-5 leading-relaxed" style={{ color: '#6B6760' }}>
+      <p className="text-[13px] mb-5 leading-relaxed" style={{ color: '#6F6C66' }}>
         Važi za stranu „Dodaj pitanja”. Vrednosti se primenjuju odmah, bez novog objavljivanja sajta.
       </p>
 
       <div className="space-y-5">
         {POLJA.map(p => (
           <div key={p.key}>
-            <label className="block text-[13px] font-bold mb-1 tracking-tight" style={{ color: '#1A1A1E' }}>
+            <label className="block text-[13px] font-bold mb-1 tracking-tight" style={{ color: '#151515' }}>
               {p.naziv}
-              <span className="font-normal ml-2" style={{ color: '#6B6760' }}>
+              <span className="font-normal ml-2" style={{ color: '#6F6C66' }}>
                 podrazumevano {p.podrazumevano}
               </span>
             </label>
@@ -120,20 +120,20 @@ export default function PredloziPodesavanja({ pocetne }: { pocetne: Vrednosti })
               value={vrednosti[p.key]}
               onChange={e => setVrednosti(v => ({ ...v, [p.key]: e.target.value }))}
               className="input" />
-            <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: '#6B6760' }}>{p.opis}</p>
+            <p className="text-[11px] mt-1.5 leading-relaxed" style={{ color: '#6F6C66' }}>{p.opis}</p>
           </div>
         ))}
       </div>
 
       {greska && (
-        <div className="rounded-2xl px-4 py-3 mt-4 text-[13px]" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+        <div className="rounded-2xl px-4 py-3 mt-4 text-[13px]" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
           {greska}
         </div>
       )}
       {poruka && (
         <div className="rounded-2xl px-4 py-3 mt-4 text-[13px] flex items-center gap-2"
-          style={{ background: '#D4F3E7', color: '#1F8A62' }}>
-          <IconCheck size={14} className="text-[#1F8A62]" /> {poruka}
+          style={{ background: '#DFF3EE', color: '#0E6F61' }}>
+          <IconCheck size={14} className="text-[#0E6F61]" /> {poruka}
         </div>
       )}
 

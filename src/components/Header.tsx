@@ -18,10 +18,10 @@ type Contributor = { id: string; first_name: string | null; last_name: string | 
 // Top-level nav. "Igre" is a hub page (/igre) with a colorful card grid;
 // the header itself stays a slim row of plain links — no dropdown.
 const NAV_LINKS = [
-  { href: '/igre',             label: 'Igre',             Icon: IconHome,    accent: '#3A36A0', tint: 'rgba(58,54,160,0.12)' },
-  { href: '/ranglista',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#8A6A12', tint: 'rgba(226,185,58,0.18)' },
-  { href: '/nagrade',       label: 'Nagrade',       Icon: IconStar,     accent: '#E2B93A', tint: 'rgba(226,185,58,0.18)' },
-  { href: '/dodaj-pitanja', label: 'Dodaj pitanja', Icon: IconQuestion, accent: '#1F8A62', tint: 'rgba(47,191,138,0.12)' },
+  { href: '/igre',             label: 'Igre',             Icon: IconHome,    accent: '#12907E', tint: 'rgba(18,144,126,0.12)' },
+  { href: '/ranglista',      label: 'Rang lista',       Icon: IconTrophy,  accent: '#8A6A12', tint: 'rgba(255,216,77,0.18)' },
+  { href: '/nagrade',       label: 'Nagrade',       Icon: IconStar,     accent: '#FFD84D', tint: 'rgba(255,216,77,0.18)' },
+  { href: '/dodaj-pitanja', label: 'Dodaj pitanja', Icon: IconQuestion, accent: '#0E6F61', tint: 'rgba(18,144,126,0.12)' },
 ]
 
 // Game routes the mobile drawer used to surface as a colored grid. Now
@@ -156,14 +156,13 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50" style={{ background: '#F4EFE6' }}>
-        <div className="h-[3px]" style={{ background: 'linear-gradient(90deg, #3A36A0 0%, #3B78E0 50%, #2FBF8A 100%)' }} />
+      <header className="sticky top-0 z-50" style={{ background: '#F3F0E6' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between gap-4"
-          style={{ borderBottom: '1px solid #12101A' }}>
+          style={{ borderBottom: '1.5px solid #E7E1D0' }}>
           <div className="flex items-center gap-3 min-w-0">
             <Logo height={32} priority />
             <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-[0.22em]"
-              style={{ color: '#6B6760' }}>
+              style={{ color: '#6F6C66' }}>
               Klub · kviz
             </span>
           </div>
@@ -177,10 +176,10 @@ export default function Header() {
               return (
                 <Link key={href} href={href}
                   className="relative text-[13px] font-semibold tracking-wide py-1"
-                  style={{ color: '#12101A' }}>
+                  style={{ color: '#12110F' }}>
                   {label}
                   {active && (
-                    <span className="absolute left-0 right-0 -bottom-[22px] h-[2px]" style={{ background: '#12101A' }} />
+                    <span className="absolute left-0 right-0 -bottom-[23px] h-[3px]" style={{ background: '#151515' }} />
                   )}
                 </Link>
               )
@@ -194,34 +193,34 @@ export default function Header() {
               <button onClick={() => setShowRecent(o => !o)}
                 className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
                 style={showRecent
-                  ? { background: '#3A36A0', color: 'white' }
-                  : { background: 'rgba(26,26,30,0.06)', color: '#1A1A1E' }}
+                  ? { background: '#12907E', color: 'white' }
+                  : { background: 'rgba(21,21,21,0.06)', color: '#151515' }}
                 aria-label="Novi članovi">
                 <IconUsers size={18} strokeWidth={2.2} />
               </button>
               {showRecent && (
                 <div className="absolute right-0 top-full mt-2 w-80 card-soft overflow-hidden z-50 animate-pop-in">
-                  <div className="px-5 py-4 border-b border-[#EBE8E1]">
-                    <p className="font-bold text-[15px]" style={{ color: '#1A1A1E' }}>Novi članovi</p>
-                    <p className="text-[12px] mt-0.5" style={{ color: '#6B6760' }}>Poslednji koji su se pridružili</p>
+                  <div className="px-5 py-4 border-b border-[#E7E1D0]">
+                    <p className="font-bold text-[15px]" style={{ color: '#151515' }}>Novi članovi</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: '#6F6C66' }}>Poslednji koji su se pridružili</p>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {recentUsers.length === 0 && (
-                      <p className="px-5 py-4 text-[13px]" style={{ color: '#6B6760' }}>Učitavanje…</p>
+                      <p className="px-5 py-4 text-[13px]" style={{ color: '#6F6C66' }}>Učitavanje…</p>
                     )}
                     {recentUsers.map(u => {
                       const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
                       return (
                         <Link key={u.id} href={`/profil/${u.id}`} onClick={() => setShowRecent(false)}
-                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#EBE8E1] transition-colors">
-                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#E7E1D0] transition-colors">
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
                             {u.avatar
                               ? <Image src={`/avatars/${u.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
-                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#3A36A0', color: 'white' }}>{name[0]}</div>}
+                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#12907E', color: 'white' }}>{name[0]}</div>}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[14px] truncate" style={{ color: '#1A1A1E' }}>{name}</p>
-                            <p className="text-[12px]" style={{ color: '#6B6760' }}>{timeAgo(u.created_at)}</p>
+                            <p className="font-semibold text-[14px] truncate" style={{ color: '#151515' }}>{name}</p>
+                            <p className="text-[12px]" style={{ color: '#6F6C66' }}>{timeAgo(u.created_at)}</p>
                           </div>
                         </Link>
                       )
@@ -238,29 +237,29 @@ export default function Header() {
               <button onClick={() => setShowContributors(o => !o)}
                 className="flex items-center justify-center w-10 h-10 rounded-full transition-all"
                 style={showContributors
-                  ? { background: '#E2B93A', color: '#1A1A1E' }
-                  : { background: 'rgba(26,26,30,0.06)', color: '#1A1A1E' }}
+                  ? { background: '#FFD84D', color: '#151515' }
+                  : { background: 'rgba(21,21,21,0.06)', color: '#151515' }}
                 aria-label="Korisnici koji doprinose kvizu">
                 <IconStar size={18} strokeWidth={2.2} />
               </button>
               {showContributors && (
                 <div className="absolute right-0 top-full mt-2 w-80 card-soft overflow-hidden z-50 animate-pop-in">
-                  <div className="px-5 py-4 border-b border-[#EBE8E1]">
-                    <p className="font-bold text-[15px]" style={{ color: '#1A1A1E' }}>Doprinos kvizu</p>
-                    <p className="text-[12px] mt-0.5" style={{ color: '#6B6760' }}>
+                  <div className="px-5 py-4 border-b border-[#E7E1D0]">
+                    <p className="font-bold text-[15px]" style={{ color: '#151515' }}>Doprinos kvizu</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: '#6F6C66' }}>
                       Šalju nova pitanja i prijavljuju greške
                     </p>
                     <Link href="/autori-pitanja" onClick={() => setShowContributors(false)}
-                      className="text-[12px] font-semibold underline" style={{ color: '#3A36A0' }}>
+                      className="text-[12px] font-semibold underline" style={{ color: '#12907E' }}>
                       Rang lista autora pitanja →
                     </Link>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {contributors.length === 0 && (
-                      <p className="px-5 py-4 text-[13px]" style={{ color: '#6B6760' }}>
+                      <p className="px-5 py-4 text-[13px]" style={{ color: '#6F6C66' }}>
                         Niko još nije dao doprinos. Budi prvi —{' '}
                         <Link href="/dodaj-pitanja" onClick={() => setShowContributors(false)}
-                          className="underline" style={{ color: '#3A36A0' }}>dodaj pitanje</Link>.
+                          className="underline" style={{ color: '#12907E' }}>dodaj pitanje</Link>.
                       </p>
                     )}
                     {contributors.map(c => {
@@ -274,20 +273,20 @@ export default function Header() {
                       if (c.reports > 0)     parts.push(`${c.reports} ${c.reports === 1 ? 'prijava' : 'prijava'}`)
                       return (
                         <Link key={c.id} href={`/profil/${c.id}`} onClick={() => setShowContributors(false)}
-                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#EBE8E1] transition-colors">
-                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-[#E7E1D0] transition-colors">
+                          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
                             {c.avatar
                               ? <Image src={`/avatars/${c.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
-                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{name[0]}</div>}
+                              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFD84D', color: '#151515' }}>{name[0]}</div>}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[14px] truncate" style={{ color: '#1A1A1E' }}>
-                              {jeAutorPitanja(c.accepted, pragBedza) && <span title="Autor pitanja">🏅 </span>}
+                            <p className="font-semibold text-[14px] truncate" style={{ color: '#151515' }}>
+                              {jeAutorPitanja(c.accepted, pragBedza) && <span title="Autor pitanja" className="inline-block w-2 h-2 rounded-full mr-1.5 align-middle" style={{ background: '#FFD84D', outline: '1.5px solid #151515' }} />}
                               {name}
                             </p>
-                            <p className="text-[12px]" style={{ color: '#6B6760' }}>{parts.join(' · ')}</p>
+                            <p className="text-[12px]" style={{ color: '#6F6C66' }}>{parts.join(' · ')}</p>
                           </div>
-                          <span className="chip flex-shrink-0" style={{ background: '#F5E6B8', color: '#8A6A12' }}>
+                          <span className="chip flex-shrink-0" style={{ background: '#FFF3C4', color: '#8A6A12' }}>
                             {c.total_contributions}
                           </span>
                         </Link>
@@ -300,7 +299,7 @@ export default function Header() {
 
             {authKnown && !userName && (
               <div className="hidden md:flex items-center gap-4">
-                <Link href="/auth/prijava" className="text-[13px] font-semibold" style={{ color: '#12101A' }}>
+                <Link href="/auth/prijava" className="text-[13px] font-semibold" style={{ color: '#12110F' }}>
                   Prijava
                 </Link>
                 <Link href="/auth/registracija" className="btn btn-primary btn-sm">
@@ -311,13 +310,13 @@ export default function Header() {
 
             {/* User avatar */}
             {userName && (
-              <Link href="/profil" className="hidden md:flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-full transition-all hover:bg-[#EBE8E1]">
-                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
+              <Link href="/profil" className="hidden md:flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-full transition-all hover:bg-[#E7E1D0]">
+                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
                   {userAvatar
                     ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={36} height={36} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{userName[0].toUpperCase()}</div>}
+                    : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFD84D', color: '#151515' }}>{userName[0].toUpperCase()}</div>}
                 </div>
-                <span className="text-[13px] font-semibold" style={{ color: '#1A1A1E' }}>{userName}</span>
+                <span className="text-[13px] font-semibold" style={{ color: '#151515' }}>{userName}</span>
               </Link>
             )}
 
@@ -325,14 +324,14 @@ export default function Header() {
             {userName && (
               <button onClick={handleLogout}
                 className="hidden md:flex items-center justify-center w-10 h-10 rounded-full transition-all"
-                style={{ color: '#6B6760' }}
+                style={{ color: '#6F6C66' }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = 'rgba(229,83,83,0.10)'
-                  ;(e.currentTarget as HTMLButtonElement).style.color = '#E55353'
+                  ;(e.currentTarget as HTMLButtonElement).style.color = '#E5385C'
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                  ;(e.currentTarget as HTMLButtonElement).style.color = '#6B6760'
+                  ;(e.currentTarget as HTMLButtonElement).style.color = '#6F6C66'
                 }}
                 aria-label="Odjava">
                 <IconLogout size={18} strokeWidth={2.2} />
@@ -342,7 +341,7 @@ export default function Header() {
             {/* Mobile hamburger */}
             <button onClick={() => setMobileOpen(o => !o)}
               className="md:hidden flex items-center justify-center w-10 h-10 rounded-full transition-all"
-              style={{ background: mobileOpen ? '#1A1A1E' : 'rgba(26,26,30,0.06)', color: mobileOpen ? 'white' : '#1A1A1E' }}
+              style={{ background: mobileOpen ? '#151515' : 'rgba(21,21,21,0.06)', color: mobileOpen ? 'white' : '#151515' }}
               aria-label="Meni">
               {mobileOpen ? <IconClose size={20} strokeWidth={2.2} /> : <IconMenu size={20} strokeWidth={2.2} />}
             </button>
@@ -351,20 +350,20 @@ export default function Header() {
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-[#EBE8E1] animate-fade-in">
+          <div className="md:hidden border-t border-[#E7E1D0] animate-fade-in">
             <div className="max-w-6xl mx-auto px-4 py-3 space-y-3">
               {/* User card */}
               {userName && (
                 <Link href="/profil" className="flex items-center gap-3 p-3 rounded-2xl"
-                  style={{ background: '#EBE8E1' }}>
+                  style={{ background: '#E7E1D0' }}>
                   <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 bg-white">
                     {userAvatar
                       ? <Image src={`/avatars/${userAvatar}`} alt={userName} width={44} height={44} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{userName[0].toUpperCase()}</div>}
+                      : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#FFD84D', color: '#151515' }}>{userName[0].toUpperCase()}</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-bold truncate" style={{ color: '#1A1A1E' }}>{userName}</p>
-                    <p className="text-[12px]" style={{ color: '#6B6760' }}>Otvori profil →</p>
+                    <p className="text-[14px] font-bold truncate" style={{ color: '#151515' }}>{userName}</p>
+                    <p className="text-[12px]" style={{ color: '#6F6C66' }}>Otvori profil →</p>
                   </div>
                 </Link>
               )}
@@ -382,7 +381,7 @@ export default function Header() {
                       className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-all"
                       style={active
                         ? { background: accent, color: 'white' }
-                        : { color: '#1A1A1E', background: tint }}>
+                        : { color: '#151515', background: tint }}>
                       <Icon size={18} strokeWidth={2.2} style={active ? undefined : { color: accent }} />
                       {label}
                     </Link>
@@ -392,21 +391,21 @@ export default function Header() {
 
               {/* Recent users */}
               {recentUsers.length > 0 && (
-                <div className="pt-3 mt-3 border-t border-[#EBE8E1]">
-                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>Novi članovi</p>
+                <div className="pt-3 mt-3 border-t border-[#E7E1D0]">
+                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6F6C66' }}>Novi članovi</p>
                   {recentUsers.slice(0, 5).map(u => {
                     const name = u.nickname || `${u.first_name} ${u.last_name}`.trim() || 'Igrač'
                     return (
                       <Link key={u.id} href={`/profil/${u.id}`}
                         className="flex items-center gap-3 px-2 py-2.5 rounded-2xl">
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
                           {u.avatar
                             ? <Image src={`/avatars/${u.avatar}`} alt={name} width={32} height={32} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#3A36A0', color: 'white' }}>{name[0]}</div>}
+                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#12907E', color: 'white' }}>{name[0]}</div>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#1A1A1E' }}>{name}</span>
-                          <span className="text-[11px]" style={{ color: '#6B6760' }}>{timeAgo(u.created_at)}</span>
+                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#151515' }}>{name}</span>
+                          <span className="text-[11px]" style={{ color: '#6F6C66' }}>{timeAgo(u.created_at)}</span>
                         </div>
                       </Link>
                     )
@@ -417,8 +416,8 @@ export default function Header() {
               {/* Contributors (mobile) — same lazy-loaded data as the
                   desktop dropdown, condensed for the drawer. */}
               {contributors.length > 0 && (
-                <div className="pt-3 mt-3 border-t border-[#EBE8E1]">
-                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6B6760' }}>Doprinos kvizu</p>
+                <div className="pt-3 mt-3 border-t border-[#E7E1D0]">
+                  <p className="px-1 mb-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6F6C66' }}>Doprinos kvizu</p>
                   {contributors.slice(0, 5).map(c => {
                     const name = c.nickname || `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() || 'Igrač'
                     const parts: string[] = []
@@ -427,16 +426,16 @@ export default function Header() {
                     return (
                       <Link key={c.id} href={`/profil/${c.id}`}
                         className="flex items-center gap-3 px-2 py-2.5 rounded-2xl">
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
                           {c.avatar
                             ? <Image src={`/avatars/${c.avatar}`} alt={name} width={32} height={32} className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#E2B93A', color: '#1A1A1E' }}>{name[0]}</div>}
+                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{ background: '#FFD84D', color: '#151515' }}>{name[0]}</div>}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#1A1A1E' }}>{name}</span>
-                          <span className="text-[11px]" style={{ color: '#6B6760' }}>{parts.join(' · ')}</span>
+                          <span className="text-[13px] font-semibold truncate block" style={{ color: '#151515' }}>{name}</span>
+                          <span className="text-[11px]" style={{ color: '#6F6C66' }}>{parts.join(' · ')}</span>
                         </div>
-                        <span className="chip flex-shrink-0" style={{ background: '#F5E6B8', color: '#8A6A12' }}>
+                        <span className="chip flex-shrink-0" style={{ background: '#FFF3C4', color: '#8A6A12' }}>
                           {c.total_contributions}
                         </span>
                       </Link>
@@ -447,8 +446,8 @@ export default function Header() {
 
               {userName && (
                 <button onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-colors mt-3 border-t border-[#EBE8E1] pt-4"
-                  style={{ color: '#E55353' }}>
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[14px] font-medium transition-colors mt-3 border-t border-[#E7E1D0] pt-4"
+                  style={{ color: '#E5385C' }}>
                   <IconLogout size={18} strokeWidth={2.2} />
                   Odjava
                 </button>

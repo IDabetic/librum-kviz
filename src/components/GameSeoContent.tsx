@@ -245,41 +245,41 @@ export default function GameSeoContent({ game }: { game: GameKey }) {
   return (
     <section className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
       <div className="text-[14px] leading-relaxed space-y-5" style={{ color: '#5a5a5a' }}>
-        <h2 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(20px, 4vw, 28px)' }}>
+        <h2 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(20px, 4vw, 28px)' }}>
           {c.h2}
         </h2>
         <p>{c.intro}</p>
 
-        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#1A1A1E' }}>{c.how.title}</h3>
+        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#151515' }}>{c.how.title}</h3>
         <p>{c.how.body}</p>
 
-        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#1A1A1E' }}>{c.topics.title}</h3>
+        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#151515' }}>{c.topics.title}</h3>
         <p>{c.topics.body}</p>
 
-        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#1A1A1E' }}>{c.why.title}</h3>
+        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#151515' }}>{c.why.title}</h3>
         <p>{c.why.body}</p>
 
-        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#1A1A1E' }}>Često postavljana pitanja</h3>
+        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#151515' }}>Često postavljana pitanja</h3>
         <div className="space-y-3">
           {c.faq.map((f, i) => (
             <div key={i}>
-              <p className="font-semibold" style={{ color: '#1A1A1E' }}>{f.q}</p>
+              <p className="font-semibold" style={{ color: '#151515' }}>{f.q}</p>
               <p>{f.a}</p>
             </div>
           ))}
         </div>
 
-        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#1A1A1E' }}>Ostale igre na Librum kvizu</h3>
+        <h3 className="font-bold text-[16px] pt-2" style={{ color: '#151515' }}>Ostale igre na Librum kvizu</h3>
         <p>
           Probaj i druge besplatne igre znanja:{' '}
           {FAQ_ANCHOR_LINKS.filter(l => COPY_KEY_FOR_HREF[l.href] !== game).map((l, i, arr) => (
             <span key={l.href}>
-              <Link href={l.href} className="underline font-medium" style={{ color: '#3A36A0' }}>{l.label}</Link>
+              <Link href={l.href} className="underline font-medium" style={{ color: '#12907E' }}>{l.label}</Link>
               {i < arr.length - 1 ? ', ' : '.'}
             </span>
           ))}{' '}
           Sve dele istu{' '}
-          <Link href="/ranglista" className="underline font-medium" style={{ color: '#3A36A0' }}>rang-listu</Link>{' '}
+          <Link href="/ranglista" className="underline font-medium" style={{ color: '#12907E' }}>rang-listu</Link>{' '}
           i sistem bodova.
         </p>
       </div>

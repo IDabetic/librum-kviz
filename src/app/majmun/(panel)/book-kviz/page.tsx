@@ -52,8 +52,8 @@ export default async function BookKvizAdminPage({ searchParams }: { searchParams
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>Book kviz pitanja</h1>
-          <p className="text-[13px] mt-1" style={{ color: '#6B6760' }}>
+          <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Book kviz pitanja</h1>
+          <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
             {count ?? 0} ukupno · {sp.q ? `pretraga "${sp.q}"` : 'svi rezultati'}
           </p>
         </div>
@@ -72,7 +72,7 @@ export default async function BookKvizAdminPage({ searchParams }: { searchParams
             className="chip transition-all"
             style={sp.genre === g
               ? { background: '#8A6A12', color: 'white' }
-              : { background: '#F5E6B8', color: '#8A6A12' }}>
+              : { background: '#FFF3C4', color: '#8A6A12' }}>
             {g} · {genreCounts[g] || 0}
           </Link>
         ))}
@@ -80,7 +80,7 @@ export default async function BookKvizAdminPage({ searchParams }: { searchParams
 
       <form className="card-soft p-4 flex items-center gap-2 flex-wrap" action="/majmun/book-kviz">
         <div className="relative flex-1 min-w-[200px]">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#6B6760' }}>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#6F6C66' }}>
             <IconSearch size={16} strokeWidth={2.2} />
           </div>
           <input name="q" defaultValue={sp.q || ''} className="input pl-11" placeholder="Pretraga po tekstu pitanja…" />
@@ -104,7 +104,7 @@ export default async function BookKvizAdminPage({ searchParams }: { searchParams
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
-          <p className="text-[12px]" style={{ color: '#6B6760' }}>Strana {page + 1} od {totalPages}</p>
+          <p className="text-[12px]" style={{ color: '#6F6C66' }}>Strana {page + 1} od {totalPages}</p>
           <div className="flex gap-2">
             {page > 0 && <Link href={`/majmun/book-kviz?${buildQS({ page: String(page - 1) })}`} className="btn btn-secondary btn-sm">← Prethodna</Link>}
             {page < totalPages - 1 && <Link href={`/majmun/book-kviz?${buildQS({ page: String(page + 1) })}`} className="btn btn-primary btn-sm">Sledeća →</Link>}

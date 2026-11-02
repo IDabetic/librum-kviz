@@ -16,12 +16,12 @@ export default async function UsloviKoriscenja() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F4EF' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F3F0E6' }}>
       {user ? (
         <Header />
       ) : (
         <nav className="sticky top-0 z-40 backdrop-blur-xl"
-          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(26,26,30,0.06)' }}>
+          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <Logo height={36} />
             <Link href="/auth/prijava" className="btn btn-primary btn-sm">Prijava</Link>
@@ -30,18 +30,18 @@ export default async function UsloviKoriscenja() {
       )}
 
       <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
-        <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#3A36A0' }}>
+        <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#12907E' }}>
           Pravna obaveštenja
         </p>
         <h1 className="font-black tracking-tight leading-[1.05] mb-3"
-          style={{ color: '#1A1A1E', fontSize: 'clamp(36px, 7vw, 48px)' }}>
+          style={{ color: '#151515', fontSize: 'clamp(36px, 7vw, 48px)' }}>
           Uslovi korišćenja
         </h1>
-        <p className="text-[13px] mb-8" style={{ color: '#6B6760' }}>
+        <p className="text-[13px] mb-8" style={{ color: '#6F6C66' }}>
           Poslednja izmena: maj 2026.
         </p>
 
-        <article className="card-soft p-7 sm:p-10 space-y-6 text-[15px] leading-relaxed" style={{ color: '#1A1A1E' }}>
+        <article className="card-soft p-7 sm:p-10 space-y-6 text-[15px] leading-relaxed" style={{ color: '#151515' }}>
           <Section title="1. Prihvatanje uslova">
             <p>
               Pristupom platformi Librum kviz na adresi <strong>kviz.librum.club</strong> (u daljem tekstu „Servis“) i njenom upotrebom
@@ -61,7 +61,7 @@ export default async function UsloviKoriscenja() {
             <p>
               Za pristup većini funkcionalnosti potrebna je registracija. Tom prilikom dajete tačne i ažurne podatke
               i preuzimate odgovornost za sve aktivnosti pod svojim nalogom. Lozinku ne smete deliti sa trećim licima.
-              Ako uočite neovlašćen pristup, obavezni ste da nas obavestite na <a href="mailto:info@librum.club" className="underline" style={{ color: '#3A36A0' }}>info@librum.club</a>.
+              Ako uočite neovlašćen pristup, obavezni ste da nas obavestite na <a href="mailto:info@librum.club" className="underline" style={{ color: '#12907E' }}>info@librum.club</a>.
             </p>
             <p>Servis je namenjen korisnicima starijim od 13 godina. Ako ste mlađi, potrebna vam je saglasnost roditelja ili staratelja.</p>
           </Section>
@@ -125,7 +125,7 @@ export default async function UsloviKoriscenja() {
           <Section title="10. Brisanje naloga">
             <p>
               U svakom trenutku možeš da zatražiš brisanje naloga i svih povezanih podataka slanjem e-maila na
-              {' '}<a href="mailto:info@librum.club" className="underline" style={{ color: '#3A36A0' }}>info@librum.club</a>.
+              {' '}<a href="mailto:info@librum.club" className="underline" style={{ color: '#12907E' }}>info@librum.club</a>.
               Brisanje izvršavamo u roku od 7 dana.
             </p>
             <p>
@@ -149,7 +149,7 @@ export default async function UsloviKoriscenja() {
 
           <Section title="13. Kontakt">
             <p>
-              Pitanja u vezi sa ovim uslovima šalji na <a href="mailto:info@librum.club" className="underline" style={{ color: '#3A36A0' }}>info@librum.club</a>.
+              Pitanja u vezi sa ovim uslovima šalji na <a href="mailto:info@librum.club" className="underline" style={{ color: '#12907E' }}>info@librum.club</a>.
             </p>
           </Section>
         </article>
@@ -163,7 +163,7 @@ export default async function UsloviKoriscenja() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="font-black text-[20px] tracking-tight" style={{ color: '#1A1A1E' }}>{title}</h2>
+      <h2 className="font-black text-[20px] tracking-tight" style={{ color: '#151515' }}>{title}</h2>
       <div className="space-y-3">{children}</div>
     </section>
   )

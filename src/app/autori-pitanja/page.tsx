@@ -51,13 +51,13 @@ export default async function AutoriPitanjaPage() {
   const ukupno = autori.reduce((a, b) => a + b.accepted, 0)
 
   return (
-    <div className="page-ink min-h-screen">
+    <div className="min-h-screen">
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <Link href="/ranglista"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-          style={{ color: '#3A36A0' }}>
+          style={{ color: '#12907E' }}>
           <IconBack size={16} strokeWidth={2.2} />
           Rang lista
         </Link>
@@ -65,10 +65,10 @@ export default async function AutoriPitanjaPage() {
         <div className="text-center mb-10">
           <div className="text-[34px] leading-none mb-3">🏅</div>
           <h1 className="font-black tracking-tight mb-2 leading-[1.1]"
-            style={{ color: '#1A1A1E', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+            style={{ color: '#151515', fontSize: 'clamp(28px, 5vw, 40px)' }}>
             Autori pitanja
           </h1>
-          <p className="text-[14px] sm:text-[15px]" style={{ color: '#6B6760' }}>
+          <p className="text-[14px] sm:text-[15px]" style={{ color: '#6F6C66' }}>
             {autori.length === 0
               ? 'Još niko nema prihvaćeno pitanje. Budi prvi.'
               : `${autori.length} ${autori.length === 1 ? 'autor' : 'autora'} · ${ukupno} prihvaćenih pitanja u kvizu.`}
@@ -86,31 +86,31 @@ export default async function AutoriPitanjaPage() {
               const naCekanju = Math.max(0, a.submissions - a.accepted)
               return (
                 <Link key={a.id} href={`/autor/${a.id}`}
-                  className="flex items-center gap-3 px-5 py-3.5 border-b border-[#EBE8E1] last:border-0 hover:bg-[#EBE8E1] transition-colors">
+                  className="flex items-center gap-3 px-5 py-3.5 border-b border-[#E7E1D0] last:border-0 hover:bg-[#E7E1D0] transition-colors">
                   <span className="w-8 text-center text-[15px] font-bold flex-shrink-0"
-                    style={{ color: i < 3 ? '#1A1A1E' : '#6B6760' }}>
+                    style={{ color: i < 3 ? '#151515' : '#6F6C66' }}>
                     {MEDALJE[i] ?? i + 1}
                   </span>
-                  <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#EBE8E1]">
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
                     {a.avatar
                       ? <Image src={`/avatars/${a.avatar}`} alt={ime} width={40} height={40} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-sm font-bold"
-                          style={{ background: '#E2B93A', color: '#1A1A1E' }}>{ime[0]}</div>}
+                          style={{ background: '#FFD84D', color: '#151515' }}>{ime[0]}</div>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[14px] truncate flex items-center gap-1.5" style={{ color: '#1A1A1E' }}>
+                    <p className="font-semibold text-[14px] truncate flex items-center gap-1.5" style={{ color: '#151515' }}>
                       {ime}
                       {jeAutorPitanja(a.accepted, prag) && (
-                        <span className="chip" style={{ background: '#F5E6B8', color: '#8A6A12' }}>
+                        <span className="chip" style={{ background: '#FFF3C4', color: '#8A6A12' }}>
                           🏅 Autor pitanja
                         </span>
                       )}
                     </p>
-                    <p className="text-[12px]" style={{ color: '#6B6760' }}>
+                    <p className="text-[12px]" style={{ color: '#6F6C66' }}>
                       {naCekanju > 0 ? `još ${naCekanju} čeka proveru` : 'sve pregledano'}
                     </p>
                   </div>
-                  <span className="chip flex-shrink-0" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
+                  <span className="chip flex-shrink-0" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
                     {a.accepted}
                   </span>
                 </Link>
@@ -119,9 +119,9 @@ export default async function AutoriPitanjaPage() {
           </div>
         )}
 
-        <p className="text-[12px] text-center mt-6 leading-relaxed" style={{ color: '#6B6760' }}>
+        <p className="text-[12px] text-center mt-6 leading-relaxed" style={{ color: '#6F6C66' }}>
           Bedž „Autor pitanja” dobija se sa {prag} prihvaćenih pitanja.{' '}
-          <Link href="/dodaj-pitanja" className="font-semibold underline" style={{ color: '#3A36A0' }}>
+          <Link href="/dodaj-pitanja" className="font-semibold underline" style={{ color: '#12907E' }}>
             Pošalji svoja
           </Link>
         </p>

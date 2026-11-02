@@ -1,3 +1,8 @@
+// Jedan izvor istine za spisak igara: naslovna, /igre i aplikacije čitaju odavde.
+// `boja` je pozadina kartice iz palete kita, `tekst` je boja slova na njoj
+// (žuta i nebo traže tamna slova zbog kontrasta AA).
+export type Maskota = 'Mimi' | 'Zig' | 'Bloop' | 'Lumi'
+
 export const IGRE = [
   {
     href: '/pro-kviz',
@@ -6,7 +11,10 @@ export const IGRE = [
     kratko: 'PRO',
     desc: 'Deset života. Survival. Rang-lista.',
     cta: 'Igraj PRO',
-    accent: '#8B86F0',
+    accent: '#6D4BC9',
+    boja: '#6D4BC9',
+    tekst: '#FFFFFF',
+    maskota: 'Mimi' as Maskota,
   },
   {
     href: '/book-kviz',
@@ -15,7 +23,10 @@ export const IGRE = [
     kratko: 'Book',
     desc: 'Pisci, dela, žanrovi.',
     cta: 'Igraj Book',
-    accent: '#E2B93A',
+    accent: '#F4A33C',
+    boja: '#F4A33C',
+    tekst: '#151515',
+    maskota: 'Zig' as Maskota,
   },
   {
     href: '/kafanski-kviz',
@@ -24,7 +35,10 @@ export const IGRE = [
     kratko: 'Kafana',
     desc: 'Domaća i ex YU muzika.',
     cta: 'Igraj Kafanski',
-    accent: '#E55353',
+    accent: '#FF5FA2',
+    boja: '#FF5FA2',
+    tekst: '#151515',
+    maskota: 'Lumi' as Maskota,
   },
   {
     href: '/igraj-zajedno',
@@ -33,7 +47,10 @@ export const IGRE = [
     kratko: 'Duel',
     desc: 'Ista pitanja, jedno na jedno.',
     cta: 'Izazovi',
-    accent: '#F0C14A',
+    accent: '#12907E',
+    boja: '#12907E',
+    tekst: '#FFFFFF',
+    maskota: 'Bloop' as Maskota,
   },
   {
     href: '/vesanje',
@@ -42,7 +59,10 @@ export const IGRE = [
     kratko: 'Vešanje',
     desc: 'Pogodi reč, slovo po slovo.',
     cta: 'Igraj Vešanje',
-    accent: '#3DDC97',
+    accent: '#6EC3F2',
+    boja: '#6EC3F2',
+    tekst: '#151515',
+    maskota: 'Mimi' as Maskota,
   },
   {
     href: '/brzi-kviz',
@@ -51,6 +71,9 @@ export const IGRE = [
     kratko: 'Brzi',
     desc: 'Tačno ili netačno. 60 sekundi.',
     cta: 'Igraj Brzi',
-    accent: '#FF6B4A',
+    accent: '#FFD84D',
+    boja: '#FFD84D',
+    tekst: '#151515',
+    maskota: 'Zig' as Maskota,
   },
 ] as const

@@ -28,14 +28,14 @@ export default function RoleEditor({ userId, currentRole }: { userId: string; cu
 
   return (
     <div>
-      <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6B6760' }}>Uloga</p>
+      <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: '#6F6C66' }}>Uloga</p>
       <div className="flex flex-wrap gap-1.5">
         {ROLES.map(r => (
           <button key={r.id} onClick={() => setRole(r.id)}
             className="px-3 py-1.5 rounded-full text-[12px] font-bold transition-all"
             style={role === r.id
-              ? { background: '#1A1A1E', color: '#FFFDF9' }
-              : { background: '#EBE8E1', color: '#6B6760' }}>
+              ? { background: '#151515', color: '#FFFFFF' }
+              : { background: '#E7E1D0', color: '#6F6C66' }}>
             {r.label}
           </button>
         ))}
@@ -45,7 +45,7 @@ export default function RoleEditor({ userId, currentRole }: { userId: string; cu
           <button onClick={save} disabled={busy} className="btn btn-primary btn-sm">
             {busy ? 'Čuvanje…' : `Postavi ${ROLES.find(r => r.id === role)?.label}`}
           </button>
-          {saved && <span className="text-[12px] font-medium" style={{ color: '#2FBF8A' }}>✓ Sačuvano</span>}
+          {saved && <span className="text-[12px] font-medium" style={{ color: '#12907E' }}>✓ Sačuvano</span>}
         </div>
       )}
     </div>

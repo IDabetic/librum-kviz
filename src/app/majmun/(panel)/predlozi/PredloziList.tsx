@@ -151,8 +151,8 @@ export default function PredloziList({ rows, status }: { rows: Row[]; status: st
   if (rows.length === 0) {
     return (
       <div className="card-soft py-16 text-center">
-        <p className="font-bold text-[16px] mb-2" style={{ color: '#1A1A1E' }}>Nema predloga</p>
-        <p className="text-[13px]" style={{ color: '#6B6760' }}>
+        <p className="font-bold text-[16px] mb-2" style={{ color: '#151515' }}>Nema predloga</p>
+        <p className="text-[13px]" style={{ color: '#6F6C66' }}>
           {naCekanju ? 'Sve je pregledano.' : 'U ovom pregledu nema ničega.'}
         </p>
       </div>
@@ -164,14 +164,14 @@ export default function PredloziList({ rows, status }: { rows: Row[]; status: st
       {naCekanju && spremni.length > 0 && (
         <div className="card-soft p-4 flex flex-wrap items-center gap-3 sticky top-2 z-10">
           <button onClick={() => setOznaceni(new Set(oznaceni.size === spremni.length ? [] : spremni.map(r => r.id)))}
-            className="text-[12px] font-semibold" style={{ color: '#3A36A0' }}>
+            className="text-[12px] font-semibold" style={{ color: '#12907E' }}>
             {oznaceni.size === spremni.length ? 'Poništi izbor' : `Označi sve kompletne (${spremni.length})`}
           </button>
-          <span className="text-[12px]" style={{ color: '#6B6760' }}>
+          <span className="text-[12px]" style={{ color: '#6F6C66' }}>
             Označeno: <strong>{oznaceni.size}</strong>
           </span>
           <button onClick={prihvatiOznacene} disabled={oznaceni.size === 0 || grupno !== ''}
-            className="btn btn-sm ml-auto" style={{ background: '#2FBF8A', color: 'white' }}>
+            className="btn btn-sm ml-auto" style={{ background: '#12907E', color: 'white' }}>
             <IconCheck size={14} className="text-white" />
             {grupno ? `Prihvatam ${grupno}…` : 'Prihvati označeno'}
           </button>
@@ -199,16 +199,16 @@ export default function PredloziList({ rows, status }: { rows: Row[]; status: st
                     className="mt-1 w-4 h-4 flex-shrink-0" aria-label="Označi predlog" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6B6760' }}>
+                  <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6F6C66' }}>
                     Predlog · {new Date(r.created_at).toLocaleDateString('sr')}
                   </p>
-                  <p className="text-[14px]" style={{ color: '#6B6760' }}>{submitter}</p>
+                  <p className="text-[14px]" style={{ color: '#6F6C66' }}>{submitter}</p>
                 </div>
               </div>
               {naCekanju && (
                 <button onClick={() => setOpenId(isOpen ? null : r.id)}
                   className="text-[12px] font-semibold transition-opacity hover:opacity-70"
-                  style={{ color: '#3A36A0' }}>
+                  style={{ color: '#12907E' }}>
                   {isOpen ? 'Zatvori' : 'Uredi i prihvati →'}
                 </button>
               )}
@@ -219,42 +219,42 @@ export default function PredloziList({ rows, status }: { rows: Row[]; status: st
                 {seg.emoji} {seg.label}
               </span>
               {r.genre && (
-                <span className="chip" style={{ background: '#EBE8E1', color: '#1A1A1E' }}>{r.genre}</span>
+                <span className="chip" style={{ background: '#E7E1D0', color: '#151515' }}>{r.genre}</span>
               )}
-              <span className="chip" style={{ background: '#EBE8E1', color: '#6B6760' }}>
+              <span className="chip" style={{ background: '#E7E1D0', color: '#6F6C66' }}>
                 {r.source === 'xml' ? 'XML uvoz' : r.source === 'xlsx' ? 'Excel uvoz' : 'obrazac'}
               </span>
               <span className="chip" style={{
-                background: potpun ? '#D4F3E7' : '#F5E6B8',
-                color: potpun ? '#1F8A62' : '#8A6A12',
+                background: potpun ? '#DFF3EE' : '#FFF3C4',
+                color: potpun ? '#0E6F61' : '#8A6A12',
               }}>
                 {potpun ? 'kompletno' : pojam ? 'treba dopuniti' : 'fale netačni'}
               </span>
             </div>
 
-            <p className="font-bold text-[15px] mb-2" style={{ color: '#1A1A1E' }}>
+            <p className="font-bold text-[15px] mb-2" style={{ color: '#151515' }}>
               {r.question_text}
             </p>
-            <div className="rounded-2xl px-4 py-3 mb-2" style={{ background: '#D4F3E7' }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#1F8A62' }}>
+            <div className="rounded-2xl px-4 py-3 mb-2" style={{ background: '#DFF3EE' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#0E6F61' }}>
                 {pojam ? 'Opis' : 'Tačan odgovor'}
               </p>
-              <p className="font-bold text-[14px] mt-1" style={{ color: '#1F8A62' }}>{r.correct_answer}</p>
+              <p className="font-bold text-[14px] mt-1" style={{ color: '#0E6F61' }}>{r.correct_answer}</p>
             </div>
 
             {netacni.length > 0 && (
-              <div className="rounded-2xl px-4 py-3 mb-3" style={{ background: '#FEE2E2' }}>
-                <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#b91c1c' }}>
+              <div className="rounded-2xl px-4 py-3 mb-3" style={{ background: '#FFE3EA' }}>
+                <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#C42B4F' }}>
                   Netačni odgovori
                 </p>
-                <ul className="text-[13px] space-y-0.5" style={{ color: '#b91c1c' }}>
+                <ul className="text-[13px] space-y-0.5" style={{ color: '#C42B4F' }}>
                   {netacni.map((n, i) => <li key={i}>· {n}</li>)}
                 </ul>
               </div>
             )}
 
             {r.status === 'rejected' && r.reject_reason && (
-              <p className="text-[12px] mb-3" style={{ color: '#b91c1c' }}>
+              <p className="text-[12px] mb-3" style={{ color: '#C42B4F' }}>
                 <strong>Razlog odbijanja:</strong> {r.reject_reason}
               </p>
             )}
@@ -266,17 +266,17 @@ export default function PredloziList({ rows, status }: { rows: Row[]; status: st
             <div className="flex gap-2 mt-3">
               {naCekanju ? (
                 <button onClick={() => setOdbijam(r)} disabled={busy === r.id}
-                  className="btn btn-md flex-1" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+                  className="btn btn-md flex-1" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
                   <IconWrong size={14} /> Odbij
                 </button>
               ) : (
                 <>
                   <button onClick={() => vrati(r.id)} disabled={busy === r.id}
-                    className="btn btn-md flex-1" style={{ background: '#EBE8E1', color: '#1A1A1E' }}>
+                    className="btn btn-md flex-1" style={{ background: '#E7E1D0', color: '#151515' }}>
                     Vrati na čekanje
                   </button>
                   <button onClick={() => obrisi(r.id)} disabled={busy === r.id}
-                    className="btn btn-md" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+                    className="btn btn-md" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
                     <IconWrong size={14} /> Obriši
                   </button>
                 </>
@@ -299,15 +299,15 @@ function OdbijanjeModal({ row, onZatvori, onPotvrdi }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(26,26,30,0.45)' }} onClick={onZatvori}>
+      style={{ background: 'rgba(21,21,21,0.45)' }} onClick={onZatvori}>
       <div className="card-soft p-6 max-w-lg w-full" onClick={e => e.stopPropagation()}>
-        <h3 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#1A1A1E' }}>
+        <h3 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#151515' }}>
           Odbijanje predloga
         </h3>
-        <p className="text-[12px] mb-4 leading-relaxed" style={{ color: '#6B6760' }}>
+        <p className="text-[12px] mb-4 leading-relaxed" style={{ color: '#6F6C66' }}>
           Autor vidi razlog na svojoj strani „Moja pitanja”.
         </p>
-        <p className="text-[13px] font-semibold mb-4 line-clamp-2" style={{ color: '#1A1A1E' }}>
+        <p className="text-[13px] font-semibold mb-4 line-clamp-2" style={{ color: '#151515' }}>
           {row.question_text}
         </p>
 
@@ -316,8 +316,8 @@ function OdbijanjeModal({ row, onZatvori, onPotvrdi }: {
             <button key={r} type="button" onClick={() => setIzabrani(r)}
               className="px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all"
               style={izabrani === r
-                ? { background: '#1A1A1E', color: 'white' }
-                : { background: '#EBE8E1', color: '#1A1A1E' }}>
+                ? { background: '#151515', color: 'white' }
+                : { background: '#E7E1D0', color: '#151515' }}>
               {r}
             </button>
           ))}
@@ -328,11 +328,11 @@ function OdbijanjeModal({ row, onZatvori, onPotvrdi }: {
 
         <div className="flex gap-2">
           <button onClick={onZatvori} className="btn btn-md flex-1"
-            style={{ background: '#EBE8E1', color: '#1A1A1E' }}>
+            style={{ background: '#E7E1D0', color: '#151515' }}>
             Odustani
           </button>
           <button onClick={() => onPotvrdi(razlog)} className="btn btn-md flex-1"
-            style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+            style={{ background: '#FFE3EA', color: '#C42B4F' }}>
             <IconWrong size={14} /> Odbij
           </button>
         </div>
@@ -393,15 +393,15 @@ function ConvertForm({ row, onSuccess }: { row: Row; onSuccess: () => void }) {
   }
 
   return (
-    <div className="rounded-2xl p-4 mt-3" style={{ background: '#EBE8E1' }}>
-      <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>
+    <div className="rounded-2xl p-4 mt-3" style={{ background: '#E7E1D0' }}>
+      <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6F6C66' }}>
         Prihvatanje u fond: <span style={{ color: seg.accent }}>{seg.label}</span>
-        <span style={{ color: '#6B6760' }}> · {seg.table}</span>
+        <span style={{ color: '#6F6C66' }}> · {seg.table}</span>
       </p>
 
-      {error && <div className="rounded-xl px-3 py-2 text-[12px] mb-3" style={{ background: '#FEE2E2', color: '#b91c1c' }}>{error}</div>}
+      {error && <div className="rounded-xl px-3 py-2 text-[12px] mb-3" style={{ background: '#FFE3EA', color: '#C42B4F' }}>{error}</div>}
 
-      <label className="block text-[11px] font-bold mb-1" style={{ color: '#6B6760' }}>
+      <label className="block text-[11px] font-bold mb-1" style={{ color: '#6F6C66' }}>
         {pojam ? 'Pojam' : 'Pitanje'}
       </label>
       {pojam ? (
@@ -413,7 +413,7 @@ function ConvertForm({ row, onSuccess }: { row: Row; onSuccess: () => void }) {
 
       {nadjene.length > 0 && (
         <div className="rounded-xl px-3 py-2.5 mb-3 text-[12px]"
-          style={{ background: '#F5E6B8', color: '#8A6A12' }}>
+          style={{ background: '#FFF3C4', color: '#8A6A12' }}>
           <ul className="space-y-0.5 mb-2">
             {nadjene.map(z => <li key={z.kod}>· {z.poruka}</li>)}
           </ul>
@@ -425,7 +425,7 @@ function ConvertForm({ row, onSuccess }: { row: Row; onSuccess: () => void }) {
         </div>
       )}
 
-      <label className="block text-[11px] font-bold mb-1" style={{ color: '#6B6760' }}>
+      <label className="block text-[11px] font-bold mb-1" style={{ color: '#6F6C66' }}>
         {pojam ? 'Opis' : 'Tačan odgovor'}
       </label>
       <input value={tacan} onChange={e => setTacan(e.target.value)} className="input mb-3" />
@@ -458,7 +458,7 @@ function ConvertForm({ row, onSuccess }: { row: Row; onSuccess: () => void }) {
         </select>
       )}
 
-      <button onClick={accept} disabled={busy} className="btn btn-md w-full" style={{ background: '#2FBF8A', color: 'white' }}>
+      <button onClick={accept} disabled={busy} className="btn btn-md w-full" style={{ background: '#12907E', color: 'white' }}>
         <IconCheck size={14} className="text-white" />
         {busy ? 'Prihvatanje…' : 'Prihvati i dodaj u bazu'}
       </button>

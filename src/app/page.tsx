@@ -1,9 +1,11 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import Script from 'next/script'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/server'
 import { IGRE } from '@/lib/igre-katalog'
+import { KarticaIgre } from '@/components/KarticaIgre'
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -16,9 +18,6 @@ const faqSchema = {
     { '@type': 'Question', name: 'Koje teme pokrivaju pitanja?', acceptedAnswer: { '@type': 'Answer', text: 'Opšte znanje, istorija, geografija, sport, nauka, film, muzika i književnost. Kafanski kviz je posvećen domaćoj i ex YU muzici, a Book kviz isključivo književnosti i žanrovima.' } },
   ],
 }
-
-const CREAM = '#F4EFE6'
-const MUTED = '#A39E95'
 
 type LeaderRow = {
   user_id: string
@@ -130,111 +129,111 @@ export default async function Home() {
       : null,
   }))
 
+  const [prva, ...ostale] = IGRE
+
   return (
-    <div className="page-ink min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
-      <section className="relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-16 sm:pb-24">
-          <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-12 lg:gap-16 items-end">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] mb-6" style={{ color: MUTED }}>
-                Librum klub · {questionsBadge} pitanja
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-16">
+        <div className="flex items-end justify-between gap-6 mb-8">
+          <div>
+            <p className="chip mb-3" style={{ color: '#12907E' }}>
+              <span className="w-2 h-2 rounded-full" style={{ background: '#2FD27A' }} />
+              {questionsBadge} pitanja u bazi
+            </p>
+            <h1 style={{ fontSize: 'clamp(44px, 9vw, 96px)' }}>
+              Izaberi kviz<br />i igraj.
+            </h1>
+          </div>
+          <Image src="/maskote/Bloop.png" alt="" width={150} height={150}
+            className="hidden sm:block maskota-lebdi shrink-0" aria-hidden priority />
+        </div>
+
+        <div className="grid gap-4 sm:gap-5 md:grid-cols-[1.3fr_1fr]">
+          <KarticaIgre igra={prva} href={user ? prva.href : `/auth/prijava?redirect=${prva.href}`} velika />
+          <div className="grid grid-cols-2 gap-4 sm:gap-5">
+            {ostale.slice(0, 2).map(g => (
+              <KarticaIgre key={g.href} igra={g} href={user ? g.href : `/auth/prijava?redirect=${g.href}`} />
+            ))}
+            <div className="col-span-2 card-soft p-5 flex flex-col justify-between">
+              <p className="text-[15px] font-semibold leading-snug">
+                Igre znanja na srpskom. Sam, u dvoje ili protiv cele rang liste.
               </p>
-              <h1 className="leading-[0.88] mb-8" style={{ color: CREAM, fontSize: 'clamp(64px, 14vw, 148px)', fontWeight: 500 }}>
-                Kviz.
-              </h1>
-              <p className="text-[18px] sm:text-[20px] max-w-md leading-snug mb-8" style={{ color: CREAM, opacity: 0.78 }}>
-                Igre znanja na srpskom. Sam, u dvoje ili protiv cele rang-liste.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link href={user ? '/igre' : '/auth/registracija'} className="btn btn-yellow btn-lg">
-                  {user ? 'Izaberi igru' : 'Počni besplatno'}
+              <div className="flex flex-wrap gap-3 mt-4">
+                <Link href={user ? '/igre' : '/auth/registracija'} className="btn btn-primary btn-md">
+                  {user ? 'Sve igre' : 'Počni besplatno'}
                 </Link>
-                <Link href="/dodaj-pitanja" className="btn btn-secondary btn-lg">
+                <Link href="/dodaj-pitanja" className="btn btn-secondary btn-md">
                   {okrugli ? `Dodaj pitanje · još ${okrugli.fali}` : 'Dodaj pitanje'}
                 </Link>
               </div>
             </div>
-
-            <ol className="divide-y" style={{ borderColor: 'rgba(244,239,230,0.12)' }}>
-              {IGRE.map(g => (
-                <li key={g.href}>
-                  <Link href={g.href}
-                    className="group flex items-baseline gap-4 py-3.5 transition-opacity hover:opacity-80">
-                    <span className="text-[11px] font-semibold tabular-nums w-8 shrink-0" style={{ color: g.accent }}>
-                      {g.n}
-                    </span>
-                    <span className="flex-1 text-[22px] sm:text-[26px] leading-none" style={{ color: CREAM, fontFamily: 'var(--font-fraunces), Fraunces, serif' }}>
-                      {g.kratko}
-                    </span>
-                    <span className="hidden sm:block text-[13px] flex-1 truncate" style={{ color: MUTED }}>
-                      {g.desc}
-                    </span>
-                    <span className="text-[13px] shrink-0" style={{ color: g.accent }}>→</span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
           </div>
         </div>
-      </section>
 
-      {leaderboard.length > 0 && (
-        <section style={{ borderTop: '1px solid rgba(244,239,230,0.12)', borderBottom: '1px solid rgba(244,239,230,0.12)' }}>
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] shrink-0" style={{ color: MUTED }}>
-              Ove nedelje
-            </p>
-            {leaderboard.map((r, i) => {
-              const name = r.profile?.nickname || r.profile?.first_name || 'Igrač'
-              return (
-                <span key={r.user_id} className="text-[14px]" style={{ color: CREAM }}>
-                  <span style={{ color: MUTED }}>{i + 1}.</span> {name}
-                  <span className="ml-2 tabular-nums" style={{ color: '#E2B93A' }}>{r.score}</span>
-                </span>
-              )
-            })}
-            <Link href="/ranglista" className="text-[13px] ml-auto" style={{ color: MUTED }}>
-              Rang lista →
-            </Link>
-          </div>
-        </section>
-      )}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 mt-4 sm:mt-5">
+          {ostale.slice(2).map(g => (
+            <KarticaIgre key={g.href} igra={g} href={user ? g.href : `/auth/prijava?redirect=${g.href}`} />
+          ))}
+        </div>
 
-      <section className="px-4 sm:px-6 py-16 sm:py-24">
-        <div className="max-w-3xl mx-auto text-[15px] leading-[1.7] space-y-5" style={{ color: MUTED }}>
-          <h2 className="mb-6" style={{ color: CREAM, fontSize: 'clamp(28px, 5vw, 42px)' }}>
+        {leaderboard.length > 0 && (
+          <section className="mt-12">
+            <div className="flex items-baseline justify-between mb-4">
+              <h2 style={{ fontSize: 'clamp(26px, 4vw, 34px)' }}>Ove nedelje</h2>
+              <Link href="/ranglista" className="text-[14px] font-bold underline underline-offset-4">Rang lista</Link>
+            </div>
+            <ol className="card-soft divide-y divide-[#E7E1D0]">
+              {leaderboard.map((r, i) => {
+                const name = r.profile?.nickname || r.profile?.first_name || 'Igrač'
+                return (
+                  <li key={r.user_id} className="flex items-center gap-4 px-5 py-3.5">
+                    <span className="w-9 h-9 grid place-items-center rounded-xl font-bold tabular-nums"
+                      style={{ background: i === 0 ? '#FFD84D' : '#F3F0E6', border: i === 0 ? '2px solid #151515' : 'none' }}>
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 font-semibold truncate">{name}</span>
+                    <span className="naslov text-[20px] tabular-nums">{r.score}</span>
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+        )}
+
+        <section className="mt-16 max-w-3xl text-[15px] leading-[1.7] space-y-5" style={{ color: '#6F6C66' }}>
+          <h2 className="mb-6" style={{ color: '#151515', fontSize: 'clamp(28px, 5vw, 40px)' }}>
             Besplatan online kviz znanja na srpskom
           </h2>
           <p>
-            <strong style={{ color: CREAM }}>Librum kviz</strong> je platforma za igre znanja na srpskom — kviz opšte kulture, muzički kviz, kviz iz književnosti i igra pogađanja reči. Bez instalacije i bez reklama u toku igre.
+            <strong style={{ color: '#151515' }}>Librum kviz</strong> je platforma za igre znanja na srpskom — kviz opšte kulture, muzički kviz, kviz iz književnosti i igra pogađanja reči. Bez instalacije i bez reklama u toku igre.
           </p>
           <p>
-            <Link href="/pro-kviz" className="underline" style={{ color: CREAM }}>PRO kviz</Link> je survival sa 10 života.{' '}
-            <Link href="/book-kviz" className="underline" style={{ color: CREAM }}>Book kviz</Link> je isključivo književnost.{' '}
-            <Link href="/kafanski-kviz" className="underline" style={{ color: CREAM }}>Kafanski kviz</Link> je pub kviz o domaćoj i ex YU muzici.{' '}
-            <Link href="/igraj-zajedno" className="underline" style={{ color: CREAM }}>Trivia duel</Link> je jedan na jedan u realnom vremenu.{' '}
-            <Link href="/vesanje" className="underline" style={{ color: CREAM }}>Vešanje</Link> pogađa reč po slovima.{' '}
-            <Link href="/brzi-kviz" className="underline" style={{ color: CREAM }}>Brzi kviz</Link> je tačno-netačno za 60 sekundi.
+            <Link href="/pro-kviz" className="underline" style={{ color: '#151515' }}>PRO kviz</Link> je survival sa 10 života.{' '}
+            <Link href="/book-kviz" className="underline" style={{ color: '#151515' }}>Book kviz</Link> je isključivo književnost.{' '}
+            <Link href="/kafanski-kviz" className="underline" style={{ color: '#151515' }}>Kafanski kviz</Link> je pub kviz o domaćoj i ex YU muzici.{' '}
+            <Link href="/igraj-zajedno" className="underline" style={{ color: '#151515' }}>Trivia duel</Link> je jedan na jedan u realnom vremenu.{' '}
+            <Link href="/vesanje" className="underline" style={{ color: '#151515' }}>Vešanje</Link> pogađa reč po slovima.{' '}
+            <Link href="/brzi-kviz" className="underline" style={{ color: '#151515' }}>Brzi kviz</Link> je tačno-netačno za 60 sekundi.
           </p>
           <p>
             Imaš pitanje? Pošalji ga preko{' '}
-            <Link href="/dodaj-pitanja" className="underline" style={{ color: CREAM }}>forme za pitanja</Link>.
+            <Link href="/dodaj-pitanja" className="underline" style={{ color: '#151515' }}>forme za pitanja</Link>.
             Dva igrača mogu da prijave netačno pitanje — tada se autor suspenduje tri dana, a sva njegova pitanja se povlače.
           </p>
 
-          <h2 className="pt-10 mb-6" style={{ color: CREAM, fontSize: 'clamp(28px, 5vw, 42px)' }}>
+          <h2 className="pt-10 mb-2" style={{ color: '#151515', fontSize: 'clamp(28px, 5vw, 40px)' }}>
             Pitanja
           </h2>
           {faqSchema.mainEntity.map(item => (
-            <div key={item.name} className="py-5" style={{ borderTop: '1px solid rgba(244,239,230,0.12)' }}>
-              <h3 className="text-[17px] mb-2" style={{ color: CREAM }}>{item.name}</h3>
+            <div key={item.name} className="py-5" style={{ borderTop: '1.5px solid #E7E1D0' }}>
+              <h3 className="text-[19px] mb-2" style={{ color: '#151515' }}>{item.name}</h3>
               <p>{item.acceptedAnswer.text}</p>
             </div>
           ))}
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
 

@@ -39,9 +39,9 @@ type Predlog = {
 type Ucinak = { prikazano: number; tacno: number | null }
 
 const STATUSI: Record<string, { naziv: string; boja: string; pozadina: string }> = {
-  pending:  { naziv: 'Čeka proveru', boja: '#8A6A12', pozadina: '#F5E6B8' },
-  accepted: { naziv: 'Prihvaćeno',   boja: '#1F8A62', pozadina: '#D4F3E7' },
-  rejected: { naziv: 'Odbijeno',     boja: '#b91c1c', pozadina: '#FEE2E2' },
+  pending:  { naziv: 'Čeka proveru', boja: '#8A6A12', pozadina: '#FFF3C4' },
+  accepted: { naziv: 'Prihvaćeno',   boja: '#0E6F61', pozadina: '#DFF3EE' },
+  rejected: { naziv: 'Odbijeno',     boja: '#C42B4F', pozadina: '#FFE3EA' },
 }
 
 function datum(s: string): string {
@@ -92,22 +92,22 @@ export default async function MojaPitanjaPage() {
   }
 
   return (
-    <div className="page-ink min-h-screen">
+    <div className="min-h-screen">
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <Link href="/dodaj-pitanja"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-          style={{ color: '#3A36A0' }}>
+          style={{ color: '#12907E' }}>
           <IconBack size={16} strokeWidth={2.2} />
           Dodaj pitanja
         </Link>
 
         <h1 className="font-black tracking-tight mb-2 leading-[1.1]"
-          style={{ color: '#1A1A1E', fontSize: 'clamp(26px, 5vw, 36px)' }}>
+          style={{ color: '#151515', fontSize: 'clamp(26px, 5vw, 36px)' }}>
           Moja pitanja
         </h1>
-        <p className="text-[14px] mb-8" style={{ color: '#6B6760' }}>
+        <p className="text-[14px] mb-8" style={{ color: '#6F6C66' }}>
           {redovi.length === 0
             ? 'Još nisi poslao nijedno pitanje.'
             : `Poslao si ${redovi.length} ${redovi.length === 1 ? 'pitanje' : 'pitanja'}.`}
@@ -115,15 +115,15 @@ export default async function MojaPitanjaPage() {
 
         {broj.accepted > 0 && (
           <div className="rounded-2xl px-5 py-4 mb-6 flex items-center gap-3"
-            style={{ background: jeAutorPitanja(broj.accepted, prag) ? '#F5E6B8' : '#EBE8E1' }}>
+            style={{ background: jeAutorPitanja(broj.accepted, prag) ? '#FFF3C4' : '#E7E1D0' }}>
             <span className="text-[24px] leading-none">🏅</span>
             <div className="flex-1">
-              <p className="font-bold text-[14px]" style={{ color: jeAutorPitanja(broj.accepted, prag) ? '#8A6A12' : '#1A1A1E' }}>
+              <p className="font-bold text-[14px]" style={{ color: jeAutorPitanja(broj.accepted, prag) ? '#8A6A12' : '#151515' }}>
                 {jeAutorPitanja(broj.accepted, prag)
                   ? 'Bedž „Autor pitanja” je tvoj'
                   : `Još ${prag - broj.accepted} do bedža „Autor pitanja”`}
               </p>
-              <p className="text-[12px] mt-0.5" style={{ color: '#6B6760' }}>
+              <p className="text-[12px] mt-0.5" style={{ color: '#6F6C66' }}>
                 {broj.accepted} od {prag} prihvaćenih ·{' '}
                 <Link href="/autori-pitanja" className="underline">rang lista autora</Link>
               </p>
@@ -134,17 +134,17 @@ export default async function MojaPitanjaPage() {
         {redovi.length > 0 && (
           <div className="grid grid-cols-3 gap-2.5 mb-8">
             <Kartica ikona={<IconTime size={18} style={{ color: '#8A6A12' }} strokeWidth={2.2} />}
-              naziv="Čeka proveru" broj={broj.pending} boja="#8A6A12" pozadina="#F5E6B8" />
-            <Kartica ikona={<IconCheck size={18} className="text-[#1F8A62]" />}
-              naziv="Prihvaćeno" broj={broj.accepted} boja="#1F8A62" pozadina="#D4F3E7" />
-            <Kartica ikona={<IconWrong size={18} style={{ color: '#b91c1c' }} />}
-              naziv="Odbijeno" broj={broj.rejected} boja="#b91c1c" pozadina="#FEE2E2" />
+              naziv="Čeka proveru" broj={broj.pending} boja="#8A6A12" pozadina="#FFF3C4" />
+            <Kartica ikona={<IconCheck size={18} className="text-[#0E6F61]" />}
+              naziv="Prihvaćeno" broj={broj.accepted} boja="#0E6F61" pozadina="#DFF3EE" />
+            <Kartica ikona={<IconWrong size={18} style={{ color: '#C42B4F' }} />}
+              naziv="Odbijeno" broj={broj.rejected} boja="#C42B4F" pozadina="#FFE3EA" />
           </div>
         )}
 
         {redovi.length === 0 ? (
           <div className="card-soft p-10 text-center">
-            <p className="text-[14px] mb-6" style={{ color: '#6B6760' }}>
+            <p className="text-[14px] mb-6" style={{ color: '#6F6C66' }}>
               Pošalji prvo pitanje i pojavićeš se u „Doprinos kvizu”.
             </p>
             <Link href="/dodaj-pitanja" className="btn btn-primary btn-md">Dodaj pitanja</Link>
@@ -165,21 +165,21 @@ export default async function MojaPitanjaPage() {
                       {seg.emoji} {seg.label}
                     </span>
                     {r.genre && (
-                      <span className="chip" style={{ background: '#EBE8E1', color: '#1A1A1E' }}>{r.genre}</span>
+                      <span className="chip" style={{ background: '#E7E1D0', color: '#151515' }}>{r.genre}</span>
                     )}
-                    <span className="text-[11px] ml-auto" style={{ color: '#6B6760' }}>
+                    <span className="text-[11px] ml-auto" style={{ color: '#6F6C66' }}>
                       {datum(r.created_at)}
                     </span>
                   </div>
 
-                  <p className="font-bold text-[15px] mb-3" style={{ color: '#1A1A1E' }}>
+                  <p className="font-bold text-[15px] mb-3" style={{ color: '#151515' }}>
                     {r.question_text}
                   </p>
 
                   <ul className="text-[13px] space-y-1">
-                    <li style={{ color: '#1F8A62' }}>✓ {r.correct_answer}</li>
+                    <li style={{ color: '#0E6F61' }}>✓ {r.correct_answer}</li>
                     {netacni.map((n, i) => (
-                      <li key={i} style={{ color: '#6B6760' }}>· {n}</li>
+                      <li key={i} style={{ color: '#6F6C66' }}>· {n}</li>
                     ))}
                   </ul>
 
@@ -191,7 +191,7 @@ export default async function MojaPitanjaPage() {
                       : null
                     return (
                       <div className="rounded-2xl px-4 py-3 mt-3 text-[12px]"
-                        style={{ background: '#EBE8E1', color: '#1A1A1E' }}>
+                        style={{ background: '#E7E1D0', color: '#151515' }}>
                         <strong>U igri:</strong>{' '}
                         {u.prikazano === 0
                           ? 'još nije došlo na red'
@@ -203,7 +203,7 @@ export default async function MojaPitanjaPage() {
 
                   {r.status === 'rejected' && r.reject_reason && (
                     <div className="rounded-2xl px-4 py-3 mt-3 text-[13px]"
-                      style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+                      style={{ background: '#FFE3EA', color: '#C42B4F' }}>
                       <strong>Razlog odbijanja:</strong> {r.reject_reason}
                     </div>
                   )}

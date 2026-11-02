@@ -58,27 +58,27 @@ export default function EditPojam({ row }: { row: Row }) {
 
   return (
     <div className="max-w-3xl">
-      <Link href="/majmun/vesanje" className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70" style={{ color: '#3A36A0' }}>
+      <Link href="/majmun/vesanje" className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70" style={{ color: '#12907E' }}>
         <IconBack size={16} strokeWidth={2.2} /> Svi pojmovi
       </Link>
 
-      <h1 className="font-black tracking-tight mb-2" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>Izmeni pojam</h1>
+      <h1 className="font-black tracking-tight mb-2" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Izmeni pojam</h1>
 
       {row.times_used > 0 && (
         <div className="card-soft p-4 mb-5">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>Statistika</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6F6C66' }}>Statistika</p>
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-2xl p-3 text-center" style={{ background: '#EBE8E1' }}>
-              <div className="font-black text-[18px]" style={{ color: '#1A1A1E' }}>{row.times_used}</div>
-              <div className="text-[11px]" style={{ color: '#6B6760' }}>Igara</div>
+            <div className="rounded-2xl p-3 text-center" style={{ background: '#E7E1D0' }}>
+              <div className="font-black text-[18px]" style={{ color: '#151515' }}>{row.times_used}</div>
+              <div className="text-[11px]" style={{ color: '#6F6C66' }}>Igara</div>
             </div>
-            <div className="rounded-2xl p-3 text-center" style={{ background: '#EBE8E1' }}>
-              <div className="font-black text-[18px]" style={{ color: '#2FBF8A' }}>{row.times_guessed}</div>
-              <div className="text-[11px]" style={{ color: '#6B6760' }}>Pogođeno</div>
+            <div className="rounded-2xl p-3 text-center" style={{ background: '#E7E1D0' }}>
+              <div className="font-black text-[18px]" style={{ color: '#12907E' }}>{row.times_guessed}</div>
+              <div className="text-[11px]" style={{ color: '#6F6C66' }}>Pogođeno</div>
             </div>
-            <div className="rounded-2xl p-3 text-center" style={{ background: '#EBE8E1' }}>
-              <div className="font-black text-[18px]" style={{ color: '#3A36A0' }}>{guessRate}%</div>
-              <div className="text-[11px]" style={{ color: '#6B6760' }}>Uspeh</div>
+            <div className="rounded-2xl p-3 text-center" style={{ background: '#E7E1D0' }}>
+              <div className="font-black text-[18px]" style={{ color: '#12907E' }}>{guessRate}%</div>
+              <div className="text-[11px]" style={{ color: '#6F6C66' }}>Uspeh</div>
             </div>
           </div>
         </div>
@@ -86,32 +86,32 @@ export default function EditPojam({ row }: { row: Row }) {
 
       <div className="card-soft p-6 sm:p-8">
         {success && (
-          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
-            <IconCheck size={16} className="text-[#1F8A62]" /> Sačuvano.
+          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
+            <IconCheck size={16} className="text-[#0E6F61]" /> Sačuvano.
           </div>
         )}
-        {error && <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>{error}</div>}
+        {error && <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium" style={{ background: '#FFE3EA', color: '#C42B4F' }}>{error}</div>}
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Reč</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>Reč</label>
           <input value={word} onChange={e => setWord(e.target.value)} className="input uppercase font-bold tracking-wider" />
-          <p className="text-[11px] mt-2 font-bold" style={{ color: letterCount < 4 || letterCount > 18 ? '#E55353' : '#2FBF8A' }}>
+          <p className="text-[11px] mt-2 font-bold" style={{ color: letterCount < 4 || letterCount > 18 ? '#E5385C' : '#12907E' }}>
             {letterCount} slova
           </p>
         </div>
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Hint</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>Hint</label>
           <textarea value={hint} onChange={e => setHint(e.target.value)} className="input resize-none" rows={3} maxLength={200} />
-          <p className="text-[11px] mt-2 text-right" style={{ color: '#6B6760' }}>{hint.length}/200</p>
+          <p className="text-[11px] mt-2 text-right" style={{ color: '#6F6C66' }}>{hint.length}/200</p>
         </div>
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Kategorija</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>Kategorija</label>
           <div className="grid grid-cols-3 gap-1.5">
             {CATS.map(c => (
               <button key={c} type="button" onClick={() => setCategory(c)} className="py-2 rounded-xl text-[12px] font-bold transition-all"
-                style={category === c ? { background: '#3A36A0', color: 'white' } : { background: '#EBE8E1', color: '#6B6760' }}>
+                style={category === c ? { background: '#12907E', color: 'white' } : { background: '#E7E1D0', color: '#6F6C66' }}>
                 {c}
               </button>
             ))}
@@ -120,15 +120,15 @@ export default function EditPojam({ row }: { row: Row }) {
 
         <label className="flex items-center gap-3 mb-6 cursor-pointer">
           <button type="button" onClick={() => setActive(a => !a)} className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
-            style={active ? { borderColor: '#2FBF8A', background: '#2FBF8A' } : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
+            style={active ? { borderColor: '#12907E', background: '#12907E' } : { borderColor: 'rgba(21,21,21,0.20)', background: 'white' }}>
             {active && <span className="text-white font-black text-[10px]">✓</span>}
           </button>
-          <span className="text-[13px] font-medium" style={{ color: '#1A1A1E' }}>Aktivno</span>
+          <span className="text-[13px] font-medium" style={{ color: '#151515' }}>Aktivno</span>
         </label>
 
         <div className="flex flex-col sm:flex-row gap-2">
           <button onClick={save} disabled={busy} className="btn btn-primary btn-md flex-1">{busy ? 'Čuvanje…' : 'Sačuvaj'}</button>
-          <button onClick={deleteRow} disabled={busy} className="btn btn-md flex-1" style={{ background: '#FEE2E2', color: '#b91c1c' }}>Obriši</button>
+          <button onClick={deleteRow} disabled={busy} className="btn btn-md flex-1" style={{ background: '#FFE3EA', color: '#C42B4F' }}>Obriši</button>
         </div>
       </div>
     </div>

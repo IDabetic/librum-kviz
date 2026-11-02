@@ -19,12 +19,12 @@ import { useState } from 'react'
 type Accent = 'blue' | 'gold' | 'red' | 'green' | 'yellow' | 'purple'
 
 const ACCENT_STYLES: Record<Accent, { idle: React.CSSProperties; done: React.CSSProperties }> = {
-  blue:   { idle: { background: '#D4D2F5', color: '#2C2980' }, done: { background: '#D4F3E7', color: '#1F8A62' } },
-  gold:   { idle: { background: '#F5E6B8', color: '#8A6A12' }, done: { background: '#D4F3E7', color: '#1F8A62' } },
-  red:    { idle: { background: '#FEE2E2', color: '#b91c1c' }, done: { background: '#D4F3E7', color: '#1F8A62' } },
-  green:  { idle: { background: '#D4F3E7', color: '#1F8A62' }, done: { background: '#D4D2F5', color: '#2C2980' } },
-  yellow: { idle: { background: '#E2B93A', color: '#1A1A1E' }, done: { background: '#D4F3E7', color: '#1F8A62' } },
-  purple: { idle: { background: '#EDE4FF', color: '#5b21b6' }, done: { background: '#D4F3E7', color: '#1F8A62' } },
+  blue:   { idle: { background: '#DFF3EE', color: '#0E6F61' }, done: { background: '#DFF3EE', color: '#0E6F61' } },
+  gold:   { idle: { background: '#FFF3C4', color: '#8A6A12' }, done: { background: '#DFF3EE', color: '#0E6F61' } },
+  red:    { idle: { background: '#FFE3EA', color: '#C42B4F' }, done: { background: '#DFF3EE', color: '#0E6F61' } },
+  green:  { idle: { background: '#DFF3EE', color: '#0E6F61' }, done: { background: '#DFF3EE', color: '#0E6F61' } },
+  yellow: { idle: { background: '#FFD84D', color: '#151515' }, done: { background: '#DFF3EE', color: '#0E6F61' } },
+  purple: { idle: { background: '#EDE4FF', color: '#5b21b6' }, done: { background: '#DFF3EE', color: '#0E6F61' } },
 }
 
 export default function ShareResultButton({

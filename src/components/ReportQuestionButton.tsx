@@ -10,7 +10,7 @@ import { useState } from 'react'
 type Source = 'questions' | 'book_questions' | 'kafana_questions' | 'hangman_words'
 
 export default function ReportQuestionButton({
-  source, questionId, questionText, accent = '#6B6760',
+  source, questionId, questionText, accent = '#6F6C66',
 }: {
   source: Source
   questionId: string
@@ -62,7 +62,7 @@ export default function ReportQuestionButton({
       disabled={busy || done}
       className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium transition-opacity hover:opacity-100"
       style={{
-        color: done ? '#1F8A62' : (error ? '#b91c1c' : accent),
+        color: done ? '#0E6F61' : (error ? '#C42B4F' : accent),
         opacity: done || error ? 1 : 0.7,
       }}
       title={done ? 'Hvala — admin će pogledati' : error || 'Prijavi grešku u pitanju'}

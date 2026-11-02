@@ -22,12 +22,12 @@ export default async function DuelAdminPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>Trivia duel</h1>
-        <p className="text-[13px] mt-1" style={{ color: '#6B6760' }}>Skorašnjih 100 duela</p>
+        <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Trivia duel</h1>
+        <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>Skorašnjih 100 duela</p>
       </div>
 
       <div className="card-soft overflow-hidden">
-        <div className="divide-y" style={{ borderColor: '#EBE8E1' }}>
+        <div className="divide-y" style={{ borderColor: '#E7E1D0' }}>
           {(rooms || []).map(r => {
             const hostName = profMap[r.host_id] || 'Domaćin'
             const guestName = r.guest_id ? (profMap[r.guest_id] || 'Gost') : '—'
@@ -36,29 +36,29 @@ export default async function DuelAdminPage() {
                 ? (r.host_score === r.guest_score ? 'Nerešeno'
                   : (r.host_score ?? 0) > (r.guest_score ?? 0) ? hostName : guestName)
                 : null
-            const statusColor = r.status === 'finished' ? '#2FBF8A' : r.status === 'playing' ? '#E2B93A' : '#6B6760'
+            const statusColor = r.status === 'finished' ? '#12907E' : r.status === 'playing' ? '#FFD84D' : '#6F6C66'
             return (
               <div key={r.id} className="px-5 py-3.5">
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                  <span className="chip" style={{ background: 'rgba(26,26,30,0.08)', color: '#1A1A1E' }}>
+                  <span className="chip" style={{ background: 'rgba(21,21,21,0.08)', color: '#151515' }}>
                     {r.room_code}
                   </span>
-                  <span className="chip" style={{ background: 'rgba(26,26,30,0.06)', color: statusColor }}>
+                  <span className="chip" style={{ background: 'rgba(21,21,21,0.06)', color: statusColor }}>
                     {r.status}
                   </span>
-                  <span className="text-[11px]" style={{ color: '#6B6760' }}>{r.game_format} · {r.total_questions} pit.</span>
-                  <span className="text-[11px] ml-auto" style={{ color: '#6B6760' }}>
+                  <span className="text-[11px]" style={{ color: '#6F6C66' }}>{r.game_format} · {r.total_questions} pit.</span>
+                  <span className="text-[11px] ml-auto" style={{ color: '#6F6C66' }}>
                     {new Date(r.created_at).toLocaleString('sr', { dateStyle: 'short', timeStyle: 'short' })}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-[14px]" style={{ color: '#1A1A1E' }}>
-                    <strong>{hostName}</strong> <span style={{ color: '#3A36A0' }}>{r.host_score ?? 0}</span>
-                    <span className="mx-2" style={{ color: '#6B6760' }}>vs</span>
-                    <strong>{guestName}</strong> <span style={{ color: '#E2B93A' }}>{r.guest_score ?? 0}</span>
+                  <p className="text-[14px]" style={{ color: '#151515' }}>
+                    <strong>{hostName}</strong> <span style={{ color: '#12907E' }}>{r.host_score ?? 0}</span>
+                    <span className="mx-2" style={{ color: '#6F6C66' }}>vs</span>
+                    <strong>{guestName}</strong> <span style={{ color: '#FFD84D' }}>{r.guest_score ?? 0}</span>
                   </p>
                   {winner && (
-                    <span className="text-[12px] font-bold" style={{ color: winner === 'Nerešeno' ? '#8A6A12' : '#1F8A62' }}>
+                    <span className="text-[12px] font-bold" style={{ color: winner === 'Nerešeno' ? '#8A6A12' : '#0E6F61' }}>
                       {winner === 'Nerešeno' ? '🤝 Nerešeno' : `🏆 ${winner}`}
                     </span>
                   )}

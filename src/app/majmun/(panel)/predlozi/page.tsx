@@ -85,27 +85,27 @@ export default async function PredloziPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-black tracking-tight" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+        <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>
           Korisnički predlozi
         </h1>
-        <p className="text-[13px] mt-1" style={{ color: '#6B6760' }}>
+        <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
           {count ?? 0} predloga u ovom pregledu · Prihvatanje upisuje u fond koji je korisnik izabrao.
         </p>
       </div>
 
       <section className="card-soft p-5">
-        <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6B6760' }}>
+        <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#6F6C66' }}>
           Poslednjih 7 dana
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Brojka naziv="Stiglo" broj={pregled.stiglo} />
-          <Brojka naziv="Prihvaćeno" broj={pregled.prihvaceno} boja="#1F8A62" />
-          <Brojka naziv="Odbijeno" broj={pregled.odbijeno} boja="#b91c1c" />
+          <Brojka naziv="Prihvaćeno" broj={pregled.prihvaceno} boja="#0E6F61" />
+          <Brojka naziv="Odbijeno" broj={pregled.odbijeno} boja="#C42B4F" />
           <Brojka naziv="Čeka ukupno" broj={pregled.ceka}
             boja={pregled.ceka > 0 ? '#8A6A12' : undefined} />
         </div>
         {pregled.ceka > 0 && (
-          <p className="text-[12px] mt-3" style={{ color: pregled.danaCeka > 14 ? '#b91c1c' : '#6B6760' }}>
+          <p className="text-[12px] mt-3" style={{ color: pregled.danaCeka > 14 ? '#C42B4F' : '#6F6C66' }}>
             Najstariji nepregledan predlog čeka <strong>{pregled.danaCeka}</strong>{' '}
             {pregled.danaCeka === 1 ? 'dan' : 'dana'}.
           </p>
@@ -132,8 +132,8 @@ export default async function PredloziPage({ searchParams }: { searchParams: Pro
             <Link key={s.key} href={`/majmun/predlozi?status=${s.key}`} scroll={false}
               className="px-4 py-2 rounded-full text-[13px] font-semibold transition-all"
               style={aktivan
-                ? { background: '#1A1A1E', color: 'white' }
-                : { background: '#EBE8E1', color: '#1A1A1E' }}>
+                ? { background: '#151515', color: 'white' }
+                : { background: '#E7E1D0', color: '#151515' }}>
               {s.naziv} ({brojevi[s.key] ?? 0})
             </Link>
           )
@@ -147,11 +147,11 @@ export default async function PredloziPage({ searchParams }: { searchParams: Pro
 
 function Brojka({ naziv, broj, boja }: { naziv: string; broj: number; boja?: string }) {
   return (
-    <div className="rounded-2xl px-4 py-3" style={{ background: '#EBE8E1' }}>
-      <p className="font-black text-[22px] leading-none mb-1" style={{ color: boja ?? '#1A1A1E' }}>
+    <div className="rounded-2xl px-4 py-3" style={{ background: '#E7E1D0' }}>
+      <p className="font-black text-[22px] leading-none mb-1" style={{ color: boja ?? '#151515' }}>
         {broj}
       </p>
-      <p className="text-[11px] font-semibold" style={{ color: '#6B6760' }}>{naziv}</p>
+      <p className="text-[11px] font-semibold" style={{ color: '#6F6C66' }}>{naziv}</p>
     </div>
   )
 }

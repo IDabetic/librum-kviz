@@ -54,48 +54,48 @@ export default function NoviPojamPage() {
 
   return (
     <div className="max-w-3xl">
-      <Link href="/majmun/vesanje" className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70" style={{ color: '#3A36A0' }}>
+      <Link href="/majmun/vesanje" className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70" style={{ color: '#12907E' }}>
         <IconBack size={16} strokeWidth={2.2} /> Svi pojmovi
       </Link>
 
-      <h1 className="font-black tracking-tight mb-6" style={{ color: '#1A1A1E', fontSize: 'clamp(22px, 4vw, 28px)' }}>Novi pojam</h1>
+      <h1 className="font-black tracking-tight mb-6" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Novi pojam</h1>
 
       <div className="card-soft p-6 sm:p-8">
         {success && (
-          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#D4F3E7', color: '#1F8A62' }}>
-            <IconCheck size={16} className="text-[#1F8A62]" /> Sačuvano.
+          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
+            <IconCheck size={16} className="text-[#0E6F61]" /> Sačuvano.
           </div>
         )}
-        {error && <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>{error}</div>}
+        {error && <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium" style={{ background: '#FFE3EA', color: '#C42B4F' }}>{error}</div>}
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Reč *</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>Reč *</label>
           <input value={word} onChange={e => setWord(e.target.value)} className="input uppercase font-bold tracking-wider" maxLength={30} />
           <div className="flex justify-between mt-2">
-            <p className="text-[11px]" style={{ color: '#6B6760' }}>4-18 slova · srpska latinica</p>
-            <p className="text-[11px] font-bold" style={{ color: letterCount < 4 || letterCount > 18 ? '#E55353' : '#2FBF8A' }}>
+            <p className="text-[11px]" style={{ color: '#6F6C66' }}>4-18 slova · srpska latinica</p>
+            <p className="text-[11px] font-bold" style={{ color: letterCount < 4 || letterCount > 18 ? '#E5385C' : '#12907E' }}>
               {letterCount} {letterCount === 1 ? 'slovo' : 'slova'}
             </p>
           </div>
         </div>
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Hint *</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>Hint *</label>
           <textarea value={hint} onChange={e => setHint(e.target.value)} className="input resize-none" rows={3} maxLength={200}
             placeholder="Opisni nagoveštaj — bez direktnog otkrivanja reči." />
           <div className="flex justify-between mt-2">
-            <p className="text-[11px]" style={{ color: '#6B6760' }}>Pomaže ali ne otkriva</p>
-            <p className="text-[11px] font-bold" style={{ color: '#6B6760' }}>{hint.length}/200</p>
+            <p className="text-[11px]" style={{ color: '#6F6C66' }}>Pomaže ali ne otkriva</p>
+            <p className="text-[11px] font-bold" style={{ color: '#6F6C66' }}>{hint.length}/200</p>
           </div>
         </div>
 
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1A1E' }}>Kategorija</label>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>Kategorija</label>
           <div className="grid grid-cols-3 gap-1.5">
             {CATS.map(c => (
               <button key={c} type="button" onClick={() => setCategory(c)}
                 className="py-2 rounded-xl text-[12px] font-bold transition-all"
-                style={category === c ? { background: '#3A36A0', color: 'white' } : { background: '#EBE8E1', color: '#6B6760' }}>
+                style={category === c ? { background: '#12907E', color: 'white' } : { background: '#E7E1D0', color: '#6F6C66' }}>
                 {c}
               </button>
             ))}
@@ -104,10 +104,10 @@ export default function NoviPojamPage() {
 
         <label className="flex items-center gap-3 mb-6 cursor-pointer">
           <button type="button" onClick={() => setActive(a => !a)} className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
-            style={active ? { borderColor: '#2FBF8A', background: '#2FBF8A' } : { borderColor: 'rgba(26,26,30,0.20)', background: 'white' }}>
+            style={active ? { borderColor: '#12907E', background: '#12907E' } : { borderColor: 'rgba(21,21,21,0.20)', background: 'white' }}>
             {active && <span className="text-white font-black text-[10px]">✓</span>}
           </button>
-          <span className="text-[13px] font-medium" style={{ color: '#1A1A1E' }}>Aktivno</span>
+          <span className="text-[13px] font-medium" style={{ color: '#151515' }}>Aktivno</span>
         </label>
 
         <div className="flex flex-col sm:flex-row gap-2">

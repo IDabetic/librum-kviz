@@ -1,19 +1,19 @@
 import type { Metadata } from 'next'
-import { Fraunces, Source_Sans_3 } from 'next/font/google'
+import { Archivo_Black, Space_Grotesk } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-const display = Fraunces({
+const display = Archivo_Black({
   subsets: ['latin', 'latin-ext'],
-  weight: ['500', '600', '700'],
-  variable: '--font-fraunces',
+  weight: '400',
+  variable: '--font-archivo',
   display: 'swap',
 })
 
-const sans = Source_Sans_3({
+const sans = Space_Grotesk({
   subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-source',
+  variable: '--font-grotesk',
   display: 'swap',
 })
 
