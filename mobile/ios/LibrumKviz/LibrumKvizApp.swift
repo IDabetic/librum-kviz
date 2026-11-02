@@ -27,11 +27,13 @@ struct LibrumKvizApp: App {
 /// Četiri kartice: igrači (društvo), igre, rang lista, profil.
 struct Koren: View {
     @Environment(Napredak.self) private var napredak
+    @Environment(Sesija.self) private var sesija
     @State private var kartica = 1
     var body: some View {
         TabView(selection: $kartica) {
             NavigationStack { IgraciTabView() }
                 .tabItem { Label("Igrači", systemImage: "person.2") }
+                .badge(Brojaci.deljeni.poruke)
                 .tag(0)
             NavigationStack { PocetnaView() }
                 .tabItem { Label("Igre", systemImage: "gamecontroller") }
@@ -42,7 +44,11 @@ struct Koren: View {
             NavigationStack { ProfilView() }
                 .tabItem { Label("Profil", systemImage: "person") }
                 .tag(3)
-                .badge(napredak.neprocitanih)
+                .badge(napredak.neprocitanih + Brojaci.deljeni.obavestenja)
+        }
+        // Brojači na karticama: na svakih 60 s dok je aplikacija otvorena (shortcut: bez push-a; posle Firebase-a stiže odmah).
+        .task(id: sesija.korisnikId) {
+            while !Task.isCancelled { await Brojaci.deljeni.osvezi(sesija); try? await Task.sleep(for: .seconds(60)) }
         }
     }
 }

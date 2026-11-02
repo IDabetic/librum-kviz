@@ -378,6 +378,7 @@ struct SanduceView: View {
             ScrollView {
                 VStack(spacing: 10) {
                     if filter != .bedzevi { DolazniIzazovi() }
+                    if filter == .sve { ServerskaObavestenja() }
                     if ucitava {
                         ForEach(0..<4, id: \.self) { _ in Skelet(visina: 84, radijus: 20) }
                     } else if poruke.isEmpty {

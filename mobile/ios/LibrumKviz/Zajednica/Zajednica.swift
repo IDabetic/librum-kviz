@@ -97,7 +97,6 @@ struct IgraciTabView: View {
     @State private var nova = false
     @State private var prijava = false
     @State private var komentariZa: Zajednica.Objava?
-    @State private var neprocitanih = 0
     @State private var jos = true
 
     var body: some View {
@@ -109,10 +108,10 @@ struct IgraciTabView: View {
                     NavigationLink { IgraciView() } label: { krug("magnifyingglass") }.accessibilityLabel("Nađi igrače")
                     NavigationLink { PorukeView() } label: {
                         krug("paperplane").overlay(alignment: .topTrailing) {
-                            if neprocitanih > 0 { Circle().fill(Color.roze).frame(width: 12, height: 12).overlay(Circle().stroke(Color.krem, lineWidth: 2)) }
+                            if Brojaci.deljeni.poruke > 0 { Circle().fill(Color.roze).frame(width: 12, height: 12).overlay(Circle().stroke(Color.krem, lineWidth: 2)) }
                         }
                     }
-                    .accessibilityLabel("Poruke, \(neprocitanih) nepročitanih")
+                    .accessibilityLabel("Poruke, \(Brojaci.deljeni.poruke) nepročitanih")
                 }
                 if !igraju.isEmpty { sadIgraju }
                 Button { if !sesija.prijavljen { prijava = true } else if napredak.s.pravilaZajednice { nova = true } else { pravila = true } } label: {
@@ -147,7 +146,7 @@ struct IgraciTabView: View {
         .task(id: vrsta) { await ucitaj() }
         .task(id: sesija.korisnikId) {
             igraju = await Zajednica.koStaIgra(sesija)
-            neprocitanih = ((try? await Zajednica.razgovori(sesija)) ?? []).reduce(0) { $0 + $1.neprocitanih }
+            await Brojaci.deljeni.osvezi(sesija)
         }
         .sheet(isPresented: $nova) { NovaObjavaView { Task { await ucitaj() } } }
         .sheet(item: $komentariZa) { o in KomentariView(objava: o) { broj in var n = o; n.komentara = broj; zameni(n) } }
@@ -825,5 +824,80 @@ struct BlokiraniView: View {
     private func ucitaj() async {
         do { stanje = .gotovo(try await Supabase.deljeni.rpc("moje_blokade", [:], token: try? await sesija.vazeciToken())) }
         catch { stanje = .greska(error.localizedDescription) }
+    }
+}
+
+
+// MARK: Obaveštenja sa servera i brojači
+
+/// Brojači za kartice: nova obaveštenja (Profil → Sanduče) i nepročitane poruke (Igrači).
+@MainActor @Observable
+final class Brojaci {
+    static let deljeni = Brojaci()
+    private(set) var obavestenja = 0
+    private(set) var poruke = 0
+
+    func osvezi(_ s: Sesija) async {
+        struct B: Decodable { let obavestenja: Int; let poruke: Int }
+        guard s.prijavljen, let t = try? await s.vazeciToken(), let b: B = try? await Supabase.deljeni.rpc("moji_brojevi", [:], token: t) else { return }
+        obavestenja = b.obavestenja; poruke = b.poruke
+    }
+    func procitanaObavestenja() { obavestenja = 0 }
+}
+
+/// Aktivnost u Sandučetu: izazovi, novi pratioci, komentari, odgovori i srca (poslednjih 30 dana).
+struct ServerskaObavestenja: View {
+    @Environment(Sesija.self) private var sesija
+    struct Red: Decodable, Identifiable {
+        let vrsta: String; let ko: String; let nadimak: String; let avatar: String?; let tekst: String?
+        let objava: Int?; let kod_sobe: String?; let kad: String; let novo: Bool
+        var id: String { vrsta + ko + kad }
+    }
+    @State private var redovi: [Red] = []
+    @State private var duelKod: String?
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ForEach(redovi) { r in red(r) }
+        }
+        .task {
+            guard sesija.prijavljen, let t = try? await sesija.vazeciToken() else { return }
+            redovi = (try? await Supabase.deljeni.rpc("moja_obavestenja", ["p_oznaci": true], token: t)) ?? []
+            Brojaci.deljeni.procitanaObavestenja()
+        }
+        .navigationDestination(item: $duelKod) { kod in DuelView(kodSobe: kod) }
+    }
+
+    @ViewBuilder private func red(_ r: Red) -> some View {
+        let (ikonica, opis): (String, String) = switch r.vrsta {
+        case "izazov": ("bolt.fill", "te izaziva na duel")
+        case "pratilac": ("person.badge.plus", "te sada prati")
+        case "komentar": ("bubble.right.fill", "je komentarisao tvoju objavu")
+        case "odgovor": ("arrowshape.turn.up.left.fill", "ti je odgovorio")
+        default: ("heart.fill", "voli tvoju objavu")
+        }
+        let sadrzaj = HStack(alignment: .top, spacing: 12) {
+            AvatarSlika(avatar: r.avatar, velicina: 44)
+                .overlay(alignment: .bottomTrailing) {
+                    Image(systemName: ikonica).font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 20, height: 20).background(Color.roze, in: Circle()).overlay(Circle().stroke(Color.krem, lineWidth: 2)).offset(x: 4, y: 4)
+                }
+            VStack(alignment: .leading, spacing: 3) {
+                (Text(r.nadimak).font(.tekst(15, .bold)) + Text(" " + opis).font(.tekst(15)))
+                if let t = r.tekst { Text("„\(t)”").font(.tekst(13)).foregroundStyle(Color.sivaTekst).lineLimit(2) }
+                Text(Zajednica.pre(r.kad)).font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+            }
+            Spacer(minLength: 0)
+            if r.novo { Circle().fill(Color.roze).frame(width: 10, height: 10).accessibilityLabel("Novo") }
+        }
+        .padding(14)
+        .background(Color.kartica, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(r.novo ? Color.mastilo : Color.kremTamnija, lineWidth: r.novo ? 2.5 : 1.5))
+        .accessibilityElement(children: .combine)
+        if r.vrsta == "izazov", let kod = r.kod_sobe {
+            Button { duelKod = kod } label: { sadrzaj }.buttonStyle(.plain)
+        } else {
+            NavigationLink { ProfilIgracaView(id: r.ko) } label: { sadrzaj }.buttonStyle(.plain)
+        }
     }
 }
