@@ -117,7 +117,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
   const boja = (vlasnik: string | null, neutralna: number) =>
     stanje.igraci.find(p => p.id === vlasnik)?.boja ?? NEUTRALNE[neutralna]
   const prestonice = useMemo(() => new Set(stanje.igraci.map(p => p.prestonica)), [stanje.igraci])
-  const krupno = pogled.w < 900 // imena i neutralne značke tek kad ima mesta
+  const krupno = pogled.w < 520 // neutralne značke i imena tek pri jakom zumu, inače prekriju mapu
   const r = 11 * jedinica
   const izabranaO = izabrana ? oblast(izabrana) : null
 

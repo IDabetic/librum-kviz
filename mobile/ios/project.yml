@@ -19,6 +19,11 @@ targets:
       - path: ../fontovi
         buildPhase: resources
         excludes: ["*.txt"]
+      # Ista mapa kao veb i Android (alati/napravi-mapu.mjs).
+      - path: ../../src/lib/osvajanje/svet.json
+        buildPhase: resources
+      - path: ../../src/lib/osvajanje/rezervna-pitanja.json
+        buildPhase: resources
     info:
       path: LibrumKviz/Info.plist
       properties:

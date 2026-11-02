@@ -3,76 +3,46 @@ import Foundation
 // Verni prevod src/lib/osvajanje/pravila.ts. Kad se pravila menjaju, menjaju se
 // na vebu, ovde i u Pravila.kt, zajedno sa testovima na sva tri mesta.
 
-struct Kontinent { let id: String; let ime: String; let bonus: Int }
-struct Oblast { let id: String; let ime: String; let kontinent: String; let x: Double; let y: Double }
+struct Region: Decodable { let id: String; let ime: String; let bonus: Int }
 
+/// Država sa tačkom za natpis i SVG putanjom (M/L/Z) u koordinatama mape.
+struct Oblast: Decodable { let id: String; let ime: String; let region: String; let x: Double; let y: Double; let boja: Int; let povrsina: Double; let d: String }
+
+/// Mapa država iz svet.json (isti fajl kao veb i Android, pravi ga alati/napravi-mapu.mjs).
 enum Mapa {
-    static let kontinenti: [Kontinent] = [
-        .init(id: "sam", ime: "Severna Amerika", bonus: 3),
-        .init(id: "jam", ime: "Južna Amerika", bonus: 2),
-        .init(id: "evr", ime: "Evropa", bonus: 3),
-        .init(id: "afr", ime: "Afrika", bonus: 3),
-        .init(id: "azi", ime: "Azija", bonus: 4),
-        .init(id: "oke", ime: "Okeanija", bonus: 2),
-    ]
+    private struct Svet: Decodable { let sirina: Double; let visina: Double; let regioni: [Region]; let drzave: [Oblast]; let veze: [[String]] }
 
-    static let oblasti: [Oblast] = [
-        .init(id: "aljaska", ime: "Aljaska", kontinent: "sam", x: 80, y: 90),
-        .init(id: "kanada", ime: "Kanada", kontinent: "sam", x: 190, y: 80),
-        .init(id: "sad", ime: "SAD", kontinent: "sam", x: 200, y: 190),
-        .init(id: "meksiko", ime: "Meksiko", kontinent: "sam", x: 180, y: 295),
-        .init(id: "kolumbija", ime: "Kolumbija", kontinent: "jam", x: 270, y: 360),
-        .init(id: "peru", ime: "Peru", kontinent: "jam", x: 250, y: 465),
-        .init(id: "brazil", ime: "Brazil", kontinent: "jam", x: 360, y: 430),
-        .init(id: "argentina", ime: "Argentina", kontinent: "jam", x: 330, y: 530),
-        .init(id: "skandinavija", ime: "Skandinavija", kontinent: "evr", x: 480, y: 70),
-        .init(id: "zap-evropa", ime: "Zapadna Evropa", kontinent: "evr", x: 430, y: 175),
-        .init(id: "sre-evropa", ime: "Srednja Evropa", kontinent: "evr", x: 535, y: 165),
-        .init(id: "balkan", ime: "Balkan", kontinent: "evr", x: 575, y: 260),
-        .init(id: "sev-afrika", ime: "Severna Afrika", kontinent: "afr", x: 475, y: 310),
-        .init(id: "zap-afrika", ime: "Zapadna Afrika", kontinent: "afr", x: 440, y: 415),
-        .init(id: "ist-afrika", ime: "Istočna Afrika", kontinent: "afr", x: 570, y: 400),
-        .init(id: "juz-afrika", ime: "Južna Afrika", kontinent: "afr", x: 520, y: 505),
-        .init(id: "sibir", ime: "Sibir", kontinent: "azi", x: 720, y: 85),
-        .init(id: "bliski-istok", ime: "Bliski istok", kontinent: "azi", x: 670, y: 285),
-        .init(id: "indija", ime: "Indija", kontinent: "azi", x: 770, y: 335),
-        .init(id: "kina", ime: "Kina", kontinent: "azi", x: 810, y: 210),
-        .init(id: "japan", ime: "Japan", kontinent: "azi", x: 925, y: 150),
-        .init(id: "indonezija", ime: "Indonezija", kontinent: "oke", x: 870, y: 400),
-        .init(id: "australija", ime: "Australija", kontinent: "oke", x: 920, y: 505),
-        .init(id: "novi-zeland", ime: "Novi Zeland", kontinent: "oke", x: 1000, y: 430),
-    ]
+    private static let svet: Svet = {
+        let url = Bundle(for: Oznacivac.self).url(forResource: "svet", withExtension: "json") ?? Bundle.main.url(forResource: "svet", withExtension: "json")!
+        return try! JSONDecoder().decode(Svet.self, from: Data(contentsOf: url))
+    }()
+    private final class Oznacivac {}
 
-    static let veze: [(String, String)] = [
-        ("aljaska", "kanada"), ("aljaska", "sibir"), ("aljaska", "sad"), ("kanada", "sad"), ("kanada", "skandinavija"),
-        ("sad", "meksiko"), ("meksiko", "kolumbija"),
-        ("kolumbija", "peru"), ("kolumbija", "brazil"), ("peru", "brazil"), ("peru", "argentina"), ("brazil", "argentina"),
-        ("brazil", "zap-afrika"),
-        ("skandinavija", "zap-evropa"), ("skandinavija", "sre-evropa"), ("skandinavija", "sibir"),
-        ("zap-evropa", "sre-evropa"), ("zap-evropa", "sev-afrika"), ("sre-evropa", "balkan"), ("sre-evropa", "sibir"),
-        ("balkan", "bliski-istok"), ("balkan", "sev-afrika"),
-        ("sev-afrika", "zap-afrika"), ("sev-afrika", "ist-afrika"), ("sev-afrika", "bliski-istok"),
-        ("zap-afrika", "ist-afrika"), ("zap-afrika", "juz-afrika"), ("ist-afrika", "juz-afrika"), ("ist-afrika", "bliski-istok"),
-        ("bliski-istok", "indija"), ("bliski-istok", "sibir"), ("sibir", "kina"), ("sibir", "japan"),
-        ("kina", "indija"), ("kina", "japan"), ("kina", "indonezija"), ("indija", "indonezija"),
-        ("indonezija", "australija"), ("australija", "novi-zeland"), ("indonezija", "novi-zeland"),
-    ]
+    static var sirina: Double { svet.sirina }
+    static var visina: Double { svet.visina }
+    static var regioni: [Region] { svet.regioni }
+    static var oblasti: [Oblast] { svet.drzave }
+    static var veze: [(String, String)] { svet.veze.map { ($0[0], $0[1]) } }
 
     private static let susedstvo: [String: [String]] = {
         var s: [String: [String]] = [:]
-        for (a, b) in veze { s[a, default: []].append(b); s[b, default: []].append(a) }
+        for v in svet.veze { s[v[0], default: []].append(v[1]); s[v[1], default: []].append(v[0]) }
         return s
     }()
+    private static let poId: [String: Oblast] = Dictionary(uniqueKeysWithValues: svet.drzave.map { ($0.id, $0) })
 
     static func susedi(_ id: String) -> [String] { susedstvo[id] ?? [] }
-    static func oblast(_ id: String) -> Oblast { oblasti.first { $0.id == id }! }
+    static func oblast(_ id: String) -> Oblast { poId[id]! }
 }
 
 enum Pravila {
-    static let pocetneVojskePrestonice = 4
+    static let pocetneVojskePrestonice = 5
+    static let pocetnihDrzava = 6
+    static let pocetneVojskeDrzave = 2
     static let neutralneVojske = 1
     static let najmanjePojacanja = 3
-    static let bitakaPoPotezu = 6
+    static let teritorijaPoVojsci = 3
+    static let bitakaPoPotezu = 8
     static let probojSvakih = 3
     static let probojBonus = 2
     static let plenPrestonice = 5
@@ -147,25 +117,43 @@ struct Stanje: Equatable {
 
     var trenutni: Igrac { igraci[naPotezu] }
 
-    /// Nova partija: prestonice na različitim kontinentima, ostalo neutralno.
+    /// Nova partija: prestonice u različitim regionima, po šest država oko njih, ostalo neutralno.
     static func nova(krugova: Int, tezina: Tezina, slucajno: inout Slucajno, ime: String? = nil) -> Stanje {
-        var kontinenti = Mapa.kontinenti
-        for i in stride(from: kontinenti.count - 1, to: 0, by: -1) {
+        var regioni = Mapa.regioni
+        for i in stride(from: regioni.count - 1, to: 0, by: -1) {
             let j = Int(slucajno.sledeci() * Double(i + 1))
-            kontinenti.swapAt(i, j)
+            regioni.swapAt(i, j)
         }
+        var oblasti: [String: StanjeOblasti] = [:]
+        for o in Mapa.oblasti { oblasti[o.id] = StanjeOblasti(vlasnik: nil, vojske: Pravila.neutralneVojske) }
         let osnova: [(String, String, UInt32, Bool)] = [
             ("ti", "Ti", 0x12907E, true), ("mimi", "Mimi", 0xFF5FA2, false), ("zig", "Zig", 0x6D4BC9, false),
         ]
         var igraci: [Igrac] = []
-        for (i, p) in osnova.enumerated() {
-            let kandidati = Mapa.oblasti.filter { $0.kontinent == kontinenti[i].id }
-            let prestonica = kandidati[Int(slucajno.sledeci() * Double(kandidati.count))].id
+        for p in osnova {
+            // Prestonica je država sa bar 3 suseda, u regionu koji niko drugi nema.
+            func kandidati(_ r: Region) -> [Oblast] {
+                Mapa.oblasti.filter { $0.region == r.id && Mapa.susedi($0.id).count >= 3 && oblasti[$0.id]?.vlasnik == nil }
+            }
+            let region = regioni.first { r in !igraci.contains { Mapa.oblast($0.prestonica).region == r.id } && !kandidati(r).isEmpty }!
+            let lista = kandidati(region)
+            let prestonica = lista[Int(slucajno.sledeci() * Double(lista.count))].id
             igraci.append(Igrac(id: p.0, ime: p.3 ? (ime ?? p.1) : p.1, boja: p.2, covek: p.3, prestonica: prestonica, ispao: false))
+            // Početni posed: prestonica i najbliže slobodne države po vezama (pretraga u širinu).
+            var posed = [prestonica]
+            var red = [prestonica]
+            var vidjeno: Set = [prestonica]
+            while !red.isEmpty && posed.count < Pravila.pocetnihDrzava {
+                for n in Mapa.susedi(red.removeFirst()) where !vidjeno.contains(n) {
+                    vidjeno.insert(n)
+                    red.append(n)
+                    if oblasti[n]?.vlasnik == nil && posed.count < Pravila.pocetnihDrzava { posed.append(n) }
+                }
+            }
+            for id in posed {
+                oblasti[id] = StanjeOblasti(vlasnik: p.0, vojske: id == prestonica ? Pravila.pocetneVojskePrestonice : Pravila.pocetneVojskeDrzave)
+            }
         }
-        var oblasti: [String: StanjeOblasti] = [:]
-        for o in Mapa.oblasti { oblasti[o.id] = StanjeOblasti(vlasnik: nil, vojske: Pravila.neutralneVojske) }
-        for p in igraci { oblasti[p.prestonica] = StanjeOblasti(vlasnik: p.id, vojske: Pravila.pocetneVojskePrestonice) }
         return Stanje(igraci: igraci, oblasti: oblasti, krug: 1, ukupnoKrugova: krugova, naPotezu: 0, faza: .snabdevanje,
                       zaRaspored: 0, bitaka: 0, niz: 0, utvrdjeno: false, tacnostBota: tezina.tacnost)
     }
@@ -174,14 +162,14 @@ struct Stanje: Equatable {
         Mapa.oblasti.filter { oblasti[$0.id]?.vlasnik == id }.map(\.id)
     }
 
-    func bonusKontinenata(_ id: String) -> Int {
-        Mapa.kontinenti
-            .filter { k in Mapa.oblasti.filter { $0.kontinent == k.id }.allSatisfy { oblasti[$0.id]?.vlasnik == id } }
+    func bonusRegiona(_ id: String) -> Int {
+        Mapa.regioni
+            .filter { r in Mapa.oblasti.filter { $0.region == r.id }.allSatisfy { oblasti[$0.id]?.vlasnik == id } }
             .reduce(0) { $0 + $1.bonus }
     }
 
     func pojacanja(_ id: String, tacno: Bool) -> Int {
-        let puno = max(Pravila.najmanjePojacanja, oblastiIgraca(id).count / 2) + bonusKontinenata(id)
+        let puno = max(Pravila.najmanjePojacanja, oblastiIgraca(id).count / Pravila.teritorijaPoVojsci) + bonusRegiona(id)
         return tacno ? puno : max(1, puno / 2)
     }
 
@@ -294,7 +282,7 @@ struct Stanje: Equatable {
         let moje = oblastiIgraca(id)
         let vojske = moje.reduce(0) { $0 + (oblasti[$1]?.vojske ?? 0) }
         let prestonica = igraci.first { $0.id == id }.map { oblasti[$0.prestonica]?.vlasnik == id ? Pravila.poeniPrestonica : 0 } ?? 0
-        return moje.count * Pravila.poeniPoOblasti + vojske + bonusKontinenata(id) * Pravila.poeniPoBonusu + prestonica
+        return moje.count * Pravila.poeniPoOblasti + vojske + bonusRegiona(id) * Pravila.poeniPoBonusu + prestonica
     }
 
     var poredak: [(igrac: Igrac, poeni: Int)] {
@@ -326,8 +314,8 @@ struct Stanje: Equatable {
             for kuda in mete(odakle) {
                 let prednost = oblasti[odakle]!.vojske - oblasti[kuda]!.vojske
                 if prednost < 1 { continue }
-                let kont = Mapa.oblast(kuda).kontinent
-                let fali = Mapa.oblasti.filter { $0.kontinent == kont && oblasti[$0.id]?.vlasnik != id }.count
+                let reg = Mapa.oblast(kuda).region
+                let fali = Mapa.oblasti.filter { $0.region == reg && oblasti[$0.id]?.vlasnik != id }.count
                 let ocena = prednost * 2 + (oblasti[kuda]!.vlasnik == nil ? 3 : 0) + (fali == 1 ? 5 : 0)
                 if najbolji == nil || ocena > najbolji!.2 { najbolji = (odakle, kuda, ocena) }
             }

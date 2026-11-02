@@ -48,6 +48,16 @@ actor PaketPitanja {
         if let d = try? Data(contentsOf: fajl), let kes = try? JSONDecoder().decode([Pitanje].self, from: d), !kes.isEmpty {
             return kes.shuffled()
         }
+        // Prvo pokretanje bez mreže ili baza ne odgovara: rezervni paket ugrađen u aplikaciju (isti kao veb).
+        if let url = Bundle.main.url(forResource: "rezervna-pitanja", withExtension: "json"),
+           let d = try? Data(contentsOf: url),
+           let redovi = try? JSONSerialization.jsonObject(with: d) as? [[Any]] {
+            let rezerva = redovi.enumerated().compactMap { i, r -> Pitanje? in
+                guard r.count == 3, let t = r[0] as? String, let o = r[1] as? [String], let c = r[2] as? Int else { return nil }
+                return Pitanje(id: "r\(i)", question_text: t, options: o, correct_answer: c)
+            }
+            if !rezerva.isEmpty { return rezerva.shuffled() }
+        }
         throw Supabase.Greska(poruka: "Pitanja nisu stigla. Proveri internet i pokušaj ponovo.")
     }
 }

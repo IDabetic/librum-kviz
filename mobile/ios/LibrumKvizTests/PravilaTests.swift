@@ -3,17 +3,29 @@ import XCTest
 
 /// Isti slučajevi kao tests/osvajanje.test.mjs na vebu.
 final class PravilaTests: XCTestCase {
+    static let prestoniceVeba = ["PNG", "ALB", "CHE"]
+
     private func nova(_ seme: UInt32 = 1) -> Stanje {
         var s = Slucajno(seme: seme)
         return Stanje.nova(krugova: 10, tezina: .normalno, slucajno: &s)
     }
 
-    func testMapaPovezanaISimetricna() {
-        XCTAssertEqual(Mapa.oblasti.count, 24)
+    /// Stanje u fazi napada sa zadatim vlasnicima, ostalo neutralno sa 1 vojskom.
+    private func napad(_ vlasnici: [(String, String, Int)]) -> Stanje {
+        var s = nova()
+        s.faza = .napad
+        for o in Mapa.oblasti { s.oblasti[o.id] = StanjeOblasti(vlasnik: nil, vojske: 1) }
+        for (id, v, n) in vlasnici { s.oblasti[id] = StanjeOblasti(vlasnik: v, vojske: n) }
+        return s
+    }
+
+    func testMapaDrzavaPovezanaISimetricna() {
+        XCTAssertEqual(Mapa.oblasti.count, 171)
         for o in Mapa.oblasti { for n in Mapa.susedi(o.id) { XCTAssertTrue(Mapa.susedi(n).contains(o.id)) } }
-        var vidjeno: Set = ["aljaska"], red = ["aljaska"]
+        var vidjeno: Set = ["SRB"], red = ["SRB"]
         while let x = red.popLast() { for n in Mapa.susedi(x) where vidjeno.insert(n).inserted { red.append(n) } }
-        XCTAssertEqual(vidjeno.count, 24)
+        XCTAssertEqual(vidjeno.count, 171)
+        XCTAssertFalse(PutanjeMape.sve["SRB"]!.isEmpty)
     }
 
     func testIstiGeneratorKaoVeb() {
@@ -24,9 +36,18 @@ final class PravilaTests: XCTestCase {
         XCTAssertEqual(s.sledeci(), 0.5274470399599522, accuracy: 1e-12)
     }
 
-    func testPrestoniceNaRazlicitimKontinentima() {
-        let s = nova(3)
-        XCTAssertEqual(Set(s.igraci.map { Mapa.oblast($0.prestonica).kontinent }).count, 3)
+    func testPocetakTriRegionaPoSestDrzava() {
+        for seme: UInt32 in 1...5 {
+            let s = nova(seme)
+            XCTAssertEqual(Set(s.igraci.map { Mapa.oblast($0.prestonica).region }).count, 3)
+            for p in s.igraci { XCTAssertEqual(s.oblastiIgraca(p.id).count, Pravila.pocetnihDrzava) }
+        }
+    }
+
+    func testIstiPocetakKaoVeb() {
+        // Seme 1 na vebu (node): prestonice redom za ti, mimi, zig.
+        let s = nova(1)
+        XCTAssertEqual(s.igraci.map(\.prestonica), PravilaTests.prestoniceVeba)
     }
 
     func testSnabdevanjeIRaspored() {
@@ -37,45 +58,34 @@ final class PravilaTests: XCTestCase {
         XCTAssertEqual(r.rasporedi(s.igraci[0].prestonica).faza, .napad)
     }
 
-    func testOsvajanjeIProboj() {
-        var s = nova().snabdevanje(tacno: true)
-        let dom = s.igraci[0].prestonica
-        while s.faza == .raspored { s = s.rasporedi(dom) }
-        let meta = s.mete(dom)[0]
-        let (novo, ishod) = s.razresiBitku(odakle: dom, kuda: meta, napadac: Odgovor(tacan: true, ms: 1), branilac: nil)
+    func testOsvajanjeNeutralne() {
+        let s = napad([("SRB", "ti", 5)])
+        let (novo, ishod) = s.razresiBitku(odakle: "SRB", kuda: "BGR", napadac: Odgovor(tacan: true, ms: 1), branilac: nil)
         XCTAssertTrue(ishod.osvojeno)
-        XCTAssertEqual(novo.oblasti[meta]?.vlasnik, "ti")
-        XCTAssertEqual(novo.oblasti[dom]?.vojske, 1)
-        XCTAssertEqual(novo.oblasti[meta]?.vojske, 6)
-        XCTAssertFalse(novo.mete(meta).isEmpty)
+        XCTAssertEqual(novo.oblasti["BGR"]?.vojske, 4)
+        XCTAssertTrue(novo.mete("BGR").contains("TUR"))
     }
 
     func testBitkaProtivIgraca() {
-        var s = nova().snabdevanje(tacno: true)
-        s.faza = .napad
-        s.oblasti["balkan"] = StanjeOblasti(vlasnik: "ti", vojske: 5)
-        s.oblasti["bliski-istok"] = StanjeOblasti(vlasnik: "mimi", vojske: 4)
-        var r = s.razresiBitku(odakle: "balkan", kuda: "bliski-istok", napadac: .init(tacan: true, ms: 2000), branilac: .init(tacan: true, ms: 5000))
-        XCTAssertEqual(r.0.oblasti["bliski-istok"]?.vojske, 3)
-        r = s.razresiBitku(odakle: "balkan", kuda: "bliski-istok", napadac: .init(tacan: false, ms: 1), branilac: .init(tacan: false, ms: 1))
-        XCTAssertEqual(r.0.oblasti["balkan"]?.vojske, 4)
-        XCTAssertEqual(r.0.oblasti["bliski-istok"]?.vojske, 3)
-        r = s.razresiBitku(odakle: "balkan", kuda: "bliski-istok", napadac: .init(tacan: false, ms: 1), branilac: .init(tacan: true, ms: 1))
-        XCTAssertEqual(r.0.oblasti["balkan"]?.vojske, 3)
+        let s = napad([("SRB", "ti", 5), ("BGR", "mimi", 4)])
+        XCTAssertEqual(s.razresiBitku(odakle: "SRB", kuda: "BGR", napadac: .init(tacan: true, ms: 2000), branilac: .init(tacan: true, ms: 5000)).0.oblasti["BGR"]?.vojske, 3)
+        let oba = s.razresiBitku(odakle: "SRB", kuda: "BGR", napadac: .init(tacan: false, ms: 1), branilac: .init(tacan: false, ms: 1)).0
+        XCTAssertEqual(oba.oblasti["SRB"]?.vojske, 4)
+        XCTAssertEqual(oba.oblasti["BGR"]?.vojske, 3)
     }
 
-    func testTreceOsvajanjeDonosiProboj() {
-        var s = nova()
-        s.faza = .napad
-        s.oblasti["peru"] = StanjeOblasti(vlasnik: "ti", vojske: 10)
-        var tren = "peru"
+    func testProbojIBonusRegiona() {
+        var s = napad([("SRB", "ti", 12)])
+        var tren = "SRB"
         var poslednji: Ishod?
-        for _ in 0..<3 {
-            let meta = s.mete(tren).first { s.oblasti[$0]?.vlasnik == nil }!
+        for meta in ["BGR", "TUR", "GRC"] {
             let r = s.razresiBitku(odakle: tren, kuda: meta, napadac: .init(tacan: true, ms: 1), branilac: nil)
             s = r.0; tren = meta; poslednji = r.1
         }
         XCTAssertEqual(poslednji?.proboj, true)
+        let zev = napad(Mapa.oblasti.filter { $0.region == "zev" }.map { ($0.id, "ti", 1) })
+        let bonus = Mapa.regioni.first { $0.id == "zev" }!.bonus
+        XCTAssertEqual(zev.pojacanja("ti", tacno: true), 3 + bonus)
     }
 
     func testCelaPartijaBotova() {

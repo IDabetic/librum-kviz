@@ -11,8 +11,8 @@ struct OsvajanjeUvodView: View {
         ("Snabdevanje", "Na početku poteza jedno pitanje. Tačno donosi pune vojske, netačno pola."),
         ("Napad", "Iz oblasti sa bar 2 vojske napadaš susednu. Protiv rivala odgovarate oboje, a izjednačenje rešava brzina."),
         ("Proboj", "Posle osvajanja cepaš dalje iz nove oblasti. Svako treće osvajanje u nizu donosi +2 vojske."),
-        ("Kontinenti", "Ceo kontinent donosi bonus svakog poteza: Azija +4, Evropa, Afrika i Severna Amerika +3, ostali +2."),
-        ("Prestonica", "Tuđa prestonica nosi +5 vojski plena, a svoja na kraju 20 poena."),
+        ("Regioni", "Svet je podeljen na 17 regiona. Ceo region donosi bonus vojske svakog poteza."),
+        ("Prestonica", "Počinješ sa prestonicom i pet susednih država. Tuđa prestonica nosi +5 vojski plena."),
     ]
 
     var body: some View {
@@ -24,7 +24,7 @@ struct OsvajanjeUvodView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Oznaka(tekst: "Glavna igra · 3 igrača", boja: .zuta)
                         Text("Osvajanje\nsveta").font(.naslov(42)).foregroundStyle(.white)
-                        Text("Šest kontinenata, 24 oblasti i dva rivala. Svaku bitku odlučuje pitanje.")
+                        Text("171 država, 17 regiona i dva rivala. Svaku državu osvajaš pitanjem.")
                             .font(.tekst(15, .semibold)).foregroundStyle(.white.opacity(0.9))
                             .padding(.trailing, 100)
                     }
@@ -41,8 +41,8 @@ struct OsvajanjeUvodView: View {
                             Text(t.ime).font(.tekst(17, .bold))
                             Text(t.opis).font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                             HStack(spacing: 10) {
-                                Button("6 krugova") { partija = Partija(tezina: t, krugova: 6) }.buttonStyle(.sekundarno)
-                                Button("10 krugova") { partija = Partija(tezina: t, krugova: 10) }.buttonStyle(.primarno)
+                                Button("8 krugova") { partija = Partija(tezina: t, krugova: 8) }.buttonStyle(.sekundarno)
+                                Button("12 krugova") { partija = Partija(tezina: t, krugova: 12) }.buttonStyle(.primarno)
                             }
                         }
                         .padding(.vertical, 14)
@@ -150,7 +150,9 @@ struct OsvajanjeIgraView: View {
             }
             .padding(.horizontal, 16)
 
-            MapaView(stanje: model.stanje, izabrana: model.izabrana, mete: model.mete) { model.dodir($0) }
+            MapaView(stanje: model.stanje, izabrana: model.izabrana, mete: model.mete,
+                     fokus: model.otvoreno?.kuda ?? model.izabrana ?? model.stanje.igraci.first(where: \.covek)?.prestonica) { model.dodir($0) }
+                .padding(.horizontal, 12)
 
             VStack(spacing: 10) {
                 Text(model.uputstvo).font(.tekst(15, .semibold)).frame(maxWidth: .infinity, alignment: .leading)
