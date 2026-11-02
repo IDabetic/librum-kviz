@@ -14,6 +14,7 @@ struct VesanjeView: View {
     @State private var greska: String?
     @State private var pokusajReci = ""
     @State private var celaRec = false
+    @State private var pomocIskoriscena = false
     @State private var sacuvano = false
 
     private let kolone = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
@@ -86,7 +87,12 @@ struct VesanjeView: View {
                     }
                     Text("Pogrešna cela reč odnosi 2 života.").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                 } else {
-                    Button("Pogodi celu reč") { celaRec = true }.buttonStyle(.sekundarno)
+                    HStack(spacing: 10) {
+                        Button("Pogodi celu reč") { celaRec = true }.buttonStyle(.sekundarno)
+                        PomocDugme(vrsta: "slovo", ikonica: "character.cursor.ibeam", naziv: "Otkrij slovo", iskoriscenaUPartiji: $pomocIskoriscena) { igra.otkrijSlovo() }
+                            .frame(width: 70)
+                    }
+                    PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
                 }
             } else {
                 VStack(spacing: 12) {
@@ -113,12 +119,13 @@ struct VesanjeView: View {
         pocetak = Date()
         sacuvano = false
         celaRec = false
+        pomocIskoriscena = false
     }
 
     private func sacuvaj() async {
         guard !sacuvano, let r = rec else { return }
         sacuvano = true
-        napredak.zabeleziIgru(kviz: "vesanje", tacnih: igra.status == .pobeda ? 1 : 0, netacnih: igra.status == .pobeda ? 0 : 1)
+        zavrsiPartiju(napredak, sesija, igra: "vesanje", poeni: igra.poeni, tacnih: igra.status == .pobeda ? 1 : 0, netacnih: igra.status == .pobeda ? 0 : 1)
         guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         try? await Supabase.deljeni.upisi("hangman_sessions",
             igra.red(korisnik: id, recId: r.id, hint: r.hint, kategorija: r.category, sekundi: Int(Date().timeIntervalSince(pocetak))), token: token)

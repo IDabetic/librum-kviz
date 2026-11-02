@@ -84,6 +84,9 @@ struct OsvajanjeIgraView: View {
     @State var model: OsvajanjeModel
     @Environment(\.dismiss) private var zatvori
     @Environment(Napredak.self) private var napredak
+    @Environment(Sesija.self) private var sesija
+    @State private var pomocIskoriscena = false
+    @State private var eliminisani: Set<Int> = []
     @State private var potvrdaIzlaska = false
 
     private let maskota: [String: Maskota] = ["ti": .bloop, "mimi": .mimi, "zig": .zig]
@@ -109,7 +112,9 @@ struct OsvajanjeIgraView: View {
         .overlay { pitanje }
         .overlay { kraj }
         .onChange(of: model.stanje.faza == .kraj) { _, gotovo in
-            if gotovo { napredak.zabeleziIgru(kviz: "osvajanje", tacnih: model.tacnih, netacnih: model.netacnih, kategorija: "Geografija") }
+            guard gotovo, let covek = model.stanje.igraci.first(where: \.covek) else { return }
+            zavrsiPartiju(napredak, sesija, igra: "osvajanje", poeni: model.stanje.poeni(covek.id), tacnih: model.tacnih, netacnih: model.netacnih,
+                          kategorija: "Geografija", prosekMs: prosek(model.zbirMs, model.tacnih + model.netacnih))
         }
     }
 
@@ -202,12 +207,23 @@ struct OsvajanjeIgraView: View {
             ZStack {
                 Color.mastilo.opacity(0.6).ignoresSafeArea()
                 ScrollView {
-                    PitanjeKartica(
-                        oznaka: oznaka(o),
-                        prikaz: o.prikaz,
-                        dodatak: o.rival.map { "Rival je odgovorio \($0.tacan ? "tačno" : "netačno") za \(String(format: "%.1f", Double($0.ms) / 1000)) s" }
-                    ) { izabran, ms in model.odgovoreno(izabran, ms: ms) }
-                    .id(o.id)
+                    VStack(spacing: 12) {
+                        PitanjeKartica(
+                            oznaka: oznaka(o),
+                            prikaz: o.prikaz,
+                            dodatak: o.rival.map { "Rival je odgovorio \($0.tacan ? "tačno" : "netačno") za \(String(format: "%.1f", Double($0.ms) / 1000)) s" },
+                            eliminisani: eliminisani
+                        ) { izabran, ms in eliminisani = []; model.odgovoreno(izabran, ms: ms) }
+                        .id(o.id)
+                        HStack {
+                            PomocDugme(ikonica: "circle.lefthalf.filled", naziv: "50/50", iskoriscenaUPartiji: $pomocIskoriscena, tamno: true) {
+                                eliminisani = Set((0..<4).filter { $0 != o.prikaz.tacan }.shuffled().prefix(2))
+                            }
+                            .frame(width: 80)
+                            Text(pomocIskoriscena ? "Pomoć je iskorišćena u ovoj partiji." : "Jedna pomoć po partiji, iz dnevnog fonda.")
+                                .font(.tekst(13, .semibold)).foregroundStyle(.white)
+                        }
+                    }
                     .padding(16)
                     .padding(.top, 40)
                 }

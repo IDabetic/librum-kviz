@@ -14,6 +14,8 @@ struct BrziKvizView: View {
     @State private var pocetakIzjave = Date()
     @State private var otkriveno: Bool?
     @State private var kraj = false
+    @State private var pomocIskoriscena = false
+    @State private var zbirMs = 0
     @State private var greska: String?
     @State private var sacuvano = false
 
@@ -75,6 +77,14 @@ struct BrziKvizView: View {
                         .buttonStyle(.tealDugme)
                 }
                 .disabled(otkriveno != nil)
+                HStack {
+                    Spacer()
+                    // Pomoć pomera početak runde, pa sat dobija 10 sekundi.
+                    PomocDugme(vrsta: "vreme", ikonica: "timer", naziv: "+10 sekundi", iskoriscenaUPartiji: $pomocIskoriscena) { pocetak = pocetak.addingTimeInterval(10) }
+                        .frame(width: 80)
+                    Spacer()
+                }
+                PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
                 Spacer()
             }
             .padding(16)
@@ -111,7 +121,7 @@ struct BrziKvizView: View {
     private func ucitaj() async {
         do {
             pitanja = try await PaketPitanja.deljeni.ucitaj(.opste)
-            igra = BrziKviz(); indeks = 0; kraj = false; sacuvano = false; otkriveno = nil
+            igra = BrziKviz(); indeks = 0; kraj = false; sacuvano = false; otkriveno = nil; pomocIskoriscena = false; zbirMs = 0
             pocetak = Date()
             sledeca()
         } catch { greska = error.localizedDescription }
@@ -127,6 +137,7 @@ struct BrziKvizView: View {
 
     private func odgovori(_ kaze: Bool?) {
         guard let iz = izjava, otkriveno == nil, !kraj else { return }
+        if kaze != nil { zbirMs += Int(Date().timeIntervalSince(pocetakIzjave) * 1000) }
         otkriveno = igra.odgovor(iz, kaze: kaze)
         Task {
             try? await Task.sleep(for: .milliseconds(700))
@@ -139,7 +150,8 @@ struct BrziKvizView: View {
     private func sacuvaj() async {
         guard !sacuvano, igra.tacnih + igra.netacnih > 0 else { return }
         sacuvano = true
-        napredak.zabeleziIgru(kviz: "brzi", tacnih: igra.tacnih, netacnih: igra.netacnih, kategorija: "Opšte znanje")
+        zavrsiPartiju(napredak, sesija, igra: "brzi", poeni: igra.poeni, tacnih: igra.tacnih, netacnih: igra.netacnih,
+                      kategorija: "Opšte znanje", prosekMs: prosek(zbirMs, igra.tacnih + igra.netacnih))
         guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         try? await Supabase.deljeni.upisi("quick_sessions", igra.red(korisnik: id, sekundi: Int(Date().timeIntervalSince(pocetak))), token: token)
     }

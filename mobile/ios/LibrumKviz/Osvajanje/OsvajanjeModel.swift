@@ -22,6 +22,7 @@ final class OsvajanjeModel {
     /// Tačni i netačni odgovori igrača u partiji, za napredak (XP, bedževi).
     private(set) var tacnih = 0
     private(set) var netacnih = 0
+    private(set) var zbirMs = 0
     var utvrdjivanje = false
     private(set) var otvoreno: Otvoreno?
     private(set) var poruka: String?
@@ -107,6 +108,7 @@ final class OsvajanjeModel {
         otvoreno = nil
         let moj = Odgovor(tacan: izabran == o.prikaz.tacan, ms: ms)
         if moj.tacan { tacnih += 1 } else { netacnih += 1 }
+        zbirMs += ms
         switch o.vrsta {
         case .snabdevanje:
             stanje = stanje.snabdevanje(tacno: moj.tacan)

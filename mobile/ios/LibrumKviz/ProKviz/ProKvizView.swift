@@ -28,6 +28,9 @@ struct ProKvizView: View {
     @State private var pocetak = Date()
     @State private var sacuvano = false
     @State private var potvrdaIzlaska = false
+    @State private var pomocIskoriscena = false
+    @State private var zbirMs = 0
+    @State private var brojMs = 0
 
     var body: some View {
         ZStack {
@@ -49,7 +52,8 @@ struct ProKvizView: View {
                             Text("Risk aktivan: duplo dobit, duplo gubitak").font(.tekst(14, .bold))
                                 .frame(maxWidth: .infinity).padding(12).pop(.zuta, radijus: 14)
                         }
-                        PitanjeKartica(oznaka: pitanje.zanr.map { "Pitanje \(igra.stigao + 1) · \($0)" } ?? "Pitanje \(igra.stigao + 1)", prikaz: pitanje, sekundi: sekundi, eliminisani: eliminisani) { izabran, _ in
+                        PitanjeKartica(oznaka: pitanje.zanr.map { "Pitanje \(igra.stigao + 1) · \($0)" } ?? "Pitanje \(igra.stigao + 1)", prikaz: pitanje, sekundi: sekundi, eliminisani: eliminisani) { izabran, ms in
+                            zbirMs += ms; brojMs += 1
                             odgovori(izabran == pitanje.tacan)
                         }
                         .id(kljuc)
@@ -103,23 +107,35 @@ struct ProKvizView: View {
     }
 
     private func pomoci(_ p: Prikaz) -> some View {
+        VStack(spacing: 8) {
         HStack(spacing: 8) {
             pomoc("50/50", "\(igra.polaPola)×", aktivno: igra.polaPola > 0 && eliminisani.isEmpty) {
                 igra.polaPola -= 1; igra.iskorisceno.polaPola += 1
                 eliminisani = Set((0..<4).filter { $0 != p.tacan }.shuffled().prefix(2))
             }
-            pomoc("Preskoči", "\(igra.preskoci)×", aktivno: igra.preskoci > 0) {
+            pomoc("Preskoči", "\(igra.preskoci)×", aktivno: igra.preskoci > 0, vrsta: "preskok") {
                 if igra.iskoristiPreskok() { sledece() }
             }
-            pomoc("+15 s", "\(igra.dodatnoVreme)×", aktivno: igra.dodatnoVreme > 0 && sekundi == ProKviz.sekundi) {
+            pomoc("+15 s", "\(igra.dodatnoVreme)×", aktivno: igra.dodatnoVreme > 0 && sekundi == ProKviz.sekundi, vrsta: "vreme") {
                 igra.dodatnoVreme -= 1; igra.iskorisceno.dodatnoVreme += 1; sekundi += 15
             }
-            if vrsta.imaRisk { pomoc("Risk", "×2", aktivno: igra.riskDostupan) { igra.aktivirajRisk() } }
+            // Risk je ulog, ne pomoć: ne troši dnevni fond.
+            if vrsta.imaRisk { pomoc("Risk", "×2", aktivno: igra.riskDostupan, izFonda: false) { igra.aktivirajRisk() } }
+        }
+        PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
         }
     }
 
-    private func pomoc(_ naziv: String, _ ostalo: String, aktivno: Bool, radnja: @escaping () -> Void) -> some View {
-        Button(action: radnja) {
+    /// Pomoć iz dnevnog fonda (7 za sve igre), jednom po partiji; Risk ide mimo fonda.
+    private func pomoc(_ naziv: String, _ ostalo: String, aktivno: Bool, izFonda: Bool = true, vrsta: String = "polaPola", radnja: @escaping () -> Void) -> some View {
+        let aktivno = aktivno && (!izFonda || (!pomocIskoriscena && napredak.pomociOstalo() > 0))
+        return Button {
+            if izFonda {
+                guard napredak.iskoristiPomoc(vrsta) else { return }
+                pomocIskoriscena = true
+            }
+            radnja()
+        } label: {
             VStack(spacing: 2) {
                 Text(naziv).font(.tekst(13, .bold))
                 Text(ostalo).font(.tekst(11)).foregroundStyle(Color.sivaTekst)
@@ -182,7 +198,8 @@ struct ProKvizView: View {
     private func sacuvaj() async {
         guard !sacuvano, igra.stigao > 0 else { return }
         sacuvano = true
-        napredak.zabeleziIgru(kviz: vrsta == .pro ? "pro" : "book", tacnih: igra.tacnih, netacnih: igra.netacnih, kategorija: vrsta == .pro ? "Opšte znanje" : "Knjige")
+        zavrsiPartiju(napredak, sesija, igra: vrsta == .pro ? "pro" : "book", poeni: igra.poeni, tacnih: igra.tacnih, netacnih: igra.netacnih,
+                      kategorija: vrsta == .pro ? "Opšte znanje" : "Knjige", prosekMs: prosek(zbirMs, brojMs))
         guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         let sekundi = Int(Date().timeIntervalSince(pocetak))
         let red = vrsta == .pro ? igra.red(korisnik: id, sekundi: sekundi) : igra.redBook(korisnik: id, sekundi: sekundi)

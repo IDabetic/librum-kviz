@@ -27,6 +27,10 @@ targets:
       - path: ../../src/lib/igre
         type: folder
         buildPhase: resources
+      # Avatari sa Knjigopolisa (alati/iseci-avatare.py), isti folder kao veb.
+      - path: ../../public/avatari
+        type: folder
+        buildPhase: resources
     info:
       path: LibrumKviz/Info.plist
       properties:

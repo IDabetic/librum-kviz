@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Duel iz kita (Battles): arena sa ulogom, brzi meč, privatna soba, izazov prijatelju,
+/// Duel iz kita (Battles): arena, brzi meč, privatna soba, izazov prijatelju,
 /// traženje rivala, VS ekran, pitanja sa rezultatom uživo, ishod runde i kraj meča.
 struct DuelView: View {
     @Environment(Sesija.self) private var sesija
@@ -27,10 +27,10 @@ struct DuelView: View {
         .toolbar(.hidden, for: .tabBar)
         .fullScreenCover(isPresented: $prijava) { PrijavaTok() }
         .onAppear { if model == nil { model = DuelModel(sesija: sesija) } }
-        .onChange(of: model?.faza) { _, f in if f == .kraj { model?.isplati(napredak) } }
+        .onChange(of: model?.faza) { _, f in if f == .kraj { model?.zabelezi(napredak) } }
         .overlay {
             if potvrdaIzlaska {
-                Dijalog(naslov: "Predaješ meč?", tekst: "Rival dobija 50 poena i pobedu. Ulog od \(model?.ulog ?? 0) novčića se gubi.",
+                Dijalog(naslov: "Predaješ meč?", tekst: "Rival dobija 50 poena i pobedu.",
                         potvrda: "Predaj", odustani: "Ostani", opasno: true) {
                     Task { await model?.napusti(); zatvori() }
                 } zatvori: { potvrdaIzlaska = false }
@@ -57,11 +57,8 @@ private struct DuelArena: View {
     @Environment(Mreza.self) private var mreza
     @Bindable var model: DuelModel
     let zatvori: () -> Void
-    @State private var ulog = 100
     @State private var privatna = false
     @State private var izazov = false
-
-    private var visok: Bool { napredak.s.novcici < ulog }
 
     var body: some View {
         ScrollView {
@@ -69,31 +66,10 @@ private struct DuelArena: View {
                 HStack {
                     KrugDugme(ikonica: "chevron.left", opis: "Nazad", radnja: zatvori)
                     Spacer()
-                    Novcanik(iznos: napredak.s.novcici)
                 }
                 Naslov(tekst: "Arena", velicina: 36)
                 if !mreza.povezan { OfflineTraka() }
                 brziMec
-                HStack {
-                    Text("Ulog").font(.tekst(15, .bold))
-                    Spacer()
-                    Text(visok ? "Imaš \(napredak.s.novcici)" : "Pobeda duplira ulog").font(.tekst(13, .semibold)).foregroundStyle(visok ? Color.crvena : .sivaTekst)
-                }
-                HStack(spacing: 8) {
-                    ForEach(DuelModel.ulozi, id: \.self) { u in
-                        let izabran = u == ulog
-                        Button { ulog = u } label: {
-                            Label("\(u)", systemImage: "dollarsign.circle.fill").font(.tekst(14, .bold))
-                                .foregroundStyle(izabran ? (visok ? Color.white : Color.naMastilu) : Color.mastilo)
-                                .frame(maxWidth: .infinity).frame(height: 44)
-                                .background(izabran ? (visok ? Color.crvena : Color.mastilo) : Color.kartica, in: RoundedRectangle(cornerRadius: 14))
-                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(izabran ? Color.mastilo : Color.kremTamnija, lineWidth: 1.5))
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityAddTraits(izabran ? .isSelected : [])
-                        .accessibilityLabel("Ulog \(u) novčića")
-                    }
-                }
                 Text("Još načina").font(.tekst(15, .bold)).padding(.top, 4)
                 HStack(spacing: 12) {
                     plocica("Izazovi\nprijatelja", "person.2", .roze) { izazov = true }
@@ -120,13 +96,13 @@ private struct DuelArena: View {
                     .padding(.horizontal, 10).padding(.vertical, 5).background(Color.roze, in: RoundedRectangle(cornerRadius: 9))
                 Text("Brzi meč").font(.naslov(36)).foregroundStyle(.white)
                 Text("Nasumičan rival · \(DuelModel.brzihPitanja) pitanja").font(.tekst(14, .semibold)).foregroundStyle(.white.opacity(0.9))
-                Button { Task { await model.brziMec(ulog: ulog, napredak: napredak) } } label: {
-                    Label("Nađi rivala", systemImage: "bolt").font(.tekst(15, .bold)).foregroundStyle(visok ? Color.white.opacity(0.7) : Color.tinta)
+                Button { Task { await model.brziMec() } } label: {
+                    Label("Nađi rivala", systemImage: "bolt").font(.tekst(15, .bold)).foregroundStyle(Color.tinta)
                         .padding(.horizontal, 16).frame(height: 44)
-                        .background(visok ? Color.white.opacity(0.18) : Color.white, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.tinta, lineWidth: visok ? 0 : 2))
+                        .background(Color.white, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.tinta, lineWidth: 2))
                 }
-                .disabled(visok || model.radi || !mreza.povezan)
+                .disabled(model.radi || !mreza.povezan)
                 .padding(.top, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading).padding(20)
@@ -194,7 +170,7 @@ private struct DuelTrazenje: View {
                 }
                 .accessibilityLabel("Otkaži")
                 Spacer()
-                Label("Ulog \(model.ulog)", systemImage: "dollarsign.circle").font(.tekst(13, .bold)).foregroundStyle(.white)
+                Label("Brzi meč · \(DuelModel.brzihPitanja) pitanja", systemImage: "bolt").font(.tekst(13, .bold)).foregroundStyle(.white)
                     .padding(.horizontal, 12).padding(.vertical, 6).background(.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
                 Spacer()
                 Color.clear.frame(width: 44)
@@ -253,7 +229,7 @@ private struct DuelVS: View {
             }
             .ignoresSafeArea()
             VStack {
-                Label("\(model.ulog) novčića na stolu", systemImage: "dollarsign.circle").font(.tekst(14, .bold)).foregroundStyle(Color.tinta)
+                Label("\(DuelModel.brzihPitanja) pitanja · ko zna više", systemImage: "bolt").font(.tekst(14, .bold)).foregroundStyle(Color.tinta)
                     .padding(.horizontal, 14).padding(.vertical, 8).background(Color.white, in: RoundedRectangle(cornerRadius: 12))
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.tinta, lineWidth: 2))
                 igrac(ime, "Nivo \(nivo) · ti", .mimi, levo: true)
@@ -351,6 +327,8 @@ private struct DuelIgra: View {
     let model: DuelModel
     let ime: String
     let predaj: () -> Void
+    @State private var pomocIskoriscena = false
+    @State private var eliminisani: Set<Int> = []
 
     var body: some View {
         ScrollView {
@@ -365,7 +343,16 @@ private struct DuelIgra: View {
                         .foregroundStyle(Color.tinta).padding(10).frame(maxWidth: .infinity, alignment: .leading).pop(.zuta, radijus: 14)
                 }
                 if let p = model.prikaz {
-                    DuelPitanje(model: model, prikaz: p).id(model.tekuce)
+                    DuelPitanje(model: model, prikaz: p, eliminisani: eliminisani).id(model.tekuce)
+                    if !model.odgovorioSam {
+                        HStack(spacing: 12) {
+                            PomocDugme(ikonica: "circle.lefthalf.filled", naziv: "50/50", iskoriscenaUPartiji: $pomocIskoriscena) {
+                                eliminisani = Set((0..<4).filter { $0 != p.tacan }.shuffled().prefix(2))
+                            }
+                            .frame(width: 80)
+                            PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
+                        }
+                    }
                 } else {
                     Skelet(visina: 360, radijus: 24)
                 }
@@ -383,6 +370,7 @@ private struct DuelIgra: View {
             }
             .padding(16)
         }
+        .onChange(of: model.tekuce) { eliminisani = [] }
     }
 
     private var tabla: some View {
@@ -446,6 +434,7 @@ private struct DuelIgra: View {
 private struct DuelPitanje: View {
     let model: DuelModel
     let prikaz: Prikaz
+    var eliminisani: Set<Int> = []
     @State private var pocetak = Date()
 
     var body: some View {
@@ -461,7 +450,8 @@ private struct DuelPitanje: View {
                 Text(prikaz.tekst).font(.naslov(22)).foregroundStyle(Color.tinta).fixedSize(horizontal: false, vertical: true)
                 ForEach(Array(prikaz.opcije.enumerated()), id: \.offset) { i, o in
                     OdgovorDugme(slovo: ["A", "B", "C", "D"][i], tekst: o, stanje: stanje(i)) { Task { await model.odgovori(i) } }
-                        .disabled(model.odgovorioSam)
+                        .disabled(model.odgovorioSam || eliminisani.contains(i))
+                        .opacity(eliminisani.contains(i) && !model.otkriveno ? 0.25 : 1)
                         .overlay(alignment: .topTrailing) {
                             HStack(spacing: 4) {
                                 if model.otkriveno, model.tekuce < model.moji.count, model.moji[model.tekuce] == i { znacka("Ti", .teal) }
@@ -516,17 +506,15 @@ private struct DuelKraj: View {
                 .background(Color.zuta, in: Circle()).overlay(Circle().stroke(Color.tinta, lineWidth: 3))
             Text(nereseno ? "Nerešeno!" : pobeda ? (model.rivalOtisao ? "Pobeda predajom" : "Pobeda!") : "Poraz").font(.naslov(42)).foregroundStyle(.white)
             Text(model.rivalOtisao && pobeda ? "\(model.rivalIme) je napustio meč. Dobijaš +\(DuelModel.bonusNapustanja) poena." :
-                    nereseno ? "Ulog ti se vraća. Revanš?" : pobeda ? "Nadigrao si \(model.rivalIme)." : "\(model.rivalIme) je ovog puta bio brži.")
+                    nereseno ? "Isto znanje. Revanš?" : pobeda ? "Nadigrao si \(model.rivalIme)." : "\(model.rivalIme) je ovog puta bio brži.")
                 .font(.tekst(15, .semibold)).foregroundStyle(.white.opacity(0.9)).multilineTextAlignment(.center)
             HStack {
                 Text("\(model.mojiPoeni) – \(model.njegoviPoeni)").font(.naslov(40)).foregroundStyle(Color.tinta).monospacedDigit()
             }
             .frame(maxWidth: .infinity).padding(.vertical, 16).background(Color.white, in: RoundedRectangle(cornerRadius: 22)).overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.tinta, lineWidth: 2.5))
-            if model.ulog > 0 {
-                HStack(spacing: 10) {
-                    statistika(nereseno ? "±0" : pobeda ? "+\(model.ulog)" : "−\(model.ulog)", "Novčići")
-                    statistika("+\(model.moji.count + 5)", "XP")
-                }
+            HStack(spacing: 10) {
+                statistika("\(model.moji.count)", "Odgovora")
+                statistika("+\(model.moji.count + 5)", "XP")
             }
             Spacer()
             Button("Novi meč", action: novi).buttonStyle(.sekundarno)

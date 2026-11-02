@@ -64,7 +64,7 @@ struct KategorijaView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(naziv).font(.naslov(32)).foregroundStyle(tekst)
                     Text("\(sve.count) kvizova · \(sve.filter { napredak.s.najbolje[$0.id] != nil }.count) odigrano").font(.tekst(13, .semibold)).foregroundStyle(tekst.opacity(0.85))
-                    Button { brzo = sve.filter { napredak.nivo >= $0.nivo && $0.ulaz == 0 }.randomElement() } label: {
+                    Button { brzo = sve.filter { napredak.nivo >= $0.nivo }.randomElement() } label: {
                         Text("Brzo igraj").font(.tekst(14, .bold)).foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40)
                             .background(Color.tinta, in: RoundedRectangle(cornerRadius: 13))
                     }

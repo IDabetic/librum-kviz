@@ -9,6 +9,8 @@ final class Sesija {
     private(set) var korisnikId: String?
     private(set) var email: String?
     private(set) var nadimak: String?
+    /// Avatar sa veba (`animal_07.png` u profiles.avatar), isti na sajtu i u aplikaciji.
+    private(set) var avatar: String?
     private var token: Supabase.Token?
 
     private let api = Supabase.deljeni
@@ -62,6 +64,22 @@ final class Sesija {
         nadimak = novi
     }
 
+    func sacuvajAvatar(_ novi: String) async throws {
+        guard let id = korisnikId, let t = try await vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se ponovo.") }
+        struct Red: Decodable { let id: String }
+        let _: [Red] = try await api.azuriraj("profiles", filter: [URLQueryItem(name: "id", value: "eq.\(id)")], polja: ["avatar": novi], token: t)
+        avatar = novi
+    }
+
+    /// Rezultat partije za rang liste po igri (tabela rezultati_igara). Bez naloga se ništa ne šalje.
+    func upisiRezultat(igra: String, poeni: Int, tacnih: Int, netacnih: Int, prosekMs: Int?, pomoc: String? = nil) async {
+        guard let id = korisnikId, let t = try? await vazeciToken() else { return }
+        var red: [String: Any] = ["user_id": id, "igra": igra, "poeni": max(0, poeni), "tacnih": tacnih, "netacnih": netacnih]
+        if let prosekMs { red["prosek_ms"] = min(120_000, max(0, prosekMs)) }
+        if let pomoc { red["pomoc"] = pomoc }
+        try? await api.upisi("rezultati_igara", red, token: t)
+    }
+
     func odjava() async {
         if let t = token { await api.odjava(token: t.access_token) }
         ocisti()
@@ -94,11 +112,12 @@ final class Sesija {
 
     func ucitajNadimak() async {
         guard let id = korisnikId else { return }
-        struct Profil: Decodable { let nickname: String?; let first_name: String? }
+        struct Profil: Decodable { let nickname: String?; let first_name: String?; let avatar: String? }
         let redovi: [Profil]? = try? await api.citaj("public_profiles", upit: [
-            URLQueryItem(name: "select", value: "nickname,first_name"), URLQueryItem(name: "id", value: "eq.\(id)"),
+            URLQueryItem(name: "select", value: "nickname,first_name,avatar"), URLQueryItem(name: "id", value: "eq.\(id)"),
         ])
         nadimak = redovi?.first.flatMap { $0.nickname ?? $0.first_name }
+        avatar = redovi?.first?.avatar
     }
 
     private func primeni(_ t: Supabase.Token) {
@@ -108,7 +127,7 @@ final class Sesija {
     }
 
     private func ocisti() {
-        token = nil; korisnikId = nil; email = nil; nadimak = nil
+        token = nil; korisnikId = nil; email = nil; nadimak = nil; avatar = nil
         SecItemDelete([kSecClass: kSecClassGenericPassword, kSecAttrAccount: Self.kljucKeychain] as CFDictionary)
     }
 

@@ -8,6 +8,7 @@ struct ProfilView: View {
     @Environment(Sesija.self) private var sesija
     @Environment(Napredak.self) private var napredak
     @State private var prijava = false
+    @State private var serverski: ProfilIgracaView.Profil?
 
     var body: some View {
         ScrollView {
@@ -33,9 +34,18 @@ struct ProfilView: View {
                     Plocica(ikonica: "checkmark.circle", vrednost: tacnost, naziv: "Tačnost", boja: .roze)
                     Plocica(ikonica: "flame", vrednost: "\(napredak.s.najduziNiz)", naziv: "Najduži niz", boja: .narandzasta)
                 }
+                if let serverski {
+                    StatistikaPoIgrama(profil: serverski)
+                } else {
+                    if let b = napredak.prosecnaBrzina {
+                        Label(String(format: "Prosečno %.1f s po odgovoru · pomoć u %d od %d partija", b, napredak.s.partijaSaPomoci, napredak.s.igara), systemImage: "bolt")
+                            .font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    PomocUpotreba(poVrsti: napredak.s.pomociPoVrsti)
+                }
                 NavigationLink { BedzeviView() } label: { bedzevi }.buttonStyle(.plain)
                 VStack(spacing: 0) {
-                    NavigationLink { ProdavnicaView() } label: { RedListe(ikonica: "dollarsign.circle", naziv: "Novčići", vrednost: napredak.s.novcici.formatted()) }
+                    RedListe(ikonica: "lifepreserver", naziv: "Pomoć danas", vrednost: "\(napredak.pomociOstalo()) od \(Napredak.pomociDnevno)", strelica: false)
                     Divider().overlay(Color.kremTamnija)
                     NavigationLink { StatistikaView() } label: { RedListe(ikonica: "chart.bar", naziv: "Statistika") }
                     Divider().overlay(Color.kremTamnija)
@@ -43,6 +53,7 @@ struct ProfilView: View {
                 }
                 .mirna()
                 if !sesija.prijavljen {
+                    NavigationLink { IzmenaProfilaView() } label: { Text("Izaberi avatar") }.buttonStyle(.sekundarno)
                     Button("Napravi nalog ili se prijavi") { prijava = true }.buttonStyle(.primarno)
                 } else {
                     NavigationLink { IzmenaProfilaView() } label: { Text("Izmeni profil") }.buttonStyle(.primarno)
@@ -53,6 +64,10 @@ struct ProfilView: View {
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
         .fullScreenCover(isPresented: $prijava) { PrijavaTok() }
+        .task(id: sesija.korisnikId) {
+            guard let id = sesija.korisnikId else { serverski = nil; return }
+            serverski = try? await Supabase.deljeni.rpc("profil_igraca", ["p_id": id])
+        }
     }
 
     private var tacnost: String {
@@ -68,8 +83,7 @@ struct ProfilView: View {
     private var glava: some View {
         let m = Maskota(rawValue: napredak.s.maskota) ?? .mimi
         return VStack(spacing: 6) {
-            MaskotaSlika(maskota: m, velicina: 100).frame(width: 120, height: 120)
-                .background(Color.roze, in: Circle()).overlay(Circle().stroke(Color.mastilo, lineWidth: 3))
+            AvatarSlika(avatar: sesija.avatar ?? napredak.s.avatar, velicina: 120, maskota: m)
                 .overlay(alignment: .bottom) {
                     Text("NV \(napredak.nivo)").font(.tekst(12, .bold)).foregroundStyle(Color.naMastilu).padding(.horizontal, 10).padding(.vertical, 4)
                         .background(Color.mastilo, in: RoundedRectangle(cornerRadius: 9)).offset(y: 10)
@@ -272,7 +286,6 @@ struct BedzeviView: View {
                         BedzKrug(bedz: b, otkljucan: false, velicina: 90)
                         Naslov(tekst: b.naziv, velicina: 28)
                         Text(b.opis).font(.tekst(15)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
-                        Label("Nagrada: \(b.nagrada) novčića", systemImage: "dollarsign.circle").font(.tekst(14, .bold))
                         Button("Važi") { detalj = nil }.buttonStyle(.primarno)
                     }
                 }
@@ -296,8 +309,6 @@ struct BedzOtkljucanView: View {
                     .padding(.horizontal, 10).padding(.vertical, 5).background(Color.zuta, in: RoundedRectangle(cornerRadius: 8))
                 Text(bedz.naziv).font(.naslov(34)).foregroundStyle(.white)
                 Text(bedz.opis).font(.tekst(15, .semibold)).foregroundStyle(.white.opacity(0.9)).multilineTextAlignment(.center)
-                Text("+\(bedz.nagrada) novčića").font(.tekst(14, .bold)).foregroundStyle(.white).padding(.horizontal, 14).padding(.vertical, 7)
-                    .background(Color.tinta, in: RoundedRectangle(cornerRadius: 10))
                 Button("Super!", action: zatvori).buttonStyle(.sekundarno).padding(.top, 6)
             }
             .padding(24).frame(maxWidth: .infinity)
@@ -309,111 +320,11 @@ struct BedzOtkljucanView: View {
     }
 }
 
-// MARK: 04 Prodavnica
-
-/// Prodavnica: pomoći za novčiće. Pravi novac se ne koristi (predlog A u PREDLOZI-IGRE-TAKMICENJA.md).
-struct ProdavnicaView: View {
-    @Environment(Napredak.self) private var napredak
-    @State private var izabrana: Napredak.Pomoc?
-    @State private var ishod: Napredak.Kupovina?
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                GornjaTraka { Novcanik(iznos: napredak.s.novcici) }
-                Naslov(tekst: "Prodavnica", velicina: 36)
-                if napredak.dnevnaNagradaSpremna {
-                    Button { _ = napredak.pokupiDnevnuNagradu() } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Oznaka(tekst: "Danas besplatno", boja: .tinta)
-                                Text("Dnevna nagrada").font(.naslov(26)).foregroundStyle(Color.tinta)
-                                Text("\(napredak.sledecaNagrada) novčića, niz raste do 100").font(.tekst(13, .semibold)).foregroundStyle(Color.tinta)
-                            }
-                            Spacer()
-                            MaskotaSlika(maskota: .bloop, velicina: 90)
-                        }
-                        .padding(16).pop(.roze, radijus: 24)
-                    }
-                    .buttonStyle(.plain)
-                }
-                Text("Pomoći").font(.naslov(22))
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    ForEach(Napredak.Pomoc.allCases) { p in
-                        Button { izabrana = p; ishod = nil } label: {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: p.ikonica).font(.system(size: 18, weight: .semibold)).foregroundStyle(Color.tinta)
-                                        .frame(width: 40, height: 40).background(Color.zuta, in: Circle()).overlay(Circle().stroke(Color.mastilo, lineWidth: 2))
-                                    Spacer()
-                                    Text("imaš \(napredak.imaPomoc(p))").font(.tekst(12, .semibold)).foregroundStyle(Color.sivaTekst)
-                                }
-                                Text(p.naziv).font(.tekst(15, .bold)).foregroundStyle(Color.mastilo)
-                                Text("\(p.cena)").font(.tekst(13, .bold)).foregroundStyle(Color.naMastilu).padding(.horizontal, 10).padding(.vertical, 4)
-                                    .background(Color.mastilo, in: RoundedRectangle(cornerRadius: 8))
-                            }
-                            .padding(14).pop(radijus: 20)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("\(p.naziv), \(p.cena) novčića")
-                    }
-                }
-                Text("Kako do novčića").font(.naslov(22)).padding(.top, 6)
-                VStack(spacing: 0) {
-                    RedListe(ikonica: "gift", naziv: "Dnevna nagrada", vrednost: "10–100", strelica: false)
-                    Divider().overlay(Color.kremTamnija)
-                    RedListe(ikonica: "checkmark.circle", naziv: "Tačan odgovor u kvizu", vrednost: "+2", strelica: false)
-                    Divider().overlay(Color.kremTamnija)
-                    RedListe(ikonica: "star", naziv: "Kviz 10/10", vrednost: "+50", strelica: false)
-                    Divider().overlay(Color.kremTamnija)
-                    RedListe(ikonica: "medal", naziv: "Novi bedž", vrednost: "50–500", strelica: false)
-                }
-                .mirna()
-            }
-            .padding(16)
-        }
-        .background(Papir())
-        .toolbar(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
-        .overlay { if let p = izabrana { potvrda(p) } }
-    }
-
-    private func potvrda(_ p: Napredak.Pomoc) -> some View {
-        DonjiList(zatvori: { izabrana = nil }) {
-            Image(systemName: ishod == .uspeh ? "checkmark" : ishod == .nemaNovcica ? "dollarsign.circle" : p.ikonica)
-                .font(.system(size: 30, weight: .bold)).foregroundStyle(Color.tinta)
-                .frame(width: 80, height: 80).background(ishod == .uspeh ? Color.teal : ishod == .nemaNovcica ? Color.crvenaSvetla : Color.zuta, in: Circle())
-                .overlay(Circle().stroke(Color.mastilo, lineWidth: 2.5))
-            switch ishod {
-            case .uspeh:
-                Naslov(tekst: "Kupljeno!", velicina: 30)
-                Text("\(p.naziv) je u torbi. Imaš ih \(napredak.imaPomoc(p)).").font(.tekst(15)).foregroundStyle(Color.sivaTekst)
-                Button("Super") { izabrana = nil }.buttonStyle(.primarno)
-            case .nemaNovcica:
-                Naslov(tekst: "Fali novčića", velicina: 30)
-                Text("Treba ti još \(p.cena - napredak.s.novcici). Odigraj kviz ili pokupi dnevnu nagradu.").font(.tekst(15)).foregroundStyle(Color.sivaTekst)
-                    .multilineTextAlignment(.center)
-                Button("U redu") { izabrana = nil }.buttonStyle(.primarno)
-            case nil:
-                Naslov(tekst: "Kupiti \(p.naziv)?", velicina: 28)
-                Text(p.opis + " Ne ističe.").font(.tekst(15)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
-                VStack(spacing: 8) {
-                    HStack { Text("Cena"); Spacer(); Text("\(p.cena) novčića").bold() }
-                    HStack { Text("Stanje posle"); Spacer(); Text("\(napredak.s.novcici - p.cena) novčića").bold().foregroundStyle(napredak.s.novcici < p.cena ? Color.crvena : Color.mastilo) }
-                }
-                .font(.tekst(14)).padding(14).mirna()
-                Button("Kupi za \(p.cena)") { withAnimation { ishod = napredak.kupi(p) } }.buttonStyle(.primarno)
-            }
-        }
-        .sensoryFeedback(trigger: ishod) { _, i in i == .uspeh ? .success : i == .nemaNovcica ? .error : nil }
-    }
-}
-
 // MARK: 05 Sanduče
 
 struct SanduceView: View {
     @Environment(Napredak.self) private var napredak
-    enum Filter: Hashable { case sve, izazovi, nagrade }
+    enum Filter: Hashable { case sve, izazovi, bedzevi }
     @State private var filter: Filter = .sve
     @State private var ucitava = true
 
@@ -422,7 +333,7 @@ struct SanduceView: View {
             switch filter {
             case .sve: true
             case .izazovi: $0.vrsta == .izazov
-            case .nagrade: $0.vrsta == .nagrada || $0.vrsta == .bedz
+            case .bedzevi: $0.vrsta == .bedz
             }
         }
     }
@@ -440,13 +351,13 @@ struct SanduceView: View {
             Naslov(tekst: "Sanduče", velicina: 36)
             let sve = napredak.s.poruke
             PodvuceniIzbor(izbor: $filter, opcije: [(.sve, "Sve · \(sve.count)"), (.izazovi, "Izazovi · \(sve.filter { $0.vrsta == .izazov }.count)"),
-                                                    (.nagrade, "Nagrade · \(sve.filter { $0.vrsta != .izazov }.count)")])
+                                                    (.bedzevi, "Bedževi · \(sve.filter { $0.vrsta == .bedz }.count)")])
             ScrollView {
                 VStack(spacing: 10) {
                     if ucitava {
                         ForEach(0..<4, id: \.self) { _ in Skelet(visina: 84, radijus: 20) }
                     } else if poruke.isEmpty {
-                        StanjeEkrana(maskota: .lumi, naslov: "Sve je pročitano!", tekst: "Nema novih izazova ni nagrada. Javićemo kad se nešto zabavno desi.")
+                        StanjeEkrana(maskota: .lumi, naslov: "Sve je pročitano!", tekst: "Nema novih izazova ni bedževa. Javićemo kad se nešto zabavno desi.")
                     } else {
                         ForEach(poruke) { p in poruka(p) }
                     }
@@ -458,12 +369,12 @@ struct SanduceView: View {
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .task { napredak.osveziSanduce(); try? await Task.sleep(for: .milliseconds(250)); ucitava = false }
+        .task { try? await Task.sleep(for: .milliseconds(250)); ucitava = false }
     }
 
     private func poruka(_ p: Napredak.Poruka) -> some View {
         let (ikonica, boja): (String, Color) = switch p.vrsta {
-        case .nagrada: ("gift", .zuta)
+        case .pratilac: ("person.badge.plus", .zuta)
         case .bedz: ("medal", .ljubicasta)
         case .izazov: ("person.2", .roze)
         case .rezultat: ("trophy", .teal)
@@ -478,11 +389,6 @@ struct SanduceView: View {
                     Text(p.vreme.formatted(.relative(presentation: .numeric))).font(.tekst(11)).foregroundStyle(Color.sivaTekst)
                 }
                 Text(p.tekst).font(.tekst(13)).foregroundStyle(Color.sivaTekst)
-                if p.vrsta == .nagrada && !p.pokupljeno {
-                    Button("Pokupi") { _ = napredak.pokupiDnevnuNagradu() }.font(.tekst(13, .bold)).foregroundStyle(Color.naMastilu)
-                        .padding(.horizontal, 14).frame(height: 34).background(Color.mastilo, in: RoundedRectangle(cornerRadius: 11)).padding(.top, 4)
-                        .disabled(!napredak.dnevnaNagradaSpremna)
-                }
             }
             if !p.procitano { Circle().fill(Color.roze).frame(width: 10, height: 10).accessibilityLabel("Novo") }
         }
@@ -606,10 +512,13 @@ struct IzmenaProfilaView: View {
     enum Stanje: Equatable { case unos, cuva, zauzet, sacuvano, greska(String) }
     @State private var nadimak = ""
     @State private var maskota: Maskota = .mimi
+    @State private var avatar: String?
     @State private var stanje: Stanje = .unos
     @State private var odbaci = false
+    @State private var sviAvatari = false
 
-    private var izmenjeno: Bool { nadimak != (sesija.nadimak ?? "") || maskota.rawValue != napredak.s.maskota }
+    private var trenutniAvatar: String? { sesija.avatar ?? napredak.s.avatar }
+    private var izmenjeno: Bool { (sesija.prijavljen && nadimak != (sesija.nadimak ?? "")) || maskota.rawValue != napredak.s.maskota || avatar != trenutniAvatar }
 
     var body: some View {
         ScrollView {
@@ -622,9 +531,22 @@ struct IzmenaProfilaView: View {
                     Color.clear.frame(width: 44)
                 }
                 VStack(spacing: 10) {
-                    MaskotaSlika(maskota: maskota, velicina: 100).frame(width: 120, height: 120).background(Color.roze, in: Circle())
-                        .overlay(Circle().stroke(Color.mastilo, lineWidth: 3))
-                    Text("Izaberi drugara").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+                    AvatarSlika(avatar: avatar, velicina: 120, maskota: maskota)
+                    Text("Avatar").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 6), spacing: 8) {
+                        ForEach(sviAvatari ? AvatarSlika.svi : Array(AvatarSlika.svi.prefix(24)), id: \.self) { a in
+                            Button { avatar = a } label: {
+                                AvatarSlika(avatar: a, velicina: 48)
+                                    .overlay(Circle().stroke(avatar == a ? Color.teal : .clear, lineWidth: 4))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Avatar \(a)").accessibilityAddTraits(avatar == a ? .isSelected : [])
+                        }
+                    }
+                    if !sviAvatari {
+                        Button("Prikaži svih \(AvatarSlika.svi.count)") { withAnimation { sviAvatari = true } }.font(.tekst(14, .bold)).foregroundStyle(Color.teal)
+                    }
+                    Text("Drugar koji navija u igri").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst).padding(.top, 8)
                     HStack(spacing: 14) {
                         ForEach([Maskota.mimi, .zig, .bloop, .lumi], id: \.self) { m in
                             Button { maskota = m } label: {
@@ -637,9 +559,13 @@ struct IzmenaProfilaView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                PoljeUnosa(naziv: "Nadimak", tekst: $nadimak, stanje: nadimakStanje, sadrzaj: .nickname)
-                PoljeUnosa(naziv: "Email", tekst: .constant(sesija.email ?? ""), onemoguceno: true)
-                Text("Email se menja preko podrške, da nalog ostane bezbedan.").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                if sesija.prijavljen {
+                    PoljeUnosa(naziv: "Nadimak", tekst: $nadimak, stanje: nadimakStanje, sadrzaj: .nickname)
+                    PoljeUnosa(naziv: "Email", tekst: .constant(sesija.email ?? ""), onemoguceno: true)
+                    Text("Email se menja preko podrške, da nalog ostane bezbedan.").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                } else {
+                    Text("Bez naloga avatar ostaje na ovom telefonu. Sa nalogom ga vide i drugi igrači.").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
+                }
                 if case .greska(let p) = stanje { Text(p).font(.tekst(14, .semibold)).foregroundStyle(Color.crvena) }
                 Button { Task { await sacuvaj() } } label: {
                     if stanje == .cuva { HStack(spacing: 10) { ProgressView().tint(Color.naMastilu); Text("Čuvam…") } }
@@ -655,6 +581,7 @@ struct IzmenaProfilaView: View {
         .onAppear {
             nadimak = sesija.nadimak ?? ""
             maskota = Maskota(rawValue: napredak.s.maskota) ?? .mimi
+            avatar = trenutniAvatar
         }
         .onChange(of: nadimak) { if stanje != .cuva { stanje = .unos } }
         .overlay {
@@ -676,8 +603,11 @@ struct IzmenaProfilaView: View {
     }
 
     private func sacuvaj() async {
-        napredak.podesi { $0.maskota = maskota.rawValue }
-        guard nadimak != (sesija.nadimak ?? "") else { stanje = .sacuvano; return }
+        napredak.podesi { $0.maskota = maskota.rawValue; $0.avatar = avatar }
+        if let avatar, avatar != sesija.avatar, sesija.prijavljen {
+            do { try await sesija.sacuvajAvatar(avatar) } catch { stanje = .greska(error.localizedDescription); return }
+        }
+        guard sesija.prijavljen, nadimak != (sesija.nadimak ?? "") else { stanje = .sacuvano; return }
         guard NalogEkranPravila.ispravanNadimak(nadimak) else { return }
         stanje = .cuva
         do { try await sesija.sacuvajNadimak(nadimak); stanje = .sacuvano }

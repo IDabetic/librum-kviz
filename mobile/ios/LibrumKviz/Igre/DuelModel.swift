@@ -68,7 +68,6 @@ final class DuelModel {
     static let sekundi = 15
     static let formati = [(10, "Brzi duel"), (25, "Standardni duel"), (50, "Veliki duel")]
     static let brzihPitanja = 5
-    static let ulozi = [50, 100, 250, 500]
     /// Posle ovoliko sekundi traženja kit pokazuje „Još tražimo”, posle drugog „Nema rivala”.
     static let dugoTrazenje = 20
     static let bezRivala = 60
@@ -86,8 +85,7 @@ final class DuelModel {
     private(set) var trazimSekundi = 0
     private(set) var slabaVeza = false
     private(set) var rivalNeOdgovara = false
-    private(set) var ulog = 0
-    private(set) var isplaceno = false
+    private(set) var zabelezeno = false
     var kod = ""
     private var neuspesnihOsvezavanja = 0
 
@@ -112,10 +110,8 @@ final class DuelModel {
     // MARK: Brzi meč
 
     /// Brzi meč: uđe u tuđu sobu „brzi5” koja čeka (do 2 min stara), ili napravi svoju i čeka rivala.
-    func brziMec(ulog: Int, napredak: Napredak) async {
+    func brziMec() async {
         guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { greska = "Prijavi se da bi igrao duel."; return }
-        guard napredak.s.novcici >= ulog else { greska = "Nemaš dovoljno novčića za ovaj ulog."; return }
-        self.ulog = ulog
         faza = .trazenje
         trazimSekundi = 0
         do {
@@ -193,15 +189,14 @@ final class DuelModel {
         return ja && on ? .oboje : ja ? .meni : on ? .rivalu : .niko
     }
 
-    /// Ulog: pobeda donosi duplo, poraz ga gubi, nerešeno vraća. Plaća se jednom.
-    func isplati(_ napredak: Napredak) {
-        guard faza == .kraj, !isplaceno else { return }
-        isplaceno = true
+    /// Kraj meča: napredak i rezultat za rang listu, jednom.
+    func zabelezi(_ napredak: Napredak) {
+        guard faza == .kraj, !zabelezeno else { return }
+        zabelezeno = true
         let pobeda = mojiPoeni > njegoviPoeni
         let tacnih = zip(moji, pitanja.map(DuelMesanje.prikaz)).filter { $0.0 == $0.1.tacan }.count
-        napredak.zabeleziIgru(kviz: "duel", tacnih: tacnih, netacnih: max(0, moji.count - tacnih), kategorija: "Opšte znanje", pobeda: pobeda)
-        guard ulog > 0 else { return }
-        if pobeda { napredak.dodajNovcice(ulog) } else if mojiPoeni < njegoviPoeni { _ = napredak.oduzmiNovcice(ulog) }
+        zavrsiPartiju(napredak, sesija, igra: "duel", poeni: mojiPoeni, tacnih: tacnih, netacnih: max(0, moji.count - tacnih),
+                      kategorija: "Opšte znanje", pobeda: pobeda)
     }
 
     // MARK: Lobi

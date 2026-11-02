@@ -1,15 +1,15 @@
 import SwiftUI
 
 /// Početna iz kita (Home · Pick a Quiz): vrteška izdvojenih kvizova, igre, teme
-/// i nedeljni vrh. Stanja: offline traka, dnevna nagrada, učitavanje i greška vrha.
+/// i nedeljni vrh. Stanja: offline traka, učitavanje i greška vrha.
 struct PocetnaView: View {
     @Environment(Sesija.self) private var sesija
     @Environment(Napredak.self) private var napredak
     @Environment(Mreza.self) private var mreza
 
     @State private var izdvojeni = 0
-    @State private var nagrada = false
     @State private var vrh: Ucitano<[RangListaView.Red]> = .ucitava
+    @State private var pravila: KvizStavka?
 
     private let istaknuti = ["osvajanje", "slikari", "opste", "knjige"].compactMap(KvizKatalog.stavka)
     /// Šest igara pored Osvajanja sveta.
@@ -20,7 +20,6 @@ struct PocetnaView: View {
             VStack(alignment: .leading, spacing: 16) {
                 zaglavlje
                 if !mreza.povezan { OfflineTraka() }
-                if napredak.dnevnaNagradaSpremna { nagradaBaner }
                 vrteska
                 Text("Igre").font(.naslov(24))
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
@@ -28,6 +27,7 @@ struct PocetnaView: View {
                         NavigationLink { KvizOdrediste(stavka: s) } label: {
                             KarticaIgre(naslov: s.naslov, opis: s.opis, boja: Color(hex: s.boja), tekst: s.tekstBoja, maskota: s.maskota, velika: false)
                         }
+                        .overlay(alignment: .topLeading) { infoDugme(s).padding(10) }
                     }
                 }
                 HStack {
@@ -49,13 +49,11 @@ struct PocetnaView: View {
         }
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
+        .overlay { if let pravila { PravilaList(stavka: pravila) { self.pravila = nil } } }
         .task { await ucitajVrh() }
         .refreshable { await ucitajVrh() }
         .task {
-            napredak.osveziSanduce()
-            if napredak.dnevnaNagradaSpremna { try? await Task.sleep(for: .milliseconds(500)); withAnimation { nagrada = true } }
         }
-        .overlay { if nagrada { DnevnaNagradaView { withAnimation { nagrada = false } } } }
     }
 
     private var zaglavlje: some View {
@@ -65,7 +63,8 @@ struct PocetnaView: View {
                     .accessibilityLabel("Niz od \(napredak.s.nizDana) dana")
                 Text("Nivo \(napredak.nivo)").font(.tekst(14, .bold)).foregroundStyle(Color.sivaTekst)
                 Spacer()
-                NavigationLink { ProdavnicaView() } label: { Novcanik(iznos: napredak.s.novcici) }
+                Label("\(napredak.pomociOstalo()) pomoći", systemImage: "lifepreserver").font(.tekst(14, .bold)).foregroundStyle(Color.sivaTekst)
+                    .accessibilityLabel("Danas još \(napredak.pomociOstalo()) pomoći")
             }
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -73,34 +72,18 @@ struct PocetnaView: View {
                     Text("Izaberi kviz\ni igraj").font(.naslov(38)).tracking(-0.5)
                 }
                 Spacer()
-                NavigationLink { ProdavnicaView() } label: { ikonica("cart", "Prodavnica") }
             }
         }
         .padding(.top, 6)
     }
 
-    private func ikonica(_ ime: String, _ opis: String) -> some View {
-        Image(systemName: ime).font(.system(size: 17, weight: .bold)).foregroundStyle(Color.mastilo)
-            .frame(width: 44, height: 44).background(Color.kartica, in: Circle()).overlay(Circle().stroke(Color.kremTamnija, lineWidth: 1.5))
-            .accessibilityLabel(opis)
-    }
-
-    private var nagradaBaner: some View {
-        Button { withAnimation { nagrada = true } } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "gift.fill").font(.system(size: 20)).foregroundStyle(Color.tinta)
-                    .frame(width: 44, height: 44).background(Color.white, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.tinta, lineWidth: 2))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Dnevna nagrada čeka").font(.tekst(15, .bold))
-                    Text("Dan \(napredak.s.danaNagrade + (napredak.s.poslednjaNagrada == nil ? 1 : 2)) · \(napredak.sledecaNagrada) novčića").font(.tekst(13))
-                }
-                Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold))
-            }
-            .foregroundStyle(Color.tinta).padding(12).pop(.zuta, radijus: 18)
+    private func infoDugme(_ s: KvizStavka) -> some View {
+        Button { withAnimation { pravila = s } } label: {
+            Image(systemName: "info").font(.system(size: 13, weight: .black)).foregroundStyle(s.tekstBoja)
+                .frame(width: 30, height: 30).overlay(Circle().stroke(s.tekstBoja, lineWidth: 2))
+                .frame(width: 44, height: 44).contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .accessibilityLabel("Pravila: \(s.naslov)")
     }
 
     private var vrteska: some View {
@@ -156,7 +139,7 @@ struct PocetnaView: View {
 
     @ViewBuilder private var nedeljniVrh: some View {
         HStack {
-            Text("Vrh ove nedelje").font(.naslov(24))
+            Text("Osvajanje: vrh nedelje").font(.naslov(24))
             Spacer()
         }
         switch vrh {
@@ -166,7 +149,7 @@ struct PocetnaView: View {
             StanjeEkrana(maskota: .lumi, naslov: "Lista se nije učitala", tekst: poruka, dugme: "Pokušaj ponovo") { Task { await ucitajVrh() } }
                 .mirna()
         case .gotovo(let redovi) where redovi.isEmpty:
-            StanjeEkrana(maskota: .bloop, naslov: "Još niko ove nedelje", tekst: "Odigraj PRO kviz i budi prvi na listi.").mirna()
+            StanjeEkrana(maskota: .bloop, naslov: "Još niko ove nedelje", tekst: "Odigraj Osvajanje sveta i budi prvi na listi.").mirna()
         case .gotovo(let redovi):
             VStack(spacing: 0) {
                 ForEach(Array(redovi.prefix(3).enumerated()), id: \.element.id) { i, r in
@@ -174,7 +157,7 @@ struct PocetnaView: View {
                         Text("\(i + 1)").font(.naslov(18)).frame(width: 34, height: 34)
                             .background([Color.zuta, .nebo, .roze][i], in: RoundedRectangle(cornerRadius: 10))
                             .foregroundStyle(Color.tinta)
-                        Text(r.ime).font(.tekst(15, .semibold)).lineLimit(1)
+                        Text(r.nadimak).font(.tekst(15, .semibold)).lineLimit(1)
                         Spacer()
                         Text(r.poeni.formatted()).font(.naslov(18)).monospacedDigit()
                     }
@@ -188,47 +171,7 @@ struct PocetnaView: View {
 
     private func ucitajVrh() async {
         if case .gotovo = vrh {} else { vrh = .ucitava }
-        do { vrh = .gotovo(try await RangListaView.ucitaj(nedelja: true, limit: 3)) } catch { vrh = .greska(error.localizedDescription) }
-    }
-}
-
-/// Dnevna nagrada iz kita (Home · Daily Reward): sedam dana niza, pokupi danas.
-struct DnevnaNagradaView: View {
-    @Environment(Napredak.self) private var napredak
-    let zatvori: () -> Void
-    @State private var pokupljeno: Int?
-
-    var body: some View {
-        DonjiList(zatvori: zatvori) {
-            VStack(spacing: 14) {
-                Image(systemName: "gift.fill").font(.system(size: 34)).foregroundStyle(Color.tinta)
-                    .frame(width: 84, height: 84).background(Color.zuta, in: Circle()).overlay(Circle().stroke(Color.mastilo, lineWidth: 2.5))
-                Naslov(tekst: pokupljeno == nil ? "Dnevna nagrada" : "+\(pokupljeno!) novčića!", velicina: 30)
-                Text(pokupljeno == nil ? "Vrati se svaki dan. Sedmi dan donosi 100 novčića." : "Vidimo se sutra. Niz nagrada raste.")
-                    .font(.tekst(14)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
-                HStack(spacing: 6) {
-                    ForEach(Napredak.nagradeNiza.indices, id: \.self) { i in
-                        let danas = (pokupljeno == nil ? napredak.s.danaNagrade + (napredak.s.poslednjaNagrada == nil ? 0 : 1) : napredak.s.danaNagrade) % 7
-                        VStack(spacing: 4) {
-                            Text("\(i + 1).").font(.tekst(11, .bold))
-                            Text("\(Napredak.nagradeNiza[i])").font(.tekst(13, .bold)).monospacedDigit()
-                        }
-                        .foregroundStyle(i == danas ? Color.tinta : Color.mastilo)
-                        .frame(maxWidth: .infinity).frame(height: 54)
-                        .background(i == danas ? Color.zuta : i < danas ? Color.tealSvetla : Color.kartica, in: RoundedRectangle(cornerRadius: 12))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(i == danas ? Color.mastilo : Color.kremTamnija, lineWidth: i == danas ? 2 : 1))
-                    }
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Sedam dana nagrada, od 10 do 100 novčića")
-                if pokupljeno == nil {
-                    Button("Pokupi \(napredak.sledecaNagrada) novčića") { withAnimation { pokupljeno = napredak.pokupiDnevnuNagradu() } }.buttonStyle(.zuto)
-                } else {
-                    Button("Super", action: zatvori).buttonStyle(.primarno)
-                }
-            }
-        }
-        .sensoryFeedback(.success, trigger: pokupljeno)
+        do { vrh = .gotovo(try await RangListaView.ucitajVrh()) } catch { vrh = .greska(error.localizedDescription) }
     }
 }
 
@@ -262,5 +205,26 @@ struct KarticaIgre: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// „Kako se igra” u donjem listu (pravila sa starog sajta, po pravilima aplikacije).
+struct PravilaList: View {
+    let stavka: KvizStavka
+    let zatvori: () -> Void
+    var body: some View {
+        DonjiList(zatvori: zatvori) {
+            VStack(alignment: .leading, spacing: 12) {
+                Naslov(tekst: "Kako se igra \(stavka.naslov)", velicina: 26)
+                ForEach(Array(stavka.pravila.enumerated()), id: \.offset) { i, t in
+                    HStack(alignment: .top, spacing: 10) {
+                        Text("\(i + 1)").font(.tekst(13, .bold)).foregroundStyle(Color.tinta).frame(width: 26, height: 26)
+                            .background(Color(hex: stavka.boja), in: Circle()).overlay(Circle().stroke(Color.mastilo, lineWidth: 1.5))
+                        Text(t).font(.tekst(15)).foregroundStyle(Color.mastilo).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Button("Važi", action: zatvori).buttonStyle(.primarno).padding(.top, 6)
+            }
+        }
     }
 }

@@ -527,10 +527,10 @@ private struct GotovoEkran: View {
             .frame(height: 260)
             .accessibilityHidden(true)
             Naslov(tekst: "Ti si u igri,\n\(sesija.nadimak ?? "šampione")!", velicina: 34).multilineTextAlignment(.center)
-            Text("Nalog je spreman. Tvoj niz i novčići su sačuvani.").font(.tekst(15)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
+            Text("Nalog je spreman. Tvoj niz i napredak su sačuvani.").font(.tekst(15)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
             HStack(spacing: 16) {
                 Label("Niz \(napredak.s.nizDana) d", systemImage: "flame")
-                Label("\(napredak.s.novcici.formatted()) novčića", systemImage: "dollarsign.circle")
+                Label("Nivo \(napredak.nivo)", systemImage: "star")
             }
             .font(.tekst(14, .bold))
             Spacer()

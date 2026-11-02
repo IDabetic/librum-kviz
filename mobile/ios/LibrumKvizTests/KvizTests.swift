@@ -45,17 +45,6 @@ final class NapredakTests: XCTestCase {
         XCTAssertEqual(Napredak.nivo(xp: 250 + 500).nivo, 3)
     }
 
-    func testDnevnaNagradaJednomDnevnoINizRaste() {
-        let n = Napredak.deljeni
-        n.resetuj()
-        let dan = Date(timeIntervalSince1970: 1_800_000_000)
-        XCTAssertEqual(n.pokupiDnevnuNagradu(danas: dan), 10)
-        XCTAssertEqual(n.pokupiDnevnuNagradu(danas: dan), 0)
-        XCTAssertEqual(n.pokupiDnevnuNagradu(danas: dan.addingTimeInterval(86_400)), 20)
-        XCTAssertEqual(n.pokupiDnevnuNagradu(danas: dan.addingTimeInterval(3 * 86_400)), 10)
-        n.resetuj()
-    }
-
     func testPrvaIgraOtkljucavaBedzINiz() {
         let n = Napredak.deljeni
         n.resetuj()
@@ -67,14 +56,29 @@ final class NapredakTests: XCTestCase {
         n.resetuj()
     }
 
-    func testKupovinaBezNovcicaNeProlazi() {
+    func testDnevniFondPomociSedamZaSveIgreIPuniSePosle24h() {
         let n = Napredak.deljeni
         n.resetuj()
-        XCTAssertEqual(n.kupi(.preskok), .nemaNovcica)
-        n.dodajNovcice(200)
-        XCTAssertEqual(n.kupi(.preskok), .uspeh)
-        XCTAssertEqual(n.imaPomoc(.preskok), 6)
+        let t = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertEqual(n.pomociOstalo(sada: t), 7)
+        for _ in 0..<7 { XCTAssertTrue(n.iskoristiPomoc(sada: t)) }
+        XCTAssertFalse(n.iskoristiPomoc(sada: t.addingTimeInterval(3600)))
+        XCTAssertEqual(n.pomociOstalo(sada: t.addingTimeInterval(23 * 3600)), 0)
+        XCTAssertEqual(n.sledeciFondPomoci(sada: t), t.addingTimeInterval(24 * 3600))
+        XCTAssertEqual(n.pomociOstalo(sada: t.addingTimeInterval(24 * 3600)), 7)
+        XCTAssertTrue(n.iskoristiPomoc(sada: t.addingTimeInterval(24 * 3600)))
         n.resetuj()
+    }
+}
+
+final class NapredakCuvanjeTests: XCTestCase {
+    func testStaroStanjeBezNovihPoljaSeUcitava() throws {
+        let staro = #"{"xp":300,"igara":4,"uvodZavrsen":true,"novcici":120,"dani":{},"kategorije":{},"najbolje":{"opste":7},"poruke":[],"bedzevi":{}}"#
+        let s = try XCTUnwrap(Napredak.ucitaj(Data(staro.utf8)))
+        XCTAssertEqual(s.xp, 300)
+        XCTAssertTrue(s.uvodZavrsen)
+        XCTAssertEqual(s.najbolje["opste"], 7)
+        XCTAssertEqual(s.pomociIskorisceno, 0)
     }
 }
 

@@ -107,6 +107,15 @@ struct Vesanje: Equatable {
         }
     }
 
+    /// Pomoć: otkriva jedno skriveno slovo bez poena i bez trošenja života.
+    @discardableResult
+    mutating func otkrijSlovo() -> String? {
+        guard status == .igra, let c = rec.first(where: { Self.jeSlovo($0) && !pogodjena.contains(Self.norm(String($0))) }) else { return nil }
+        pogodjena.insert(Self.norm(String(c)))
+        if sveOtkriveno { poeni += bonusZaGreske; status = .pobeda }
+        return String(c).uppercased()
+    }
+
     mutating func pogodiRec(_ pokusaj: String) {
         guard status == .igra else { return }
         if Self.norm(pokusaj.trimmingCharacters(in: .whitespaces)) == Self.norm(rec) {

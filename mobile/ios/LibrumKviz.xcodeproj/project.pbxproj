@@ -27,6 +27,7 @@
 		3D00D47993EFA8CC8E52EC12 /* svet.json in Resources */ = {isa = PBXBuildFile; fileRef = 7F1564D794D2693A00D0D719 /* svet.json */; };
 		45897423F282A9F4149E881A /* KvizIgraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EA136C8D52FFD7F5E1877D /* KvizIgraView.swift */; };
 		46F4F57BFFF9FC3D1614C520 /* PravilaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F6710AA06B54EA34503FFA1 /* PravilaTests.swift */; };
+		50324E525E263ECBAFA7CA22 /* Partija.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF23D03C5EDB331D59A95605 /* Partija.swift */; };
 		52A6CB51F2774A27AB5E9FE8 /* Katalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2735B64623C0DCC699BAC21A /* Katalog.swift */; };
 		583EF28111F53188EA0E898E /* PocetnaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C5AC4CC3916A6E90BB355C /* PocetnaView.swift */; };
 		6E7C2DDB0843ED38A1D2642D /* MapaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34A53034F0CC8C1D196D136 /* MapaView.swift */; };
@@ -43,6 +44,7 @@
 		E2485F1C49D34F7E21F4C64A /* LibrumKvizApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC227D8E84CCA578950E363A /* LibrumKvizApp.swift */; };
 		E38F45BDB585442A35A140EC /* Napredak.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8DAF98DC73C562F246D261F /* Napredak.swift */; };
 		EC98C10A81AEE13704265DA7 /* BrziKvizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4398B59F97C72B843ADF0FC9 /* BrziKvizView.swift */; };
+		EEB388B84A027D625EC2BF06 /* avatari in Resources */ = {isa = PBXBuildFile; fileRef = E8673969A4CAB7BE98C82B6C /* avatari */; };
 		FA014B7195A7B3453DF34F47 /* KvizTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BABBAF67F52C5607DA7A66E0 /* KvizTests.swift */; };
 		FC3DB799164BCDB3F3F119D0 /* VesanjeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7B9F3BC8EA4C361AEF287B /* VesanjeView.swift */; };
 /* End PBXBuildFile section */
@@ -97,8 +99,10 @@
 		E2D4930B06633BBCB815E047 /* PrijavaTok.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrijavaTok.swift; sourceTree = "<group>"; };
 		E3B900417CC7C158B4CD0455 /* UvodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UvodView.swift; sourceTree = "<group>"; };
 		E6EBAC1E7BB1A11085267361 /* PitanjeKartica.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitanjeKartica.swift; sourceTree = "<group>"; };
+		E8673969A4CAB7BE98C82B6C /* avatari */ = {isa = PBXFileReference; lastKnownFileType = folder; name = avatari; path = ../../public/avatari; sourceTree = SOURCE_ROOT; };
 		ED18EE7D3B6358D185964D21 /* rezervna-pitanja.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "rezervna-pitanja.json"; sourceTree = "<group>"; };
 		EE4B80D0067FB0FF1E210FA7 /* ProKviz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProKviz.swift; sourceTree = "<group>"; };
+		FF23D03C5EDB331D59A95605 /* Partija.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Partija.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -128,6 +132,14 @@
 				9FED500CF38EA749232AE59B /* Pravila.swift */,
 			);
 			path = Osvajanje;
+			sourceTree = "<group>";
+		};
+		31802D1E5471965562D2C828 /* public */ = {
+			isa = PBXGroup;
+			children = (
+				E8673969A4CAB7BE98C82B6C /* avatari */,
+			);
+			path = public;
 			sourceTree = "<group>";
 		};
 		4079E94921EDCC8464305410 /* LibrumKviz */ = {
@@ -201,6 +213,7 @@
 				C46E3F9E4B91BE3482AF4C62 /* Mreza.swift */,
 				D8DAF98DC73C562F246D261F /* Napredak.swift */,
 				096154B7FE7443B80C4E5CA7 /* PaketPitanja.swift */,
+				FF23D03C5EDB331D59A95605 /* Partija.swift */,
 				AA657A4E3E3FACD279AAAFF6 /* Sesija.swift */,
 				31F7FFAE025C531368758B6B /* Supabase.swift */,
 			);
@@ -240,6 +253,7 @@
 		BCA12A56FD0C389DDB78D05E /* librum-kviz */ = {
 			isa = PBXGroup;
 			children = (
+				31802D1E5471965562D2C828 /* public */,
 				1728CF779AC48D7C09358F00 /* src */,
 			);
 			name = "librum-kviz";
@@ -373,6 +387,7 @@
 				168AFC74242CD1A315C70869 /* ArchivoBlack-Regular.ttf in Resources */,
 				0A140B4E34C656314FDF1E71 /* Assets.xcassets in Resources */,
 				2F2A5B2083A815BC2207536F /* SpaceGrotesk.ttf in Resources */,
+				EEB388B84A027D625EC2BF06 /* avatari in Resources */,
 				1943C95750E68728C9455CFC /* igre in Resources */,
 				2C4463F75E1A523C629CD94D /* rezervna-pitanja.json in Resources */,
 				3D00D47993EFA8CC8E52EC12 /* svet.json in Resources */,
@@ -401,6 +416,7 @@
 				874B81797EA899D9CE393254 /* OsvajanjeModel.swift in Sources */,
 				232A65EEA93A852EB5C5FB09 /* OsvajanjeView.swift in Sources */,
 				043BF82E3453077BB6A12411 /* PaketPitanja.swift in Sources */,
+				50324E525E263ECBAFA7CA22 /* Partija.swift in Sources */,
 				BBCB7350D0962129AC532351 /* PitanjeKartica.swift in Sources */,
 				583EF28111F53188EA0E898E /* PocetnaView.swift in Sources */,
 				A87F1B20734FF29CF0E7B773 /* Pravila.swift in Sources */,

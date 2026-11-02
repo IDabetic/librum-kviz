@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: 04 Detalji kviza
 
 /// Detalji kviza iz kita: naslovna kartica, tri podatka, najbolji rezultat i start.
-/// Stanja: zaključano (nivo), nema novčića (ulaz), nije moglo da počne, pokreće se.
+/// Stanja: zaključano (nivo), nije moglo da počne, pokreće se.
 struct KvizDetaljiView: View {
     @Environment(Napredak.self) private var napredak
     let stavka: KvizStavka
@@ -15,7 +15,6 @@ struct KvizDetaljiView: View {
     @State private var omiljen = false
 
     private var zakljucano: Bool { napredak.nivo < stavka.nivo }
-    private var nemaNovcica: Bool { napredak.s.novcici < stavka.ulaz }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -37,20 +36,21 @@ struct KvizDetaljiView: View {
                         Plocica(ikonica: "clock", vrednost: "\(stavka.brojPitanja * stavka.sekundi / 60) min", naziv: "Trajanje")
                         Plocica(ikonica: "bolt", vrednost: stavka.tezina, naziv: "Težina")
                     }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Kako se igra").font(.tekst(15, .bold))
+                        ForEach(stavka.pravila, id: \.self) { t in
+                            Label(t, systemImage: "checkmark.circle").font(.tekst(14)).foregroundStyle(Color.mastilo)
+                        }
+                    }
+                    .padding(14).frame(maxWidth: .infinity, alignment: .leading).mirna()
                     if zakljucano {
                         obavestenje("lock.fill", "Otključava se na nivou \(stavka.nivo)",
                                     "Ti si na nivou \(napredak.nivo). Još \(napredak.xpUNivou.treba - napredak.xpUNivou.imam) XP do sledećeg.", .udubljeno)
-                    } else if nemaNovcica {
-                        obavestenje("dollarsign.circle", "Fali ti \(stavka.ulaz - napredak.s.novcici) novčića",
-                                    "Ulaz je \(stavka.ulaz). Pokupi dnevnu nagradu ili odigraj besplatan kviz.", .crvenaSvetla)
                     } else if let naj = napredak.s.najbolje[stavka.id] {
                         obavestenje("trophy", "Tvoj najbolji: \(naj)/10", naj == 10 ? "Savršeno. Možeš li opet?" : "Nadmaši ga i uzmi +50 novčića za 10/10.", .zuta)
                     }
                     if case .greska(let poruka) = start {
                         obavestenje("exclamationmark.triangle", "Kviz nije mogao da počne", poruka, .crvenaSvetla)
-                    }
-                    if stavka.ulaz > 0 && !zakljucano {
-                        Text("Ulaz \(stavka.ulaz) novčića · imaš \(napredak.s.novcici)").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
                     }
                 }
                 .padding(.bottom, 8)
@@ -59,11 +59,11 @@ struct KvizDetaljiView: View {
                 if start == .pokrece {
                     HStack(spacing: 10) { ProgressView().tint(Color.naMastilu); Text("Pokrećem…") }
                 } else {
-                    Text(zakljucano ? "Zaključano" : nemaNovcica ? "Nemaš dovoljno novčića" : start == .miruje ? "Igraj kviz" : "Pokušaj ponovo")
+                    Text(zakljucano ? "Zaključano" : start == .miruje ? "Igraj kviz" : "Pokušaj ponovo")
                 }
             }
             .buttonStyle(.primarno)
-            .disabled(zakljucano || nemaNovcica || start == .pokrece)
+            .disabled(zakljucano || start == .pokrece)
         }
         .padding(.horizontal, 16).padding(.bottom, 12)
         .background(Papir())
@@ -113,7 +113,6 @@ struct KvizDetaljiView: View {
         start = .pokrece
         do {
             pitanja = try await PaketPitanja.deljeni.kviz(Fond(rawValue: fond) ?? .opste, zanr: zanr, tesko: tesko, broj: stavka.brojPitanja)
-            if stavka.ulaz > 0, !napredak.oduzmiNovcice(stavka.ulaz) { start = .miruje; return }
             start = .miruje
             igra = true
         } catch {
@@ -160,12 +159,10 @@ struct KvizIgraView: View {
     private func zavrsi() {
         prethodniNajbolji = napredak.s.najbolje[stavka.id]
         let kat = stavka.kategorija == "Knjige" ? "Knjige · \(stavka.naslov)" : stavka.kategorija
-        var rezultat = napredak.zabeleziIgru(kviz: stavka.id, tacnih: kviz.tacnih, netacnih: kviz.netacnih, kategorija: kat, brzih: kviz.brzih)
-        if stavka.ulaz > 0 {
-            // Teški kviz: ulaz vraćen kroz novčiće ×3.
-            napredak.dodajNovcice(rezultat.novcici * 2)
-            rezultat = Napredak.Ishod(xp: rezultat.xp, novcici: rezultat.novcici * 3, noviBedzevi: rezultat.noviBedzevi)
-        }
+        let mereni = kviz.zapisi.filter { !$0.preskoceno }
+        let rezultat = zavrsiPartiju(napredak, sesija, igra: stavka.id.hasPrefix("slikari") ? "slikari" : "tema", kviz: stavka.id, poeni: kviz.poeni,
+                                     tacnih: kviz.tacnih, netacnih: kviz.netacnih, kategorija: kat, brzih: kviz.brzih,
+                                     prosekMs: prosek(mereni.reduce(0) { $0 + $1.ms }, mereni.count))
         ishod = rezultat
         withAnimation { faza = .rezultati }
     }
@@ -257,6 +254,8 @@ struct KvizPitanjaView: View {
     @State private var pocetakPitanja = Date()
     /// Sat ne teče dok slika ne stigne (Picture Round), da spora mreža ne krade vreme.
     @State private var slikaSpremna = false
+    /// Jedna pomoć po partiji (vlasnikovo pravilo), iz dnevnog fonda za sve igre.
+    @State private var pomocIskoriscena = false
 
     private static let najvecaVisinaSlike: CGFloat = 300
     private let otkucaj = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
@@ -284,7 +283,7 @@ struct KvizPitanjaView: View {
         .overlay { if pauza { pauzaSloj } }
         .overlay {
             if prekid {
-                Dijalog(naslov: "Prekinuti kviz?", tekst: "Odgovori iz ovog kviza se ne čuvaju. Ulaz u novčićima se ne vraća.",
+                Dijalog(naslov: "Prekinuti kviz?", tekst: "Odgovori iz ovog kviza se ne čuvaju.",
                         potvrda: "Prekini", odustani: "Nastavi", opasno: true) { prekini() } zatvori: { prekid = false; pauza = false }
             }
         }
@@ -379,43 +378,28 @@ struct KvizPitanjaView: View {
     }
 
     private var pomoci: some View {
-        HStack(spacing: 10) {
-            pomoc(.polaPola) {
-                let netacni = p.opcije.indices.filter { $0 != p.tacan && !sklonjeni.contains($0) }
-                sklonjeni.formUnion(netacni.shuffled().prefix(2))
-            }
-            pomoc(.nagovestaj) {
-                if let i = p.opcije.indices.filter({ $0 != p.tacan && !sklonjeni.contains($0) }).randomElement() {
-                    sklonjeni.insert(i)
-                    nagovestaj = "Sigurno nije „\(p.opcije[i])”. Ostalo je \(p.opcije.count - sklonjeni.count)."
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
+                pomoc(.polaPola) {
+                    let netacni = p.opcije.indices.filter { $0 != p.tacan && !sklonjeni.contains($0) }
+                    sklonjeni.formUnion(netacni.shuffled().prefix(2))
                 }
+                pomoc(.nagovestaj) {
+                    if let i = p.opcije.indices.filter({ $0 != p.tacan && !sklonjeni.contains($0) }).randomElement() {
+                        sklonjeni.insert(i)
+                        nagovestaj = "Sigurno nije „\(p.opcije[i])”. Ostalo je \(p.opcije.count - sklonjeni.count)."
+                    }
+                }
+                pomoc(.vreme) { ostalo += 10; ukupnoVreme += 10 }
+                pomoc(.preskok) { kviz.preskok(p); sledece() }
             }
-            pomoc(.vreme) { ostalo += 10; ukupnoVreme += 10 }
-            pomoc(.preskok) { kviz.preskok(p); sledece() }
+            PomocNapomena(iskoriscenaUPartiji: pomocIskoriscena)
         }
         .padding(.horizontal, 6).padding(.top, 8)
     }
 
     private func pomoc(_ vrsta: Napredak.Pomoc, radnja: @escaping () -> Void) -> some View {
-        let broj = napredak.imaPomoc(vrsta)
-        let vecKorisceno = (vrsta == .polaPola && sklonjeni.count >= 2) || (vrsta == .nagovestaj && nagovestaj != nil)
-        return Button {
-            if napredak.potrosi(vrsta) { withAnimation { radnja() } }
-        } label: {
-            Image(systemName: vrsta.ikonica).font(.system(size: 20, weight: .semibold)).foregroundStyle(Color.mastilo)
-                .frame(maxWidth: .infinity).frame(height: 58)
-                .background(Color.kartica, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.mastilo, lineWidth: 2))
-                .overlay(alignment: .topTrailing) {
-                    Text("\(broj)").font(.tekst(11, .bold)).foregroundStyle(Color.naMastilu).frame(minWidth: 20, minHeight: 20)
-                        .background(Color.mastilo, in: Circle()).offset(x: 6, y: -6)
-                }
-        }
-        .buttonStyle(.plain)
-        .disabled(broj == 0 || vecKorisceno)
-        .opacity(broj == 0 || vecKorisceno ? 0.35 : 1)
-        .accessibilityLabel(vrsta.naziv.replacingOccurrences(of: " ×5", with: ""))
-        .accessibilityValue("\(broj) preostalo")
+        PomocDugme(vrsta: vrsta.rawValue, ikonica: vrsta.ikonica, naziv: vrsta.naziv, iskoriscenaUPartiji: $pomocIskoriscena, radnja: radnja)
     }
 
     private var listOdgovora: some View {
@@ -530,7 +514,7 @@ struct KvizRezultatiView: View {
                     glavna
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                         Plocica(ikonica: "star", vrednost: kviz.poeni.formatted(), naziv: "Poeni", boja: .narandzasta)
-                        Plocica(ikonica: "dollarsign.circle", vrednost: "+\(ishod?.novcici ?? 0)", naziv: "Novčići", boja: .narandzasta)
+                        Plocica(ikonica: "sparkles", vrednost: "+\(ishod?.xp ?? 0)", naziv: "XP", boja: .narandzasta)
                         Plocica(ikonica: "checkmark.circle", vrednost: "\(Int(Double(kviz.tacnih) / Double(max(1, ukupno)) * 100))%", naziv: "Tačnost")
                         Plocica(ikonica: "clock", vrednost: String(format: "%d:%02d", sekundi / 60, sekundi % 60), naziv: "Ukupno vreme", boja: .nebo)
                     }

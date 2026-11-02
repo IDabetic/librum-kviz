@@ -182,22 +182,6 @@ struct CrticeKoraka: View {
     }
 }
 
-/// Novčanik iz kita: iznos i novčić.
-struct Novcanik: View {
-    let iznos: Int
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(iznos.formatted()).font(.tekst(15, .bold)).monospacedDigit()
-            Image(systemName: "dollarsign.circle.fill").font(.system(size: 20)).foregroundStyle(Color.narandzasta)
-        }
-        .foregroundStyle(Color.mastilo)
-        .padding(.horizontal, 12).frame(height: 40)
-        .background(Color.kartica, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.kremTamnija, lineWidth: 1.5))
-        .accessibilityLabel("\(iznos) novčića")
-    }
-}
-
 /// Donji list u stilu kita (umesto sistemskog sheet-a).
 struct DonjiList<Sadrzaj: View>: View {
     let zatvori: () -> Void
@@ -274,5 +258,103 @@ struct Plocica: View {
         .frame(maxWidth: .infinity).padding(.vertical, 14)
         .mirna()
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Dugme pomoći: troši iz dnevnog fonda (7 za sve igre), najviše jednom po partiji.
+/// Broj u uglu je koliko je pomoći ostalo danas.
+struct PomocDugme: View {
+    @Environment(Napredak.self) private var napredak
+    /// Ključ vrste za statistiku: polaPola, nagovestaj, vreme, preskok, slovo.
+    var vrsta = "polaPola"
+    let ikonica: String
+    let naziv: String
+    @Binding var iskoriscenaUPartiji: Bool
+    var dostupno = true
+    var tamno = false
+    let radnja: () -> Void
+
+    var body: some View {
+        let ostalo = napredak.pomociOstalo()
+        let moze = !iskoriscenaUPartiji && ostalo > 0 && dostupno
+        Button {
+            guard moze, napredak.iskoristiPomoc(vrsta) else { return }
+            iskoriscenaUPartiji = true
+            withAnimation { radnja() }
+        } label: {
+            Image(systemName: ikonica).font(.system(size: 20, weight: .semibold)).foregroundStyle(tamno ? Color.tinta : Color.mastilo)
+                .frame(maxWidth: .infinity).frame(height: 54)
+                .background(tamno ? Color.white : Color.kartica, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(tamno ? Color.tinta : Color.mastilo, lineWidth: 2))
+                .overlay(alignment: .topTrailing) {
+                    Text("\(ostalo)").font(.tekst(11, .bold)).foregroundStyle(Color.naMastilu).frame(minWidth: 20, minHeight: 20)
+                        .background(Color.mastilo, in: Circle()).offset(x: 6, y: -6)
+                }
+        }
+        .buttonStyle(BezPrigusenja())
+        .disabled(!moze)
+        .opacity(moze ? 1 : 0.35)
+        .accessibilityLabel(naziv)
+        .accessibilityValue(iskoriscenaUPartiji ? "Iskorišćeno u ovoj partiji" : "\(ostalo) pomoći danas")
+    }
+}
+
+/// Jedan red ispod pomoći: pravilo i kada stiže novi fond.
+struct PomocNapomena: View {
+    @Environment(Napredak.self) private var napredak
+    let iskoriscenaUPartiji: Bool
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 60)) { k in
+            let ostalo = napredak.pomociOstalo(sada: k.date)
+            let tekst: String = if iskoriscenaUPartiji {
+                "Pomoć je iskorišćena u ovoj partiji."
+            } else if ostalo == 0, let novi = napredak.sledeciFondPomoci(sada: k.date) {
+                "Danas nema više pomoći. Novih \(Napredak.pomociDnevno) za \(Self.za(novi, od: k.date))."
+            } else {
+                "Jedna pomoć po partiji · danas još \(ostalo) od \(Napredak.pomociDnevno) za sve igre"
+            }
+            Text(tekst).font(.tekst(12, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity)
+        }
+    }
+
+    static func za(_ d: Date, od: Date) -> String {
+        let s = max(0, Int(d.timeIntervalSince(od)))
+        return s >= 3600 ? "\(s / 3600) h \(s % 3600 / 60) min" : "\(max(1, s / 60)) min"
+    }
+}
+
+/// Avatar igrača. Novi izbor su likovi sa Knjigopolisa (oznaka „s3:2:4”, fajl avatari/s3_2_4.jpg);
+/// stari profili sa veba imaju životinje („animal_07.png”), pa i one moraju da se prikažu.
+struct AvatarSlika: View {
+    let avatar: String?
+    var velicina: CGFloat = 44
+    var maskota: Maskota = .mimi
+
+    /// Svih 332 lika za izbor, redom kao na Knjigopolisu.
+    static let svi: [String] = {
+        guard let url = Bundle.main.url(forResource: "spisak", withExtension: "json", subdirectory: "avatari"),
+              let d = try? Data(contentsOf: url), let l = try? JSONDecoder().decode([String].self, from: d) else { return [] }
+        return l
+    }()
+
+    static func slika(_ avatar: String?) -> UIImage? {
+        guard let a = avatar, !a.isEmpty else { return nil }
+        if a.hasPrefix("animal_") { return UIImage(named: a.replacingOccurrences(of: ".png", with: "")) }
+        let ime = a.replacingOccurrences(of: ":", with: "_")
+        return Bundle.main.path(forResource: ime, ofType: "jpg", inDirectory: "avatari").flatMap(UIImage.init(contentsOfFile:))
+    }
+
+    var body: some View {
+        Group {
+            if let ui = Self.slika(avatar) {
+                Image(uiImage: ui).resizable().scaledToFill()
+            } else {
+                MaskotaSlika(maskota: maskota, velicina: velicina * 0.8).frame(width: velicina, height: velicina).background(Color.roze)
+            }
+        }
+        .frame(width: velicina, height: velicina)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(Color.mastilo, lineWidth: velicina > 60 ? 3 : 2))
+        .accessibilityHidden(true)
     }
 }

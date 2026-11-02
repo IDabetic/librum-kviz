@@ -63,11 +63,22 @@ struct Naslov: View {
 struct PopKartica: ViewModifier {
     var boja: Color = .kartica
     var radijus: CGFloat = 24
+    /// Jarke kartice nose sadržaj u svetloj temi: tamna slova na žutoj i u tamnom režimu.
+    private static let jarke: [Color] = [.zuta, .narandzasta, .nebo]
+
     func body(content: Content) -> some View {
         content
+            .modifier(SvetlaTema(ukljuceno: Self.jarke.contains(boja)))
             .background(boja, in: RoundedRectangle(cornerRadius: radijus, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radijus, style: .continuous).stroke(Color.mastilo, lineWidth: 2.5))
             .background(RoundedRectangle(cornerRadius: radijus, style: .continuous).fill(Color.senka).offset(y: 5))
+    }
+}
+
+struct SvetlaTema: ViewModifier {
+    let ukljuceno: Bool
+    @ViewBuilder func body(content: Content) -> some View {
+        if ukljuceno { content.environment(\.colorScheme, .light) } else { content }
     }
 }
 

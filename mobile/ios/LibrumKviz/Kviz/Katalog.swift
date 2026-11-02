@@ -13,13 +13,54 @@ struct KvizStavka: Identifiable, Hashable {
     let maskota: Maskota
     let vrsta: Vrsta
     var nivo = 1
-    var ulaz = 0
     var tezina = "Srednje"
     var ikonica = "questionmark"
     /// Red u tabeli quizzes za upis rezultata (quiz_results); nil = samo lokalno.
     var quizId: String? = nil
 
     var brojPitanja: Int { 10 }
+
+    /// „Kako se igra”, po starom sajtu (GameSeoContent) i pravilima aplikacije.
+    var pravila: [String] {
+        let pomoc = "Pomoć: jedna po partiji, iz dnevnog fonda od \(Napredak.pomociDnevno) za sve igre."
+        switch vrsta {
+        case .igra(.osvajanje): return [
+            "Igraju tri igrača na pravoj mapi sveta: 171 država u 17 regiona.",
+            "Na početku poteza jedno pitanje snabdevanja: tačno donosi pune vojske, netačno pola.",
+            "Napadaš samo susede, a preko mora idu morski putevi. Bitka je pitanje: tačan odgovor ruši branioca, kad oboje znate pobeđuje brži.",
+            "Ceo region donosi bonus vojske svakog poteza. Svako treće osvajanje u nizu daje +2 vojske, pala prestonica +5.",
+            "Partija traje 8 ili 12 krugova; pobeđuje ko ima najviše država, vojske i regiona.", pomoc + " Ovde je pomoć 50/50 na jednom pitanju."]
+        case .igra(.pro): return [
+            "Na svako pitanje imaš četiri ponuđena odgovora i 15 sekundi.",
+            "Tačan odgovor +10, netačan −5 i jedan život. Imaš 10 života.",
+            "Više tačnih zaredom donosi kombo bonuse: 5 zaredom +10, 10 +25, 20 +60, 50 +150, 100 +400.",
+            "Na svakih 50 pitanja dobijaš 5 života i dodatnu pomoć. Risk jednom u 10 pitanja: duplo dobijaš, duplo gubiš.",
+            "Kad potrošiš sve živote, rezultat ide na rang listu i tvoj profil.", pomoc]
+        case .igra(.book): return [
+            "Isti format kao PRO kviz, sa 10 života, ali su sva pitanja iz sveta književnosti.",
+            "Pitanja su iz različitih žanrova, a profil pamti u kom žanru si najjači.", pomoc]
+        case .igra(.duel): return [
+            "Jedan na jedan, ista pitanja u isto vreme. Brzi meč ima 5 pitanja sa nasumičnim rivalom, a privatna soba 10, 25 ili 50 pitanja uz kod koji deliš.",
+            "Tačno +10, netačno ili isteklo vreme −5. Nerešeno ide na zlatno pitanje.",
+            "Ko napusti meč predaje ga: rival dobija +50.", pomoc + " Ovde je pomoć 50/50."]
+        case .igra(.vesanje): return [
+            "Pred tobom su prazna polja i kratak opis reči. Biraš slova: tačno se otkriva na svim mestima, netačno troši jedan od 6 života.",
+            "Slovo +5 po pojavljivanju, promašaj −2. Cela reč donosi +20, a bez greške još +30.",
+            "Pogrešna cela reč odnosi 2 života.", pomoc + " Ovde pomoć otkriva jedno slovo."]
+        case .igra(.brzi): return [
+            "Tajmer od 60 sekundi kreće odmah. Za svaku tvrdnju biraš tačno ili netačno, 10 sekundi po tvrdnji.",
+            "Tačan odgovor +10, netačan −5. Tempo je sve.", pomoc + " Ovde pomoć dodaje 10 sekundi."]
+        case .tema(fond: "slikari", _, _): return [
+            "Na svakoj slici je jedno delo. Biraš ko ga je naslikao, od četiri ponuđena slikara.",
+            "Deset slika, 15 sekundi po slici; sat ne teče dok se slika ne učita.",
+            "Tačno 100 poena, plus 2 za svaku preostalu sekundu i 20 od trećeg tačnog zaredom.",
+            "Slike su sa Wikimedia Commons, uz naziv dela, godinu i muzej posle odgovora.", pomoc]
+        default: return [
+            "Deset pitanja, 15 sekundi po pitanju, četiri ponuđena odgovora.",
+            "Tačno 100 poena, plus 2 za svaku preostalu sekundu i 20 od trećeg tačnog zaredom.",
+            "Na kraju vidiš pregled svih odgovora i tačna rešenja.", pomoc]
+        }
+    }
     var sekundi: Int { 15 }
     var tekstBoja: Color { [0xFFD84D, 0xF4A33C, 0x6EC3F2, 0xFF5FA2].contains(boja) ? .tinta : .white }
 }
@@ -75,8 +116,8 @@ enum KvizKatalog {
             KvizStavka(id: "slikari-tesko", naslov: "Slikari: majstori", opis: "Samo manje poznata dela. Za one koji idu po muzejima.", kategorija: "Umetnost",
                        boja: 0x6D4BC9, maskota: .zig, vrsta: .tema(fond: "slikari", zanr: nil, tesko: true), nivo: 2, tezina: "Teško",
                        ikonica: "building.columns", quizId: kulturaUmetnost),
-            KvizStavka(id: "tesko", naslov: "Nemoguća pitanja", opis: "Samo najteža pitanja iz baze. Ulaz 50 novčića, novčići ×3.", kategorija: "Opšte znanje",
-                       boja: 0xE5385C, maskota: .lumi, vrsta: .tema(fond: "opste", zanr: nil, tesko: true), nivo: 3, ulaz: 50, tezina: "Teško",
+            KvizStavka(id: "tesko", naslov: "Nemoguća pitanja", opis: "Samo najteža pitanja iz baze. Otključava se na nivou 3.", kategorija: "Opšte znanje",
+                       boja: 0xE5385C, maskota: .lumi, vrsta: .tema(fond: "opste", zanr: nil, tesko: true), nivo: 3, tezina: "Teško",
                        ikonica: "flame", quizId: opsteZnanje),
         ]
         let boje: [UInt32] = [0xFF5FA2, 0x6D4BC9, 0x6EC3F2, 0xF4A33C, 0x12907E, 0xFFD84D]

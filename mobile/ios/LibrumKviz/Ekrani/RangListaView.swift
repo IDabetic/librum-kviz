@@ -1,112 +1,172 @@
 import SwiftUI
 
-/// Rang lista iz kita: postolje za prva tri, spisak, tvoje mesto na dnu.
-/// Izvor je PRO kviz (survivor_sessions), isti kao veb.
-/// Stanja: učitavanje, greška, prazno, prijatelji prazni, nisi rangiran.
+/// Igre sa rang listom (ključ u tabeli rezultati_igara) i kako izgledaju u izboru.
+enum IgraListe: String, CaseIterable, Identifiable {
+    case osvajanje, pro, book, duel, slikari, brzi, vesanje
+    var id: String { rawValue }
+    var naziv: String {
+        switch self {
+        case .osvajanje: "Osvajanje"
+        case .pro: "PRO"
+        case .book: "Book"
+        case .duel: "Duel"
+        case .slikari: "Slikari"
+        case .brzi: "Brzi"
+        case .vesanje: "Vešanje"
+        }
+    }
+}
+
+/// Rang lista iz kita, po igri i periodu (dan, nedelja, mesec, godina). Godišnja se
+/// sama resetuje 1. januara jer broji samo tekuću godinu (RPC rang_lista_igre).
+/// Stanja: učitavanje, greška, prazno, nisi rangiran / prijavi se.
 struct RangListaView: View {
-    enum Period: Hashable { case nedelja, sveVreme, prijatelji }
-    struct Red: Identifiable { let id: String; let ime: String; let poeni: Int; let pitanja: Int }
+    enum Period: String, CaseIterable, Hashable {
+        case dan, nedelja, mesec, godina
+        var naziv: String { switch self { case .dan: "Dan"; case .nedelja: "Nedelja"; case .mesec: "Mesec"; case .godina: "Godina" } }
+    }
+
+    struct Red: Decodable, Identifiable {
+        let mesto: Int
+        let user_id: String
+        let nadimak: String
+        let avatar: String?
+        let poeni: Int
+        let partija: Int
+        let prosek_ms: Int?
+        var id: String { user_id }
+    }
+    struct MojeMesto: Decodable { let mesto: Int; let poeni: Int; let partija: Int; let prosek_ms: Int?; let ukupno: Int }
 
     @Environment(Sesija.self) private var sesija
+    @State private var igra: IgraListe = .osvajanje
     @State private var period: Period = .nedelja
     @State private var stanje: Ucitano<[Red]> = .ucitava
+    @State private var moje: MojeMesto?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Text("Rang lista").font(.naslov(38))
-                    Spacer()
-                    Image(systemName: "calendar").font(.system(size: 17, weight: .bold)).frame(width: 44, height: 44)
-                        .background(Color.kartica, in: Circle()).overlay(Circle().stroke(Color.kremTamnija, lineWidth: 1.5)).accessibilityHidden(true)
+                Text("Rang lista").font(.naslov(38)).padding(.top, 6)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    PodvuceniIzbor(izbor: $igra, opcije: IgraListe.allCases.map { ($0, $0.naziv) })
                 }
-                PodvuceniIzbor(izbor: $period, opcije: [(.nedelja, "Ova nedelja"), (.sveVreme, "Sve vreme"), (.prijatelji, "Prijatelji")])
-                if period == .nedelja {
-                    Label("Nova lista za \(doPonedeljka) · PRO kviz", systemImage: "clock").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+                HStack(spacing: 8) {
+                    ForEach(Period.allCases, id: \.self) { p in
+                        Button { period = p } label: {
+                            Text(p.naziv).font(.tekst(14, .bold)).foregroundStyle(period == p ? Color.naMastilu : Color.mastilo)
+                                .frame(maxWidth: .infinity).frame(height: 40)
+                                .background(period == p ? Color.mastilo : Color.kartica, in: RoundedRectangle(cornerRadius: 12))
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.mastilo, lineWidth: 1.5))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(period == p ? .isSelected : [])
+                    }
                 }
+                Label(napomena, systemImage: "clock").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
                 sadrzaj
             }
             .padding(16)
         }
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
-        .task(id: period) { await osvezi() }
+        .task(id: "\(igra.rawValue)-\(period.rawValue)") { await osvezi() }
         .refreshable { await osvezi() }
     }
 
+    private var napomena: String {
+        switch period {
+        case .dan: "Lista dana, nova od ponoći"
+        case .nedelja: "Nova lista svakog ponedeljka"
+        case .mesec: "Nova lista prvog u mesecu"
+        case .godina: "Godišnja lista se resetuje 1. januara"
+        }
+    }
+
     @ViewBuilder private var sadrzaj: some View {
-        if period == .prijatelji {
-            StanjeEkrana(maskota: .zig, naslov: "Još nemaš prijatelje", tekst: "Izazovi nekoga na duel kodom sobe. Prijatelji iz duela će se pojaviti ovde.")
-        } else {
-            switch stanje {
-            case .ucitava:
-                HStack(alignment: .bottom, spacing: 10) { Skelet(visina: 90); Skelet(visina: 130); Skelet(visina: 70) }
-                ForEach(0..<5, id: \.self) { _ in Skelet(visina: 56) }
-            case .greska(let poruka):
-                StanjeEkrana(maskota: .lumi, naslov: "Lista se nije učitala", tekst: poruka, dugme: "Pokušaj ponovo") { Task { await osvezi() } }
-            case .gotovo(let redovi) where redovi.isEmpty:
-                StanjeEkrana(maskota: .bloop, naslov: "Prazno je", tekst: "Još nema rezultata u ovom periodu. Odigraj PRO kviz i budi prvi.")
-            case .gotovo(let redovi):
-                postolje(Array(redovi.prefix(3)))
-                VStack(spacing: 0) {
-                    ForEach(Array(redovi.dropFirst(3).enumerated()), id: \.element.id) { i, r in
-                        red(i + 4, r)
-                        if i < redovi.count - 4 { Divider().overlay(Color.kremTamnija) }
-                    }
+        switch stanje {
+        case .ucitava:
+            HStack(alignment: .bottom, spacing: 10) { Skelet(visina: 90); Skelet(visina: 130); Skelet(visina: 70) }
+            ForEach(0..<5, id: \.self) { _ in Skelet(visina: 56) }
+        case .greska(let poruka):
+            StanjeEkrana(maskota: .lumi, naslov: "Lista se nije učitala", tekst: poruka, dugme: "Pokušaj ponovo") { Task { await osvezi() } }
+        case .gotovo(let redovi) where redovi.isEmpty:
+            StanjeEkrana(maskota: .bloop, naslov: "Prazno je", tekst: "Niko još nije igrao \(igra.naziv) u ovom periodu. Budi prvi na listi.")
+        case .gotovo(let redovi):
+            postolje(Array(redovi.prefix(3)))
+            VStack(spacing: 0) {
+                ForEach(Array(redovi.dropFirst(3).enumerated()), id: \.element.id) { i, r in
+                    NavigationLink { ProfilIgracaView(id: r.user_id) } label: { red(r) }.buttonStyle(.plain)
+                    if i < redovi.count - 4 { Divider().overlay(Color.kremTamnija) }
                 }
-                .mirna()
-                mojeMesto(redovi)
             }
+            .mirna()
+            mojeMestoKartica
         }
     }
 
     private func postolje(_ tri: [Red]) -> some View {
         HStack(alignment: .bottom, spacing: 10) {
             ForEach([1, 0, 2].filter { $0 < tri.count }, id: \.self) { i in
-                VStack(spacing: 6) {
-                    MaskotaSlika(maskota: [Maskota.zig, .mimi, .lumi][i], velicina: i == 0 ? 64 : 52)
-                        .frame(width: i == 0 ? 72 : 60, height: i == 0 ? 72 : 60).background(Color.kartica, in: Circle())
-                        .overlay(Circle().stroke(Color.mastilo, lineWidth: 2))
-                    Text(tri[i].ime).font(.tekst(13, .bold)).lineLimit(1)
-                    Text(tri[i].poeni.formatted()).font(.tekst(12, .bold)).foregroundStyle(Color.naMastilu).padding(.horizontal, 8).padding(.vertical, 3)
-                        .background(Color.mastilo, in: RoundedRectangle(cornerRadius: 8))
-                    Text("\(i + 1)").font(.naslov(34)).foregroundStyle(Color.tinta).frame(maxWidth: .infinity).frame(height: [120, 90, 70][i])
-                        .background([Color.zuta, .nebo, .roze][i], in: UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
-                        .overlay(UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14).stroke(Color.mastilo, lineWidth: 2))
+                NavigationLink { ProfilIgracaView(id: tri[i].user_id) } label: {
+                    VStack(spacing: 6) {
+                        AvatarSlika(avatar: tri[i].avatar, velicina: i == 0 ? 72 : 60, maskota: [Maskota.zig, .mimi, .lumi][i])
+                        Text(tri[i].nadimak).font(.tekst(13, .bold)).foregroundStyle(Color.mastilo).lineLimit(1)
+                        Text(tri[i].poeni.formatted()).font(.tekst(12, .bold)).foregroundStyle(Color.naMastilu).padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Color.mastilo, in: RoundedRectangle(cornerRadius: 8))
+                        Text("\(tri[i].mesto)").font(.naslov(34)).foregroundStyle(Color.tinta).frame(maxWidth: .infinity).frame(height: [120, 90, 70][i])
+                            .background([Color.zuta, .nebo, .roze][i], in: UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
+                            .overlay(UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14).stroke(Color.mastilo, lineWidth: 2))
+                    }
                 }
+                .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(i + 1). mesto: \(tri[i].ime), \(tri[i].poeni) poena")
+                .accessibilityLabel("\(tri[i].mesto). mesto: \(tri[i].nadimak), \(tri[i].poeni) poena")
             }
         }
         .padding(.top, 8)
     }
 
-    private func red(_ mesto: Int, _ r: Red, istaknut: Bool = false) -> some View {
-        HStack(spacing: 14) {
-            Text("\(mesto)").font(.tekst(15, .bold)).monospacedDigit().frame(width: 36, height: 36)
-                .background(Color.udubljeno, in: RoundedRectangle(cornerRadius: 11))
+    private func red(_ r: Red) -> some View {
+        HStack(spacing: 12) {
+            Text("\(r.mesto)").font(.tekst(15, .bold)).monospacedDigit().frame(width: 30)
+            AvatarSlika(avatar: r.avatar, velicina: 40)
             VStack(alignment: .leading, spacing: 2) {
-                Text(r.ime).font(.tekst(16, .semibold)).lineLimit(1)
-                Text("\(r.pitanja) pitanja").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                Text(r.nadimak).font(.tekst(16, .semibold)).lineLimit(1)
+                Text(detalj(partija: r.partija, ms: r.prosek_ms)).font(.tekst(12)).foregroundStyle(Color.sivaTekst)
             }
             Spacer()
             Text(r.poeni.formatted()).font(.naslov(20)).monospacedDigit()
         }
-        .foregroundStyle(istaknut ? Color.tinta : Color.mastilo)
-        .padding(.horizontal, 16).padding(.vertical, 12)
+        .foregroundStyle(Color.mastilo)
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder private func mojeMesto(_ redovi: [Red]) -> some View {
-        if let id = sesija.korisnikId, let i = redovi.firstIndex(where: { $0.id == id }) {
-            red(i + 1, redovi[i], istaknut: true).pop(.zuta, radijus: 18)
+    private func detalj(partija: Int, ms: Int?) -> String {
+        let p = partija == 1 ? "1 partija" : "\(partija) partija"
+        return ms.map { "\(p) · \(String(format: "%.1f", Double($0) / 1000)) s po odgovoru" } ?? p
+    }
+
+    @ViewBuilder private var mojeMestoKartica: some View {
+        if let moje {
+            HStack(spacing: 12) {
+                Text("\(moje.mesto)").font(.naslov(22)).frame(width: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Tvoje mesto od \(moje.ukupno)").font(.tekst(15, .bold))
+                    Text(detalj(partija: moje.partija, ms: moje.prosek_ms)).font(.tekst(12))
+                }
+                Spacer()
+                Text(moje.poeni.formatted()).font(.naslov(20)).monospacedDigit()
+            }
+            .foregroundStyle(Color.tinta).padding(14).pop(.zuta, radijus: 18)
         } else {
             HStack(spacing: 12) {
                 Image(systemName: "person.crop.circle.badge.questionmark").font(.system(size: 22))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(sesija.prijavljen ? "Još nisi na listi" : "Prijavi se da uđeš na listu").font(.tekst(15, .bold))
-                    Text(sesija.prijavljen ? "Odigraj PRO kviz ove nedelje i upiši se." : "Rezultati bez naloga ostaju samo na telefonu.").font(.tekst(13))
+                    Text(sesija.prijavljen ? "Još nisi na ovoj listi" : "Prijavi se da uđeš na listu").font(.tekst(15, .bold))
+                    Text(sesija.prijavljen ? "Odigraj \(igra.naziv) u ovom periodu i upiši se." : "Rezultati bez naloga ostaju samo na telefonu.").font(.tekst(13))
                 }
                 Spacer()
             }
@@ -114,40 +174,147 @@ struct RangListaView: View {
         }
     }
 
-    private var doPonedeljka: String {
-        var k = Calendar(identifier: .iso8601); k.timeZone = TimeZone(identifier: "Europe/Belgrade")!
-        let sledeci = k.nextDate(after: .now, matching: DateComponents(hour: 0, minute: 0, weekday: 2), matchingPolicy: .nextTime) ?? .now
-        let s = Int(sledeci.timeIntervalSinceNow)
-        return "\(s / 86_400) d \(s % 86_400 / 3600) h"
-    }
-
     private func osvezi() async {
-        guard period != .prijatelji else { return }
-        if case .gotovo = stanje {} else { stanje = .ucitava }
-        do { stanje = .gotovo(try await Self.ucitaj(nedelja: period == .nedelja, limit: 20)) } catch { stanje = .greska(error.localizedDescription) }
+        stanje = .ucitava
+        do {
+            let redovi: [Red] = try await Supabase.deljeni.rpc("rang_lista_igre", ["p_igra": igra.rawValue, "p_period": period.rawValue, "p_broj": 50])
+            stanje = .gotovo(redovi)
+        } catch {
+            stanje = .greska(error.localizedDescription)
+        }
+        if let token = try? await sesija.vazeciToken() {
+            let m: [MojeMesto]? = try? await Supabase.deljeni.rpc("moje_mesto_igre", ["p_igra": igra.rawValue, "p_period": period.rawValue], token: token)
+            moje = m?.first
+        } else {
+            moje = nil
+        }
     }
 
-    /// Najbolji rezultat po igraču, sa imenima iz javnih profila.
-    static func ucitaj(nedelja: Bool, limit: Int) async throws -> [Red] {
-        struct Sesija: Decodable { let user_id: String; let score: Int; let questions_reached: Int }
-        struct Profil: Decodable { let id: String; let nickname: String?; let first_name: String? }
-        var upit = [
-            URLQueryItem(name: "select", value: "user_id,score,questions_reached"),
-            URLQueryItem(name: "order", value: "score.desc"),
-            URLQueryItem(name: "limit", value: "100"),
-        ]
-        if nedelja {
-            let od = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-7 * 24 * 3600))
-            upit.append(URLQueryItem(name: "created_at", value: "gte.\(od)"))
+    /// Vrh nedelje za početnu: prva tri iz Osvajanja.
+    static func ucitajVrh() async throws -> [Red] {
+        try await Supabase.deljeni.rpc("rang_lista_igre", ["p_igra": "osvajanje", "p_period": "nedelja", "p_broj": 3])
+    }
+}
+
+/// Javni profil drugog igrača: avatar, od kada igra i statistika po igri.
+struct ProfilIgracaView: View {
+    let id: String
+    struct Profil: Decodable {
+        struct Igra: Decodable { let igra: String; let partija: Int; let najbolje: Int; let prosek_ms: Int?; let tacnost: Int?; let sa_pomoci: Int? }
+        let nadimak: String
+        let avatar: String?
+        let od: String?
+        let igre: [Igra]
+        let pomoci: [String: Int]?
+    }
+    @State private var stanje: Ucitano<Profil> = .ucitava
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                GornjaTraka()
+                switch stanje {
+                case .ucitava:
+                    Skelet(visina: 120, radijus: 60).frame(width: 120)
+                    Skelet(visina: 30).frame(width: 180)
+                    ForEach(0..<3, id: \.self) { _ in Skelet(visina: 70) }
+                case .greska(let poruka):
+                    StanjeEkrana(maskota: .lumi, naslov: "Profil se nije učitao", tekst: poruka, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
+                case .gotovo(let p):
+                    AvatarSlika(avatar: p.avatar, velicina: 120)
+                    Text(p.nadimak).font(.naslov(30))
+                    if let od = p.od?.prefix(4) { Text("Igra od \(od).").font(.tekst(13)).foregroundStyle(Color.sivaTekst) }
+                    StatistikaPoIgrama(profil: p)
+                }
+            }
+            .padding(16)
         }
-        let sesije: [Sesija] = try await Supabase.deljeni.citaj("survivor_sessions", upit: upit)
-        var vidjeno = Set<String>()
-        let najbolji = sesije.filter { vidjeno.insert($0.user_id).inserted }.prefix(limit)
-        guard !najbolji.isEmpty else { return [] }
-        let profili: [Profil] = try await Supabase.deljeni.citaj("public_profiles", upit: [
-            URLQueryItem(name: "select", value: "id,nickname,first_name"), URLQueryItem(name: "id", value: "in.(\(najbolji.map(\.user_id).joined(separator: ",")))"),
-        ])
-        let imena = Dictionary(uniqueKeysWithValues: profili.map { ($0.id, $0.nickname ?? $0.first_name ?? "Igrač") })
-        return najbolji.map { Red(id: $0.user_id, ime: imena[$0.user_id] ?? "Igrač", poeni: $0.score, pitanja: $0.questions_reached) }
+        .background(Papir())
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .task { await ucitaj() }
+    }
+
+    private func ucitaj() async {
+        stanje = .ucitava
+        do {
+            let p: Profil = try await Supabase.deljeni.rpc("profil_igraca", ["p_id": id])
+            stanje = .gotovo(p)
+        } catch {
+            stanje = .greska(error.localizedDescription)
+        }
+    }
+}
+
+/// Statistika po igri (kao kartice na starom profilu sajta) i upotreba pomoći.
+struct StatistikaPoIgrama: View {
+    let profil: ProfilIgracaView.Profil
+
+    var body: some View {
+        let ukupno = profil.igre.reduce(0) { $0 + $1.partija }
+        let brzine = profil.igre.compactMap(\.prosek_ms)
+        VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Plocica(ikonica: "gamecontroller", vrednost: "\(ukupno)", naziv: "Partija")
+                Plocica(ikonica: "bolt", vrednost: brzine.isEmpty ? "–" : String(format: "%.1f s", Double(brzine.reduce(0, +)) / Double(brzine.count) / 1000),
+                        naziv: "Prosek odgovora", boja: .narandzasta)
+                Plocica(ikonica: "lifepreserver", vrednost: ukupno == 0 ? "–" : "\(profil.igre.reduce(0) { $0 + ($1.sa_pomoci ?? 0) } * 100 / ukupno)%",
+                        naziv: "Sa pomoći", boja: .roze)
+            }
+            PomocUpotreba(poVrsti: profil.pomoci ?? [:])
+            if profil.igre.isEmpty {
+                StanjeEkrana(maskota: .bloop, naslov: "Još nema partija", tekst: "Kad se odigra prva igra sa nalogom, rezultati će stajati ovde.")
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(profil.igre.enumerated()), id: \.offset) { i, g in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(IgraListe(rawValue: g.igra)?.naziv ?? (g.igra == "tema" ? "Teme" : g.igra)).font(.tekst(15, .bold))
+                                Text([g.partija == 1 ? "1 partija" : "\(g.partija) partija", g.tacnost.map { "\($0)% tačno" },
+                                      g.prosek_ms.map { String(format: "%.1f s po odgovoru", Double($0) / 1000) },
+                                      (g.sa_pomoci ?? 0) > 0 ? "pomoć u \(g.sa_pomoci!)" : nil].compactMap { $0 }.joined(separator: " · "))
+                                    .font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 0) {
+                                Text(g.najbolje.formatted()).font(.naslov(20)).monospacedDigit()
+                                Oznaka(tekst: "rekord")
+                            }
+                        }
+                        .padding(14)
+                        if i < profil.igre.count - 1 { Divider().overlay(Color.kremTamnija) }
+                    }
+                }
+                .mirna()
+            }
+        }
+    }
+}
+
+/// Koju pomoć igrač koristi i koliko često (ključ vrste → broj).
+struct PomocUpotreba: View {
+    let poVrsti: [String: Int]
+    static let nazivi = ["polaPola": "50/50", "nagovestaj": "Nagoveštaj", "vreme": "Dodatno vreme", "preskok": "Preskok", "slovo": "Otkriveno slovo"]
+
+    var body: some View {
+        let ukupno = poVrsti.values.reduce(0, +)
+        if ukupno > 0 {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Pomoći").font(.tekst(15, .bold))
+                ForEach(poVrsti.sorted { $0.value > $1.value }, id: \.key) { k, v in
+                    HStack(spacing: 10) {
+                        Text(Self.nazivi[k] ?? k).font(.tekst(14, .semibold)).frame(width: 120, alignment: .leading)
+                        GeometryReader { g in
+                            RoundedRectangle(cornerRadius: 4).fill(Color.udubljeno)
+                                .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 4).fill(Color.roze).frame(width: g.size.width * Double(v) / Double(ukupno)) }
+                        }
+                        .frame(height: 8)
+                        Text("\(v)×").font(.tekst(13, .bold)).monospacedDigit().frame(width: 40, alignment: .trailing)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading).mirna()
+        }
     }
 }

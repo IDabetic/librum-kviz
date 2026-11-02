@@ -549,10 +549,10 @@ private struct UvodGotovo: View {
             .accessibilityHidden(true)
             Oznaka(tekst: "Bedž otključan", boja: .roze)
             Naslov(tekst: "Spreman si,\nnovajlijo!", velicina: 36).multilineTextAlignment(.center)
-            Text("Prvi poklon je tu: \(napredak.s.novcici) novčića za pomoći. \(napredak.s.cilj) kviza dnevno čuvaju niz.")
+            Text("Svaki dan imaš \(Napredak.pomociDnevno) pomoći za sve igre. \(napredak.s.cilj) kviza dnevno čuvaju niz.")
                 .font(.tekst(15)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
             HStack(spacing: 10) {
-                Label("\(napredak.s.novcici) novčića", systemImage: "dollarsign.circle")
+                Label("\(Napredak.pomociDnevno) pomoći dnevno", systemImage: "lifepreserver")
                 Label("Dan 1 niza", systemImage: "flame")
             }
             .font(.tekst(13, .bold))
