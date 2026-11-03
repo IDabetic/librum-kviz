@@ -84,6 +84,21 @@ struct Supabase {
         return try JSONDecoder().decode(Token.self, from: d)
     }
 
+    /// Prijava tokenom sa telefona (Sign in with Apple, Google): Supabase proverava potpis i nonce.
+    func prijavaTokenom(provajder: String, idToken: String, nonce: String?) async throws -> Token {
+        var telo: [String: Any] = ["provider": provajder, "id_token": idToken]
+        if let nonce { telo["nonce"] = nonce }
+        let d = try await zahtev("auth/v1/token", metod: "POST", telo: telo, upit: [URLQueryItem(name: "grant_type", value: "id_token")])
+        return try JSONDecoder().decode(Token.self, from: d)
+    }
+
+    /// Koji spoljni provajderi su uključeni u Supabase (Authentication → Providers); dugmad se prikazuju samo za njih.
+    func ukljuceniProvajderi() async -> Set<String> {
+        struct P: Decodable { let external: [String: Bool] }
+        guard let d = try? await zahtev("auth/v1/settings"), let p = try? JSONDecoder().decode(P.self, from: d) else { return [] }
+        return Set(p.external.filter(\.value).map(\.key))
+    }
+
     func osvezi(_ refresh: String) async throws -> Token {
         let d = try await zahtev("auth/v1/token", metod: "POST", telo: ["refresh_token": refresh],
                                  upit: [URLQueryItem(name: "grant_type", value: "refresh_token")])

@@ -35,6 +35,13 @@ final class Sesija {
         await ucitajNadimak()
     }
 
+    func prijavaTokenom(provajder: String, idToken: String, nonce: String?) async throws {
+        let t = try await api.prijavaTokenom(provajder: provajder, idToken: idToken, nonce: nonce)
+        primeni(t)
+        sacuvaj(t)
+        await ucitajNadimak()
+    }
+
     func registracija(email: String, lozinka: String, ime: String, prezime: String, nadimak: String) async throws {
         try await api.registracija(email: email.trimmingCharacters(in: .whitespaces).lowercased(), lozinka: lozinka,
                                    ime: ime, prezime: prezime, nadimak: nadimak)

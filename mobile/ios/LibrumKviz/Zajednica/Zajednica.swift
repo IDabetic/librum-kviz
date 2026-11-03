@@ -105,6 +105,13 @@ struct IgraciTabView: View {
                 HStack(spacing: 10) {
                     Naslov(tekst: "Igrači", velicina: 34)
                     Spacer()
+                    // Sanduče gore desno (vlasnik 03.11): izazovi, pratioci, komentari i poruke sistema.
+                    NavigationLink { SanduceView() } label: {
+                        krug("tray").overlay(alignment: .topTrailing) {
+                            if napredak.neprocitanih + Brojaci.deljeni.obavestenja > 0 { Circle().fill(Color.roze).frame(width: 12, height: 12).overlay(Circle().stroke(Color.krem, lineWidth: 2)) }
+                        }
+                    }
+                    .accessibilityLabel("Sanduče, \(napredak.neprocitanih + Brojaci.deljeni.obavestenja) novih")
                     NavigationLink { IgraciView() } label: { krug("magnifyingglass") }.accessibilityLabel("Nađi igrače")
                     NavigationLink { PorukeView() } label: {
                         krug("paperplane").overlay(alignment: .topTrailing) {

@@ -1,4 +1,6 @@
 import SwiftUI
+import AuthenticationServices
+import CryptoKit
 
 /// Prijava iz kita (Auth): dobrodošlica, prijava, nalog, kod iz mejla,
 /// zaboravljena lozinka i nova lozinka, sa svim stanjima greške.
@@ -6,12 +8,14 @@ struct PrijavaTok: View {
     @Environment(\.dismiss) private var zatvori
     @State private var put: [Korak] = []
     var pocetak: Korak? = nil
+    /// Ulaz u aplikaciju traži nalog (vlasnik 03.11): nema „Igraj bez naloga” ni zatvaranja.
+    var obavezna = false
 
     enum Korak: Hashable { case prijava, nalog, potvrda(email: String), zaboravljena, novaLozinka(email: String), gotovo }
 
     var body: some View {
         NavigationStack(path: $put) {
-            Dobrodosli(idi: idi) { zatvori() }
+            Dobrodosli(idi: idi, gost: obavezna ? nil : { zatvori() })
                 .navigationDestination(for: Korak.self) { k in
                     Group {
                         switch k {
@@ -37,7 +41,7 @@ struct PrijavaTok: View {
 
 private struct Dobrodosli: View {
     let idi: (PrijavaTok.Korak) -> Void
-    let gost: () -> Void
+    let gost: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -55,7 +59,10 @@ private struct Dobrodosli: View {
             Spacer(minLength: 0)
             Button("Napravi nalog") { idi(.nalog) }.buttonStyle(.primarno)
             Button("Već imam nalog") { idi(.prijava) }.buttonStyle(.sekundarno)
-            Button("Igraj bez naloga", action: gost).font(.tekst(14, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity)
+            SpoljnaPrijava()
+            if let gost {
+                Button("Igraj bez naloga", action: gost).font(.tekst(14, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity)
+            }
         }
         .padding(.horizontal, 20).padding(.bottom, 12)
         .background(Papir())
@@ -538,5 +545,52 @@ private struct GotovoEkran: View {
         }
         .padding(.horizontal, 20).padding(.bottom, 12)
         .background(Papir())
+    }
+}
+
+
+/// Apple i Google prijava: dugme se vidi samo kad je provajder uključen u Supabase, pa aplikacija radi i pre podešavanja.
+/// shortcut: Google dugme čeka Google Sign-In SDK i Client ID; do tada se prikazuje samo Apple.
+struct SpoljnaPrijava: View {
+    @Environment(Sesija.self) private var sesija
+    @State private var provajderi: Set<String> = []
+    @State private var nonce = ""
+    @State private var greska: String?
+
+    var body: some View {
+        VStack(spacing: 10) {
+            if provajderi.contains("apple") {
+                SignInWithAppleButton(.continue) { zahtev in
+                    nonce = Self.nasumicno()
+                    zahtev.requestedScopes = [.email, .fullName]
+                    zahtev.nonce = Self.sha256(nonce)
+                } onCompletion: { ishod in
+                    switch ishod {
+                    case .success(let a):
+                        guard let c = a.credential as? ASAuthorizationAppleIDCredential, let t = c.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) else { return }
+                        Task {
+                            do { try await sesija.prijavaTokenom(provajder: "apple", idToken: t, nonce: nonce) }
+                            catch { greska = error.localizedDescription }
+                        }
+                    case .failure(let e):
+                        if (e as? ASAuthorizationError)?.code != .canceled { greska = e.localizedDescription }
+                    }
+                }
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 54).clipShape(RoundedRectangle(cornerRadius: 16))
+            }
+            if let greska { Text(greska).font(.tekst(13, .semibold)).foregroundStyle(Color.crvena) }
+        }
+        .task { provajderi = await Supabase.deljeni.ukljuceniProvajderi() }
+    }
+
+    private static func nasumicno() -> String {
+        var b = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, b.count, &b)
+        return b.map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static func sha256(_ s: String) -> String {
+        SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 }

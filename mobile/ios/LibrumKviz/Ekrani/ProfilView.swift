@@ -19,12 +19,6 @@ struct ProfilView: View {
                     }
                     .accessibilityLabel("Podeli profil")
                     Spacer()
-                    NavigationLink { SanduceView() } label: {
-                        krug("tray").overlay(alignment: .topTrailing) {
-                            if napredak.neprocitanih > 0 { Circle().fill(Color.roze).frame(width: 12, height: 12).overlay(Circle().stroke(Color.krem, lineWidth: 2)) }
-                        }
-                    }
-                    .accessibilityLabel("Sanduče, \(napredak.neprocitanih) novih")
                     NavigationLink { PodesavanjaView() } label: { krug("gearshape") }.accessibilityLabel("Podešavanja")
                 }
                 if sesija.prijavljen, let p = serverski {
@@ -72,16 +66,10 @@ struct ProfilView: View {
                     NavigationLink { IgraciView() } label: { RedListe(ikonica: "person.2", naziv: "Igrači i praćenje") }
                     Divider().overlay(Color.kremTamnija)
                     NavigationLink { StatistikaView() } label: { RedListe(ikonica: "chart.bar", naziv: "Statistika") }
-                    Divider().overlay(Color.kremTamnija)
-                    NavigationLink { PravilaIgaraView() } label: { RedListe(ikonica: "book.pages", naziv: "Pravila igara") }
-                    Divider().overlay(Color.kremTamnija)
-                    NavigationLink { SanduceView() } label: { RedListe(ikonica: "tray", naziv: "Sanduče", vrednost: napredak.neprocitanih > 0 ? "\(napredak.neprocitanih) novo" : nil) }
+
                 }
                 .mirna()
-                if !sesija.prijavljen {
-                    NavigationLink { IzmenaProfilaView() } label: { Text("Izaberi avatar") }.buttonStyle(.sekundarno)
-                    Button("Napravi nalog ili se prijavi") { prijava = true }.buttonStyle(.primarno)
-                }
+
             }
             .padding(16)
         }
@@ -124,22 +112,41 @@ struct ProfilView: View {
         }
     }
 
+    /// Kartica napretka: titula i nivo, XP do sledećeg, pa niz, pomoći i partije (docs/NAPREDAK.md).
     private var nivo: some View {
         let x = napredak.xpUNivou
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Nivo \(napredak.nivo) → \(napredak.nivo + 1)").font(.tekst(15, .bold))
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(napredak.titula.uppercased()).font(.tekst(12, .bold)).tracking(1.2).opacity(0.7)
+                    Text("Nivo \(napredak.nivo)").font(.naslov(30))
+                }
                 Spacer()
                 Text("\(x.imam.formatted()) / \(x.treba.formatted()) XP").font(.tekst(13, .semibold)).monospacedDigit()
             }
             GeometryReader { g in
-                RoundedRectangle(cornerRadius: 6).fill(Color.white).overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.tinta, lineWidth: 2))
-                    .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 6).fill(Color.teal).frame(width: max(8, g.size.width * Double(x.imam) / Double(x.treba))) }
+                RoundedRectangle(cornerRadius: 7).fill(Color.white).overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.tinta, lineWidth: 2))
+                    .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 7).fill(Color.teal).frame(width: max(10, g.size.width * Double(x.imam) / Double(max(1, x.treba)))) }
             }
-            .frame(height: 14)
+            .frame(height: 16)
+            HStack(spacing: 8) {
+                cip("flame.fill", "\(napredak.s.nizDana)", "dana niz")
+                cip("lifepreserver", "\(napredak.pomociOstalo())/\(napredak.fondPomoci)", "pomoći")
+                cip("gamecontroller.fill", "\(napredak.s.igara)", "partija")
+            }
         }
-        .foregroundStyle(Color.tinta).padding(16).pop(.zuta, radijus: 20)
+        .foregroundStyle(Color.tinta).padding(18).pop(.zuta, radijus: 24)
         .accessibilityElement(children: .combine)
+    }
+
+    private func cip(_ ikonica: String, _ vrednost: String, _ naziv: String) -> some View {
+        VStack(spacing: 2) {
+            Label(vrednost, systemImage: ikonica).font(.tekst(16, .bold)).monospacedDigit()
+            Text(naziv).font(.tekst(11, .semibold)).opacity(0.7)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 8)
+        .background(Color.white.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.tinta.opacity(0.25), lineWidth: 1.5))
     }
 
     private var bedzevi: some View {
@@ -447,6 +454,8 @@ struct PodesavanjaView: View {
                 VStack(spacing: 0) {
                     if sesija.prijavljen {
                         NavigationLink { IzmenaProfilaView() } label: { RedListe(ikonica: "person", naziv: "Izmeni profil") }
+                        Divider().overlay(Color.kremTamnija)
+                        NavigationLink { IzmenaProfilaView() } label: { RedListe(ikonica: "face.smiling", naziv: "Izaberi avatar") }
                         Divider().overlay(Color.kremTamnija)
                         RedListe(ikonica: "envelope", naziv: "Email", vrednost: sesija.email, strelica: false)
                         Divider().overlay(Color.kremTamnija)

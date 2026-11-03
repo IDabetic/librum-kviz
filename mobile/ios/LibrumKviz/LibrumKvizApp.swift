@@ -11,7 +11,9 @@ struct LibrumKvizApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if napredak.s.uvodZavrsen { Koren() } else { UvodView() }
+                if !napredak.s.uvodZavrsen { UvodView() }
+                else if !sesija.prijavljen { PrijavaTok(obavezna: true) }
+                else { Koren() }
             }
             .environment(sesija)
             .environment(napredak)
