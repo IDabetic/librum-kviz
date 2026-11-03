@@ -96,6 +96,18 @@ final class Napredak {
     var nivo: Int { Self.nivo(xp: s.xp).nivo }
     var xpUNivou: (imam: Int, treba: Int) { let n = Self.nivo(xp: s.xp); return (n.ostatak, n.nivo * Self.xpPoNivou) }
 
+    /// Titula po nivou (docs/NAPREDAK.md).
+    static func titula(_ nivo: Int) -> String {
+        switch nivo { case ..<5: "Početnik"; case ..<10: "Znalac"; case ..<20: "Erudita"; case ..<35: "Mudrac"; default: "Legenda" }
+    }
+    var titula: String { Self.titula(nivo) }
+
+    /// XP za partiju: 10 po tačnom, 20 za završenu partiju, 50 za pobedu; niz dana dodaje do +50%.
+    static func xpZaPartiju(tacnih: Int, pobeda: Bool, niz: Int) -> Int {
+        let osnova = tacnih * 10 + 20 + (pobeda ? 50 : 0)
+        return osnova + osnova * min(max(niz, 1) - 1, 10) / 20
+    }
+
     static func nivo(xp: Int) -> (nivo: Int, ostatak: Int) {
         var n = 1, ostatak = xp
         while ostatak >= n * xpPoNivou { ostatak -= n * xpPoNivou; n += 1 }
@@ -115,7 +127,7 @@ final class Napredak {
             s.najduziNiz = max(s.najduziNiz, s.nizDana)
             s.poslednjiDanIgre = dan
         }
-        let xp = tacnih + 5
+        let xp = Self.xpZaPartiju(tacnih: tacnih, pobeda: pobeda, niz: s.nizDana)
         s.xp += xp
         s.igara += 1
         s.tacnih += tacnih
@@ -160,9 +172,13 @@ final class Napredak {
         s.pocetakCiklusaPomoci.map { sada.timeIntervalSince($0) >= Self.ciklusPomoci } ?? true
     }
 
+    /// Dnevni fond: 7, +1 na svakih 5 nivoa (najviše +3), +1 za niz od 3 dana, +2 od 7 dana.
+    static func fond(nivo: Int, niz: Int) -> Int { pomociDnevno + min(3, (nivo - 1) / 5) + (niz >= 7 ? 2 : niz >= 3 ? 1 : 0) }
+    var fondPomoci: Int { Self.fond(nivo: nivo, niz: s.nizDana) }
+
     /// Koliko pomoći je ostalo u tekućem ciklusu.
     func pomociOstalo(sada: Date = .now) -> Int {
-        ciklusIstekao(sada) ? Self.pomociDnevno : max(0, Self.pomociDnevno - s.pomociIskorisceno)
+        ciklusIstekao(sada) ? fondPomoci : max(0, fondPomoci - s.pomociIskorisceno)
     }
 
     /// Kada se fond puni (nil dok nijedna pomoć nije potrošena u ovom ciklusu).
@@ -177,7 +193,7 @@ final class Napredak {
     /// Troši jednu pomoć iz dnevnog fonda; false kad je fond prazan.
     func iskoristiPomoc(_ vrsta: String = "pomoc", sada: Date = .now) -> Bool {
         if ciklusIstekao(sada) { s.pocetakCiklusaPomoci = sada; s.pomociIskorisceno = 0 }
-        guard s.pomociIskorisceno < Self.pomociDnevno else { return false }
+        guard s.pomociIskorisceno < fondPomoci else { return false }
         s.pomociIskorisceno += 1
         s.pomociPoVrsti[vrsta, default: 0] += 1
         pomocUPartiji = vrsta

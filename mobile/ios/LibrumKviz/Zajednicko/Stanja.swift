@@ -309,9 +309,9 @@ struct PomocNapomena: View {
             let tekst: String = if iskoriscenaUPartiji {
                 "Pomoć je iskorišćena u ovoj partiji."
             } else if ostalo == 0, let novi = napredak.sledeciFondPomoci(sada: k.date) {
-                "Danas nema više pomoći. Novih \(Napredak.pomociDnevno) za \(Self.za(novi, od: k.date))."
+                "Danas nema više pomoći. Novih \(napredak.fondPomoci) za \(Self.za(novi, od: k.date))."
             } else {
-                "Jedna pomoć po partiji · danas još \(ostalo) od \(Napredak.pomociDnevno) za sve igre"
+                "Jedna pomoć po partiji · danas još \(ostalo) od \(napredak.fondPomoci) za sve igre"
             }
             Text(tekst).font(.tekst(12, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity)
         }

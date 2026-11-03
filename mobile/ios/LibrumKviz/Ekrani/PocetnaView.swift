@@ -9,6 +9,7 @@ struct PocetnaView: View {
 
     @State private var vrh: Ucitano<[RangListaView.Red]> = .ucitava
     @State private var pravila: KvizStavka?
+    @State private var objasnjenje: Objasnjenje?
 
     /// Vlasnik 03.11: Osvajanje sveta je jedna velika kartica, ispod šest igara u dva reda po tri.
     private let osvajanje = KvizKatalog.stavka("osvajanje")
@@ -53,6 +54,7 @@ struct PocetnaView: View {
         .background(Papir())
         .toolbar(.hidden, for: .navigationBar)
         .overlay { if let pravila { PravilaList(stavka: pravila) { self.pravila = nil } } }
+        .overlay { if let objasnjenje { ObjasnjenjeList(vrsta: objasnjenje) { self.objasnjenje = nil } } }
         .task { await ucitajVrh() }
         .refreshable { await ucitajVrh() }
         .task {
@@ -61,14 +63,22 @@ struct PocetnaView: View {
 
     private var zaglavlje: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Label("\(napredak.s.nizDana)", systemImage: "flame.fill").font(.tekst(15, .bold)).foregroundStyle(Color.roze)
-                    .accessibilityLabel("Niz od \(napredak.s.nizDana) dana")
-                Text("Nivo \(napredak.nivo)").font(.tekst(14, .bold)).foregroundStyle(Color.sivaTekst)
+            HStack(spacing: 14) {
+                Button { objasnjenje = .niz } label: {
+                    Label("\(napredak.s.nizDana)", systemImage: "flame.fill").font(.tekst(15, .bold)).foregroundStyle(Color.roze)
+                }
+                .accessibilityLabel("Niz od \(napredak.s.nizDana) dana, objašnjenje")
+                Button { objasnjenje = .nivo } label: {
+                    Text("Nivo \(napredak.nivo) · \(napredak.titula)").font(.tekst(14, .bold)).foregroundStyle(Color.sivaTekst)
+                }
+                .accessibilityLabel("Nivo \(napredak.nivo), \(napredak.titula), objašnjenje")
                 Spacer()
-                Label("\(napredak.pomociOstalo()) pomoći", systemImage: "lifepreserver").font(.tekst(14, .bold)).foregroundStyle(Color.sivaTekst)
-                    .accessibilityLabel("Danas još \(napredak.pomociOstalo()) pomoći")
+                Button { objasnjenje = .pomoci } label: {
+                    Label("\(napredak.pomociOstalo())/\(napredak.fondPomoci)", systemImage: "lifepreserver").font(.tekst(14, .bold)).foregroundStyle(Color.sivaTekst)
+                }
+                .accessibilityLabel("Danas još \(napredak.pomociOstalo()) od \(napredak.fondPomoci) pomoći, objašnjenje")
             }
+            .buttonStyle(.plain)
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     if let ime = sesija.nadimak { Oznaka(tekst: "Zdravo, \(ime)", boja: .teal) }
@@ -175,6 +185,62 @@ struct KarticaIgre: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Šta znače vatrica, nivo i pomoći (docs/NAPREDAK.md), sa tvojim brojkama.
+enum Objasnjenje { case niz, nivo, pomoci }
+
+struct ObjasnjenjeList: View {
+    @Environment(Napredak.self) private var napredak
+    let vrsta: Objasnjenje
+    let zatvori: () -> Void
+
+    var body: some View {
+        DonjiList(zatvori: zatvori) {
+            VStack(alignment: .leading, spacing: 12) {
+                switch vrsta {
+                case .niz:
+                    Naslov(tekst: "Niz: \(napredak.s.nizDana) \(napredak.s.nizDana == 1 ? "dan" : "dana")", velicina: 26)
+                    stavke([
+                        "Svaki dan u kom odigraš bar jednu partiju produžava niz. Preskočen dan ga vraća na 1.",
+                        "3 dana zaredom: +1 pomoć dnevno. 7 dana: +2 pomoći dnevno.",
+                        "Svaki dan niza dodaje 5% XP-a, najviše +50%.",
+                        "Najduži niz: \(napredak.s.najduziNiz) dana.",
+                    ])
+                case .nivo:
+                    let x = napredak.xpUNivou
+                    Naslov(tekst: "Nivo \(napredak.nivo) · \(napredak.titula)", velicina: 26)
+                    ProgressView(value: Double(x.imam), total: Double(max(1, x.treba))).tint(Color.teal)
+                    Text("\(x.imam) / \(x.treba) XP do nivoa \(napredak.nivo + 1)").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
+                    stavke([
+                        "XP: 10 po tačnom odgovoru, 20 za završenu partiju, 50 za pobedu, plus bonus niza.",
+                        "Titule: Početnik (1), Znalac (5), Erudita (10), Mudrac (20), Legenda (35).",
+                        "Nivo 2 otključava Slikare: majstori, nivo 3 Nemoguća pitanja.",
+                        "Na svakih 5 nivoa dobijaš +1 pomoć dnevno (najviše +3).",
+                    ])
+                case .pomoci:
+                    Naslov(tekst: "Pomoći: \(napredak.pomociOstalo()) od \(napredak.fondPomoci)", velicina: 26)
+                    stavke([
+                        "Jedna pomoć po partiji: 50/50, nagoveštaj, dodatno vreme ili preskok.",
+                        "Dnevni fond je 7, +1 na svakih 5 nivoa i +1 ili +2 za niz dana (najviše 12).",
+                        "Fond se puni 24 sata posle prve iskorišćene pomoći.",
+                    ])
+                }
+                Button("Važi", action: zatvori).buttonStyle(.primarno).padding(.top, 6)
+            }
+        }
+    }
+
+    private func stavke(_ l: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(l, id: \.self) { t in
+                HStack(alignment: .top, spacing: 10) {
+                    Circle().fill(Color.zuta).overlay(Circle().stroke(Color.mastilo, lineWidth: 1.5)).frame(width: 10, height: 10).padding(.top, 6)
+                    Text(t).font(.tekst(15)).foregroundStyle(Color.mastilo).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 }
 

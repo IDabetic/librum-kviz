@@ -67,7 +67,7 @@ struct ProfilView: View {
                 }
                 NavigationLink { BedzeviView() } label: { bedzevi }.buttonStyle(.plain)
                 VStack(spacing: 0) {
-                    RedListe(ikonica: "lifepreserver", naziv: "Pomoć danas", vrednost: "\(napredak.pomociOstalo()) od \(Napredak.pomociDnevno)", strelica: false)
+                    RedListe(ikonica: "lifepreserver", naziv: "Pomoć danas", vrednost: "\(napredak.pomociOstalo()) od \(napredak.fondPomoci)", strelica: false)
                     Divider().overlay(Color.kremTamnija)
                     NavigationLink { IgraciView() } label: { RedListe(ikonica: "person.2", naziv: "Igrači i praćenje") }
                     Divider().overlay(Color.kremTamnija)

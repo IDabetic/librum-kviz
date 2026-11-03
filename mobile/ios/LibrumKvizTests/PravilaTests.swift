@@ -340,3 +340,24 @@ final class SatPotezaTests: XCTestCase {
         XCTAssertEqual(s.isteklo(ja).propusteno?[ja], 0)
     }
 }
+
+/// Napredak (docs/NAPREDAK.md): XP, titule i dnevni fond pomoći.
+@MainActor
+final class NapredakPravilaTests: XCTestCase {
+    func testXpINiz() {
+        XCTAssertEqual(Napredak.xpZaPartiju(tacnih: 8, pobeda: false, niz: 1), 100)
+        XCTAssertEqual(Napredak.xpZaPartiju(tacnih: 8, pobeda: true, niz: 1), 150)
+        XCTAssertEqual(Napredak.xpZaPartiju(tacnih: 8, pobeda: false, niz: 11), 150)
+        XCTAssertEqual(Napredak.xpZaPartiju(tacnih: 8, pobeda: false, niz: 40), 150)
+    }
+    func testFondPomoci() {
+        XCTAssertEqual(Napredak.fond(nivo: 1, niz: 1), 7)
+        XCTAssertEqual(Napredak.fond(nivo: 6, niz: 3), 9)
+        XCTAssertEqual(Napredak.fond(nivo: 30, niz: 7), 12)
+    }
+    func testTitule() {
+        XCTAssertEqual(Napredak.titula(1), "Početnik")
+        XCTAssertEqual(Napredak.titula(12), "Erudita")
+        XCTAssertEqual(Napredak.titula(40), "Legenda")
+    }
+}
