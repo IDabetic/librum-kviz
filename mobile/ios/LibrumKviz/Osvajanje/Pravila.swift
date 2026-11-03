@@ -56,7 +56,7 @@ enum Pravila {
     static let pocetneVojskeDrzave = 2
     static let neutralneVojske = 1
     static let najmanjePojacanja = 3
-    static let teritorijaPoVojsci = 3
+    static let teritorijaPoVojsci = 2
     /// Napada zaredom po potezu kad svako igra za sebe; u timu po igraču (tim = 2 × 2).
     static let bitakaPoPotezu = 5
     static let bitakaUTimuPoIgracu = 2

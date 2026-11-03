@@ -90,7 +90,9 @@ class PravilaTest {
         }
         assertEquals(true, poslednji?.proboj)
         val zev = napad(*Mapa.oblasti.filter { it.region == "zev" }.map { Triple(it.id, "ti", 1) }.toTypedArray())
-        assertEquals(3 + Mapa.regioni.first { it.id == "zev" }.bonus, zev.pojacanja("ti", true))
+        // Pojačanja = max(3, države / 2) + bonus kontinenta.
+        val drzava = Mapa.oblasti.count { it.region == "zev" }
+        assertEquals(maxOf(3, drzava / 2) + Mapa.regioni.first { it.id == "zev" }.bonus, zev.pojacanja("ti", true))
     }
 
     @Test fun celaPartijaBotova() {

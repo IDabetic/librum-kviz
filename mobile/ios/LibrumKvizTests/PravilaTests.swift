@@ -85,7 +85,10 @@ final class PravilaTests: XCTestCase {
         XCTAssertEqual(poslednji?.proboj, true)
         let zev = napad(Mapa.oblasti.filter { $0.region == "zev" }.map { ($0.id, "ti", 1) })
         let bonus = Mapa.regioni.first { $0.id == "zev" }!.bonus
-        XCTAssertEqual(zev.pojacanja("ti", tacno: true), 3 + bonus)
+        // Pojačanja = max(3, države / 2) + bonus kontinenta; netačan odgovor daje pola.
+        let drzava = Mapa.oblasti.filter { $0.region == "zev" }.count
+        XCTAssertEqual(zev.pojacanja("ti", tacno: true), max(3, drzava / 2) + bonus)
+        XCTAssertEqual(napad((0..<20).map { (Mapa.oblasti[$0 * 7].id, "ti", 1) }).pojacanja("ti", tacno: true) >= 10, true)
     }
 
     func testCelaPartijaBotova() {

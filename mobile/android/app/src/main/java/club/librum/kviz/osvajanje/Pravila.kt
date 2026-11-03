@@ -59,7 +59,7 @@ object Pravila {
     const val POCETNE_VOJSKE_DRZAVE = 2
     const val NEUTRALNE_VOJSKE = 1
     const val NAJMANJE_POJACANJA = 3
-    const val TERITORIJA_PO_VOJSCI = 3
+    const val TERITORIJA_PO_VOJSCI = 2
     /** Napada zaredom po potezu kad svako igra za sebe; u timu po igraču (tim = 2 × 2). */
     const val BITAKA_PO_POTEZU = 5
     const val BITAKA_U_TIMU_PO_IGRACU = 2
