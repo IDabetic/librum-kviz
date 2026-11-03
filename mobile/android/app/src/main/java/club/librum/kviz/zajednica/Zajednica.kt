@@ -277,7 +277,7 @@ fun KarticaObjave(sesija: Sesija, o: Zajednica.Objava, idi: (String) -> Unit, ko
         }
         if (!o.moja && nalog != null && (o.vrsta == "poziv_duel" || o.vrsta == "poziv_tim")) {
             Dugme(if (o.vrsta == "poziv_duel") "Prihvati duel" else "Javi se", vrsta = VrstaDugmeta.ZUTO) {
-                if (o.vrsta == "poziv_duel") idi("duel") else idi("razgovor/${o.ko}/${o.nadimak}")
+                if (o.vrsta == "poziv_duel") idi("duel/izazov/${o.ko}") else idi("razgovor/${o.ko}/${o.nadimak}")
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(22.dp)) {
@@ -606,7 +606,7 @@ fun SanduceEkran(sesija: Sesija, idi: (String) -> Unit, nazad: () -> Unit) {
                     Row(
                         Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(20.dp))
                             .border(if (r.novo) 2.5.dp else 1.5.dp, if (r.novo) Boje.mastilo else Boje.kremTamnija, RoundedCornerShape(20.dp))
-                            .clickable(enabled = r.vrsta != "ishod") { if (r.vrsta == "izazov" && r.kod_sobe != null) idi("duel") else idi("igrac/${r.ko}") }
+                            .clickable(enabled = r.vrsta != "ishod") { if (r.vrsta == "izazov" && r.kod_sobe != null) idi("duel/kod/${r.kod_sobe}") else idi("igrac/${r.ko}") }
                             .padding(14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {

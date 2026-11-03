@@ -80,6 +80,7 @@ data class Soba(
     val host_score: Int? = null,
     val guest_score: Int? = null,
     val total_questions: Int? = null,
+    val game_format: String? = null,
 )
 
 /** Tok duela: soba, čekanje rivala, pitanja, otkrivanje i kraj; soba se osvežava svake sekunde. */
@@ -92,7 +93,59 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
         const val BONUS_NAPUSTANJA = 50
         const val SEKUNDI = 15
         val FORMATI = listOf(10 to "Brzi duel", 25 to "Standardni duel", 50 to "Veliki duel")
+        /** Izazov bez čekanja: izazivač odigra odmah, rival kad stigne (do 24 h); ishod kad oba završe. */
+        const val FORMAT_IZAZOVA = "izazov"
+        const val PITANJA_IZAZOVA = 10
+        private fun noviKod() = (1..5).map { "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".random() }.joinToString("")
     }
+
+    val jeIzazov get() = soba?.game_format == FORMAT_IZAZOVA
+    /** Izazivač je odigrao, rival još nije. */
+    val cekaRivala get() = jeIzazov && jaSamDomacin && (soba?.guest_answers.orEmpty().size < ukupno)
+
+    /** Izazov za igrača: soba je odmah „playing”, rival je upisan, ja igram svojih 10 pitanja sad; rival dobija obaveštenje. */
+    fun izazovi(rival: String) = viewModelScope.launch {
+        val id = sesija.nalog.value?.id ?: return@launch
+        val token = sesija.vazeciToken() ?: return@launch
+        radi = true
+        runCatching {
+            val p = Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_pitanja", mapOf("p_igra" to "opste", "p_broj" to PITANJA_IZAZOVA + 5), token))
+                .take(PITANJA_IZAZOVA)
+            require(p.size >= PITANJA_IZAZOVA) { "Nema dovoljno pitanja za duel." }
+            val s = dekoduj(Supabase.upisiVrati("game_rooms", mapOf(
+                "room_code" to noviKod(), "host_id" to id, "guest_id" to rival, "question_ids" to p.map { it.id }, "total_questions" to PITANJA_IZAZOVA,
+                "status" to "playing", "game_format" to FORMAT_IZAZOVA, "quiz_type" to "pro", "game_start_time" to Instant.now().toString(),
+            ), token)).first()
+            soba = s; pitanja = p
+            runCatching { Supabase.upisi("izazovi", mapOf("od" to id, "za" to rival, "igra" to "duel", "kod_sobe" to s.room_code), token) }
+            faza = Faza.IGRA; pocetakPitanja = System.currentTimeMillis()
+            pratiSobu()
+        }.onFailure { greska = it.message }
+        radi = false
+    }
+
+    data class MojIzazov(val soba: Soba, val rival: String, val rivalIme: String, val ja: Int, val on: Int, val zavrsen: Boolean, val naMeni: Boolean)
+    @Serializable private data class ImeIgraca(val id: String, val nickname: String? = null, val first_name: String? = null)
+
+    /** Moji izazovi (poslati i primljeni, 7 dana) za lobi: ko čeka koga i ishod. */
+    suspend fun mojiIzazovi(): List<MojIzazov> = runCatching {
+        val id = sesija.nalog.value?.id ?: return emptyList()
+        val token = sesija.vazeciToken() ?: return emptyList()
+        val sobe = dekoduj(Supabase.citaj("game_rooms", listOf(
+            "select" to "*", "game_format" to "eq.$FORMAT_IZAZOVA", "or" to "(host_id.eq.$id,guest_id.eq.$id)",
+            "created_at" to "gte.${Instant.now().minusSeconds(7 * 86_400)}", "order" to "created_at.desc", "limit" to "20",
+        ), token))
+        val drugi = sobe.mapNotNull { if (it.host_id == id) it.guest_id else it.host_id }.toSet()
+        val ime = if (drugi.isEmpty()) emptyMap() else Supabase.json.decodeFromString<List<ImeIgraca>>(Supabase.citaj("public_profiles",
+            listOf("select" to "id,nickname,first_name", "id" to "in.(${drugi.joinToString(",")})"), token)).associate { it.id to (it.nickname ?: it.first_name ?: "Igrač") }
+        sobe.map { s ->
+            val domacin = s.host_id == id
+            val rival = (if (domacin) s.guest_id else s.host_id).orEmpty()
+            val gostOdigrao = s.guest_answers.orEmpty().size >= (s.total_questions ?: PITANJA_IZAZOVA)
+            MojIzazov(s, rival, ime[rival] ?: "Igrač", (if (domacin) s.host_score else s.guest_score) ?: 0,
+                (if (domacin) s.guest_score else s.host_score) ?: 0, gostOdigrao, !domacin && !gostOdigrao)
+        }
+    }.getOrDefault(emptyList())
 
     var faza by mutableStateOf(Faza.LOBI); private set
     var soba by mutableStateOf<Soba?>(null); private set
@@ -154,6 +207,18 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
         runCatching {
             val s = dekoduj(Supabase.citaj("game_rooms", listOf("select" to "*", "room_code" to "eq.$k"), token)).firstOrNull()
                 ?: error("Soba sa tim kodom ne postoji.")
+            if (s.game_format == FORMAT_IZAZOVA) {
+                // Izazov: igram ista pitanja; izazivačevi odgovori su već tu, pa se svaka runda otkriva čim odgovorim.
+                check(s.guest_id == id) { "Ovaj izazov nije za tebe." }
+                check(s.guest_answers.orEmpty().size < (s.total_questions ?: PITANJA_IZAZOVA)) { "Ovaj izazov si već odigrao." }
+                soba = s
+                val p = Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_pitanja_po_id", mapOf("p_igra" to "pro", "p_ids" to s.question_ids), token)).associateBy { it.id }
+                pitanja = s.question_ids.mapNotNull { p[it] }
+                tekuce = s.guest_answers.orEmpty().size
+                faza = Faza.IGRA; pocetakPitanja = System.currentTimeMillis()
+                pratiSobu()
+                return@runCatching
+            }
             check(s.status == "waiting") { "Igra je već počela ili završena." }
             check(s.host_id != id) { "Ne možeš da se pridružiš sopstvenoj sobi." }
             soba = dekoduj(Supabase.azuriraj("game_rooms", listOf("room_code" to "eq.$k", "guest_id" to "is.null"), mapOf("guest_id" to id), token))
@@ -189,10 +254,11 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
         soba = nova
         when {
             faza == Faza.CEKANJE && nova.status == "playing" -> { faza = Faza.IGRA; pocetakPitanja = System.currentTimeMillis() }
-            faza == Faza.IGRA && nova.status == "finished" -> { rivalOtisao = true; zavrsi() }
+            faza == Faza.IGRA && nova.status == "finished" && !jeIzazov -> { rivalOtisao = true; zavrsi() }
             faza == Faza.IGRA && !otkriveno -> {
                 val isteklo = System.currentTimeMillis() - pocetakPitanja >= rokMs
-                if ((odgovorioSam && odgovorioJe) || isteklo) otkrij()
+                // U izazovu rival ne igra uživo: runda se otkriva čim ja odgovorim.
+                if ((odgovorioSam && (odgovorioJe || jeIzazov)) || isteklo) otkrij()
             }
             else -> Unit
         }
@@ -218,9 +284,12 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
         if (faza != Faza.IGRA) return
         val sledeci = tekuce + 1
         // Posle glavnog dela: nerešeno ide na zlatno pitanje dok ih ima.
-        if (sledeci >= ukupno && !(mojiPoeni == njegoviPoeni && sledeci < pitanja.size)) {
+        // Izazov nema zlatno pitanje: rival nije tu da ga odigra.
+        if (sledeci >= ukupno && (jeIzazov || !(mojiPoeni == njegoviPoeni && sledeci < pitanja.size))) {
+            // Izazivač samo označava da je završio; sobu zatvara rival kad odigra.
+            val polja = if (jeIzazov && jaSamDomacin) mapOf("host_finished" to true) else if (jeIzazov) mapOf("guest_finished" to true, "status" to "finished") else mapOf("status" to "finished")
             viewModelScope.launch {
-                sesija.vazeciToken()?.let { t -> runCatching { Supabase.azuriraj("game_rooms", filterId(), mapOf("status" to "finished"), t) } }
+                sesija.vazeciToken()?.let { t -> runCatching { Supabase.azuriraj("game_rooms", filterId(), polja, t) } }
                 zavrsi()
             }
             return
@@ -234,6 +303,8 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
     suspend fun napusti() {
         osvezavanje?.cancel()
         if (soba == null || faza == Faza.LOBI || faza == Faza.KRAJ) return
+        // Izazov se ne zatvara izlaskom: odgovoreno ostaje, ostatak se računa kao istek.
+        if (jeIzazov) return
         val token = sesija.vazeciToken() ?: return
         val polja = mutableMapOf<String, Any?>("status" to "finished")
         if (faza == Faza.IGRA) polja[if (jaSamDomacin) "guest_score" else "host_score"] = njegoviPoeni + BONUS_NAPUSTANJA
@@ -252,10 +323,14 @@ class DuelModel(private val sesija: Sesija) : ViewModel() {
 
 /** Trivia duel: napravi sobu ili uđi kodom, pa ista pitanja jedan na jedan. */
 @Composable
-fun DuelEkran(sesija: Sesija, izadji: () -> Unit) {
+fun DuelEkran(sesija: Sesija, izazovi: String? = null, kodSobe: String? = null, izadji: () -> Unit) {
     val opseg = rememberCoroutineScope()
     var kljuc by remember { mutableIntStateOf(0) }
     val m: DuelModel = viewModel(key = "duel-$kljuc") { DuelModel(sesija) }
+    LaunchedEffect(kljuc) {
+        if (kljuc != 0 || m.faza != DuelModel.Faza.LOBI) return@LaunchedEffect
+        if (izazovi != null) m.izazovi(izazovi) else if (kodSobe != null) { m.kod = kodSobe; m.pridruzi() }
+    }
     var potvrda by remember { mutableStateOf(false) }
     val nalog = sesija.nalog.value
     BackHandler { if (m.faza == DuelModel.Faza.IGRA) potvrda = true else opseg.launch { m.napusti(); izadji() } }
@@ -285,7 +360,10 @@ fun DuelEkran(sesija: Sesija, izadji: () -> Unit) {
                 Column(Modifier.align(Alignment.Center).padding(20.dp).pop().padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     MaskotaSlika(if (pobeda) Maskota.BLOOP else Maskota.ZIG, 120.dp)
-                    Text(if (m.mojiPoeni == m.njegoviPoeni) "Nerešeno!" else if (pobeda) "Pobeda!" else "Poraz", style = naslov(40.sp))
+                    if (m.cekaRivala) {
+                        Text("Odigrao si!", style = naslov(40.sp))
+                        Text("Rival ima 24 h da odigra ista pitanja. Ishod stiže u Sanduče.", style = tekst(15.sp, boja = Boje.sivaTekst))
+                    } else Text(if (m.mojiPoeni == m.njegoviPoeni) "Nerešeno!" else if (pobeda) "Pobeda!" else "Poraz", style = naslov(40.sp))
                     if (m.rivalOtisao) Text("Rival je napustio duel.", style = tekst(15.sp, boja = Boje.sivaTekst))
                     Rezultati(m)
                     Dugme("Novi duel", vrsta = VrstaDugmeta.ZUTO) { kljuc++ }
@@ -335,6 +413,34 @@ private fun Lobi(m: DuelModel, izadji: () -> Unit) {
             Dugme("Uđi u sobu", omoguceno = !m.radi && m.kod.isNotBlank()) { m.pridruzi() }
         }
         m.greska?.let { Text(it, style = tekst(15.sp, FontWeight.SemiBold, Boje.crvena)) }
+        MojiIzazovi(m)
+    }
+}
+
+/** Poslati i primljeni izazovi: na meni je da igram, čekam rivala ili ishod. */
+@Composable
+private fun MojiIzazovi(m: DuelModel) {
+    var lista by remember { mutableStateOf<List<DuelModel.MojIzazov>>(emptyList()) }
+    LaunchedEffect(Unit) { lista = m.mojiIzazovi() }
+    if (lista.isEmpty()) return
+    Column(Modifier.fillMaxWidth().mirna().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Izazovi", style = naslov(24.sp))
+        lista.forEach { iz ->
+            Row(Modifier.fillMaxWidth().clickable(enabled = iz.naMeni) { m.kod = iz.soba.room_code; m.pridruzi() }.padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(iz.rivalIme, style = tekst(16.sp, FontWeight.SemiBold))
+                    Text(when {
+                        iz.naMeni -> "Izazvao te je · igraj sad"
+                        !iz.zavrsen -> "Čeka se rival"
+                        iz.ja > iz.on -> "Pobeda ${iz.ja} : ${iz.on}"
+                        iz.ja < iz.on -> "Poraz ${iz.ja} : ${iz.on}"
+                        else -> "Nerešeno ${iz.ja} : ${iz.on}"
+                    }, style = tekst(13.sp, if (iz.naMeni) FontWeight.Bold else FontWeight.Normal, if (iz.naMeni) Boje.teal else Boje.sivaTekst))
+                }
+                if (iz.naMeni) Text("›", style = tekst(22.sp, FontWeight.Bold))
+            }
+        }
     }
 }
 

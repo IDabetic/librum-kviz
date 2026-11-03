@@ -146,6 +146,8 @@ private fun Aplikacija() {
                 composable("brzi") { BrziKvizEkran(sesija) { nav.popBackStack() } }
                 composable("vesanje") { VesanjeEkran(sesija) { nav.popBackStack() } }
                 composable("duel") { DuelEkran(sesija) { nav.popBackStack() } }
+                composable("duel/izazov/{id}") { e -> DuelEkran(sesija, izazovi = e.arguments?.getString("id")) { nav.popBackStack() } }
+                composable("duel/kod/{kod}") { e -> DuelEkran(sesija, kodSobe = e.arguments?.getString("kod")) { nav.popBackStack() } }
             }
         }
     }

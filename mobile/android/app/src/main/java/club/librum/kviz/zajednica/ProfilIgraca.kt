@@ -170,7 +170,7 @@ fun ProfilIgracaEkran(sesija: Sesija, id: String, idi: (String) -> Unit, nazad: 
                             Dugme(if (pr.ja_pratim) "Pratiš" else "Prati", Modifier.weight(1f), if (pr.ja_pratim) VrstaDugmeta.SEKUNDARNO else VrstaDugmeta.PRIMARNO) {
                                 opseg.launch { if (Drustvo.prati(sesija, id, !pr.ja_pratim)) ucitaj() }
                             }
-                            Dugme("Izazovi", Modifier.weight(1f), VrstaDugmeta.ZUTO) { idi("duel") }
+                            Dugme("Izazovi", Modifier.weight(1f), VrstaDugmeta.ZUTO) { idi("duel/izazov/$id") }
                             KockaIkonica(Icons.AutoMirrored.Rounded.Send, "Pošalji poruku") { idi("razgovor/$id/${pr.nadimak}") }
                             KockaIkonica(Icons.Rounded.Block, "Blokiraj") { blokada = true }
                         }
