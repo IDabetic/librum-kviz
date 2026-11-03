@@ -109,7 +109,11 @@ def problemi_prevoda(polja):
 
 def obradi(xlsx, postojeca, izlaz):
     wb = openpyxl.load_workbook(xlsx, read_only=True)
-    redovi = list(wb.worksheets[0].iter_rows(values_only=True))[1:]
+    sve = list(wb.worksheets[0].iter_rows(values_only=True))
+    zaglavlje, redovi = sve[0], sve[1:]
+    # Drugi oblik (srbija-kviz.xlsx): #, Kategorija, Podkategorija, Pitanje, Tačan, Netačan 1–3; kategorija je već data.
+    sa_kategorijom = len(zaglavlje) > 2 and str(zaglavlje[1]).lower() == "kategorija"
+    izvor_fajla = Path(xlsx).stem
     vidjeno = {kljuc(t["t"]) for t in postojeca}
     u_fajlu = set()
     razlozi = Counter()
@@ -117,7 +121,12 @@ def obradi(xlsx, postojeca, izlaz):
     kategorije = Counter()
     uvoz, pregled = [], []
     for r in redovi:
-        rid, izvor, pitanje, tacan, n1, n2, n3, napomena = (list(r) + [None] * 8)[:8]
+        data_kat = podkat = None
+        if sa_kategorijom:
+            rid, data_kat, podkat, pitanje, tacan, n1, n2, n3 = (list(r) + [None] * 8)[:8]
+            izvor, napomena = izvor_fajla, None
+        else:
+            rid, izvor, pitanje, tacan, n1, n2, n3, napomena = (list(r) + [None] * 8)[:8]
         pitanje, tacan = veliko_prvo(u_latinicu(ocisti(pitanje))), veliko_prvo(u_latinicu(ocisti(tacan)))
         netacni = [veliko_prvo(u_latinicu(ocisti(x))) for x in (n1, n2, n3)]
         razlog = None
@@ -147,11 +156,11 @@ def obradi(xlsx, postojeca, izlaz):
             continue
         u_fajlu.add(k)
         vidjeno.add(kljuc(pitanje))
-        kat = kategorija(pitanje, tacan)
+        kat = ocisti(data_kat).lower() if data_kat else kategorija(pitanje, tacan)
         kategorije[kat] += 1
         po_izvoru[izvor] += 1
         uvoz.append({"id": rid, "izvor": izvor, "pitanje": pitanje, "tacan": tacan, "netacni": netacni, "kategorija": kat,
-                     "tezina": "hard" if izvor in ("HKS",) else "medium"})
+                     "podkategorija": ocisti(podkat) or None, "tezina": "hard" if izvor in ("HKS",) else "medium"})
     izlaz.mkdir(parents=True, exist_ok=True)
     with open(izlaz / "uvoz.jsonl", "w") as f:
         for u in uvoz:

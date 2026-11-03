@@ -1,0 +1,23 @@
+{
+  "ulaz": 10066,
+  "za_uvoz": 10056,
+  "odbaceno": {
+    "prevod": 8,
+    "duplikat": 1,
+    "dužina": 1
+  },
+  "po_izvoru": {
+    "srbija-kviz": 10056
+  },
+  "kategorije": {
+    "geografija": 2394,
+    "ličnosti": 1889,
+    "kultura": 1836,
+    "jezik": 1794,
+    "istorija": 944,
+    "sport": 779,
+    "tradicija": 265,
+    "opšte znanje": 79,
+    "nauka": 76
+  }
+}
