@@ -15,6 +15,8 @@ data class Nalog(val id: String, val email: String?, val nadimak: String?, val a
  * nedostupnim drugim aplikacijama; osvežavaju se pred istek.
  */
 class Sesija(context: Context) {
+    init { Supabase.tokenIgraca = { vazeciToken() } }
+
     private val prefs = context.getSharedPreferences("sesija", Context.MODE_PRIVATE)
     private var token: Token? = prefs.getString("token", null)?.let { runCatching { Supabase.json.decodeFromString<Token>(it) }.getOrNull() }
     private val _nalog = MutableStateFlow(token?.let { Nalog(it.user.id, it.user.email, prefs.getString("nadimak", null)) })

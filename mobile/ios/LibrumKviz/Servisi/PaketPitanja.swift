@@ -52,7 +52,9 @@ actor PaketPitanja {
 
     /// Svež paket ako mreža radi, inače keš, inače rezerva ugrađena u aplikaciju.
     func ucitaj(_ fond: Fond = .opste) async throws -> [Pitanje] {
-        if let svez: [Pitanje] = try? await Supabase.deljeni.rpc("aplikacija_pitanja", ["p_igra": fond.rawValue, "p_broj": velicina]) {
+        // Sa tokenom server zna igrača: 7 dana ne šalje ista pitanja (scripts/2026-11-03_vidjena-pitanja.sql).
+        let token = try? await Sesija.trenutna?.vazeciToken()
+        if let svez: [Pitanje] = try? await Supabase.deljeni.rpc("aplikacija_pitanja", ["p_igra": fond.rawValue, "p_broj": velicina], token: token) {
             let ispravna = svez.filter { $0.options.count == 4 && (0..<4).contains($0.correct_answer) }
             if !ispravna.isEmpty {
                 try? JSONEncoder().encode(ispravna).write(to: fajl(fond), options: .atomic)
@@ -90,7 +92,7 @@ actor PaketPitanja {
         var parametri: [String: Any] = ["p_fond": fond.rawValue, "p_broj": broj]
         if let zanr { parametri["p_zanr"] = zanr }
         if tesko { parametri["p_tezina"] = "tesko" }
-        if let svez: [Pitanje] = try? await Supabase.deljeni.rpc("aplikacija_kviz", parametri) {
+        if let svez: [Pitanje] = try? await Supabase.deljeni.rpc("aplikacija_kviz", parametri, token: try? await Sesija.trenutna?.vazeciToken()) {
             let ispravna = svez.filter { $0.options.count == 4 && (0..<4).contains($0.correct_answer) }
             if ispravna.count >= min(broj, 5) { return ispravna }
         }

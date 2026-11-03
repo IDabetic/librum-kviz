@@ -40,7 +40,7 @@ class PaketPitanja(private val context: Context) {
     suspend fun ucitaj(fond: Fond = Fond.OPSTE): List<Pitanje> = withContext(Dispatchers.IO) {
         val kes = fajl(if (fond == Fond.OPSTE) "paket-pitanja.json" else "paket-${fond.kljuc}.json")
         val svez = runCatching {
-            Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_pitanja", mapOf("p_igra" to fond.kljuc, "p_broj" to 60)))
+            Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_pitanja", mapOf("p_igra" to fond.kljuc, "p_broj" to 60), runCatching { Supabase.tokenIgraca?.invoke() }.getOrNull()))
                 .filter { it.options.size == 4 && it.correct_answer in 0..3 }
         }.getOrNull()
         if (!svez.isNullOrEmpty()) {
@@ -83,7 +83,7 @@ class PaketPitanja(private val context: Context) {
 /** Kviz po temi (RPC aplikacija_kviz): 10 pitanja iz fonda, žanra ili samo teških; bez mreže iz keša/rezerve istog fonda. */
 suspend fun PaketPitanja.temaKviz(fond: Fond, zanr: String? = null, tesko: Boolean = false, broj: Int = 10): List<Pitanje> {
     val parametri = buildMap<String, Any?> { put("p_fond", fond.kljuc); put("p_broj", broj); zanr?.let { put("p_zanr", it) }; if (tesko) put("p_tezina", "tesko") }
-    runCatching { Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_kviz", parametri)) }.getOrNull()
+    runCatching { Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_kviz", parametri, runCatching { Supabase.tokenIgraca?.invoke() }.getOrNull())) }.getOrNull()
         ?.filter { it.options.size == 4 && it.correct_answer in 0..3 }?.takeIf { it.size >= minOf(broj, 5) }?.let { return it }
     val rezerva = ucitaj(fond).filter { zanr == null || it.genre == zanr }
     if (rezerva.isEmpty()) error("Za ovu temu nema sačuvanih pitanja. Poveži se na internet i pokušaj ponovo.")

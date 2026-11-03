@@ -309,3 +309,34 @@ final class BotTests: XCTestCase {
         XCTAssertLessThan(s.ocenaNapada(odakle: "FRA", kuda: "DEU"), 0)
     }
 }
+
+/// Sat poteza: tri isteka zaredom bez napada izbacuju igrača; napad briše niz.
+final class SatPotezaTests: XCTestCase {
+    func testTriIstekaIzbacuju() {
+        var r = Slucajno(seme: 5)
+        var s = Stanje.nova(krugova: 12, tezina: .normalno, slucajno: &r)
+        s.faza = .napad
+        let ja = s.trenutni.id
+        let tim = s.trenutni.tim
+        for i in 1...3 {
+            s = s.isteklo(ja)
+            XCTAssertEqual(s.propusteno?[ja], i)
+            // Ostali igrači odigraju svoje poteze, pa je opet red na mene.
+            while s.trenutni.id != ja && s.faza != .kraj { s = s.zavrsiPotez() }
+            s.faza = .napad
+        }
+        XCTAssertTrue(s.igraci.first { $0.id == ja }!.ispao)
+        XCTAssertFalse(s.oblasti.values.contains { $0.vlasnik == tim })
+    }
+
+    func testNapadBriseNiz() {
+        var r = Slucajno(seme: 5)
+        var s = Stanje.nova(krugova: 12, tezina: .normalno, slucajno: &r)
+        s.faza = .napad
+        let ja = s.trenutni.id
+        s = s.isteklo(ja)
+        while s.trenutni.id != ja { s = s.zavrsiPotez() }
+        s.faza = .napad; s.bitaka = 1
+        XCTAssertEqual(s.isteklo(ja).propusteno?[ja], 0)
+    }
+}

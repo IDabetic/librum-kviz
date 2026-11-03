@@ -54,6 +54,10 @@ enum Pravila {
     static let pocetneVojskePrestonice = 5
     static let pocetnihDrzava = 6
     static let pocetneVojskeDrzave = 2
+    /// Vreme za odluku na potezu; svaki dodir ga produžava.
+    static let rokPotezaSekundi = 30
+    /// Tri poteza zaredom bez napada (isteklo vreme) = igrač nije u igri i ispada.
+    static let propustenihDoIspadanja = 3
     /// Vojske koje igrač sam raspoređuje na početne države pre prvog kruga (isto koliko dobija i automatski).
     static var vojskiNaPocetku: Int { pocetneVojskePrestonice + (pocetnihDrzava - 1) * pocetneVojskeDrzave }
     static let neutralneVojske = 1
@@ -228,6 +232,8 @@ struct Stanje: Equatable, Codable {
     var tacnih: [String: Int] = [:]
     var pobednik: String?
     var bonusPomoci: [String: Int] = [:]
+    /// Potezi zaredom bez napada (isteklo vreme); na treći igrač ispada. Opciono, da stara stanja sa servera i dalje čitaju.
+    var propusteno: [String: Int]?
 
     var trenutni: Igrac { igraci[naPotezu] }
 
@@ -471,6 +477,23 @@ struct Stanje: Equatable, Codable {
         s.oblasti[odakle]!.vojske -= n
         s.oblasti[kuda]!.vojske += n
         return s
+    }
+
+    /// Isteklo vreme na potezu igrača `id`: bez ijednog napada to je propušten potez; treći zaredom ga izbacuje,
+    /// a države njegovog tima (ako niko iz tima nije ostao) postaju neutralne sa pola vojske. Napad u potezu briše niz.
+    func isteklo(_ id: String) -> Stanje {
+        var s = self
+        var p = s.propusteno ?? [:]
+        p[id] = bitaka > 0 ? 0 : (p[id] ?? 0) + 1
+        s.propusteno = p
+        if (p[id] ?? 0) >= Pravila.propustenihDoIspadanja, let i = s.igraci.firstIndex(where: { $0.id == id }) {
+            s.igraci[i].ispao = true
+            let tim = s.igraci[i].tim
+            if !s.igraci.contains(where: { $0.tim == tim && !$0.ispao }) {
+                for (k, o) in s.oblasti where o.vlasnik == tim { s.oblasti[k] = StanjeOblasti(vlasnik: nil, vojske: max(1, o.vojske / 2)) }
+            }
+        }
+        return s.zavrsiPotez()
     }
 
     func zavrsiPotez() -> Stanje {

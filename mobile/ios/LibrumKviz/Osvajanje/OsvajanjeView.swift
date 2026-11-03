@@ -36,6 +36,9 @@ struct OsvajanjeIgraView: View {
             }
         }
         .task(id: ObjectIdentifier(model)) { await model.pokreni() }
+        // Ekran ne sme da se ugasi usred poteza (gašenje je izbacivalo iz partije).
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .task(id: ObjectIdentifier(model)) { await model.slusaj() }
         .overlay { pitanje }
         .overlay { if let b = model.bitka { BitkaView(model: model, bitka: b) } }
@@ -124,8 +127,19 @@ struct OsvajanjeIgraView: View {
                 .padding(.horizontal, 12)
 
             VStack(spacing: 10) {
-                Text(model.uputstvo).font(.tekst(15, .semibold)).frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityAddTraits(.updatesFrequently)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(model.uputstvo).font(.tekst(15, .semibold)).frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityAddTraits(.updatesFrequently)
+                    if let rok = model.rokPoteza {
+                        // Odbrojavanje poteza: poslednjih 10 sekundi crveno.
+                        TimelineView(.periodic(from: .now, by: 1)) { kontekst in
+                            let ostalo = max(0, Int(rok.timeIntervalSince(kontekst.date).rounded(.up)))
+                            Text("\(ostalo) s").font(.naslov(18)).monospacedDigit()
+                                .foregroundStyle(ostalo <= 10 ? Color.crvena : Color.sivaTekst)
+                                .accessibilityLabel("Još \(ostalo) sekundi za potez")
+                        }
+                    }
+                }
                 if let p = model.postavljanje {
                     HStack(spacing: 10) {
                         Button("Ispočetka") { model.ponistiPostavljanje() }.buttonStyle(.sekundarno).disabled(p.drzave.isEmpty)

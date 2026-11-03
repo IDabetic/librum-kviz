@@ -122,6 +122,7 @@ final class OsvajanjeModel {
             guard let novo = a.stanje else { return }
             stanje = lokalizuj(novo)
             if cekaPocetak { cekaPocetak = false; spremno = !spil.prazan }
+            pratiUdaljenog()
             pocniPotezAkoTreba()
         case "bitka":
             guard let odakle = a.odakle, let kuda = a.kuda, let skor = a.skor, bitka == nil,
@@ -217,6 +218,7 @@ final class OsvajanjeModel {
     // MARK: Čovek
 
     func dodir(_ id: String) {
+        produziSat()
         if postavljanje != nil { dodirPostavljanja(id); return }
         guard covekNaPotezu, otvoreno == nil, let oblast = stanje.oblasti[id] else { return }
         let moja = oblast.vlasnik == stanje.trenutni.tim
@@ -317,6 +319,72 @@ final class OsvajanjeModel {
         return stanje.oblastiIgraca(stanje.trenutni.id).filter { !stanje.mete($0).isEmpty }
     }
 
+    // MARK: Sat poteza (30 s, svaki dodir produžava; tri isteka bez napada = ispadanje)
+
+    private(set) var rokPoteza: Date?
+    private var satPoteza: Task<Void, Never>?
+    /// Domaćin prati i poteze igrača sa drugih telefona: ako se ne jave u roku (+15 s za mrežu), potez je propušten.
+    private var pocetakUdaljenogPoteza: (krug: Int, igrac: Int, kad: Date)?
+
+    private func pokreniSat() {
+        rokPoteza = Date().addingTimeInterval(TimeInterval(Pravila.rokPotezaSekundi))
+        satPoteza?.cancel()
+        satPoteza = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                self?.proveriSat()
+            }
+        }
+    }
+
+    /// Domaćin meri koliko dugo se igrač sa drugog telefona ne javlja; svako njegovo stanje vraća sat na početak.
+    private func pratiUdaljenog() {
+        guard veza?.domacin == true, udaljen(stanje.trenutni), stanje.faza != .kraj else { return }
+        pocetakUdaljenogPoteza = (stanje.krug, stanje.naPotezu, Date())
+        if satPoteza == nil {
+            satPoteza = Task { [weak self] in
+                while !Task.isCancelled { try? await Task.sleep(for: .seconds(1)); self?.proveriSat() }
+            }
+        }
+    }
+
+    private func produziSat() {
+        if rokPoteza != nil { rokPoteza = Date().addingTimeInterval(TimeInterval(Pravila.rokPotezaSekundi)) }
+    }
+
+    private func proveriSat() {
+        // Udaljeni igrač koji se ne javlja: domaćin mu propušta potez, da partija ne stoji.
+        if veza?.domacin == true, let p = pocetakUdaljenogPoteza, udaljen(stanje.trenutni), stanje.faza != .kraj,
+           p.krug == stanje.krug, p.igrac == stanje.naPotezu,
+           Date().timeIntervalSince(p.kad) > TimeInterval(Pravila.rokPotezaSekundi + 15) {
+            pocetakUdaljenogPoteza = nil
+            let novo = stanje.isteklo(stanje.trenutni.id)
+            objavi(novo)
+            pocniPotez(novo)
+            return
+        }
+        guard let rok = rokPoteza else { return }
+        guard covekNaPotezu, stanje.faza == .napad else { rokPoteza = nil; return }
+        // Bitka i otvoreno pitanje imaju svoj sat; rok poteza čeka.
+        if bitka != nil || otvoreno != nil { produziSat(); return }
+        if Date() >= rok { istekaoPotez() }
+    }
+
+    private func istekaoPotez() {
+        rokPoteza = nil
+        let ja = stanje.trenutni
+        let novo = stanje.isteklo(ja.id)
+        izabrana = nil; meta = nil; utvrdjivanje = false
+        if novo.igraci.first(where: { $0.id == ja.id })?.ispao == true {
+            javi("Ispao si: tri poteza zaredom bez napada.")
+            if veza == nil { var kraj = novo; kraj.faza = .kraj; stanje = kraj; return }
+        } else if stanje.bitaka == 0 {
+            javi("Vreme je isteklo, potez prelazi dalje (\(novo.propusteno?[ja.id] ?? 0)/\(Pravila.propustenihDoIspadanja)).")
+        }
+        objavi(novo)
+        pocniPotez(novo)
+    }
+
     /// Potvrda napada sa panela mete.
     func napadni() {
         guard let izvor = izabrana, let kuda = meta, stanje.mete(izvor).contains(kuda) else { return }
@@ -335,6 +403,7 @@ final class OsvajanjeModel {
     }
 
     func krajPoteza() {
+        rokPoteza = nil
         izabrana = nil; utvrdjivanje = false
         let novo = stanje.zavrsiPotez()
         objavi(novo)
@@ -474,7 +543,8 @@ final class OsvajanjeModel {
         guard novo.faza == .snabdevanje else { return }
         zapocetPotez = (novo.krug, novo.naPotezu)
         // Pravi igrač sa drugog telefona igra sam; bota vodi samo domaćin.
-        if udaljen(novo.trenutni) || (veza != nil && !novo.trenutni.covek && veza?.domacin != true) { return }
+        if udaljen(novo.trenutni) { pratiUdaljenog(); return }
+        if veza != nil && !novo.trenutni.covek && veza?.domacin != true { return }
         if novo.trenutni.covek {
             // Potez čoveka počinje napadom (vlasnik 02.11): pojačanja stižu sama i idu na granice, bez pitanja.
             let tim = novo.trenutni.tim
@@ -483,6 +553,7 @@ final class OsvajanjeModel {
             let dobio = s.zaRaspored
             stanje = s.botRasporedi()
             javi("+\(dobio) vojski na granicama. Biraj odakle napadaš.")
+            pokreniSat()
         } else {
             Task { await potezBota() }
         }

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import SettingsForm from './SettingsForm'
 import PredloziPodesavanja, { type Vrednosti } from './PredloziPodesavanja'
+import MesanjeOdgovora from './MesanjeOdgovora'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +22,8 @@ export default async function AdminSettingsPage() {
     ? await supabase.from('admin_settings').select('key, value')
     : { data: [] as { key: string; value: string }[] }
   const pocetne: Vrednosti = Object.fromEntries((podesavanja ?? []).map(r => [r.key, r.value]))
+  const { data: mesanje } = await supabase.rpc('admin_poslednje_mesanje')
+  const poslednjeMesanje = (mesanje as { kad: string; pitanja: number }[] | null)?.[0] ?? null
 
   return (
     <div className="max-w-2xl space-y-5">
@@ -34,6 +37,8 @@ export default async function AdminSettingsPage() {
       </div>
 
       <SettingsForm profile={profile!} email={user!.email || ''} />
+
+      <MesanjeOdgovora poslednje={poslednjeMesanje} />
 
       {superAdmin && <PredloziPodesavanja pocetne={pocetne} />}
     </div>

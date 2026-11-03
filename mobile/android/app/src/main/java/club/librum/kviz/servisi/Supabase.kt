@@ -113,6 +113,9 @@ object Supabase {
         runCatching { zahtev("auth/v1/logout", "POST", token = token) }
     }
 
+    /** Token prijavljenog igrača za pakete pitanja (server tada 7 dana ne šalje ista pitanja); postavlja ga Sesija. */
+    var tokenIgraca: (suspend () -> String?)? = null
+
     suspend fun rpc(ime: String, parametri: Map<String, Any?> = emptyMap(), token: String? = null): String =
         zahtev("rest/v1/rpc/$ime", "POST", json.encodeToString(JsonElement.serializer(), uJson(parametri)), token)
 
