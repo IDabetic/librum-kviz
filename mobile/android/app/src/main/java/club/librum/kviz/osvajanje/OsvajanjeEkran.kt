@@ -186,9 +186,9 @@ fun OsvajanjeTokEkran(sesija: Sesija, izadji: () -> Unit) {
     var korak by remember { mutableStateOf(if (postavka?.traziIgrace == true) 0 else if (postavka?.teren == null) 1 else 2) }
     val p = postavka ?: run { izadji(); return }
     when (korak) {
-        0 -> Cekaonica(sesija, p, odustani = izadji) { nova -> postavka = nova; korak = if (nova.teren == null) 1 else 2 }
+        0 -> Cekaonica(sesija, p, odustani = izadji) { nova -> postavka = nova; korak = if (nova.teren == null && nova.soba == null) 1 else 2 }
         1 -> IzborKontinenata(p, izadji) { nova -> postavka = nova; korak = 2 }
-        else -> OsvajanjeIgra(p, izadji)
+        else -> OsvajanjeIgra(p, sesija, izadji)
     }
 }
 
@@ -225,12 +225,20 @@ private fun Cekaonica(sesija: Sesija, postavka: OsvajanjePostavka, odustani: () 
             Zvuk.stani(Zvuk.Vrsta.CEKANJE)
             Zvuk.pusti(Zvuk.Vrsta.BEDZ, 0.4f)
             // Pravi igrači sedaju na mesta botova redom; čovek ostaje prvi u svom timu.
-            // shortcut: potezi drugih igrača se još ne šalju preko servera, pa ih vodi bot sa njihovim imenom; sledeći korak je sinhronizacija poteza.
-            val drugi = soba!!.mesta.filter { it.user_id != sesija.nalog.value?.id }
+            // Isti id na svakom telefonu („u:<nalog>”, kao iOS), da partija preko servera zna ko je ko.
+            val ja = sesija.nalog.value?.id.orEmpty()
+            val s = soba!!
+            val drugi = s.mesta.filter { it.user_id != ja }.sortedBy { it.mesto }
             var i = 0
-            gotovo(postavka.copy(igraci = postavka.igraci.map { p ->
-                if (p.covek || i >= drugi.size) p else NoviIgrac("igrac$i", drugi[i].nadimak, p.boja, false, p.tim, p.kapiten).also { i++ }
-            }))
+            val igraci = postavka.igraci.map { p ->
+                when {
+                    p.covek -> p.copy(id = VezaOsvajanja.idIgraca(ja))
+                    i >= drugi.size -> p
+                    else -> NoviIgrac(VezaOsvajanja.idIgraca(drugi[i].user_id), drugi[i].nadimak, p.boja, false, p.tim, p.kapiten).also { i++ }
+                }
+            }
+            gotovo(if (drugi.isEmpty()) postavka.copy(igraci = postavka.igraci) else
+                postavka.copy(igraci = igraci, soba = s.id, korisnik = ja, domacin = s.mesta.firstOrNull { it.mesto == 0 }?.user_id == ja))
         } catch (e: CancellationException) {
             // Zatvorena čekaonica pre početka: mesto se oslobađa za druge.
             mojaSoba?.takeIf { soba?.status == "ceka" }?.let { s -> kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { runCatching { Supabase.rpc("osvajanje_napusti", mapOf("p_soba" to s.id), token) } } }
@@ -311,17 +319,18 @@ private fun KrugIzlaz(radnja: () -> Unit) {
 
 /** Partija: igrači gore, mapa u sredini, uputstvo i radnje dole, bitka preko svega. */
 @Composable
-fun OsvajanjeIgra(postavka: OsvajanjePostavka, izadji: () -> Unit) {
+fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: () -> Unit) {
     val kontekst = LocalContext.current.applicationContext
     val model: OsvajanjeModel = viewModel(key = "osvajanje-${postavka.hashCode()}") {
-        OsvajanjeModel(postavka.krugova, postavka.tezina, null, PaketPitanja(kontekst), postavka)
+        OsvajanjeModel(postavka.krugova, postavka.tezina, null, PaketPitanja(kontekst), postavka, sesija)
     }
     var potvrdaIzlaska by remember { mutableStateOf(false) }
     var misija by remember { mutableStateOf(false) }
     var videoMisiju by remember { mutableStateOf(false) }
     BackHandler { potvrdaIzlaska = true }
-    LaunchedEffect(model.spremno) {
-        if (!model.spremno || videoMisiju) return@LaunchedEffect
+    // Preko servera misija i mapa stižu sa domaćinovog telefona, pa list misije čeka prvo stanje.
+    LaunchedEffect(model.spremno, model.cekaPocetak) {
+        if (!model.spremno || model.cekaPocetak || videoMisiju) return@LaunchedEffect
         videoMisiju = true
         // Na jednom kontinentu nema tajne misije: cilj je ceo kontinent, partija kreće odmah.
         if (postavka.teren == null) misija = true else { model.zapocni(); model.javi("Cilj: osvoji ceo kontinent") }
@@ -338,6 +347,11 @@ fun OsvajanjeIgra(postavka: OsvajanjePostavka, izadji: () -> Unit) {
                 Text("Pitanja nisu stigla", style = naslov(26.sp))
                 Text(model.greska.orEmpty(), style = tekst(15.sp, boja = Boje.sivaTekst))
                 Dugme("Nazad", radnja = izadji)
+            }
+            model.cekaPocetak && model.spremno -> Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                CircularProgressIndicator(color = Boje.mastilo)
+                Text("Domaćin postavlja mapu…", style = tekst(16.sp, FontWeight.SemiBold, Boje.sivaTekst))
             }
             !model.spremno -> CircularProgressIndicator(Modifier.align(Alignment.Center).semantics { contentDescription = "Učitavanje pitanja" }, color = Boje.mastilo)
             else -> Igra(model, { misija = true }) { potvrdaIzlaska = true }

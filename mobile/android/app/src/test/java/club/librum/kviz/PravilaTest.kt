@@ -127,6 +127,37 @@ class PravilaTest {
 }
 
 /** Pravila ostalih igara, isti brojevi kao na vebu i iOS-u. */
+/** Stanje partije putuje između iOS-a i Androida (osvajanje_potezi): isti ključevi i vrednosti kao iOS Codable. */
+class FormatStanjaTest {
+    init { Mapa.ucitaj(java.io.File("../../../src/lib/osvajanje/svet.json").readText()) }
+    private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
+
+    @Test fun androidPiseKaoIos() {
+        val s = Stanje.nova(8, Tezina.NORMALNO, Slucajno(7), "Ti")
+            .let { it.copy(odbrane = mapOf("evr" to club.librum.kviz.osvajanje.Odbrana.BRZ_SAT)) }
+        val o = json.parseToJsonElement(json.encodeToString(Stanje.serializer(), s)).let { it as kotlinx.serialization.json.JsonObject }
+        assertEquals("\"snabdevanje\"", o["faza"].toString())
+        assertEquals("\"brzSat\"", (o["odbrane"] as kotlinx.serialization.json.JsonObject)["evr"].toString())
+        // iOS dekoder traži i prazne mape.
+        listOf("misije", "metaMisije", "promenaOdbrane", "tvrdjava", "tacnih", "bonusPomoci").forEach { assertTrue(it, o.containsKey(it)) }
+        val boja = ((o["igraci"] as kotlinx.serialization.json.JsonArray)[0] as kotlinx.serialization.json.JsonObject)["boja"].toString().toLong()
+        assertTrue("boja bez alfe", boja <= 0xFFFFFF)
+        assertEquals(s, json.decodeFromString(Stanje.serializer(), json.encodeToString(Stanje.serializer(), s)))
+    }
+
+    @Test fun androidCitaIos() {
+        val ios = """{"igraci":[{"id":"u:a","ime":"Ana","boja":1216638,"covek":false,"prestonica":"SRB","ispao":false,"tim":"A","kapiten":true}],
+            "oblasti":{"SRB":{"vlasnik":"A","vojske":5},"HRV":{"vojske":1}},"krug":2,"ukupnoKrugova":8,"naPotezu":0,"faza":"napad","zaRaspored":0,
+            "bitaka":1,"niz":0,"utvrdjeno":false,"tacnostBota":0.62,"misije":{},"metaMisije":{},"odbrane":{"evr":"tvrdjava"},"promenaOdbrane":{},
+            "tvrdjava":{},"tacnih":{"A":3},"bonusPomoci":{}}"""
+        val s = json.decodeFromString(Stanje.serializer(), ios)
+        assertEquals(Faza.NAPAD, s.faza)
+        assertEquals(0xFF12907E, s.igraci[0].boja)
+        assertEquals(null, s.oblasti["HRV"]?.vlasnik)
+        assertEquals(club.librum.kviz.osvajanje.Odbrana.TVRDJAVA, s.odbrane["evr"])
+    }
+}
+
 class IgreTest {
     @Test fun vesanjeSlovaIBonus() {
         val v = club.librum.kviz.igre.Vesanje("kiša")

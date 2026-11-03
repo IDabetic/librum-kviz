@@ -83,10 +83,18 @@ enum class Tezina(val tacnost: Double, val ime: String, val opis: String) {
     TESKO(0.75, "Teško", "Rivali znaju 3 od 4"),
 }
 
+/** Boja u JSON-u partije kao na iOS-u (0xRRGGBB, bez alfe); u aplikaciji 0xFFRRGGBB. */
+object BojaSerializer : kotlinx.serialization.KSerializer<Long> {
+    override val descriptor = kotlinx.serialization.descriptors.PrimitiveSerialDescriptor("Boja", kotlinx.serialization.descriptors.PrimitiveKind.LONG)
+    override fun serialize(encoder: kotlinx.serialization.encoding.Encoder, value: Long) = encoder.encodeLong(value and 0xFFFFFF)
+    override fun deserialize(decoder: kotlinx.serialization.encoding.Decoder): Long = 0xFF000000 or (decoder.decodeLong() and 0xFFFFFF)
+}
+
+@Serializable
 data class Igrac(
     val id: String,
     val ime: String,
-    val boja: Long,
+    @Serializable(with = BojaSerializer::class) val boja: Long,
     val covek: Boolean,
     val prestonica: String,
     val ispao: Boolean,
@@ -99,14 +107,17 @@ data class Igrac(
 /** Igrač za novu partiju (čekaonica): bez prestonice, ona se bira na početku. */
 data class NoviIgrac(val id: String, val ime: String, val boja: Long, val covek: Boolean, val tim: String? = null, val kapiten: Boolean = true)
 
-data class StanjeOblasti(val vlasnik: String?, val vojske: Int)
+@Serializable data class StanjeOblasti(val vlasnik: String? = null, val vojske: Int)
 
-enum class Faza { SNABDEVANJE, RASPORED, NAPAD, KRAJ }
+@Serializable enum class Faza {
+    @kotlinx.serialization.SerialName("snabdevanje") SNABDEVANJE, @kotlinx.serialization.SerialName("raspored") RASPORED,
+    @kotlinx.serialization.SerialName("napad") NAPAD, @kotlinx.serialization.SerialName("kraj") KRAJ,
+}
 
 data class Odgovor(val tacan: Boolean, val ms: Int)
 
 /** Rezultat jedne strane u bitki od 5 pitanja. */
-data class Skor(val tacnih: Int, val ms: Int)
+@Serializable data class Skor(val tacnih: Int, val ms: Int)
 
 data class Ishod(
     val gubitakNapadaca: Int,
@@ -150,14 +161,16 @@ object Kontinenti {
     }
 }
 
+/** Nazivi u JSON-u partije isti kao iOS rawValue (brzSat…), da telefoni dele stanje. */
+@Serializable
 enum class Odbrana(val naziv: String, val opis: String, val cena: Int) {
-    BRZ_SAT("Brz sat", "Napadač ima 8 sekundi umesto 15.", 0),
-    BEZ_POMOCI("Bez pomoći", "Napadač ne sme da koristi pomoć na ovom kontinentu.", 0),
-    TESKO_PITANJE("Teško pitanje", "Napadač dobija samo teška pitanja.", 1),
-    PREDNOST("Prednost", "Napadaču trebaju bar 2 tačna više od branioca da osvoji.", 2),
-    TEMA_BRANIOCA("Tema branioca", "Pitanja za napadača su iz teme koju je branilac izabrao.", 0),
-    TVRDJAVA("Tvrđava", "Prvi poraz branioca u krugu se ne računa.", 2),
-    ZAMKA("Zamka", "Kad napadač pogreši, gubi 2 vojske umesto 1.", 1),
+    @kotlinx.serialization.SerialName("brzSat") BRZ_SAT("Brz sat", "Napadač ima 8 sekundi umesto 15.", 0),
+    @kotlinx.serialization.SerialName("bezPomoci") BEZ_POMOCI("Bez pomoći", "Napadač ne sme da koristi pomoć na ovom kontinentu.", 0),
+    @kotlinx.serialization.SerialName("teskoPitanje") TESKO_PITANJE("Teško pitanje", "Napadač dobija samo teška pitanja.", 1),
+    @kotlinx.serialization.SerialName("prednost") PREDNOST("Prednost", "Napadaču trebaju bar 2 tačna više od branioca da osvoji.", 2),
+    @kotlinx.serialization.SerialName("temaBranioca") TEMA_BRANIOCA("Tema branioca", "Pitanja za napadača su iz teme koju je branilac izabrao.", 0),
+    @kotlinx.serialization.SerialName("tvrdjava") TVRDJAVA("Tvrđava", "Prvi poraz branioca u krugu se ne računa.", 2),
+    @kotlinx.serialization.SerialName("zamka") ZAMKA("Zamka", "Kad napadač pogreši, gubi 2 vojske umesto 1.", 1),
 }
 
 data class Misija(val id: String, val tekst: String, val samoPojedinacno: Boolean = false)
@@ -182,6 +195,7 @@ object Misije {
 
 data class Uslov(val sekundi: Int, val bezPomoci: Boolean, val tesko: Boolean, val pitanja: Int, val temaBranioca: Boolean, val prednost: Int)
 
+@Serializable
 data class Stanje(
     val igraci: List<Igrac>,
     val oblasti: Map<String, StanjeOblasti>,

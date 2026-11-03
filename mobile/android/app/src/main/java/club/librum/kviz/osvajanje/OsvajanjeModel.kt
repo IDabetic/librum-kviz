@@ -27,6 +27,10 @@ data class OsvajanjePostavka(
     val teren: String? = null,
     /** Pravi igrači se traže preko servera (sobe); inače su prazna mesta botovi odmah. */
     val traziIgrace: Boolean = false,
+    /** Partija preko servera: soba, moj nalog i da li sam domaćin (mesto 0); null = igra na telefonu. */
+    val soba: String? = null,
+    val korisnik: String? = null,
+    val domacin: Boolean = false,
 ) {
     /** [kljuc] je vrednost na serveru (osvajanje_sobe.nacin), ista kao na iOS-u. */
     enum class Nacin(val kljuc: String, val naziv: String, val opis: String, val brojevi: List<Int>) {
@@ -63,6 +67,7 @@ class OsvajanjeModel(
     private val ime: String?,
     private val paket: PaketPitanja,
     val postavka: OsvajanjePostavka? = null,
+    sesija: club.librum.kviz.servisi.Sesija? = null,
 ) : ViewModel() {
     data class Otvoreno(val prikaz: Prikaz, val id: String = UUID.randomUUID().toString())
 
@@ -108,6 +113,61 @@ class OsvajanjeModel(
     private var potezBota: Job? = null
     private val pauzaBota = 700L
 
+    // ── Partija preko servera ──
+    val veza: VezaOsvajanja? = postavka?.soba?.let { s -> postavka.korisnik?.let { k -> sesija?.let { VezaOsvajanja(it, s, k, postavka.domacin) } } }
+    /** Telefon koji nije domaćin čeka prvo stanje sa servera. */
+    var cekaPocetak by mutableStateOf(veza != null && veza.domacin.not()); private set
+    private var cekaUdaljenuOdbranu: Pair<Int, CompletableDeferred<Skor>>? = null
+    /** Branim se od napada sa drugog telefona: redni broj „bitke” i skor napadača. */
+    private var udaljeniNapad: Pair<Int, Skor>? = null
+    private var zapocetPotez: Pair<Int, Int>? = null
+    private val rokOdbraneMs = 45_000L
+
+    /** Igrač sa drugog telefona (pravi nalog, ne ja i ne bot). */
+    private fun udaljen(i: Igrac) = veza != null && i.id.startsWith("u:") && !i.covek
+    private fun lokalizuj(s: Stanje) = s.copy(igraci = s.igraci.map { it.copy(covek = it.id == veza?.mojId) })
+    private fun objavi(s: Stanje) { val v = veza ?: return; viewModelScope.launch { v.posalji(VezaOsvajanja.Akcija("stanje", stanje = s)) } }
+
+    private fun primi(red: VezaOsvajanja.Red) {
+        val a = red.akcija
+        when (a.v) {
+            "stanje" -> {
+                stanje = lokalizuj(a.stanje ?: return)
+                if (cekaPocetak) cekaPocetak = false
+                pocniPotezAkoTreba()
+            }
+            "bitka" -> {
+                val odakle = a.odakle ?: return; val kuda = a.kuda ?: return; val skor = a.skor ?: return
+                if (bitka != null || stanje.oblasti[kuda]?.vlasnik != mojTim) return
+                udaljeniNapad = red.rb to skor
+                bitka = novaBitka(false, odakle, kuda)
+            }
+            "odbrana" -> {
+                val c = cekaUdaljenuOdbranu ?: return
+                if (a.bitka != c.first) return
+                cekaUdaljenuOdbranu = null
+                c.second.complete(a.skor ?: return)
+            }
+        }
+    }
+
+    /** Posle stanja sa servera: ako je red na mene (ili na bota, a ja sam domaćin), potez kreće jednom. */
+    private fun pocniPotezAkoTreba() {
+        if (stanje.faza != Faza.SNABDEVANJE || zapocetPotez == (stanje.krug to stanje.naPotezu)) return
+        val t = stanje.trenutni
+        if (t.covek || (!udaljen(t) && veza?.domacin == true)) pocniPotez(stanje)
+    }
+
+    /** Napad na državu pravog igrača: on odgovara na svoja pitanja; ako se ne javi za 45 s, umesto njega bot. */
+    private suspend fun udaljenaOdbrana(odakle: String, kuda: String, napadac: Skor): Skor {
+        val v = veza ?: return stanje.botSkor(slucajno)
+        val rb = v.posalji(VezaOsvajanja.Akcija("bitka", odakle = odakle, kuda = kuda, skor = napadac)) ?: return stanje.botSkor(slucajno)
+        val cekanje = CompletableDeferred<Skor>()
+        cekaUdaljenuOdbranu = rb to cekanje
+        return kotlinx.coroutines.withTimeoutOrNull(rokOdbraneMs) { cekanje.await() }
+            ?: stanje.botSkor(slucajno).also { cekaUdaljenuOdbranu = null }
+    }
+
     // Na jednom kontinentu nema misija: pobeđuje ko ga ceo osvoji ili ima više na kraju.
     private fun nova() = postavka?.let { Stanje.nova(it.krugova, it.tezina, slucajno, igraci = it.igraci, pocetak = it.pocetak, misije = it.teren == null, teren = it.teren) }
         ?: Stanje.nova(krugova, tezina, slucajno, ime)
@@ -143,11 +203,19 @@ class OsvajanjeModel(
                 .onSuccess { spil = Spil(it); spremno = true; if (postavka == null) pocniPotez(stanje) }
                 .onFailure { greska = it.message }
         }
+        // Slušanje sobe: novi potezi na svake 1,5 s dok je partija otvorena.
+        veza?.let { v ->
+            stanje = lokalizuj(stanje)
+            viewModelScope.launch { while (stanje.faza != Faza.KRAJ) { v.novi().forEach(::primi); delay(1500) } }
+        }
     }
 
     /** Posle lista sa misijom: kreće prvi potez. */
     fun zapocni() {
         if (!spremno || stanje.krug != 1 || stanje.faza != Faza.SNABDEVANJE || otvoreno != null || potezBota?.isActive == true) return
+        // Domaćin šalje početno stanje (mapa, misije, redosled); ostali kreću kad ga prime.
+        if (veza?.domacin == true) objavi(stanje)
+        if (veza != null) { pocniPotezAkoTreba(); return }
         pocniPotez(stanje)
     }
 
@@ -209,7 +277,9 @@ class OsvajanjeModel(
 
     fun krajPoteza() {
         izabrana = null; meta = null; utvrdjivanje = false
-        pocniPotez(stanje.zavrsiPotez())
+        val novo = stanje.zavrsiPotez()
+        objavi(novo)
+        pocniPotez(novo)
     }
 
     fun postaviOdbranu(k: String, o: Odbrana) {
@@ -258,11 +328,35 @@ class OsvajanjeModel(
             if (stanje.oblasti[b.kuda]?.vlasnik == null) {
                 val (novo, ishod) = stanje.razresiBitku(b.odakle, b.kuda, Odgovor(tacno, ms), null)
                 stanje = novo; b = b.copy(ishod = ishod)
+            } else if (stanje.igraci.firstOrNull { it.tim == stanje.oblasti[b.kuda]?.vlasnik }?.let(::udaljen) == true) {
+                // Branilac je na drugom telefonu: rezultat stiže kad odgovori (ili posle roka).
+                val moj = Skor(b.tacnih, b.ms)
+                bitka = b.copy(korak = Bitka.Korak.REZULTAT)
+                viewModelScope.launch {
+                    val rival = udaljenaOdbrana(b.odakle, b.kuda, moj)
+                    if (b.kuda !in stanje.mete(b.odakle)) return@launch
+                    val (novo, ishod) = stanje.razresiBitkuSkorom(b.odakle, b.kuda, moj, rival)
+                    stanje = novo
+                    bitka = bitka?.copy(rival = rival, ishod = ishod)
+                    objavi(novo)
+                }
+                return
             } else {
                 val rival = stanje.botSkor(slucajno, b.prikazi.size)
                 val (novo, ishod) = stanje.razresiBitkuSkorom(b.odakle, b.kuda, Skor(b.tacnih, b.ms), rival)
                 stanje = novo; b = b.copy(rival = rival, ishod = ishod)
             }
+            objavi(stanje)
+        }
+        val n = udaljeniNapad
+        if (!b.napadam && n != null && veza != null) {
+            // Odbrana od napada sa drugog telefona: šaljem svoj skor; ishod za prikaz po istom pravilu, mapa stiže sa servera.
+            val moj = Skor(b.tacnih, b.ms)
+            udaljeniNapad = null
+            viewModelScope.launch { veza.posalji(VezaOsvajanja.Akcija("odbrana", skor = moj, bitka = n.first)) }
+            val razlika = n.second.tacnih - moj.tacnih
+            val osvojio = razlika >= (if (stanje.odbranaMete(b.kuda) == Odbrana.PREDNOST) 2 else 1) || (razlika == 0 && n.second.ms < moj.ms)
+            b = b.copy(rival = n.second, ishod = Ishod(0, 0, osvojio, false, false, izgubljenaDrzava = !osvojio))
         }
         bitka = b.copy(korak = Bitka.Korak.REZULTAT)
         if (!b.napadam) { cekaOdbranu?.complete(Skor(b.tacnih, b.ms)); cekaOdbranu = null }
@@ -291,6 +385,9 @@ class OsvajanjeModel(
     private fun pocniPotez(novo: Stanje) {
         stanje = novo
         if (novo.faza != Faza.SNABDEVANJE) return
+        zapocetPotez = novo.krug to novo.naPotezu
+        // Pravi igrač sa drugog telefona igra sam; bota vodi samo domaćin.
+        if (udaljen(novo.trenutni) || (veza != null && !novo.trenutni.covek && veza.domacin.not())) return
         if (novo.trenutni.covek) {
             // Potez čoveka počinje napadom (vlasnik 02.11): pojačanja stižu sama i idu na granice, bez pitanja.
             val tim = novo.trenutni.tim
@@ -312,6 +409,12 @@ class OsvajanjeModel(
             val vlasnik = stanje.oblasti[kuda]?.vlasnik
             stanje = when {
                 vlasnik == null -> stanje.razresiBitku(odakle, kuda, stanje.botOdgovor(slucajno), null).first
+                udaljen(stanje.igraci.first { it.tim == vlasnik }) -> {
+                    val napadac = stanje.botSkor(slucajno)
+                    val (novo, _) = stanje.razresiBitkuSkorom(odakle, kuda, napadac, udaljenaOdbrana(odakle, kuda, napadac))
+                    objavi(novo)
+                    novo
+                }
                 stanje.igraci.first { it.tim == vlasnik }.covek -> {
                     val napadac = stanje.botSkor(slucajno)
                     val cekanje = CompletableDeferred<Skor>()
@@ -328,7 +431,9 @@ class OsvajanjeModel(
             delay(pauzaBota)
         }
         izabrana = null
-        pocniPotez(stanje.zavrsiPotez())
+        val novo = stanje.zavrsiPotez()
+        objavi(novo)
+        pocniPotez(novo)
     }
 
     fun javi(tekst: String) {
