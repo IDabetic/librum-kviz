@@ -91,6 +91,14 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 KarticaIgre("Duel", "Jedan na jedan.", Boje.mastilo, Color.White, Maskota.BLOOP, false, Modifier.weight(1f)) { idi("duel") }
                 KarticaIgre("Vešanje", "Reč slovo po slovo.", Boje.roze, Boje.mastilo, Maskota.LUMI, false, Modifier.weight(1f)) { idi("vesanje") }
             }
+            Text("Teme", style = naslov(26.sp), modifier = Modifier.padding(top = 8.dp))
+            KarticaIgre("Opšte znanje", "10 pitanja iz svega pomalo, 15 sekundi po pitanju.", Color(0xFFF4A33C), Boje.mastilo, Maskota.BLOOP, false) { idi("tema/opste") }
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                KarticaIgre("Knjige", "Pisci, dela i likovi.", Boje.teal, Color.White, Maskota.ZIG, false, Modifier.weight(1f)) { idi("tema/knjige") }
+                KarticaIgre("Slikari", "Ko je naslikao ovo delo?", Boje.roze, Boje.mastilo, Maskota.LUMI, false, Modifier.weight(1f)) { idi("tema/slikari") }
+            }
+            KarticaIgre("Slikari: majstori", "Samo manje poznata dela. Za one koji idu po muzejima.", Boje.ljubicasta, Color.White, Maskota.ZIG, false) { idi("tema/slikari-tesko") }
+            KarticaIgre("Nemoguća pitanja", "Samo najteža pitanja iz baze.", Color(0xFFE5385C), Color.White, Maskota.LUMI, false) { idi("tema/tesko") }
             KarticaIgre("Brzi kviz", "Tačno ili netačno, 60 sekundi.", Boje.zuta, Boje.mastilo, Maskota.ZIG, false) { idi("brzi") }
             Spacer(Modifier.height(80.dp))
         }

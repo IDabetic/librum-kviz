@@ -43,6 +43,10 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import club.librum.kviz.igre.KvizIgraEkran
 import club.librum.kviz.servisi.dnevniIzazov
+import club.librum.kviz.servisi.temaKviz
+import club.librum.kviz.servisi.slikariKviz
+import club.librum.kviz.servisi.PaketPitanja
+import club.librum.kviz.servisi.Fond
 import club.librum.kviz.zajednica.DodajPitanjeEkran
 import club.librum.kviz.zajednica.ProfilIgracaEkran
 import club.librum.kviz.zajednica.TraziIgraceEkran
@@ -142,7 +146,19 @@ private fun Aplikacija() {
                 composable("osvajanje/igra") { OsvajanjeTokEkran(sesija) { nav.popBackStack() } }
                 composable("pro") { ProKvizEkran(sesija, Survival.PRO) { nav.popBackStack() } }
                 composable("book") { ProKvizEkran(sesija, Survival.BOOK) { nav.popBackStack() } }
-                composable("dnevni") { KvizIgraEkran(sesija, "Dnevni izazov", "dnevni", { dnevniIzazov() }) { nav.popBackStack() } }
+                composable("dnevni") { KvizIgraEkran(sesija, "Dnevni izazov", "dnevni", null, { dnevniIzazov() }) { nav.popBackStack() } }
+                composable("tema/{id}") { e ->
+                    val kontekst = LocalContext.current.applicationContext
+                    val paket = remember { PaketPitanja(kontekst) }
+                    // Isti redovi u quizzes kao iOS Katalog (quiz_results za Opšte znanje i Knjige).
+                    when (e.arguments?.getString("id")) {
+                        "knjige" -> KvizIgraEkran(sesija, "Knjige", "tema", "e4b739dc-67f6-4b2c-bf9d-def4e18b0d45", { paket.temaKviz(Fond.BOOK) }) { nav.popBackStack() }
+                        "slikari" -> KvizIgraEkran(sesija, "Slikari", "slikari", null, { slikariKviz(kontekst) }) { nav.popBackStack() }
+                        "slikari-tesko" -> KvizIgraEkran(sesija, "Slikari: majstori", "slikari", null, { slikariKviz(kontekst, tesko = true) }) { nav.popBackStack() }
+                        "tesko" -> KvizIgraEkran(sesija, "Nemoguća pitanja", "tema", "3cc90acb-9803-429d-9163-7c2245d9e4f7", { paket.temaKviz(Fond.OPSTE, tesko = true) }) { nav.popBackStack() }
+                        else -> KvizIgraEkran(sesija, "Opšte znanje", "tema", "3cc90acb-9803-429d-9163-7c2245d9e4f7", { paket.temaKviz(Fond.OPSTE) }) { nav.popBackStack() }
+                    }
+                }
                 composable("brzi") { BrziKvizEkran(sesija) { nav.popBackStack() } }
                 composable("vesanje") { VesanjeEkran(sesija) { nav.popBackStack() } }
                 composable("duel") { DuelEkran(sesija) { nav.popBackStack() } }

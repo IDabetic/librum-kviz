@@ -11,7 +11,8 @@ import kotlinx.serialization.builtins.ListSerializer
 import java.io.File
 
 @Serializable
-data class Pitanje(val id: String, val question_text: String, val options: List<String>, val correct_answer: Int, val genre: String? = null)
+data class Pitanje(val id: String, val question_text: String, val options: List<String>, val correct_answer: Int, val genre: String? = null,
+                   val slika: String? = null, val opis: String? = null)
 
 @Serializable
 data class Rec(val id: String, val word: String, val hint: String? = null, val category: String? = null)
@@ -20,11 +21,11 @@ data class Rec(val id: String, val word: String, val hint: String? = null, val c
 enum class Fond(val kljuc: String) { OPSTE("opste"), BOOK("book") }
 
 /** Pitanje spremno za prikaz: ponude promešane, zna se koja je tačna. */
-data class Prikaz(val tekst: String, val opcije: List<String>, val tacan: Int, val zanr: String? = null) {
+data class Prikaz(val tekst: String, val opcije: List<String>, val tacan: Int, val zanr: String? = null, val slika: String? = null, val opis: String? = null) {
     companion object {
         fun od(p: Pitanje): Prikaz {
             val red = (0..3).shuffled()
-            return Prikaz(p.question_text, red.map { p.options[it] }, red.indexOf(p.correct_answer), p.genre?.takeIf { it != "Razno" })
+            return Prikaz(p.question_text, red.map { p.options[it] }, red.indexOf(p.correct_answer), p.genre?.takeIf { it != "Razno" }, p.slika, p.opis)
         }
     }
 }
@@ -79,6 +80,35 @@ class PaketPitanja(private val context: Context) {
 }
 
 /** Špil koji se vrti u krug kad se pitanja potroše. */
+/** Kviz po temi (RPC aplikacija_kviz): 10 pitanja iz fonda, žanra ili samo teških; bez mreže iz keša/rezerve istog fonda. */
+suspend fun PaketPitanja.temaKviz(fond: Fond, zanr: String? = null, tesko: Boolean = false, broj: Int = 10): List<Pitanje> {
+    val parametri = buildMap<String, Any?> { put("p_fond", fond.kljuc); put("p_broj", broj); zanr?.let { put("p_zanr", it) }; if (tesko) put("p_tezina", "tesko") }
+    runCatching { Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_kviz", parametri)) }.getOrNull()
+        ?.filter { it.options.size == 4 && it.correct_answer in 0..3 }?.takeIf { it.size >= minOf(broj, 5) }?.let { return it }
+    val rezerva = ucitaj(fond).filter { zanr == null || it.genre == zanr }
+    if (rezerva.isEmpty()) error("Za ovu temu nema sačuvanih pitanja. Poveži se na internet i pokušaj ponovo.")
+    return rezerva.take(broj)
+}
+
+@kotlinx.serialization.Serializable
+private data class Delo(val id: String, val naziv: String, val slika: String, val ponude: List<String>, val godina: String, val pravac: String, val muzej: String, val tezina: String)
+
+/** Slikari iz paketa u aplikaciji (assets slikari.json, 1.439 dela): pola lakših pola ostalih, ili samo teška. */
+fun slikariKviz(context: Context, broj: Int = 10, tesko: Boolean = false): List<Pitanje> {
+    val dela = Supabase.json.decodeFromString<List<Delo>>(context.assets.open("slikari.json").bufferedReader().use { it.readText() })
+    val izbor = if (tesko) dela.filter { it.tezina == "teško" }.shuffled().take(broj) else {
+        val lakse = dela.filter { it.tezina != "teško" }.shuffled().take(broj / 2)
+        (lakse + dela.filter { d -> lakse.none { it.id == d.id } }.shuffled().take(broj - lakse.size)).shuffled()
+    }
+    return izbor.map { d ->
+        // Delo bez slike je tekstualno pitanje: godina pomaže da naziv ne bude jedini trag.
+        val imaSliku = d.slika.isNotEmpty()
+        val godina = if (d.godina.isEmpty()) "" else " (${d.godina})"
+        Pitanje(d.id, if (imaSliku) "Ko je naslikao delo „${d.naziv}”?" else "Ko je naslikao delo „${d.naziv}”$godina?", d.ponude, 0, d.pravac,
+            d.slika.ifEmpty { null }, (listOf(d.naziv, d.godina, d.muzej) + if (imaSliku) listOf("Slika: Wikimedia Commons") else emptyList()).filter { it.isNotEmpty() }.joinToString(" · "))
+    }
+}
+
 /** Dnevni izazov (RPC dnevni_izazov): isti 10 pitanja za sve tog dana; bez mreže nema izazova, jer bi bio drugačiji od ostalih. */
 suspend fun dnevniIzazov(): List<Pitanje> {
     val p = Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("dnevni_izazov"))

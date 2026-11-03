@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -91,7 +94,7 @@ class KlasicniKviz {
  * `igra` je ključ rang liste (npr. "dnevni").
  */
 @Composable
-fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, ucitaj: suspend () -> List<Pitanje>, izadji: () -> Unit) {
+fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, quizId: String? = null, ucitaj: suspend () -> List<Pitanje>, izadji: () -> Unit) {
     val opseg = rememberCoroutineScope()
     var pitanja by remember { mutableStateOf<List<Prikaz>?>(null) }
     var greska by remember { mutableStateOf<String?>(null) }
@@ -106,6 +109,7 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, ucitaj: sus
     var eliminisani by remember { mutableStateOf(setOf<Int>()) }
     var pomocIskoriscena by remember { mutableStateOf(false) }
     var kraj by remember { mutableStateOf(false) }
+    var slikaSpremna by remember { mutableStateOf(false) }
 
     suspend fun pokreni() {
         greska = null; pitanja = null
@@ -123,10 +127,14 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, ucitaj: sus
                 val prosek = kviz.zbirMs / maxOf(1, kviz.tacnih + kviz.netacnih)
                 Napredak.deljeni.zabeleziIgru(igra, kviz.tacnih, kviz.netacnih, prosekMs = prosek)
                 sesija.upisiRezultat(igra, kviz.poeni, kviz.tacnih, kviz.netacnih, prosek, pomoc)
+                // Teme sa redom u quizzes idu i u quiz_results, kao na vebu (RLS: samo svoj red).
+                val id = sesija.nalog.value?.id
+                if (quizId != null && id != null) sesija.vazeciToken()?.let { t -> runCatching { club.librum.kviz.servisi.Supabase.upisi("quiz_results", mapOf(
+                    "user_id" to id, "quiz_id" to quizId, "score" to kviz.tacnih, "total" to l.size, "score_points" to kviz.poeni), t) } }
             }
             return
         }
-        indeks++; izabran = null; otkriveno = false; eliminisani = emptySet(); dodatno = 0; pocetak = System.currentTimeMillis()
+        indeks++; izabran = null; otkriveno = false; eliminisani = emptySet(); dodatno = 0; slikaSpremna = false; pocetak = System.currentTimeMillis()
     }
     fun odgovori(i: Int?) {
         val p = pitanja?.getOrNull(indeks) ?: return
@@ -142,6 +150,8 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, ucitaj: sus
     LaunchedEffect(indeks, kraj, pitanja) {
         while (!kraj && pitanja != null) {
             sada = System.currentTimeMillis()
+            // Sat ne teče dok slika ne stigne, da spora mreža ne krade vreme.
+            if (pitanja?.getOrNull(indeks)?.slika != null && !slikaSpremna) pocetak = sada
             if (!otkriveno && sada - pocetak >= (KlasicniKviz.SEKUNDI + dodatno) * 1000L) odgovori(null)
             delay(250)
         }
@@ -178,7 +188,8 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, ucitaj: sus
                 }
                 Column(Modifier.fillMaxWidth().pop(Boje.zuta).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Oznaka(p.zanr ?: naslovKviza, Boje.tinta)
-                    Text(p.tekst, style = naslov(23.sp, Boje.tinta))
+                    p.slika?.let { url -> SlikaSaMreze(url, Modifier.fillMaxWidth().height(220.dp)) { slikaSpremna = true } }
+                    Text(p.tekst, style = naslov(if (p.slika == null) 23.sp else 19.sp, Boje.tinta))
                     p.opcije.forEachIndexed { i, o ->
                         val stanje = when {
                             !otkriveno -> if (i in eliminisani) StanjeOdgovora.BLEDO else StanjeOdgovora.OBICNO
@@ -190,6 +201,7 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, ucitaj: sus
                     }
                     if (otkriveno) Text(if (izabran == p.tacan) "Tačno! +$dobio" else if (izabran == null) "Isteklo vreme." else "Netačno.",
                         style = tekst(16.sp, FontWeight.Bold, if (izabran == p.tacan) Boje.teal else Boje.crvena))
+                    if (otkriveno) p.opis?.let { Text(it, style = tekst(13.sp, boja = Boje.tinta)) }
                 }
                 if (!otkriveno) PomociTraka(pomocIskoriscena,
                     { eliminisani = (0 until 4).filter { it != p.tacan }.shuffled().take(2).toSet() },
@@ -198,5 +210,27 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, ucitaj: sus
                 Spacer(Modifier.padding(20.dp))
             }
         }
+    }
+}
+
+/** Slika sa mreže (Wikimedia) bez dodatne biblioteke; javlja kad je stigla ili kad nije uspela, da sat krene. */
+@Composable
+private fun SlikaSaMreze(url: String, modifier: Modifier, spremna: () -> Unit) {
+    val slika by androidx.compose.runtime.produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, url) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                val veza = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                veza.setRequestProperty("User-Agent", "LibrumKviz/1.0 (kviz.librum.club)")
+                veza.connectTimeout = 8000; veza.readTimeout = 10000
+                veza.inputStream.use { android.graphics.BitmapFactory.decodeStream(it) }?.asImageBitmap()
+            }.getOrNull()
+        }
+        spremna()
+    }
+    Box(modifier.background(Boje.kartica, androidx.compose.foundation.shape.RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+        val s = slika
+        if (s == null) CircularProgressIndicator(color = Boje.mastilo)
+        else androidx.compose.foundation.Image(s, contentDescription = "Slika dela", modifier = Modifier.fillMaxSize().padding(6.dp),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit)
     }
 }
