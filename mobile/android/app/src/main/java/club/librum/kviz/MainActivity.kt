@@ -123,7 +123,7 @@ private fun Aplikacija() {
                 composable("igraci/trazi") { TraziIgraceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("poruke") { PorukeEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("razgovor/{sa}/{ime}") { e -> RazgovorEkran(sesija, e.arguments?.getString("sa").orEmpty(), e.arguments?.getString("ime").orEmpty()) { nav.popBackStack() } }
-                composable("rang") { RangLista() }
+                composable("rang") { RangLista(sesija) { nav.navigate(it) } }
                 composable("profil") { Profil(sesija) { nav.navigate(it) } }
                 composable("dodaj/{vrsta}") { e -> DodajPitanjeEkran(sesija, e.arguments?.getString("vrsta") ?: "pro") { nav.popBackStack() } }
                 composable("osvajanje") { OsvajanjeUvod(nalog?.nadimak) { p -> OsvajanjeTok.postavka = p; nav.navigate("osvajanje/igra") } }

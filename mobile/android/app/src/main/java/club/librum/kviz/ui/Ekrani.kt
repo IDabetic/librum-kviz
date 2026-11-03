@@ -3,6 +3,8 @@ package club.librum.kviz.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -127,40 +129,39 @@ fun Izbor(opcije: List<String>, izabrana: Int, promeni: (Int) -> Unit) {
     }
 }
 
-@Serializable private data class Sesija_(val user_id: String, val score: Int, val questions_reached: Int)
-@Serializable private data class Profil_(val id: String, val nickname: String? = null, val first_name: String? = null)
-private data class Red(val id: String, val ime: String, val poeni: Int, val pitanja: Int)
+@Serializable private data class RedListe(val mesto: Int, val user_id: String, val nadimak: String, val avatar: String? = null, val poeni: Int, val partija: Int)
 
-/** Najbolji PRO rezultati: ova nedelja ili sve vreme (isti izvor kao veb). */
+private val IGRE_LISTE = listOf("dnevni" to "Dnevni", "osvajanje" to "Osvajanje", "pro" to "PRO", "book" to "Book", "duel" to "Duel", "brzi" to "Brzi", "vesanje" to "Vešanje")
+private val PERIODI = listOf("dan" to "Dan", "nedelja" to "Nedelja", "mesec" to "Mesec", "godina" to "Godina")
+
+/** Rang lista po igri i periodu (RPC rang_lista_igre), za sve ili samo igrače koje pratim; red vodi na profil. */
 @Composable
-fun RangLista() {
-    var period by remember { mutableStateOf(0) }
-    var redovi by remember { mutableStateOf<List<Red>?>(null) }
+fun RangLista(sesija: club.librum.kviz.servisi.Sesija, idi: (String) -> Unit) {
+    val nalog by sesija.nalog.collectAsState()
+    var igra by remember { mutableStateOf(1) }
+    var period by remember { mutableStateOf(1) }
+    var krug by remember { mutableStateOf(0) }
+    var redovi by remember { mutableStateOf<List<RedListe>?>(null) }
     var greska by remember { mutableStateOf<String?>(null) }
     var pokusaj by remember { mutableStateOf(0) }
 
-    LaunchedEffect(period, pokusaj) {
+    LaunchedEffect(igra, period, krug, pokusaj, nalog?.id) {
         greska = null; redovi = null
         runCatching {
-            val upit = mutableListOf("select" to "user_id,score,questions_reached", "order" to "score.desc", "limit" to "100")
-            if (period == 0) upit += "created_at" to "gte.${Instant.now().minus(7, ChronoUnit.DAYS)}"
-            val sesije = Supabase.json.decodeFromString<List<Sesija_>>(Supabase.citaj("survivor_sessions", upit))
-            val vidjeno = mutableSetOf<String>()
-            val najbolji = sesije.filter { vidjeno.add(it.user_id) }.take(20)
-            val imena = if (najbolji.isEmpty()) emptyMap() else Supabase.json.decodeFromString<List<Profil_>>(
-                Supabase.citaj("public_profiles", listOf("select" to "id,nickname,first_name", "id" to "in.(${najbolji.joinToString(",") { it.user_id }})")),
-            ).associate { it.id to (it.nickname ?: it.first_name ?: "Igrač") }
-            najbolji.map { Red(it.user_id, imena[it.user_id] ?: "Igrač", it.score, it.questions_reached) }
+            Supabase.json.decodeFromString<List<RedListe>>(Supabase.rpc("rang_lista_igre", mapOf(
+                "p_igra" to IGRE_LISTE[igra].first, "p_period" to PERIODI[period].first, "p_broj" to 50, "p_krug" to if (krug == 1) "pratim" else "svi",
+            ), runCatching { sesija.vazeciToken() }.getOrNull()))
         }.onSuccess { redovi = it }.onFailure { greska = it.message }
     }
 
     Box(Modifier.fillMaxSize()) {
         Papir()
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Spacer(Modifier.height(36.dp))
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Spacer(Modifier.height(20.dp))
             Text("Rang lista", style = naslov(40.sp))
-            Oznaka("PRO kviz")
-            Izbor(listOf("Ova nedelja", "Sve vreme"), period) { period = it }
+            Row(Modifier.horizontalScroll(rememberScrollState())) { Izbor(IGRE_LISTE.map { it.second }, igra) { igra = it } }
+            Izbor(PERIODI.map { it.second }, period) { period = it }
+            if (nalog != null) Izbor(listOf("Svi igrači", "Koje pratim"), krug) { krug = it }
             val r = redovi
             when {
                 greska != null -> Column(Modifier.fillMaxWidth().mirna().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -170,19 +171,20 @@ fun RangLista() {
                 r == null -> CircularProgressIndicator(color = Boje.mastilo)
                 r.isEmpty() -> Column(Modifier.fillMaxWidth().mirna().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     MaskotaSlika(Maskota.LUMI, 90.dp)
-                    Text("Još nema rezultata u ovom periodu. Budi prvi.", style = tekst(15.sp, boja = Boje.sivaTekst))
+                    Text(if (krug == 1) "Igrači koje pratiš još nemaju rezultat u ovom periodu." else "Još nema rezultata u ovom periodu. Budi prvi.",
+                        style = tekst(15.sp, boja = Boje.sivaTekst))
                 }
                 else -> Column(Modifier.fillMaxWidth().mirna()) {
                     r.forEachIndexed { i, red ->
-                        Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Box(
-                                Modifier.size(36.dp).background(if (i == 0) Boje.zuta else Boje.krem, RoundedCornerShape(11.dp))
-                                    .border(2.dp, if (i == 0) Boje.mastilo else Color.Transparent, RoundedCornerShape(11.dp)),
-                                contentAlignment = Alignment.Center,
-                            ) { Text("${i + 1}", style = tekst(15.sp, FontWeight.Bold)) }
+                        val ja = red.user_id == nalog?.id
+                        Row(Modifier.fillMaxWidth().background(if (ja) Boje.tealSvetla else Color.Transparent).clickable { idi("igrac/${red.user_id}") }
+                            .padding(horizontal = 16.dp, vertical = 10.dp).semantics(mergeDescendants = true) {},
+                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("${red.mesto}", style = naslov(18.sp, if (red.mesto <= 3) Boje.mastilo else Boje.sivaTekst), modifier = Modifier.width(30.dp))
+                            club.librum.kviz.ui.AvatarSlika(red.avatar, 40.dp)
                             Column(Modifier.weight(1f)) {
-                                Text(red.ime, style = tekst(16.sp, FontWeight.SemiBold), maxLines = 1)
-                                Text("${red.pitanja} pitanja", style = tekst(12.sp, boja = Boje.sivaTekst))
+                                Text(red.nadimak + if (ja) " (ti)" else "", style = tekst(16.sp, FontWeight.SemiBold), maxLines = 1)
+                                Text("${red.partija} partija", style = tekst(12.sp, boja = Boje.sivaTekst))
                             }
                             Text("${red.poeni}", style = naslov(20.sp))
                         }
