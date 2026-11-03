@@ -79,6 +79,7 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 }
                 MaskotaSlika(Maskota.BLOOP, 92.dp)
             }
+            KarticaIgre("Dnevni izazov", "Istih 10 pitanja za sve danas. Jedan pokušaj, jedna rang lista.", Boje.zuta, Boje.tinta, Maskota.BLOOP, false) { idi("dnevni") }
             KarticaIgre("Osvajanje sveta", "171 država, vojske i bitke znanja protiv dva rivala.", Boje.teal, Color.White, Maskota.MIMI, true) { idi("osvajanje") }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 KarticaIgre("PRO kviz", "Deset života, rang lista.", Boje.ljubicasta, Color.White, Maskota.LUMI, false, Modifier.weight(1f)) { idi("pro") }

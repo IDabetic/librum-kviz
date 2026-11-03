@@ -37,6 +37,8 @@ import androidx.navigation.compose.rememberNavController
 import club.librum.kviz.osvajanje.Mapa
 import club.librum.kviz.osvajanje.OsvajanjeTok
 import club.librum.kviz.zajednica.IgraciEkran
+import club.librum.kviz.igre.KvizIgraEkran
+import club.librum.kviz.servisi.dnevniIzazov
 import club.librum.kviz.zajednica.DodajPitanjeEkran
 import club.librum.kviz.zajednica.ProfilIgracaEkran
 import club.librum.kviz.zajednica.TraziIgraceEkran
@@ -128,6 +130,7 @@ private fun Aplikacija() {
                 composable("osvajanje/igra") { OsvajanjeTokEkran(sesija) { nav.popBackStack() } }
                 composable("pro") { ProKvizEkran(sesija, Survival.PRO) { nav.popBackStack() } }
                 composable("book") { ProKvizEkran(sesija, Survival.BOOK) { nav.popBackStack() } }
+                composable("dnevni") { KvizIgraEkran(sesija, "Dnevni izazov", "dnevni", { dnevniIzazov() }) { nav.popBackStack() } }
                 composable("brzi") { BrziKvizEkran(sesija) { nav.popBackStack() } }
                 composable("vesanje") { VesanjeEkran(sesija) { nav.popBackStack() } }
                 composable("duel") { DuelEkran(sesija) { nav.popBackStack() } }

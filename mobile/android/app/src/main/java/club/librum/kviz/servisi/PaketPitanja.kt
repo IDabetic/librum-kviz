@@ -79,6 +79,13 @@ class PaketPitanja(private val context: Context) {
 }
 
 /** Špil koji se vrti u krug kad se pitanja potroše. */
+/** Dnevni izazov (RPC dnevni_izazov): isti 10 pitanja za sve tog dana; bez mreže nema izazova, jer bi bio drugačiji od ostalih. */
+suspend fun dnevniIzazov(): List<Pitanje> {
+    val p = Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("dnevni_izazov"))
+    if (p.size < 5) error("Dnevni izazov nije stigao. Proveri internet.")
+    return p
+}
+
 class Spil(private val pitanja: List<Pitanje>) {
     private var indeks = 0
     fun sledece(): Prikaz = Prikaz.od(pitanja[indeks++ % pitanja.size])
