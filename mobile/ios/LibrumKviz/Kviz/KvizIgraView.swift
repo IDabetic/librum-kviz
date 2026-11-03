@@ -162,7 +162,8 @@ struct KvizIgraView: View {
         let mereni = kviz.zapisi.filter { !$0.preskoceno }
         let rezultat = zavrsiPartiju(napredak, sesija, igra: stavka.id == "dnevni" ? "dnevni" : stavka.id.hasPrefix("slikari") ? "slikari" : "tema", kviz: stavka.id, poeni: kviz.poeni,
                                      tacnih: kviz.tacnih, netacnih: kviz.netacnih, kategorija: kat, brzih: kviz.brzih,
-                                     prosekMs: prosek(mereni.reduce(0) { $0 + $1.ms }, mereni.count))
+                                     prosekMs: prosek(mereni.reduce(0) { $0 + $1.ms }, mereni.count),
+                                     odgovori: mereni.map { ($0.prikaz.id, $0.tacno) })
         ishod = rezultat
         withAnimation { faza = .rezultati }
     }

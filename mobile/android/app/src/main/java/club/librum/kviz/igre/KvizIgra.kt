@@ -110,6 +110,8 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, quizId: Str
     var pomocIskoriscena by remember { mutableStateOf(false) }
     var kraj by remember { mutableStateOf(false) }
     var slikaSpremna by remember { mutableStateOf(false) }
+    /** Ishodi pitanja za težinu (scripts/2026-11-03_tezina-iz-statistike.sql). */
+    val ishodi = remember { mutableListOf<Pair<String, Boolean>>() }
 
     suspend fun pokreni() {
         greska = null; pitanja = null
@@ -127,6 +129,9 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, quizId: Str
                 val prosek = kviz.zbirMs / maxOf(1, kviz.tacnih + kviz.netacnih)
                 Napredak.deljeni.zabeleziIgru(igra, kviz.tacnih, kviz.netacnih, prosekMs = prosek)
                 sesija.upisiRezultat(igra, kviz.poeni, kviz.tacnih, kviz.netacnih, prosek, pomoc)
+                if (ishodi.isNotEmpty()) runCatching {
+                    club.librum.kviz.servisi.Supabase.rpc("zabelezi_odgovore", mapOf("p_odgovori" to ishodi.take(100).map { (id, t) -> mapOf("id" to id, "tacno" to t) }))
+                }
                 // Teme sa redom u quizzes idu i u quiz_results, kao na vebu (RLS: samo svoj red).
                 val id = sesija.nalog.value?.id
                 if (quizId != null && id != null) sesija.vazeciToken()?.let { t -> runCatching { club.librum.kviz.servisi.Supabase.upisi("quiz_results", mapOf(
@@ -143,6 +148,7 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, quizId: Str
         val ostalo = (KlasicniKviz.SEKUNDI + dodatno) - ms / 1000
         izabran = i; otkriveno = true
         dobio = kviz.odgovor(p, i, ostalo, ms)
+        p.id?.let { ishodi += it to (i == p.tacan) }
         opseg.launch { delay(1800); sledece() }
     }
 

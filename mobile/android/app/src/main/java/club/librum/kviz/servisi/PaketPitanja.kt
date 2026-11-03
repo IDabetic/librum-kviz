@@ -21,11 +21,12 @@ data class Rec(val id: String, val word: String, val hint: String? = null, val c
 enum class Fond(val kljuc: String) { OPSTE("opste"), BOOK("book") }
 
 /** Pitanje spremno za prikaz: ponude promešane, zna se koja je tačna. */
-data class Prikaz(val tekst: String, val opcije: List<String>, val tacan: Int, val zanr: String? = null, val slika: String? = null, val opis: String? = null) {
+data class Prikaz(val tekst: String, val opcije: List<String>, val tacan: Int, val zanr: String? = null, val slika: String? = null, val opis: String? = null, val id: String? = null) {
     companion object {
         fun od(p: Pitanje): Prikaz {
             val red = (0..3).shuffled()
-            return Prikaz(p.question_text, red.map { p.options[it] }, red.indexOf(p.correct_answer), p.genre?.takeIf { it != "Razno" }, p.slika, p.opis)
+            return Prikaz(p.question_text, red.map { p.options[it] }, red.indexOf(p.correct_answer), p.genre?.takeIf { it != "Razno" }, p.slika, p.opis,
+                p.id.takeIf { !it.startsWith("s-") && !it.startsWith("r") })
         }
     }
 }

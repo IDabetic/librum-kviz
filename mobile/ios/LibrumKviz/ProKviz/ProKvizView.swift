@@ -178,7 +178,11 @@ struct ProKvizView: View {
         }
     }
 
+    /// Ishodi pitanja za težinu (samo PRO; Book je druga tabela).
+    @State private var ishodi: [(id: String?, tacno: Bool)] = []
+
     private func odgovori(_ tacan: Bool) {
+        ishodi.append((pitanje?.id, tacan))
         if let p = igra.odgovor(tacan: tacan) { javi(p) }
         if !igra.gotovo { sledece() }
     }
@@ -200,7 +204,8 @@ struct ProKvizView: View {
         guard !sacuvano, igra.stigao > 0 else { return }
         sacuvano = true
         zavrsiPartiju(napredak, sesija, igra: vrsta == .pro ? "pro" : "book", poeni: igra.poeni, tacnih: igra.tacnih, netacnih: igra.netacnih,
-                      kategorija: vrsta == .pro ? "Opšte znanje" : "Knjige", prosekMs: prosek(zbirMs, brojMs))
+                      kategorija: vrsta == .pro ? "Opšte znanje" : "Knjige", prosekMs: prosek(zbirMs, brojMs),
+                      odgovori: vrsta == .pro ? Array(ishodi.suffix(100)) : [])
         guard let id = sesija.korisnikId, let token = try? await sesija.vazeciToken() else { return }
         let sekundi = Int(Date().timeIntervalSince(pocetak))
         let red = vrsta == .pro ? igra.red(korisnik: id, sekundi: sekundi) : igra.redBook(korisnik: id, sekundi: sekundi)

@@ -57,6 +57,10 @@
 	<dict>
 		<key>UIColorName</key>
 		<string>Krem</string>
+		<key>UIImageName</key>
+		<string>Bloop</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<true/>
 	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
