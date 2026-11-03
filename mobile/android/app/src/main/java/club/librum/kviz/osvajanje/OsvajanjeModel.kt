@@ -500,6 +500,8 @@ class OsvajanjeModel(
             delay(pauzaBota)
         }
         izabrana = null
+        // Pre kraja poteza bot prebacuje vojsku iz unutrašnjosti na ugroženu granicu.
+        if (stanje.faza == Faza.NAPAD) stanje = stanje.botUtvrdi()
         val novo = stanje.zavrsiPotez()
         objavi(novo)
         pocniPotez(novo)

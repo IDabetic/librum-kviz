@@ -525,6 +525,8 @@ final class OsvajanjeModel {
         }
         izabrana = nil
         botRadi = false
+        // Pre kraja poteza bot prebacuje vojsku iz unutrašnjosti na ugroženu granicu.
+        if stanje.faza == .napad { stanje = stanje.botUtvrdi() }
         let novo = stanje.zavrsiPotez()
         objavi(novo)
         pocniPotez(novo)

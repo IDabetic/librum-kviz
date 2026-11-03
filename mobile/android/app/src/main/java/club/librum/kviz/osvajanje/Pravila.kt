@@ -442,9 +442,16 @@ data class Stanje(
         return copy(odbrane = odbrane + (kontinentId to o), promenaOdbrane = promenaOdbrane + (kontinentId to krug))
     }
 
+    /** Odbrana kontinenta: kad cilj ili jak rival dira kontinent „Prednost”, inače „Brz sat”. */
     fun botOdbrana(): Stanje {
         var s = this
-        for (k in Kontinenti.svi) if (s.odbrane[k.id] == null && s.drziKontinent(s.trenutni.tim, k.id)) s = s.postaviOdbranu(k.id, Odbrana.BRZ_SAT)
+        val tim = trenutni.tim
+        val cilj = ciljBota(tim)
+        for (k in Kontinenti.svi) if (s.odbrane[k.id] == null && s.drziKontinent(tim, k.id)) {
+            val st = s
+            val ugrozen = Kontinenti.oblasti(k.id).any { st.pretnja(it, tim, cilj) >= 4 }
+            s = s.postaviOdbranu(k.id, if (ugrozen) Odbrana.PREDNOST else Odbrana.BRZ_SAT)
+        }
         return s
     }
 
@@ -497,35 +504,148 @@ data class Stanje(
         return Skor(t, ms)
     }
 
+    // ── Mozak bota (docs/OSVAJANJE-BOT.md), isto kao iOS ──
+    // Koga cilja, gde stavlja vojsku, koju bitku bira (šansa × vrednost − rizik), pa prebacivanje vojske na granicu.
+    // Narav menja pragove, težina koliko često bot uzme lošiji potez; pitanja i dalje odlučuje tacnostBota.
+
+    enum class Narav { NAPADAC, GRADITELJ, OPREZAN }
+
+    private fun jeCovek(i: Igrac) = i.covek || i.id.startsWith("u:")
+
+    /** Snaga tima: države, vojske i celi regioni (bonus vojske svakog kruga). */
+    fun snaga(tim: String): Double {
+        val moje = oblasti.values.filter { it.vlasnik == tim }
+        return moje.size + moje.sumOf { it.vojske } * 0.5 + bonusRegiona(tim) * 3.0
+    }
+
+    /** Koga bot cilja: sa jednim čovekom (ili jednim timom ljudi) svi botovi idu na njega; inače na najjačeg rivala. */
+    fun ciljBota(tim: String): String? {
+        val zivi = igraci.filter { !it.ispao && it.tim != tim }
+        val ljudi = zivi.filter(::jeCovek).map { it.tim }.toSet()
+        if (ljudi.size == 1 && igraci.none { jeCovek(it) && it.tim == tim }) return ljudi.first()
+        return zivi.map { it.tim }.toSet().maxByOrNull { snaga(it) }
+    }
+
+    private fun pretnja(id: String, tim: String, cilj: String?): Double = Mapa.susedi(id).sumOf { n ->
+        val o = oblasti[n]; val v = o?.vlasnik
+        if (o == null || v == null || v == tim) 0.0 else o.vojske * (if (v == cilj) 1.5 else 1.0)
+    }
+
+    private fun fali(region: String, tim: String) = Mapa.oblasti.count { it.region == region && it.id in oblasti && oblasti[it.id]?.vlasnik != tim }
+
+    private fun vrednost(kuda: String, tim: String, cilj: String?, narav: Narav): Double {
+        val o = Mapa.oblast(kuda)
+        val bonus = (Mapa.regioni.firstOrNull { it.id == o.region }?.bonus ?: 0).toDouble()
+        val gradnja = if (narav == Narav.GRADITELJ) 1.4 else 1.0
+        var v = 1.0
+        val f = fali(o.region, tim)
+        v += if (f == 1) bonus * 1.5 * gradnja else bonus * 0.3 * gradnja / maxOf(1, f)
+        oblasti[kuda]?.vlasnik?.let { vlasnik ->
+            if (fali(o.region, vlasnik) == 0) v += bonus * 1.2
+            if (igraci.any { it.tim == vlasnik && it.prestonica == kuda }) v += 3
+            if (vlasnik == cilj) v += 1.5
+        }
+        if (misije[tim]?.contains(Kontinenti.od(kuda).id) == true) v += 0.8
+        return v
+    }
+
+    /** Ocena napada: šansa × dobitak − (1 − šansa) × gubitak; protiv igrača poraz odnosi i državu iz koje se napada. */
+    fun ocenaNapada(odakle: String, kuda: String): Double {
+        val tim = trenutni.tim
+        val nar = narav(trenutni.id)
+        val izvor = oblasti[odakle] ?: return Double.NEGATIVE_INFINITY
+        val meta = oblasti[kuda] ?: return Double.NEGATIVE_INFINITY
+        val dobitak = vrednost(kuda, tim, ciljBota(tim), nar)
+        val p: Double
+        var gubitak: Double
+        val vlasnik = meta.vlasnik
+        if (vlasnik != null) {
+            val branilac = if (igraci.firstOrNull { it.tim == vlasnik }?.let(::jeCovek) == true) 0.65 else tacnostBota
+            p = sansaBitke(tacnostBota, branilac, uslovBitke(kuda).pitanja, odbranaMete(kuda) == Odbrana.PREDNOST)
+            gubitak = 1 + maxOf(0, izvor.vojske - Pravila.GUBITAK_PORAZENOG_NAPADACA) * 0.4
+            if (igraci.any { it.tim == tim && it.prestonica == odakle }) gubitak += 4
+            val reg = Mapa.oblast(odakle).region
+            if (fali(reg, tim) == 0) gubitak += (Mapa.regioni.firstOrNull { it.id == reg }?.bonus ?: 0)
+        } else {
+            p = tacnostBota
+            gubitak = 0.5
+        }
+        if (nar == Narav.OPREZAN) gubitak *= 1.3
+        return p * dobitak - (1 - p) * gubitak
+    }
+
+    private fun pragNapada(n: Narav) = when (n) { Narav.NAPADAC -> 0.1; Narav.GRADITELJ -> 0.25; Narav.OPREZAN -> 0.5 }
+
+    /** Koliko često bot uzme lošiji potez (lako 35%, normalno 12%, teško nikad). */
+    private val greskaBota get() = if (tacnostBota < 0.55) 0.35 else if (tacnostBota < 0.7) 0.12 else 0.0
+
     fun botRasporedi(): Stanje {
         var s = this
+        val tim = trenutni.tim
+        val cilj = ciljBota(tim)
         while (s.faza == Faza.RASPORED) {
-            val tim = s.trenutni.tim
             val moje = s.oblastiIgraca(s.trenutni.id)
-            fun pretnja(o: String) = Mapa.susedi(o).count { it in s.oblasti && s.oblasti[it]?.vlasnik != tim }
-            val cilj = moje.fold(moje[0]) { najbolja, o -> if (pretnja(o) > pretnja(najbolja)) o else najbolja }
-            s = s.rasporedi(cilj)
+            val prva = moje.firstOrNull() ?: break
+            val st = s
+            // Vojska ide gde je najveća pretnja ili odakle se zatvara region; prestonica se čuva.
+            fun ocena(id: String): Double {
+                var v = st.pretnja(id, tim, cilj) - (st.oblasti[id]?.vojske ?: 0) * 0.6
+                if (Mapa.susedi(id).any { n -> n in st.oblasti && st.oblasti[n]?.vlasnik != tim && st.fali(Mapa.oblast(n).region, tim) == 1 }) v += 3
+                if (st.igraci.any { it.tim == tim && it.prestonica == id }) v += 1.5
+                return v
+            }
+            val granica = moje.filter { st.pretnja(it, tim, cilj) > 0 }
+            s = s.rasporedi((granica.ifEmpty { moje }).maxByOrNull(::ocena) ?: prva)
         }
         return s
     }
 
     fun botSledeciNapad(): Pair<String, String>? {
+        val opcije = oblastiIgraca(trenutni.id).flatMap { o -> mete(o).map { Triple(o, it, ocenaNapada(o, it)) } }
+        if (opcije.isEmpty()) return null
+        // Šum je vezan za krug i bitku, da isti potez ne ispadne drugačije na dva telefona.
+        val r = Slucajno(krug * 7919 + naPotezu * 131 + bitaka * 17 + 1)
+        if (r.sledeci() < greskaBota) {
+            val losije = opcije.filter { it.third > -1 }
+            if (losije.isNotEmpty()) { val o = losije[(r.sledeci() * losije.size).toInt()]; return o.first to o.second }
+        }
+        val najbolja = opcije.maxBy { it.third }
+        return if (najbolja.third >= pragNapada(narav(trenutni.id))) najbolja.first to najbolja.second else null
+    }
+
+    /** Pred kraj poteza: vojska iz unutrašnjosti (bez tuđih suseda) ide na najugroženiju susednu granicu. */
+    fun botUtvrdi(): Stanje {
         val tim = trenutni.tim
-        var najbolji: Triple<String, String, Int>? = null
-        for (odakle in oblastiIgraca(trenutni.id)) {
-            for (kuda in mete(odakle)) {
-                val prednost = oblasti.getValue(odakle).vojske - oblasti.getValue(kuda).vojske
-                if (prednost < 1) continue
-                val reg = Mapa.oblast(kuda).region
-                val fali = Mapa.oblasti.count { it.region == reg && oblasti[it.id]?.vlasnik != tim }
-                val ocena = prednost * 2 + (if (oblasti.getValue(kuda).vlasnik == null) 3 else 0) + (if (fali == 1) 5 else 0)
-                if (najbolji == null || ocena > najbolji.third) najbolji = Triple(odakle, kuda, ocena)
+        val cilj = ciljBota(tim)
+        var najbolje: Triple<String, String, Double>? = null
+        for (id in oblastiIgraca(trenutni.id)) {
+            if ((oblasti[id]?.vojske ?: 0) <= 1 || pretnja(id, tim, cilj) > 0) continue
+            for (n in Mapa.susedi(id)) {
+                if (oblasti[n]?.vlasnik != tim) continue
+                val p = pretnja(n, tim, cilj)
+                if (p > 0 && (najbolje == null || p > najbolje.third)) najbolje = Triple(id, n, p)
             }
         }
-        return najbolji?.let { it.first to it.second }
+        val (odakle, kuda, _) = najbolje ?: return this
+        return utvrdi(odakle, kuda, (oblasti[odakle]?.vojske ?: 1) - 1)
     }
 
     companion object {
+        /** Stalna narav po id-ju (ista na svakom telefonu i kao na iOS-u). */
+        fun narav(id: String) = when (id.sumOf { it.code } % 3) { 0 -> Narav.NAPADAC; 1 -> Narav.GRADITELJ; else -> Narav.OPREZAN }
+
+        /** Šansa napadača (tačnost a) protiv branioca (b) u bitki od n pitanja; kod jednakog broja pola-pola; prednost traži 2 više. */
+        fun sansaBitke(a: Double, b: Double, n: Int, prednost: Boolean): Double {
+            fun bin(p: Double) = (0..n).map { k -> var c = 1.0; for (i in 0 until k) c = c * (n - i) / (i + 1); c * Math.pow(p, k.toDouble()) * Math.pow(1 - p, (n - k).toDouble()) }
+            val pa = bin(a); val pb = bin(b)
+            var w = 0.0
+            for (i in 0..n) for (j in 0..n) {
+                val r = i - j
+                if (prednost) { if (r >= 2) w += pa[i] * pb[j] } else if (r > 0) w += pa[i] * pb[j] else if (r == 0) w += pa[i] * pb[j] * 0.5
+            }
+            return w
+        }
+
         val podrazumevani = listOf(
             NoviIgrac("ti", "Ti", 0xFF12907E, true), NoviIgrac("mimi", "Mimi", 0xFFFF5FA2, false), NoviIgrac("zig", "Zig", 0xFF6D4BC9, false),
         )

@@ -127,6 +127,41 @@ class PravilaTest {
 }
 
 /** Pravila ostalih igara, isti brojevi kao na vebu i iOS-u. */
+/** Mozak bota (docs/OSVAJANJE-BOT.md), isti slučajevi kao iOS BotTests. */
+class BotTest {
+    init { Mapa.ucitaj(java.io.File("../../../src/lib/osvajanje/svet.json").readText()) }
+
+    private fun botNaPotezu(vararg v: Triple<String, String, Int>, tacnost: Double = 0.75): Stanje {
+        val s = Stanje.nova(12, Tezina.TESKO, Slucajno(3))
+        val oblasti = Mapa.oblasti.associate { it.id to StanjeOblasti(null, 1) } + v.associate { it.first to StanjeOblasti(it.second, it.third) }
+        return s.copy(faza = Faza.NAPAD, naPotezu = s.igraci.indexOfFirst { it.id == "mimi" }, tacnostBota = tacnost, oblasti = oblasti)
+    }
+
+    @Test fun sansaBitke() {
+        assertEquals(0.5, Stanje.sansaBitke(0.5, 0.5, 5, false), 0.001)
+        assertTrue(Stanje.sansaBitke(0.75, 0.5, 5, false) > 0.7)
+        assertTrue(Stanje.sansaBitke(0.75, 0.5, 5, true) < Stanje.sansaBitke(0.75, 0.5, 5, false))
+    }
+
+    @Test fun botoviCiljajuJedinogCoveka() {
+        val s = botNaPotezu(Triple("SRB", "ti", 3), Triple("FRA", "mimi", 3), Triple("CHN", "zig", 9))
+        assertEquals("ti", s.ciljBota("mimi"))
+        assertEquals("ti", s.ciljBota("zig"))
+    }
+
+    @Test fun botZatvaraRegion() {
+        val srb = Mapa.oblast("SRB").region
+        val s = botNaPotezu(*Mapa.oblasti.filter { it.region == srb && it.id != "SRB" }.map { Triple(it.id, "mimi", 3) }.toTypedArray())
+        assertEquals("SRB", s.botSledeciNapad()?.second)
+    }
+
+    @Test fun botNeRizikujePrestonicuKadSlaboZna() {
+        val s = botNaPotezu(Triple("FRA", "mimi", 8), Triple("DEU", "ti", 2), tacnost = 0.3)
+        val t = s.copy(igraci = s.igraci.map { if (it.id == "mimi") it.copy(prestonica = "FRA") else it })
+        assertTrue(t.ocenaNapada("FRA", "DEU") < 0)
+    }
+}
+
 /** Stanje partije putuje između iOS-a i Androida (osvajanje_potezi): isti ključevi i vrednosti kao iOS Codable. */
 class FormatStanjaTest {
     init { Mapa.ucitaj(java.io.File("../../../src/lib/osvajanje/svet.json").readText()) }

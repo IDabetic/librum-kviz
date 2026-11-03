@@ -269,3 +269,43 @@ final class OsvajanjeVezaTests: XCTestCase {
         XCTAssertLessThan(d.count, 20_000, "stanje mora ostati malo za slanje na svaki potez")
     }
 }
+
+/// Mozak bota (docs/OSVAJANJE-BOT.md): šansa bitke, koga cilja, šta bira i kad odustaje.
+final class BotTests: XCTestCase {
+    /// Bot „mimi” na potezu; ostalo neutralno sa 1 vojskom; „ti” je čovek.
+    private func botNaPotezu(_ vlasnici: [(String, String, Int)], tacnost: Double = 0.75) -> Stanje {
+        var r = Slucajno(seme: 3)
+        var s = Stanje.nova(krugova: 12, tezina: .tesko, slucajno: &r)
+        s.faza = .napad
+        s.naPotezu = s.igraci.firstIndex { $0.id == "mimi" }!
+        s.tacnostBota = tacnost
+        for o in Mapa.oblasti { s.oblasti[o.id] = StanjeOblasti(vlasnik: nil, vojske: 1) }
+        for (id, v, n) in vlasnici { s.oblasti[id] = StanjeOblasti(vlasnik: v, vojske: n) }
+        return s
+    }
+
+    func testSansaBitke() {
+        XCTAssertEqual(Stanje.sansaBitke(0.5, 0.5, n: 5, prednost: false), 0.5, accuracy: 0.001)
+        XCTAssertGreaterThan(Stanje.sansaBitke(0.75, 0.5, n: 5, prednost: false), 0.7)
+        XCTAssertLessThan(Stanje.sansaBitke(0.75, 0.5, n: 5, prednost: true), Stanje.sansaBitke(0.75, 0.5, n: 5, prednost: false))
+    }
+
+    func testBotoviCiljajuJedinogCoveka() {
+        let s = botNaPotezu([("SRB", "ti", 3), ("FRA", "mimi", 3), ("CHN", "zig", 9)])
+        XCTAssertEqual(s.ciljBota("mimi"), "ti")
+        XCTAssertEqual(s.ciljBota("zig"), "ti")
+    }
+
+    func testBotZatvaraRegion() {
+        let srb = Mapa.oblast("SRB").region
+        let region = Mapa.oblasti.filter { $0.region == srb }.map(\.id)
+        let s = botNaPotezu(region.filter { $0 != "SRB" }.map { ($0, "mimi", 3) })
+        XCTAssertEqual(s.botSledeciNapad()?.kuda, "SRB")
+    }
+
+    func testBotNeRizikujePrestonicuKadSlaboZna() {
+        var s = botNaPotezu([("FRA", "mimi", 8), ("DEU", "ti", 2)], tacnost: 0.3)
+        s.igraci = s.igraci.map { var i = $0; if i.id == "mimi" { i.prestonica = "FRA" }; return i }
+        XCTAssertLessThan(s.ocenaNapada(odakle: "FRA", kuda: "DEU"), 0)
+    }
+}
