@@ -170,7 +170,13 @@ private fun Aplikacija() {
                     val kontekst = LocalContext.current.applicationContext
                     val paket = remember { PaketPitanja(kontekst) }
                     // Isti redovi u quizzes kao iOS Katalog (quiz_results za Opšte znanje i Knjige).
-                    when (e.arguments?.getString("id")) {
+                    val id = e.arguments?.getString("id").orEmpty()
+                    if (id.startsWith("kat:")) {
+                        val tag = id.removePrefix("kat:")
+                        KvizIgraEkran(sesija, tag.replaceFirstChar { it.uppercase() }, "tema", "3cc90acb-9803-429d-9163-7c2245d9e4f7", { paket.temaKviz(Fond.OPSTE, zanr = tag) }) { nav.popBackStack() }
+                        return@composable
+                    }
+                    when (id) {
                         "knjige" -> KvizIgraEkran(sesija, "Knjige", "tema", "e4b739dc-67f6-4b2c-bf9d-def4e18b0d45", { paket.temaKviz(Fond.BOOK) }) { nav.popBackStack() }
                         "slikari" -> KvizIgraEkran(sesija, "Slikari", "slikari", null, { slikariKviz(kontekst) }) { nav.popBackStack() }
                         "slikari-tesko" -> KvizIgraEkran(sesija, "Slikari: majstori", "slikari", null, { slikariKviz(kontekst, tesko = true) }) { nav.popBackStack() }

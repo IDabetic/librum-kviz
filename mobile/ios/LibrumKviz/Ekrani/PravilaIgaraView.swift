@@ -3,7 +3,7 @@ import SwiftUI
 /// Pravila na profilu: šta važi za sve igre, pa pravila i bodovanje svake igre (isti tekst kao „Kako se igra” na kartici).
 struct PravilaIgaraView: View {
     /// Igre i glavne teme; žanrovi knjiga imaju ista pravila kao „Knjige”, pa se ne ponavljaju.
-    private var igre: [KvizStavka] { KvizKatalog.sve.filter { !$0.id.hasPrefix("zanr-") } }
+    private var igre: [KvizStavka] { KvizKatalog.sve.filter { !$0.id.hasPrefix("zanr-") && !$0.id.hasPrefix("tema-") } }
     @State private var otvorena: String?
 
     static let zaSve = [

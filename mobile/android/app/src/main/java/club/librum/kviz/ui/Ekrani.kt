@@ -98,6 +98,25 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 KarticaIgre("Slikari", "Ko je naslikao ovo delo?", Boje.roze, Boje.mastilo, Maskota.LUMI, false, Modifier.weight(1f)) { idi("tema/slikari") }
             }
             KarticaIgre("Slikari: majstori", "Samo manje poznata dela. Za one koji idu po muzejima.", Boje.ljubicasta, Color.White, Maskota.ZIG, false) { idi("tema/slikari-tesko") }
+            Text("Kategorije", style = naslov(26.sp), modifier = Modifier.padding(top = 8.dp))
+            // Kategorije opšteg fonda (questions.tags), isto kao iOS KvizKatalog.teme.
+            listOf(
+                "Film i TV" to "film i tv", "Muzika" to "muzika", "Sport" to "sport", "Geografija" to "geografija",
+                "Istorija" to "istorija", "Ličnosti" to "ličnosti", "Jezik" to "jezik", "Nauka" to "nauka",
+                "Priroda" to "priroda", "Kultura i tradicija" to "kultura",
+                "Religija i mitologija" to "religija i mitologija", "Hrana i piće" to "hrana i piće", "Tehnika" to "tehnika",
+            ).chunked(2).forEachIndexed { red, par ->
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    par.forEachIndexed { i, (naziv, tag) ->
+                        val boje = listOf(Boje.roze, Boje.ljubicasta, Color(0xFF6EC3F2), Color(0xFFF4A33C), Boje.teal, Boje.zuta)
+                        val b = boje[(red * 2 + i) % boje.size]
+                        KarticaIgre(naziv, "10 pitanja", b, if (b == Boje.ljubicasta || b == Boje.teal) Color.White else Boje.tinta,
+                            listOf(Maskota.MIMI, Maskota.ZIG, Maskota.BLOOP, Maskota.LUMI)[(red * 2 + i) % 4], false, Modifier.weight(1f)) {
+                            idi("tema/kat:" + android.net.Uri.encode(tag))
+                        }
+                    }
+                }
+            }
             KarticaIgre("Nemoguća pitanja", "Samo najteža pitanja iz baze.", Color(0xFFE5385C), Color.White, Maskota.LUMI, false) { idi("tema/tesko") }
             KarticaIgre("Brzi kviz", "Tačno ili netačno, 60 sekundi.", Boje.zuta, Boje.mastilo, Maskota.ZIG, false) { idi("brzi") }
             Spacer(Modifier.height(80.dp))

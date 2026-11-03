@@ -89,6 +89,25 @@ enum KvizKatalog {
     static let kategorije: [(naziv: String, ikonica: String, boja: UInt32)] = [
         ("Igre", "gamecontroller", 0x6D4BC9), ("Opšte znanje", "lightbulb", 0xF4A33C),
         ("Knjige", "book", 0x12907E), ("Geografija", "globe.europe.africa", 0x6EC3F2), ("Umetnost", "paintpalette", 0xFF5FA2),
+        ("Teme", "square.grid.2x2", 0xE5385C),
+    ]
+
+    /// Kategorije opšteg fonda (questions.tags, uvoz 03.11): naslov, tag u bazi, ikonica, opis.
+    static let teme: [(naslov: String, tag: String, ikonica: String, opis: String)] = [
+        ("Film i TV", "film i tv", "film", "Filmovi, serije, glumci i reditelji."),
+        ("Muzika", "muzika", "music.note", "Pevači, bendovi, albumi i hitovi."),
+        ("Sport", "sport", "sportscourt", "Fudbal, košarka, olimpijske igre i rekordi."),
+        ("Geografija", "geografija", "map", "Države, prestonice, reke i planine."),
+        ("Istorija", "istorija", "building.columns", "Vladari, bitke i velike godine."),
+        ("Ličnosti", "ličnosti", "person.crop.square", "Poznati Srbi kroz vekove."),
+        ("Jezik", "jezik", "textformat", "Reči, izrazi, poreklo i pravopis."),
+        ("Nauka", "nauka", "atom", "Fizika, hemija, biologija i svemir."),
+        ("Priroda", "priroda", "leaf", "Životinje, biljke i pojave."),
+        // „Klasici” (Librum eBook, 3.357 pitanja) čekaju vlasnikovu doradu; pitanja su isključena u bazi.
+        ("Kultura i tradicija", "kultura", "theatermasks", "Običaji, praznici, umetnost Srbije."),
+        ("Religija i mitologija", "religija i mitologija", "sparkles", "Bogovi, mitovi i sveti spisi."),
+        ("Hrana i piće", "hrana i piće", "fork.knife", "Kuhinje sveta i domaća jela."),
+        ("Tehnika", "tehnika", "cpu", "Računari, izumi i mašine."),
     ]
 
     /// Žanrovi stvarnog Book fonda (book_questions.genre), bez „Razno”.
@@ -96,6 +115,7 @@ enum KvizKatalog {
 
     static func ikonica(zanra z: String) -> String {
         switch z {
+        case "Klasici": "books.vertical"
         case "Domaći": "house"
         case "Drama": "theatermasks"
         case "Fantastika": "wand.and.stars"
@@ -144,6 +164,11 @@ enum KvizKatalog {
         ]
         let boje: [UInt32] = [0xFF5FA2, 0x6D4BC9, 0x6EC3F2, 0xF4A33C, 0x12907E, 0xFFD84D]
         let maskote: [Maskota] = [.mimi, .zig, .bloop, .lumi]
+        for (i, t) in teme.enumerated() {
+            l.append(KvizStavka(id: "tema-\(t.tag)", naslov: t.naslov, opis: t.opis, kategorija: "Teme",
+                                boja: boje[(i + 2) % boje.count], maskota: maskote[i % maskote.count],
+                                vrsta: .tema(fond: "opste", zanr: t.tag, tesko: false), ikonica: t.ikonica, quizId: opsteZnanje))
+        }
         for (i, z) in zanrovi.enumerated() {
             l.append(KvizStavka(id: "zanr-\(z)", naslov: z, opis: "Deset pitanja o knjigama žanra \(z.lowercased()).", kategorija: "Knjige",
                                 boja: boje[i % boje.count], maskota: maskote[i % maskote.count],
