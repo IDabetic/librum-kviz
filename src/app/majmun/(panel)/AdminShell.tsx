@@ -33,6 +33,7 @@ const NAV = [
   { label: 'Vešanje',        href: '/majmun/vesanje',        Icon: IconHint },
   { label: 'Predlozi',       href: '/majmun/predlozi',       Icon: IconUsers,    hint: 'nova pitanja' },
   { label: 'Prijave',        href: '/majmun/prijave',        Icon: IconUsers,    hint: 'greške u pitanjima' },
+  { label: 'Zajednica',      href: '/majmun/zajednica',      Icon: IconUsers,    hint: 'objave i komentari' },
   { label: 'Korisnici',      href: '/majmun/korisnici',      Icon: IconUsers },
   { label: 'Rang lista',     href: '/majmun/rang-lista',     Icon: IconTrophy },
   { label: 'Trivia duel',    href: '/majmun/trivia-duel',    Icon: IconSwords,   hint: 'analitika' },

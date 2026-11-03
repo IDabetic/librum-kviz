@@ -38,7 +38,7 @@ struct ProfilZaglavlje<Radnje: View>: View {
                 }
                 .font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                 if let poslao = profil.poslao_pitanja, poslao > 0 {
-                    Label("Poslao \(poslao.srpski) \(poslao == 1 ? "pitanje" : "pitanja") · \((profil.u_igri_pitanja ?? 0).srpski) u igri", systemImage: "rosette")
+                    Label("Poslao \(poslao.srpski) \(poslao % 10 == 1 && poslao % 100 != 11 ? "pitanje" : "pitanja") · \((profil.u_igri_pitanja ?? 0).srpski) u igri", systemImage: "rosette")
                         .font(.tekst(13, .bold)).foregroundStyle(Color.teal)
                 }
             }
