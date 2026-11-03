@@ -1,6 +1,6 @@
 # Librum kviz aplikacija: šta postoji i šta fali
 
-Ažurirano: 03.11.2026. · verzija 3 (iOS: tačke 1–8; Android: Igrači, profil, Vešanje, pomoći, Dnevni izazov) · grana `redizajn-quizpop`
+Ažurirano: 03.11.2026. · verzija 4 (iOS i Android izjednačeni; 75.702 pitanja; bot, sat poteza, pitanja bez ponavljanja) · grana `redizajn-quizpop`
 
 Pregled svakog toka u iOS aplikaciji (Android prati isti spisak), poređen sa QuizPop kitom
 i sa vebom kviz.librum.club. Kolona „Gradi se” je redosled rada.
@@ -37,6 +37,22 @@ PRO, Book, Slikari, Brzi kviz, Vešanje, Duel, teme. Prodavnicu i novčiće smo 
 | Admin /majmun | pitanja, reči, predlozi | **prijave objava i komentara** (moderacija), opcije aplikacije (verzija, poruka svima) |
 | Obaveštenja (push) | kod za APNs/FCM napisan | Firebase/APNs ključevi i objava funkcije `obavesti` |
 | Android | Osvajanje v3; Igrači (objave, komentari u granama, poruke, pravila, blokada, prijava), profil igrača i pretraga, moj profil kao IG + Dodaj pitanje/reč, Vešanje (vešala, tastatura telefona), 4 pomoći u Vešanju/Brzom/Duelu/Dnevnom, Dnevni izazov | Slikari, kvizovi po temi, duel bez čekanja, rang „Koje pratim”, Sanduče sa servera, linkovi `librumkviz://`, Osvajanje preko servera, spisak blokiranih, uređivanje profila |
+
+## 2a. Urađeno 03.11 (druga polovina dana)
+
+- **Android sustigao iOS:** rang lista (sve igre, „Koje pratim”), Sanduče i brojači, duel bez čekanja, Slikari i kvizovi po temi, linkovi `librumkviz://`, Osvajanje preko servera (isti JSON kao iOS, test formata).
+- **Osvajanje (obe platforme):**
+  - Pojačanja = max(3, države/2) + bonus kontinenta.
+  - Pre prvog kruga igrač sam bira 6 država i raspoređuje 15 vojski.
+  - Zum drži centar ekrana i ne beži pri dodiru.
+  - Mozak bota opisan u `docs/OSVAJANJE-BOT.md`.
+  - 30 s za potez; 3 propusta zaredom = ispadanje; ekran ne gasi.
+- **Pitanja:**
+  - Uvezeno 58.899 (kviz-srpski.xlsx) + 10.033 (srbija-kviz.xlsx), alat `alati/uvoz-pitanja.py`, izveštaji u `docs/uvoz/`.
+  - 51.284 otvorena pitanja (bez netačnih) nije uvezeno.
+  - Igraču se pitanja ne ponavljaju 7 dana (`scripts/2026-11-03_vidjena-pitanja.sql`).
+  - Redosled odgovora se meša svakog ponedeljka u 04:00 (pg_cron) i ručno u /majmun/podesavanja.
+- **Admin:** /majmun/zajednica (moderacija objava i komentara).
 
 ## 3. Redosled gradnje
 
