@@ -187,7 +187,10 @@ class OsvajanjeModel(
     }
     val bonusPomoci: Int get() = mojTim?.let { stanje.bonusPomoci[it] } ?: 0
 
-    val uputstvo: String get() = when {
+    val uputstvo: String get() = postavljanje?.let { p ->
+        if (p.drzave.size < Pravila.POCETNIH_DRZAVA) "Izaberi svoje države (${p.kontinent.ime}): ${p.drzave.size} od ${Pravila.POCETNIH_DRZAVA}. Prva je prestonica."
+        else if (zaPostavljanje > 0) "Rasporedi vojsku: dodiruj svoje države, još $zaPostavljanje." else "Spremno. Kreni u osvajanje!"
+    } ?: when {
         stanje.faza == Faza.KRAJ -> "Kraj partije"
         !covekNaPotezu -> "${stanje.trenutni.ime} je na potezu…"
         stanje.faza == Faza.RASPORED -> "Dodirni svoje oblasti: još ${stanje.zaRaspored}"
@@ -210,6 +213,71 @@ class OsvajanjeModel(
         }
     }
 
+    // ── Postavljanje pre prvog kruga ──
+
+    /** Igrač sam bira početne države na svom kontinentu (prva je prestonica), pa raspoređuje vojske. */
+    data class Postavljanje(val kontinent: Kontinent, val original: Stanje, val drzave: List<String> = emptyList())
+    var postavljanje by mutableStateOf<Postavljanje?>(null); private set
+    val zaPostavljanje: Int get() = Pravila.VOJSKI_NA_POCETKU - (postavljanje?.drzave?.sumOf { stanje.oblasti[it]?.vojske ?: 0 } ?: 0)
+
+    /** Posle misije: partija na telefonu kreće postavljanjem; preko servera mapu postavlja domaćin, pa odmah počinje. */
+    fun pocniPostavljanje() {
+        if (postavljanje != null) return
+        val ja = stanje.igraci.firstOrNull { it.covek }
+        if (veza != null || stanje.krug != 1 || stanje.faza != Faza.SNABDEVANJE || ja == null) { zapocni(); return }
+        postavljanje = Postavljanje(Kontinenti.od(ja.prestonica), stanje)
+        oslobodiMoje()
+    }
+
+    private fun oslobodiMoje() {
+        val tim = mojTim ?: return
+        stanje = stanje.copy(oblasti = stanje.oblasti.mapValues { (_, o) -> if (o.vlasnik == tim) StanjeOblasti(null, Pravila.NEUTRALNE_VOJSKE) else o })
+    }
+
+    private fun dodirPostavljanja(id: String) {
+        val p = postavljanje ?: return
+        val tim = mojTim ?: return
+        val o = stanje.oblasti[id] ?: return
+        if (p.drzave.size < Pravila.POCETNIH_DRZAVA) {
+            // Kad na kontinentu nema slobodnih, bira se bilo gde.
+            val slobodnih = Kontinenti.oblasti(p.kontinent.id).count { stanje.oblasti[it]?.vlasnik == null }
+            if (o.vlasnik != null) { javi("${Mapa.oblast(id).ime} je zauzeta. Biraj slobodnu državu."); return }
+            if (Kontinenti.od(id).id != p.kontinent.id && slobodnih > 0) { javi("Biraš države na kontinentu ${p.kontinent.ime}."); return }
+            stanje = stanje.copy(oblasti = stanje.oblasti + (id to StanjeOblasti(tim, 1)))
+            postavljanje = p.copy(drzave = p.drzave + id)
+        } else if (id in p.drzave && zaPostavljanje > 0) {
+            stanje = stanje.copy(oblasti = stanje.oblasti + (id to o.copy(vojske = o.vojske + 1)))
+        }
+    }
+
+    fun ponistiPostavljanje() {
+        val p = postavljanje ?: return
+        stanje = p.original
+        postavljanje = Postavljanje(p.kontinent, p.original)
+        oslobodiMoje()
+    }
+
+    /** Ostatak vojske ide redom po izabranim državama (prestonica prva). */
+    fun rasporediPostavljanjeSam() {
+        val p = postavljanje ?: return
+        if (p.drzave.size < Pravila.POCETNIH_DRZAVA) return
+        var i = 0
+        while (zaPostavljanje > 0) {
+            val id = p.drzave[i++ % p.drzave.size]
+            val o = stanje.oblasti.getValue(id)
+            stanje = stanje.copy(oblasti = stanje.oblasti + (id to o.copy(vojske = o.vojske + 1)))
+        }
+    }
+
+    fun zavrsiPostavljanje() {
+        val p = postavljanje ?: return
+        val prva = p.drzave.firstOrNull() ?: return
+        if (p.drzave.size < Pravila.POCETNIH_DRZAVA || zaPostavljanje > 0) return
+        stanje = stanje.copy(igraci = stanje.igraci.map { if (it.covek) it.copy(prestonica = prva) else it })
+        postavljanje = null
+        zapocni()
+    }
+
     /** Posle lista sa misijom: kreće prvi potez. */
     fun zapocni() {
         if (!spremno || stanje.krug != 1 || stanje.faza != Faza.SNABDEVANJE || otvoreno != null || potezBota?.isActive == true) return
@@ -220,6 +288,7 @@ class OsvajanjeModel(
     }
 
     fun dodir(id: String) {
+        if (postavljanje != null) { dodirPostavljanja(id); return }
         if (!covekNaPotezu || otvoreno != null || bitka != null) return
         val oblast = stanje.oblasti[id] ?: return
         val moja = oblast.vlasnik == stanje.trenutni.tim

@@ -333,7 +333,7 @@ fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: (
         if (!model.spremno || model.cekaPocetak || videoMisiju) return@LaunchedEffect
         videoMisiju = true
         // Na jednom kontinentu nema tajne misije: cilj je ceo kontinent, partija kreće odmah.
-        if (postavka.teren == null) misija = true else { model.zapocni(); model.javi("Cilj: osvoji ceo kontinent") }
+        if (postavka.teren == null) misija = true else { model.pocniPostavljanje(); model.javi("Cilj: osvoji ceo kontinent") }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -370,7 +370,7 @@ fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: (
         AnimatedVisibility(model.bitka != null, enter = fadeIn(), exit = fadeOut()) {
             model.bitka?.let { BitkaEkran(model, it) }
         }
-        if (misija) MisijaList(model) { misija = false; model.zapocni() }
+        if (misija) MisijaList(model) { misija = false; model.pocniPostavljanje() }
         if (model.stanje.faza == Faza.KRAJ) Kraj(model, izadji)
         if (potvrdaIzlaska) Dijalog("Napuštaš partiju?", "Partija se ne čuva.", "Izađi", "Ostani", potvrdi = izadji, zatvori = { potvrdaIzlaska = false })
     }
@@ -444,6 +444,14 @@ private fun Igra(model: OsvajanjeModel, otvoriMisiju: () -> Unit, izlaz: () -> U
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp).fillMaxWidth().mirna().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             run {
                 Text(model.uputstvo, style = tekst(15.sp, FontWeight.SemiBold))
+                model.postavljanje?.let { p ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Dugme("Ispočetka", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO, omoguceno = p.drzave.isNotEmpty(), radnja = model::ponistiPostavljanje)
+                        if (p.drzave.size == Pravila.POCETNIH_DRZAVA && model.zaPostavljanje > 0)
+                            Dugme("Rasporedi sam", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO, radnja = model::rasporediPostavljanjeSam)
+                        else Dugme("Kreni", Modifier.weight(1f), omoguceno = p.drzave.size == Pravila.POCETNIH_DRZAVA && model.zaPostavljanje == 0, radnja = model::zavrsiPostavljanje)
+                    }
+                }
                 if (model.covekNaPotezu && s.faza == Faza.RASPORED) Dugme("Rasporedi sam", vrsta = VrstaDugmeta.SEKUNDARNO, radnja = model::rasporediSam)
                 if (model.covekNaPotezu && s.faza == Faza.NAPAD) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

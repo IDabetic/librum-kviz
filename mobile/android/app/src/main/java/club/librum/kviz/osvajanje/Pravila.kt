@@ -58,6 +58,8 @@ object Pravila {
     const val POCETNIH_DRZAVA = 6
     const val POCETNE_VOJSKE_DRZAVE = 2
     const val NEUTRALNE_VOJSKE = 1
+    /** Vojske koje igrač sam raspoređuje na početne države pre prvog kruga (isto koliko dobija i automatski). */
+    const val VOJSKI_NA_POCETKU = POCETNE_VOJSKE_PRESTONICE + (POCETNIH_DRZAVA - 1) * POCETNE_VOJSKE_DRZAVE
     const val NAJMANJE_POJACANJA = 3
     const val TERITORIJA_PO_VOJSCI = 2
     /** Napada zaredom po potezu kad svako igra za sebe; u timu po igraču (tim = 2 × 2). */
@@ -185,7 +187,7 @@ object Misije {
         Misija("sam-oke", "Osvoji Severnu Ameriku i Okeaniju."),
         Misija("drzava60", "Drži 60 država."),
         Misija("drzava45x2", "Drži 45 država sa najmanje 2 vojske u svakoj."),
-        Misija("regiona8", "Drži 8 regiona u celosti."),
+        Misija("regiona8", "Drži 8 celih regiona (region je grupa država, npr. ceo Balkan)."),
         Misija("prestonice2", "Zauzmi prestonice dva rivala."),
         Misija("izbaci", "Izbaci određenog rivala iz igre.", samoPojedinacno = true),
         Misija("tacnih25", "Odgovori tačno na 25 pitanja i drži bar 30 država."),

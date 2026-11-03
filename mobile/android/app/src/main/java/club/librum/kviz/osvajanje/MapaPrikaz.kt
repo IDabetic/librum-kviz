@@ -115,6 +115,7 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
     val gustina = LocalDensity.current.density
     var razmera by remember { mutableFloatStateOf(1f) }
     var pomak by remember { mutableStateOf(Offset.Zero) }
+    var uokvirenKontinent by remember { mutableStateOf(false) }
 
     BoxWithConstraints(
         modifier.clip(RoundedCornerShape(24.dp)).border(2.5.dp, Boje.mastilo, RoundedCornerShape(24.dp))
@@ -146,7 +147,8 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
 
         // Telefon: mapa krene uvećana oko prestonice ili mesta bitke; na kontinentu ostaje ceo kontinent.
         LaunchedEffect(fokus) {
-            if (naKontinentu) { if (fokus != izabrana || fokus == null) uokviriKontinent(); return@LaunchedEffect }
+            // Ceo kontinent samo na prvom kadru; posle toga dodir i bitka ne vraćaju zum koji je igrač namestio.
+            if (naKontinentu) { if (!uokvirenKontinent) { uokviriKontinent(); uokvirenKontinent = true }; return@LaunchedEffect }
             val id = fokus ?: return@LaunchedEffect
             val o = Mapa.oblast(id)
             if (sirinaPx / gustina < 700) razmera = max(razmera, max(2.4f, visinaPx / (Mapa.visina * osnova)))
@@ -154,23 +156,37 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
             pomak = ogranici(Offset((Mapa.sirina / 2 - o.x) * k, (Mapa.visina / 2 - o.y) * k), k)
         }
 
-        // Izabrana država i sve njene mete staju u kadar, da se vidi kuda se može dalje.
+        // Izabrana država i sve njene mete staju u kadar; samo približava: ako je igrač uvećao više, pomera se na izabranu bez umanjenja.
         LaunchedEffect(mete) {
             val id = izabrana ?: return@LaunchedEffect
             if (mete.isEmpty()) return@LaunchedEffect
             val t = (mete + id).map { Mapa.oblast(it) }
             val x0 = t.minOf { it.x }; val x1 = t.maxOf { it.x }; val y0 = t.minOf { it.y }; val y1 = t.maxOf { it.y }
             val kk = min(sirinaPx / ((x1 - x0) * 1.5f + 140), visinaPx / ((y1 - y0) * 1.5f + 140))
-            razmera = (kk / osnova).coerceIn(1f, 8f)
+            val zeljena = (kk / osnova).coerceIn(1f, 8f)
+            if (zeljena < razmera) {
+                val o = Mapa.oblast(id); val k = osnova * razmera
+                pomak = ogranici(Offset((Mapa.sirina / 2 - o.x) * k, (Mapa.visina / 2 - o.y) * k), k)
+                return@LaunchedEffect
+            }
+            razmera = zeljena
             val k = osnova * razmera
             pomak = ogranici(Offset((Mapa.sirina / 2 - (x0 + x1) / 2) * k, (Mapa.visina / 2 - (y0 + y1) / 2) * k), k)
+        }
+
+        // Zum drži ono što je na sredini ekrana: pomak raste srazmerno, inače bi pogled odleteo ka sredini mape.
+        fun zumiraj(nova: Float) {
+            val r = nova.coerceIn(1f, 8f)
+            val f = r / razmera
+            razmera = r
+            pomak = ogranici(pomak * f, osnova * r)
         }
 
         Canvas(
             Modifier.fillMaxSize().background(OKEAN)
                 .pointerInput(Unit) {
                     detectTransformGestures { _, pan, zum, _ ->
-                        razmera = (razmera * zum).coerceIn(1f, 8f)
+                        zumiraj(razmera * zum)
                         pomak = ogranici(pomak + pan, osnova * razmera)
                     }
                 }
@@ -278,8 +294,8 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
 
         Column(Modifier.align(Alignment.TopEnd).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(
-                Triple(Icons.Rounded.Add, "Uvećaj") { razmera = min(8f, razmera * 1.5f) },
-                Triple(Icons.Rounded.Remove, "Umanji") { razmera = max(1f, razmera / 1.5f); pomak = ogranici(pomak, osnova * razmera) },
+                Triple(Icons.Rounded.Add, "Uvećaj") { zumiraj(razmera * 1.5f) },
+                Triple(Icons.Rounded.Remove, "Umanji") { zumiraj(razmera / 1.5f) },
                 Triple(Icons.Rounded.Public, if (naKontinentu) "Ceo kontinent" else "Ceo svet") { if (naKontinentu) uokviriKontinent() else { razmera = 1f; pomak = Offset.Zero } },
             ).forEach { (ikonica, opis, radnja) ->
                 IconButton(onClick = radnja, modifier = Modifier.size(44.dp).background(Boje.kartica, CircleShape).border(2.dp, Boje.mastilo, CircleShape)) {
