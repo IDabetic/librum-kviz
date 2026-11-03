@@ -186,6 +186,12 @@ final class OsvajanjeModel {
     }
 
     var uputstvo: String {
+        if let p = postavljanje {
+            if p.drzave.count < Pravila.pocetnihDrzava {
+                return "Izaberi svoje države (\(p.kontinent.ime)): \(p.drzave.count) od \(Pravila.pocetnihDrzava). Prva je prestonica."
+            }
+            return zaPostavljanje > 0 ? "Rasporedi vojsku: dodiruj svoje države, još \(zaPostavljanje)." : "Spremno. Kreni u osvajanje!"
+        }
         guard covekNaPotezu else { return stanje.faza == .kraj ? "Kraj partije" : "\(stanje.trenutni.ime) je na potezu…" }
         switch stanje.faza {
         case .raspored: return "Dodirni svoje oblasti: još \(stanje.zaRaspored)"
@@ -211,6 +217,7 @@ final class OsvajanjeModel {
     // MARK: Čovek
 
     func dodir(_ id: String) {
+        if postavljanje != nil { dodirPostavljanja(id); return }
         guard covekNaPotezu, otvoreno == nil, let oblast = stanje.oblasti[id] else { return }
         let moja = oblast.vlasnik == stanje.trenutni.tim
         switch stanje.faza {
@@ -235,6 +242,63 @@ final class OsvajanjeModel {
     }
 
     /// Posle lista sa misijom: kreće prvi potez.
+    // MARK: Postavljanje pre prvog kruga
+
+    /// Igrač sam bira početne države na svom kontinentu (prva je prestonica), pa raspoređuje vojske.
+    struct Postavljanje { let kontinent: Kontinent; let original: Stanje; var drzave: [String] = [] }
+    private(set) var postavljanje: Postavljanje?
+    var zaPostavljanje: Int { Pravila.vojskiNaPocetku - (postavljanje?.drzave.reduce(0) { $0 + (stanje.oblasti[$1]?.vojske ?? 0) } ?? 0) }
+
+    /// Posle misije: partija na telefonu kreće postavljanjem; preko servera mapu postavlja domaćin, pa odmah počinje.
+    func pocniPostavljanje() {
+        guard postavljanje == nil else { return }
+        guard veza == nil, stanje.krug == 1, stanje.faza == .snabdevanje, let ja = stanje.igraci.first(where: \.covek) else { zapocni(); return }
+        postavljanje = Postavljanje(kontinent: Kontinenti.od(ja.prestonica), original: stanje)
+        oslobodiMoje()
+    }
+
+    private func oslobodiMoje() {
+        guard let tim = mojTim else { return }
+        for (id, o) in stanje.oblasti where o.vlasnik == tim { stanje.oblasti[id] = StanjeOblasti(vlasnik: nil, vojske: Pravila.neutralneVojske) }
+    }
+
+    private func dodirPostavljanja(_ id: String) {
+        guard var p = postavljanje, let tim = mojTim, let o = stanje.oblasti[id] else { return }
+        if p.drzave.count < Pravila.pocetnihDrzava {
+            // Kad na kontinentu nema dovoljno slobodnih, bira se bilo gde.
+            let slobodnih = Kontinenti.oblasti(p.kontinent.id).filter { stanje.oblasti[$0]?.vlasnik == nil }.count
+            let naKontinentu = Kontinenti.od(id).id == p.kontinent.id || slobodnih == 0
+            guard o.vlasnik == nil else { javi("\(Mapa.oblast(id).ime) je zauzeta. Biraj slobodnu državu."); return }
+            guard naKontinentu else { javi("Biraš države na kontinentu \(p.kontinent.ime).") ; return }
+            stanje.oblasti[id] = StanjeOblasti(vlasnik: tim, vojske: 1)
+            p.drzave.append(id)
+        } else if p.drzave.contains(id), zaPostavljanje > 0 {
+            stanje.oblasti[id]?.vojske += 1
+        }
+        postavljanje = p
+    }
+
+    func ponistiPostavljanje() {
+        guard let p = postavljanje else { return }
+        stanje = p.original
+        postavljanje = Postavljanje(kontinent: p.kontinent, original: p.original)
+        oslobodiMoje()
+    }
+
+    /// Ostatak vojske ide redom po izabranim državama (prestonica prva).
+    func rasporediPostavljanjeSam() {
+        guard let p = postavljanje, p.drzave.count == Pravila.pocetnihDrzava else { return }
+        var i = 0
+        while zaPostavljanje > 0 { stanje.oblasti[p.drzave[i % p.drzave.count]]?.vojske += 1; i += 1 }
+    }
+
+    func zavrsiPostavljanje() {
+        guard let p = postavljanje, p.drzave.count == Pravila.pocetnihDrzava, zaPostavljanje == 0, let prva = p.drzave.first else { return }
+        stanje.igraci = stanje.igraci.map { var i = $0; if i.covek { i.prestonica = prva }; return i }
+        postavljanje = nil
+        zapocni()
+    }
+
     func zapocni() {
         guard spremno, stanje.krug == 1, stanje.faza == .snabdevanje, otvoreno == nil else { return }
         // Domaćin šalje početno stanje (mapa, misije, redosled); ostali kreću kad ga prime.

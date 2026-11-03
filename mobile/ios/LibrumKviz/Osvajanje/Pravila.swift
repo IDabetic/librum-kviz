@@ -54,6 +54,8 @@ enum Pravila {
     static let pocetneVojskePrestonice = 5
     static let pocetnihDrzava = 6
     static let pocetneVojskeDrzave = 2
+    /// Vojske koje igrač sam raspoređuje na početne države pre prvog kruga (isto koliko dobija i automatski).
+    static var vojskiNaPocetku: Int { pocetneVojskePrestonice + (pocetnihDrzava - 1) * pocetneVojskeDrzave }
     static let neutralneVojske = 1
     static let najmanjePojacanja = 3
     static let teritorijaPoVojsci = 2
@@ -94,7 +96,7 @@ struct Igrac: Equatable, Codable {
     let boja: UInt32
     /// Igrač na ovom uređaju (u partiji preko servera svaki telefon postavlja svoje).
     var covek: Bool
-    let prestonica: String
+    var prestonica: String
     var ispao: Bool
     /// Tim (vlasnik država). Svako za sebe: tim = id igrača.
     var tim: String
@@ -198,7 +200,7 @@ enum Misije {
         Misija(id: "sam-oke", tekst: "Osvoji Severnu Ameriku i Okeaniju."),
         Misija(id: "drzava60", tekst: "Drži 60 država."),
         Misija(id: "drzava45x2", tekst: "Drži 45 država sa najmanje 2 vojske u svakoj."),
-        Misija(id: "regiona8", tekst: "Drži 8 regiona u celosti."),
+        Misija(id: "regiona8", tekst: "Drži 8 celih regiona (region je grupa država, npr. ceo Balkan)."),
         Misija(id: "prestonice2", tekst: "Zauzmi prestonice dva rivala."),
         Misija(id: "izbaci", tekst: "Izbaci određenog rivala iz igre.", samoPojedinacno: true),
         Misija(id: "tacnih25", tekst: "Odgovori tačno na 25 pitanja i drži bar 30 država."),

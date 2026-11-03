@@ -157,10 +157,7 @@ struct MapaView: View {
             .gesture(
                 SimultaneousGesture(
                     MagnifyGesture().updating($zumPokret) { v, s, _ in s = v.magnification }
-                        .onEnded { v in
-                            razmera = min(Self.najveciZum, max(1, razmera * v.magnification))
-                            pomak = ogranici(pomak, k: osnova * razmera, velicina: g.size)
-                        },
+                        .onEnded { v in zumiraj(na: razmera * v.magnification, osnova: osnova, velicina: g.size) },
                     DragGesture(minimumDistance: 6).updating($prevlacenje) { v, s, _ in s = v.translation }
                         .onEnded { v in
                             pomak = ogranici(CGSize(width: pomak.width + v.translation.width, height: pomak.height + v.translation.height),
@@ -182,8 +179,9 @@ struct MapaView: View {
             .onChange(of: fokus, initial: true) { _, novi in
                 // Prvi kadar partije na kontinentu je ceo kontinent, da se vide sve njegove države.
                 // Na kontinentu kadar ostaje ceo kontinent (malo država); mete posebno uokviruje izbor države.
+                // Ceo kontinent samo na prvom kadru; posle toga dodir i bitka ne vraćaju zum koji je igrač namestio.
                 if naKontinentu {
-                    if !uokvirenKontinent || novi != izabrana { uokviri(Array(stanje.oblasti.keys), velicina: g.size, osnova: osnova, tesno: true) }
+                    if !uokvirenKontinent { uokviri(Array(stanje.oblasti.keys), velicina: g.size, osnova: osnova, tesno: true) }
                     uokvirenKontinent = true
                 } else {
                     centriraj(novi, velicina: g.size, osnova: osnova)
@@ -191,13 +189,14 @@ struct MapaView: View {
             }
             .onChange(of: mete) { _, nove in
                 // Izabrana država i sve njene mete staju u kadar, da se vidi kuda se može dalje.
+                // Samo približava: ako je igrač uvećao više nego što treba, kadar se pomera na izabranu bez umanjenja.
                 guard let izabrana, !nove.isEmpty else { return }
-                uokviri([izabrana] + nove, velicina: g.size, osnova: osnova)
+                uokviri([izabrana] + nove, velicina: g.size, osnova: osnova, neUmanjuj: true)
             }
             .overlay(alignment: .topTrailing) {
                 VStack(spacing: 8) {
-                    zumDugme("plus.magnifyingglass", "Uvećaj") { razmera = min(Self.najveciZum, razmera * 1.5) }
-                    zumDugme("minus.magnifyingglass", "Umanji") { razmera = max(1, razmera / 1.5); if razmera == 1 { pomak = .zero } }
+                    zumDugme("plus.magnifyingglass", "Uvećaj") { zumiraj(na: razmera * 1.5, osnova: osnova, velicina: g.size) }
+                    zumDugme("minus.magnifyingglass", "Umanji") { zumiraj(na: razmera / 1.5, osnova: osnova, velicina: g.size) }
                     if naKontinentu {
                         zumDugme("globe.europe.africa", "Ceo kontinent") { uokviri(Array(stanje.oblasti.keys), velicina: g.size, osnova: osnova, tesno: true) }
                     } else {
@@ -214,6 +213,14 @@ struct MapaView: View {
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.mastilo, lineWidth: 2.5))
     }
 
+    /// Zum drži ono što je na sredini ekrana: pomak raste srazmerno, inače bi pogled odleteo ka sredini mape.
+    private func zumiraj(na nova: CGFloat, osnova: CGFloat, velicina: CGSize) {
+        let r = min(Self.najveciZum, max(1, nova))
+        let f = r / razmera
+        razmera = r
+        pomak = ogranici(CGSize(width: pomak.width * f, height: pomak.height * f), k: osnova * r, velicina: velicina)
+    }
+
     /// Na telefonu mapa krene uvećana oko prestonice ili mesta bitke.
     private func centriraj(_ id: String?, velicina: CGSize, osnova: CGFloat) {
         guard let id else { return }
@@ -227,7 +234,7 @@ struct MapaView: View {
     }
 
     /// `tesno` za ceo kontinent: manje vazduha oko ivica, da države budu krupnije.
-    private func uokviri(_ ids: [String], velicina: CGSize, osnova: CGFloat, tesno: Bool = false) {
+    private func uokviri(_ ids: [String], velicina: CGSize, osnova: CGFloat, tesno: Bool = false, neUmanjuj: Bool = false) {
         let t = ids.map(Mapa.oblast)
         // Ceo kontinent: bez krajnjih 10% država (Rusija, Island), da jezgro bude dovoljno krupno za dodir.
         func opseg(_ v: [Double]) -> (Double, Double) {
@@ -239,8 +246,18 @@ struct MapaView: View {
         let (y0, y1) = opseg(t.map(\.y))
         let (puta, rub): (CGFloat, CGFloat) = tesno ? (1.15, 60) : (1.5, 140)
         let k = min(velicina.width / ((x1 - x0) * puta + rub), velicina.height / ((y1 - y0) * puta + rub))
+        let zeljena = min(Self.najveciZum, max(1, k / osnova))
+        if neUmanjuj && zeljena < razmera {
+            // Sve mete ne staju u igračev zum: centar na prvoj (izabranoj) državi, razmera ostaje.
+            let o = t[0]
+            withAnimation(.easeInOut(duration: 0.35)) {
+                let kk = osnova * razmera
+                pomak = ogranici(CGSize(width: (Mapa.sirina / 2 - o.x) * kk, height: (Mapa.visina / 2 - o.y) * kk), k: kk, velicina: velicina)
+            }
+            return
+        }
         withAnimation(.easeInOut(duration: 0.45)) {
-            razmera = min(Self.najveciZum, max(1, k / osnova))
+            razmera = zeljena
             let kk = osnova * razmera
             pomak = ogranici(CGSize(width: (Mapa.sirina / 2 - (x0 + x1) / 2) * kk, height: (Mapa.visina / 2 - (y0 + y1) / 2) * kk), k: kk, velicina: velicina)
         }

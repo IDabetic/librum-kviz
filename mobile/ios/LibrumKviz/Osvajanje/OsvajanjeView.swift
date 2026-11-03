@@ -126,6 +126,17 @@ struct OsvajanjeIgraView: View {
             VStack(spacing: 10) {
                 Text(model.uputstvo).font(.tekst(15, .semibold)).frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityAddTraits(.updatesFrequently)
+                if let p = model.postavljanje {
+                    HStack(spacing: 10) {
+                        Button("Ispočetka") { model.ponistiPostavljanje() }.buttonStyle(.sekundarno).disabled(p.drzave.isEmpty)
+                        if p.drzave.count == Pravila.pocetnihDrzava && model.zaPostavljanje > 0 {
+                            Button("Rasporedi sam") { model.rasporediPostavljanjeSam() }.buttonStyle(.sekundarno)
+                        } else {
+                            Button("Kreni") { model.zavrsiPostavljanje() }.buttonStyle(.primarno)
+                                .disabled(p.drzave.count < Pravila.pocetnihDrzava || model.zaPostavljanje > 0)
+                        }
+                    }
+                }
                 if model.meta == nil && model.covekNaPotezu && model.stanje.faza == .raspored {
                     Button("Rasporedi sam") { model.rasporediSam() }.buttonStyle(.sekundarno)
                 }
@@ -166,7 +177,7 @@ struct OsvajanjeIgraView: View {
             guard da, model.postavka != nil, !videoMisiju else { return }
             videoMisiju = true
             // Na jednom kontinentu nema tajne misije: cilj je ceo kontinent, partija kreće odmah.
-            if model.postavka?.teren == nil { misija = true } else { model.zapocni(); model.javi("Cilj: osvoji ceo kontinent") }
+            if model.postavka?.teren == nil { misija = true } else { model.pocniPostavljanje(); model.javi("Cilj: osvoji ceo kontinent") }
         }
         .overlay {
             if potvrdaIzlaska {
@@ -304,7 +315,7 @@ struct OsvajanjeIgraView: View {
     }
 
     private func misijaList(_ tim: String) -> some View {
-        DonjiList(zatvori: { misija = false; model.zapocni() }) {
+        DonjiList(zatvori: { misija = false; model.pocniPostavljanje() }) {
             VStack(alignment: .leading, spacing: 12) {
                 Oznaka(tekst: "Tajna misija · vidi je samo tvoj tim", boja: .roze)
                 Naslov(tekst: Misije.tekst(model.stanje.misije[tim]), velicina: 26)
@@ -333,7 +344,7 @@ struct OsvajanjeIgraView: View {
                         }
                     }
                 }
-                Button("Važi") { misija = false; model.zapocni() }.buttonStyle(.primarno)
+                Button("Važi") { misija = false; model.pocniPostavljanje() }.buttonStyle(.primarno)
             }
         }
     }
