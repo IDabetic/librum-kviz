@@ -42,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -328,6 +329,9 @@ fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: (
     var misija by remember { mutableStateOf(false) }
     var videoMisiju by remember { mutableStateOf(false) }
     BackHandler { potvrdaIzlaska = true }
+    // Ekran ne sme da se ugasi usred poteza (gašenje je izbacivalo iz partije).
+    val pogled = androidx.compose.ui.platform.LocalView.current
+    DisposableEffect(Unit) { pogled.keepScreenOn = true; onDispose { pogled.keepScreenOn = false } }
     // Preko servera misija i mapa stižu sa domaćinovog telefona, pa list misije čeka prvo stanje.
     LaunchedEffect(model.spremno, model.cekaPocetak) {
         if (!model.spremno || model.cekaPocetak || videoMisiju) return@LaunchedEffect
@@ -443,7 +447,17 @@ private fun Igra(model: OsvajanjeModel, otvoriMisiju: () -> Unit, izlaz: () -> U
             model::dodir, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp), meta = model.meta, izvori = model.izvori)
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp).fillMaxWidth().mirna().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             run {
-                Text(model.uputstvo, style = tekst(15.sp, FontWeight.SemiBold))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(model.uputstvo, style = tekst(15.sp, FontWeight.SemiBold), modifier = Modifier.weight(1f))
+                    model.rokPoteza?.let { rok ->
+                        // Odbrojavanje poteza: poslednjih 10 sekundi crveno.
+                        var sada by remember { mutableLongStateOf(System.currentTimeMillis()) }
+                        LaunchedEffect(rok) { while (true) { sada = System.currentTimeMillis(); delay(500) } }
+                        val ostalo = ((rok - sada + 999) / 1000).coerceAtLeast(0)
+                        Text("$ostalo s", style = naslov(18.sp, if (ostalo <= 10) Boje.crvena else Boje.sivaTekst),
+                            modifier = Modifier.semantics { contentDescription = "Još $ostalo sekundi za potez" })
+                    }
+                }
                 model.postavljanje?.let { p ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Dugme("Ispočetka", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO, omoguceno = p.drzave.isNotEmpty(), radnja = model::ponistiPostavljanje)

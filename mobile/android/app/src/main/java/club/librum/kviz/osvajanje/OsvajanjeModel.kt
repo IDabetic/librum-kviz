@@ -134,6 +134,7 @@ class OsvajanjeModel(
             "stanje" -> {
                 stanje = lokalizuj(a.stanje ?: return)
                 if (cekaPocetak) cekaPocetak = false
+                pratiUdaljenog()
                 pocniPotezAkoTreba()
             }
             "bitka" -> {
@@ -288,6 +289,7 @@ class OsvajanjeModel(
     }
 
     fun dodir(id: String) {
+        produziSat()
         if (postavljanje != null) { dodirPostavljanja(id); return }
         if (!covekNaPotezu || otvoreno != null || bitka != null) return
         val oblast = stanje.oblasti[id] ?: return
@@ -344,7 +346,61 @@ class OsvajanjeModel(
         bitka = b.copy(prikazi = b.prikazi.toMutableList().also { it[b.redni] = spil.sledece() }, zamena = b.zamena + 1)
     }
 
+    // ── Sat poteza (30 s, svaki dodir produžava; tri isteka bez napada = ispadanje) ──
+
+    var rokPoteza by mutableStateOf<Long?>(null); private set
+    private var satPoteza: Job? = null
+    /** Domaćin prati igrača sa drugog telefona: ako se ne javi u roku (+15 s za mrežu), potez je propušten. */
+    private var pocetakUdaljenogPoteza: Triple<Int, Int, Long>? = null
+
+    private fun pokreniPetlju() {
+        if (satPoteza?.isActive == true) return
+        satPoteza = viewModelScope.launch { while (true) { delay(1000); proveriSat() } }
+    }
+
+    private fun pokreniSat() { rokPoteza = System.currentTimeMillis() + Pravila.ROK_POTEZA_SEKUNDI * 1000L; pokreniPetlju() }
+    private fun produziSat() { if (rokPoteza != null) rokPoteza = System.currentTimeMillis() + Pravila.ROK_POTEZA_SEKUNDI * 1000L }
+
+    private fun pratiUdaljenog() {
+        if (veza?.domacin != true || !udaljen(stanje.trenutni) || stanje.faza == Faza.KRAJ) return
+        pocetakUdaljenogPoteza = Triple(stanje.krug, stanje.naPotezu, System.currentTimeMillis())
+        pokreniPetlju()
+    }
+
+    private fun proveriSat() {
+        val p = pocetakUdaljenogPoteza
+        if (veza?.domacin == true && p != null && udaljen(stanje.trenutni) && stanje.faza != Faza.KRAJ &&
+            p.first == stanje.krug && p.second == stanje.naPotezu &&
+            System.currentTimeMillis() - p.third > (Pravila.ROK_POTEZA_SEKUNDI + 15) * 1000L) {
+            pocetakUdaljenogPoteza = null
+            val novo = stanje.isteklo(stanje.trenutni.id)
+            objavi(novo); pocniPotez(novo)
+            return
+        }
+        val rok = rokPoteza ?: return
+        if (!covekNaPotezu || stanje.faza != Faza.NAPAD) { rokPoteza = null; return }
+        // Bitka i otvoreno pitanje imaju svoj sat; rok poteza čeka.
+        if (bitka != null || otvoreno != null) { produziSat(); return }
+        if (System.currentTimeMillis() >= rok) istekaoPotez()
+    }
+
+    private fun istekaoPotez() {
+        rokPoteza = null
+        val ja = stanje.trenutni
+        val novo = stanje.isteklo(ja.id)
+        izabrana = null; meta = null; utvrdjivanje = false
+        if (novo.igraci.firstOrNull { it.id == ja.id }?.ispao == true) {
+            javi("Ispao si: tri poteza zaredom bez napada.")
+            if (veza == null) { stanje = novo.copy(faza = Faza.KRAJ); return }
+        } else if (stanje.bitaka == 0) {
+            javi("Vreme je isteklo, potez prelazi dalje (${novo.propusteno?.get(ja.id) ?: 0}/${Pravila.PROPUSTENIH_DO_ISPADANJA}).")
+        }
+        objavi(novo)
+        pocniPotez(novo)
+    }
+
     fun krajPoteza() {
+        rokPoteza = null
         izabrana = null; meta = null; utvrdjivanje = false
         val novo = stanje.zavrsiPotez()
         objavi(novo)
@@ -456,7 +512,8 @@ class OsvajanjeModel(
         if (novo.faza != Faza.SNABDEVANJE) return
         zapocetPotez = novo.krug to novo.naPotezu
         // Pravi igrač sa drugog telefona igra sam; bota vodi samo domaćin.
-        if (udaljen(novo.trenutni) || (veza != null && !novo.trenutni.covek && veza.domacin.not())) return
+        if (udaljen(novo.trenutni)) { pratiUdaljenog(); return }
+        if (veza != null && !novo.trenutni.covek && veza.domacin.not()) return
         if (novo.trenutni.covek) {
             // Potez čoveka počinje napadom (vlasnik 02.11): pojačanja stižu sama i idu na granice, bez pitanja.
             val tim = novo.trenutni.tim
@@ -464,6 +521,7 @@ class OsvajanjeModel(
             val dobio = s.zaRaspored
             stanje = s.copy(tacnih = s.tacnih + (tim to ((s.tacnih[tim] ?: 1) - 1))).botRasporedi()
             javi("+$dobio vojski na granicama. Biraj odakle napadaš.")
+            pokreniSat()
         }
         else potezBota = viewModelScope.launch { igrajBota() }
     }

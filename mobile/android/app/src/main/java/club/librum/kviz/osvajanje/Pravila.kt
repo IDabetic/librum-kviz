@@ -57,6 +57,10 @@ object Pravila {
     const val POCETNE_VOJSKE_PRESTONICE = 5
     const val POCETNIH_DRZAVA = 6
     const val POCETNE_VOJSKE_DRZAVE = 2
+    /** Vreme za odluku na potezu; svaki dodir ga produžava. */
+    const val ROK_POTEZA_SEKUNDI = 30
+    /** Tri poteza zaredom bez napada (isteklo vreme) = igrač nije u igri i ispada. */
+    const val PROPUSTENIH_DO_ISPADANJA = 3
     const val NEUTRALNE_VOJSKE = 1
     /** Vojske koje igrač sam raspoređuje na početne države pre prvog kruga (isto koliko dobija i automatski). */
     const val VOJSKI_NA_POCETKU = POCETNE_VOJSKE_PRESTONICE + (POCETNIH_DRZAVA - 1) * POCETNE_VOJSKE_DRZAVE
@@ -218,6 +222,8 @@ data class Stanje(
     val tacnih: Map<String, Int> = emptyMap(),
     val pobednik: String? = null,
     val bonusPomoci: Map<String, Int> = emptyMap(),
+    /** Potezi zaredom bez napada (isteklo vreme); na treći igrač ispada. Opciono, kao na iOS-u. */
+    val propusteno: Map<String, Int>? = null,
 ) {
     val trenutni: Igrac get() = igraci[naPotezu]
 
@@ -388,6 +394,20 @@ data class Stanje(
         val n = min(broj, a.vojske - 1)
         if (n <= 0) return this
         return copy(utvrdjeno = true, oblasti = oblasti + (odakle to a.copy(vojske = a.vojske - n)) + (kuda to b.copy(vojske = b.vojske + n)))
+    }
+
+    /** Isteklo vreme na potezu: bez napada je propušten potez, treći zaredom izbacuje (države tima postaju neutralne sa pola vojske). */
+    fun isteklo(id: String): Stanje {
+        val p = (propusteno ?: emptyMap()) + (id to if (bitaka > 0) 0 else (propusteno?.get(id) ?: 0) + 1)
+        var s = copy(propusteno = p)
+        if ((p[id] ?: 0) >= Pravila.PROPUSTENIH_DO_ISPADANJA) {
+            val tim = igraci.firstOrNull { it.id == id }?.tim
+            val igraci2 = s.igraci.map { if (it.id == id) it.copy(ispao = true) else it }
+            s = s.copy(igraci = igraci2)
+            if (tim != null && igraci2.none { it.tim == tim && !it.ispao })
+                s = s.copy(oblasti = s.oblasti.mapValues { (_, o) -> if (o.vlasnik == tim) StanjeOblasti(null, maxOf(1, o.vojske / 2)) else o })
+        }
+        return s.zavrsiPotez()
     }
 
     fun zavrsiPotez(): Stanje {

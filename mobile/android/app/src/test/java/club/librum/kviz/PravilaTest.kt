@@ -127,6 +127,32 @@ class PravilaTest {
 }
 
 /** Pravila ostalih igara, isti brojevi kao na vebu i iOS-u. */
+/** Sat poteza: tri isteka zaredom bez napada izbacuju igrača; napad briše niz (isto kao iOS SatPotezaTests). */
+class SatPotezaTest {
+    init { Mapa.ucitaj(java.io.File("../../../src/lib/osvajanje/svet.json").readText()) }
+
+    @Test fun triIstekaIzbacuju() {
+        var s = Stanje.nova(12, Tezina.NORMALNO, Slucajno(5)).let { it.copy(faza = Faza.NAPAD) }
+        val ja = s.trenutni.id; val tim = s.trenutni.tim
+        for (i in 1..3) {
+            s = s.isteklo(ja)
+            assertEquals(i, s.propusteno?.get(ja))
+            while (s.trenutni.id != ja && s.faza != Faza.KRAJ) s = s.zavrsiPotez()
+            s = s.copy(faza = Faza.NAPAD)
+        }
+        assertTrue(s.igraci.first { it.id == ja }.ispao)
+        assertFalse(s.oblasti.values.any { it.vlasnik == tim })
+    }
+
+    @Test fun napadBriseNiz() {
+        var s = Stanje.nova(12, Tezina.NORMALNO, Slucajno(5)).let { it.copy(faza = Faza.NAPAD) }
+        val ja = s.trenutni.id
+        s = s.isteklo(ja)
+        while (s.trenutni.id != ja) s = s.zavrsiPotez()
+        assertEquals(0, s.copy(faza = Faza.NAPAD, bitaka = 1).isteklo(ja).propusteno?.get(ja))
+    }
+}
+
 /** Mozak bota (docs/OSVAJANJE-BOT.md), isti slučajevi kao iOS BotTests. */
 class BotTest {
     init { Mapa.ucitaj(java.io.File("../../../src/lib/osvajanje/svet.json").readText()) }
