@@ -1,26 +1,23 @@
 import SwiftUI
 
-/// Početna iz kita (Home · Pick a Quiz): vrteška izdvojenih kvizova, igre, teme
+/// Početna iz kita (Home · Pick a Quiz): igre (Osvajanje sveta prvo), teme
 /// i nedeljni vrh. Stanja: offline traka, učitavanje i greška vrha.
 struct PocetnaView: View {
     @Environment(Sesija.self) private var sesija
     @Environment(Napredak.self) private var napredak
     @Environment(Mreza.self) private var mreza
 
-    @State private var izdvojeni = 0
     @State private var vrh: Ucitano<[RangListaView.Red]> = .ucitava
     @State private var pravila: KvizStavka?
 
-    private let istaknuti = ["dnevni", "osvajanje", "slikari", "opste", "knjige"].compactMap(KvizKatalog.stavka)
-    /// Šest igara pored Osvajanja sveta.
-    private let igre = ["pro", "book", "duel", "slikari", "brzi", "vesanje"].compactMap(KvizKatalog.stavka)
+    /// Igre kao kartice; Osvajanje sveta je prvo (vlasnik 03.11: bez banera na vrhu).
+    private let igre = ["osvajanje", "dnevni", "pro", "book", "duel", "slikari", "brzi", "vesanje"].compactMap(KvizKatalog.stavka)
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 zaglavlje
                 if !mreza.povezan { OfflineTraka() }
-                vrteska
                 Text("Igre").font(.naslov(24))
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
                     ForEach(igre) { s in
@@ -84,50 +81,6 @@ struct PocetnaView: View {
                 .frame(width: 44, height: 44).contentShape(Rectangle())
         }
         .accessibilityLabel("Pravila: \(s.naslov)")
-    }
-
-    private var vrteska: some View {
-        VStack(spacing: 10) {
-            TabView(selection: $izdvojeni) {
-                ForEach(Array(istaknuti.enumerated()), id: \.offset) { i, s in
-                    NavigationLink { KvizOdrediste(stavka: s) } label: { izdvojena(s) }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 4).padding(.bottom, 8)
-                        .tag(i)
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: 330)
-            CrticeKoraka(ukupno: istaknuti.count, trenutni: izdvojeni)
-        }
-    }
-
-    private func izdvojena(_ s: KvizStavka) -> some View {
-        ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: s.boja))
-            Circle().fill(.white.opacity(0.2)).frame(width: 260).offset(x: 120, y: 110)
-            Group {
-                if let ilu = s.ilustracija { Image(ilu).resizable().scaledToFit().frame(width: 170, height: 170).rotationEffect(.degrees(6)) }
-                else { MaskotaSlika(maskota: s.maskota, velicina: 190) }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing).padding(16)
-            .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(s.naslov).font(.naslov(28)).foregroundStyle(Color.tinta).lineLimit(2).minimumScaleFactor(0.7)
-                Text(s.tezina).font(.tekst(13, .bold)).foregroundStyle(Color.tinta.opacity(0.7))
-            }
-            .padding(14).background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.tinta, lineWidth: 2.5))
-            .rotationEffect(.degrees(-3)).padding(18).frame(maxWidth: 230, alignment: .leading)
-            Text("Igraj").font(.tekst(16, .bold)).foregroundStyle(.white)
-                .padding(.horizontal, 22).frame(height: 48).background(Color.tinta, in: RoundedRectangle(cornerRadius: 16))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading).padding(18)
-        }
-        .overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).stroke(Color.mastilo, lineWidth: 2.5))
-        .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color.senka).offset(y: 6))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(s.naslov). \(s.opis)")
-        .accessibilityAddTraits(.isButton)
     }
 
     private func tema(_ s: KvizStavka) -> some View {

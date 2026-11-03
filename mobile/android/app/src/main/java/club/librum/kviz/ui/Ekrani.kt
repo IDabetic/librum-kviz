@@ -81,8 +81,11 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 }
                 MaskotaSlika(Maskota.BLOOP, 92.dp)
             }
-            KarticaIgre("Dnevni izazov", "Istih 10 pitanja za sve danas. Jedan pokušaj, jedna rang lista.", Boje.zuta, Boje.tinta, Maskota.BLOOP, false) { idi("dnevni") }
-            KarticaIgre("Osvajanje sveta", "171 država, vojske i bitke znanja protiv dva rivala.", Boje.teal, Color.White, Maskota.MIMI, true) { idi("osvajanje") }
+            // Osvajanje sveta je prva kartica igre, ne baner (vlasnik 03.11).
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                KarticaIgre("Osvajanje sveta", "171 država, vojske i bitke znanja.", Boje.teal, Color.White, Maskota.MIMI, false, Modifier.weight(1f)) { idi("osvajanje") }
+                KarticaIgre("Dnevni izazov", "Istih 10 pitanja za sve danas.", Boje.zuta, Boje.tinta, Maskota.BLOOP, false, Modifier.weight(1f)) { idi("dnevni") }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 KarticaIgre("PRO kviz", "Deset života, rang lista.", Boje.ljubicasta, Color.White, Maskota.LUMI, false, Modifier.weight(1f)) { idi("pro") }
                 KarticaIgre("Book kviz", "Pisci, dela, žanrovi.", Color(0xFFF4A33C), Boje.mastilo, Maskota.ZIG, false, Modifier.weight(1f)) { idi("book") }
@@ -133,7 +136,8 @@ private fun KarticaIgre(naslovIgre: String, opis: String, boja: Color, bojaTekst
         Box(Modifier.align(Alignment.TopEnd).offset(x = 40.dp, y = (-30).dp).size(if (velika) 230.dp else 150.dp).alpha(0.22f).background(Boje.kartica, CircleShape))
         MaskotaSlika(maskota, if (velika) 160.dp else 84.dp, Modifier.align(Alignment.TopEnd).offset(y = if (velika) 4.dp else (-6).dp))
         Column(Modifier.align(Alignment.BottomStart).padding(if (velika) 22.dp else 18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(naslovIgre, style = naslov(if (velika) 36.sp else 24.sp).copy(color = bojaTeksta), maxLines = 1)
+            // Dve reči („Osvajanje sveta”) idu u dva reda umesto da se drugi deo seče.
+            Text(naslovIgre, style = naslov(if (velika) 36.sp else 24.sp).copy(color = bojaTeksta, lineHeight = if (velika) 38.sp else 25.sp), maxLines = 2)
             Text(opis, style = tekst(14.sp, FontWeight.SemiBold, bojaTeksta.copy(alpha = 0.85f)), modifier = Modifier.fillMaxWidth(if (velika) 0.7f else 1f))
         }
     }
