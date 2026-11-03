@@ -154,6 +154,8 @@ private fun Aplikacija() {
                 composable("igrac/{id}") { e -> ProfilIgracaEkran(sesija, e.arguments?.getString("id").orEmpty(), { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("igraci/trazi") { TraziIgraceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("sanduce") { SanduceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("pravila") { club.librum.kviz.ui.PravilaIgaraEkran { nav.popBackStack() } }
+                composable("pravno/{vrsta}") { e -> club.librum.kviz.ui.PravniTekstEkran(e.arguments?.getString("vrsta") ?: "uslovi") { nav.popBackStack() } }
                 composable("poruke") { PorukeEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("razgovor/{sa}/{ime}") { e -> RazgovorEkran(sesija, e.arguments?.getString("sa").orEmpty(), e.arguments?.getString("ime").orEmpty()) { nav.popBackStack() } }
                 composable("rang") { RangLista(sesija) { nav.navigate(it) } }

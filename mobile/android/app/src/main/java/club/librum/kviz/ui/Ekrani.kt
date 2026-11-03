@@ -258,18 +258,19 @@ fun Profil(sesija: Sesija, idi: (String) -> Unit = {}) {
             }
             Column(Modifier.fillMaxWidth().mirna()) {
                 listOf(
-                    "Politika privatnosti" to "https://kviz.librum.club/politika-privatnosti",
-                    "Uslovi korišćenja" to "https://kviz.librum.club/uslovi-koriscenja",
-                    "Pošalji pitanje za kviz" to "https://kviz.librum.club/dodaj-pitanja",
-                ).forEachIndexed { i, (naziv, adresa) ->
+                    "Pravila igara" to "pravila",
+                    "Pošalji pitanje za kviz" to "dodaj/pro",
+                    "Politika privatnosti" to "pravno/privatnost",
+                    "Uslovi korišćenja" to "pravno/uslovi",
+                ).forEachIndexed { i, (naziv, ruta) ->
                     Row(
-                        Modifier.fillMaxWidth().clickable(role = Role.Button) { kontekst.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(adresa))) }.padding(16.dp),
+                        Modifier.fillMaxWidth().clickable(role = Role.Button) { idi(ruta) }.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(naziv, style = tekst(15.sp, FontWeight.SemiBold), modifier = Modifier.weight(1f))
-                        Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null, tint = Boje.sivaTekst, modifier = Modifier.size(18.dp))
+                        Text("›", style = tekst(20.sp, FontWeight.Bold, Boje.sivaTekst))
                     }
-                    if (i < 2) HorizontalDivider(color = Boje.kremTamnija)
+                    if (i < 3) HorizontalDivider(color = Boje.kremTamnija)
                 }
             }
             Text("Librum kviz ${BuildConfig.VERSION_NAME}", style = tekst(12.sp, boja = Boje.sivaTekst), modifier = Modifier.align(Alignment.CenterHorizontally))
