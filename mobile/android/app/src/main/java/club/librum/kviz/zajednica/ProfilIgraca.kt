@@ -86,6 +86,9 @@ object Drustvo {
     }.isSuccess
 }
 
+/** „1 pitanje”, „21 pitanje”, inače „pitanja” (2–4 i 5+ imaju isti oblik). */
+internal fun pitanja(n: Int) = if (n % 10 == 1 && n % 100 != 11) "pitanje" else "pitanja"
+
 /** Zaglavlje kao na Instagramu: slika, brojevi (partija, pratilaca, prati), ime, grad, bio i pitanja koja je igrač poslao. */
 @Composable
 fun ProfilZaglavlje(p: ProfilIgraca, radnje: @Composable () -> Unit = {}) {
@@ -100,9 +103,9 @@ fun ProfilZaglavlje(p: ProfilIgraca, radnje: @Composable () -> Unit = {}) {
             }
         }
         Text(p.nadimak, style = tekst(18.sp, FontWeight.Bold))
-        listOfNotNull(p.ime, p.grad).joinToString(" · ").takeIf { it.isNotEmpty() }?.let { Text(it, style = tekst(14.sp, boja = Boje.sivaTekst)) }
+        listOfNotNull(p.ime, p.grad).map { it.trim().replace(Regex("\\s+"), " ") }.filter { it.isNotEmpty() }.joinToString(" · ").takeIf { it.isNotEmpty() }?.let { Text(it, style = tekst(14.sp, boja = Boje.sivaTekst)) }
         p.bio?.takeIf { it.isNotBlank() }?.let { Text(it, style = tekst(15.sp)) }
-        if (p.poslao_pitanja > 0) Text("Poslao ${p.poslao_pitanja} pitanja · ${p.u_igri_pitanja} u igri", style = tekst(14.sp, FontWeight.SemiBold, Boje.teal))
+        if (p.poslao_pitanja > 0) Text("Poslao ${p.poslao_pitanja} ${pitanja(p.poslao_pitanja)} · ${p.u_igri_pitanja} u igri", style = tekst(14.sp, FontWeight.SemiBold, Boje.teal))
         radnje()
     }
 }

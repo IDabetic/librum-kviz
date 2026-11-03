@@ -79,6 +79,12 @@ class MainActivity : ComponentActivity() {
         Napredak.deljeni = Napredak(applicationContext)
         Zvuk.init(applicationContext)
         setContent { Aplikacija() }
+        intent?.data?.let { Pozivnica.primi(it) }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        intent.data?.let { Pozivnica.primi(it) }
     }
 }
 
@@ -91,6 +97,15 @@ private val KARTICE = listOf(
     Kartica("profil", "Profil", Icons.Rounded.Person),
 )
 
+/** Link iz pozivnice čeka dok navigacija ne bude spremna; host je vrsta (duel, igrac), putanja je kod ili id. */
+object Pozivnica {
+    val ruta = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    fun primi(uri: android.net.Uri) {
+        val vrednost = uri.pathSegments.firstOrNull()?.filter { it.isLetterOrDigit() || it == '-' } ?: return
+        ruta.value = when (uri.host) { "duel" -> "duel/kod/${vrednost.uppercase()}"; "igrac" -> "igrac/$vrednost"; else -> null }
+    }
+}
+
 /** Tri kartice dole kao One UI: igre, rang lista, profil; igre preko celog ekrana. */
 @Composable
 private fun Aplikacija() {
@@ -101,6 +116,8 @@ private fun Aplikacija() {
     val trenutna by nav.currentBackStackEntryAsState()
     val ruta = trenutna?.destination?.route
     LaunchedEffect(nalog?.id) { sesija.ucitajNadimak() }
+    val pozivnica by Pozivnica.ruta.collectAsState()
+    LaunchedEffect(pozivnica) { pozivnica?.let { nav.navigate(it); Pozivnica.ruta.value = null } }
     // Brojači se osvežavaju pri svakom prelasku na karticu, kao na iOS-u.
     LaunchedEffect(ruta, nalog?.id) { Brojaci.osvezi(sesija) }
     val novaObavestenja by Brojaci.obavestenja.collectAsState()
