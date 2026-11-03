@@ -10,8 +10,9 @@ struct PocetnaView: View {
     @State private var vrh: Ucitano<[RangListaView.Red]> = .ucitava
     @State private var pravila: KvizStavka?
 
-    /// Igre kao kartice; Osvajanje sveta je prvo (vlasnik 03.11: bez banera na vrhu).
-    private let igre = ["osvajanje", "dnevni", "pro", "book", "duel", "slikari", "brzi", "vesanje"].compactMap(KvizKatalog.stavka)
+    /// Vlasnik 03.11: Osvajanje sveta je jedna velika kartica, ispod šest igara u dva reda po tri.
+    private let osvajanje = KvizKatalog.stavka("osvajanje")
+    private let igre = ["pro", "book", "duel", "slikari", "brzi", "vesanje"].compactMap(KvizKatalog.stavka)
 
     var body: some View {
         ScrollView {
@@ -19,12 +20,17 @@ struct PocetnaView: View {
                 zaglavlje
                 if !mreza.povezan { OfflineTraka() }
                 Text("Igre").font(.naslov(24))
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
+                if let s = osvajanje {
+                    NavigationLink { KvizOdrediste(stavka: s) } label: {
+                        KarticaIgre(naslov: s.naslov, opis: s.opis, boja: Color(hex: s.boja), tekst: s.tekstBoja, maskota: s.maskota, velika: true, ilustracija: s.ilustracija)
+                    }
+                    .overlay(alignment: .topLeading) { infoDugme(s).padding(12) }
+                }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                     ForEach(igre) { s in
-                        NavigationLink { KvizOdrediste(stavka: s) } label: {
-                            KarticaIgre(naslov: s.naslov, opis: s.opis, boja: Color(hex: s.boja), tekst: s.tekstBoja, maskota: s.maskota, velika: false, ilustracija: s.ilustracija)
-                        }
-                        .overlay(alignment: .topLeading) { infoDugme(s).padding(10) }
+                        NavigationLink { KvizOdrediste(stavka: s) } label: { MalaIgra(stavka: s) }
+                            .buttonStyle(.plain)
+                            .contextMenu { Button("Kako se igra") { withAnimation { pravila = s } } }
                     }
                 }
                 HStack {
@@ -34,7 +40,7 @@ struct PocetnaView: View {
                 }
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(KvizKatalog.sve.filter { $0.id.hasPrefix("zanr-") }) { s in
+                        ForEach(KvizKatalog.sve.filter { $0.id == "dnevni" || $0.id.hasPrefix("tema-") || $0.id.hasPrefix("zanr-") }) { s in
                             NavigationLink { KvizOdrediste(stavka: s) } label: { tema(s) }
                         }
                     }
@@ -167,6 +173,28 @@ struct KarticaIgre: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .pop(boja)
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Mala kartica igre (tri u redu): ilustracija i naslov; pravila su na dugom pritisku i u lobiju.
+struct MalaIgra: View {
+    let stavka: KvizStavka
+    var body: some View {
+        VStack(spacing: 6) {
+            Group {
+                if let ilu = stavka.ilustracija { Image(ilu).resizable().scaledToFit() }
+                else { MaskotaSlika(maskota: stavka.maskota, velicina: 64) }
+            }
+            .frame(width: 64, height: 64)
+            .accessibilityHidden(true)
+            Text(stavka.naslov).font(.naslov(15)).foregroundStyle(stavka.tekstBoja)
+                .lineLimit(2).minimumScaleFactor(0.8).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity).frame(height: 128)
+        .padding(.horizontal, 6)
+        .pop(Color(hex: stavka.boja))
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
     }

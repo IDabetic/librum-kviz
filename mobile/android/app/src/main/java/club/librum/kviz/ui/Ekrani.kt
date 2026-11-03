@@ -81,26 +81,23 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 }
                 MaskotaSlika(Maskota.BLOOP, 92.dp)
             }
-            // Osvajanje sveta je prva kartica igre, ne baner (vlasnik 03.11).
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                KarticaIgre("Osvajanje sveta", "171 država, vojske i bitke znanja.", Boje.teal, Color.White, Maskota.MIMI, false, Modifier.weight(1f)) { idi("osvajanje") }
-                KarticaIgre("Dnevni izazov", "Istih 10 pitanja za sve danas.", Boje.zuta, Boje.tinta, Maskota.BLOOP, false, Modifier.weight(1f)) { idi("dnevni") }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                KarticaIgre("PRO kviz", "Deset života, rang lista.", Boje.ljubicasta, Color.White, Maskota.LUMI, false, Modifier.weight(1f)) { idi("pro") }
-                KarticaIgre("Book kviz", "Pisci, dela, žanrovi.", Color(0xFFF4A33C), Boje.mastilo, Maskota.ZIG, false, Modifier.weight(1f)) { idi("book") }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                KarticaIgre("Duel", "Jedan na jedan.", Boje.mastilo, Color.White, Maskota.BLOOP, false, Modifier.weight(1f)) { idi("duel") }
-                KarticaIgre("Vešanje", "Reč slovo po slovo.", Boje.roze, Boje.mastilo, Maskota.LUMI, false, Modifier.weight(1f)) { idi("vesanje") }
+            // Vlasnik 03.11: Osvajanje sveta je jedna velika kartica, ispod šest igara u dva reda po tri.
+            KarticaIgre("Osvajanje sveta", "171 država, vojske i bitke znanja protiv rivala.", Boje.teal, Color.White, Maskota.MIMI, true) { idi("osvajanje") }
+            listOf(
+                listOf(Triple("PRO kviz", "pro", Boje.ljubicasta to Maskota.LUMI), Triple("Book kviz", "book", Color(0xFFF4A33C) to Maskota.ZIG), Triple("Duel", "duel", Boje.mastilo to Maskota.BLOOP)),
+                listOf(Triple("Slikari", "tema/slikari", Boje.roze to Maskota.LUMI), Triple("Brzi kviz", "brzi", Boje.zuta to Maskota.ZIG), Triple("Vešanje", "vesanje", Color(0xFF6EC3F2) to Maskota.MIMI)),
+            ).forEach { red ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    red.forEach { (naziv, ruta, bm) -> MalaIgra(naziv, bm.first, bm.second, Modifier.weight(1f)) { idi(ruta) } }
+                }
             }
             Text("Teme", style = naslov(26.sp), modifier = Modifier.padding(top = 8.dp))
+            KarticaIgre("Dnevni izazov", "Istih 10 pitanja za sve danas. Jedan pokušaj, jedna rang lista.", Boje.zuta, Boje.tinta, Maskota.BLOOP, false) { idi("dnevni") }
             KarticaIgre("Opšte znanje", "10 pitanja iz svega pomalo, 15 sekundi po pitanju.", Color(0xFFF4A33C), Boje.mastilo, Maskota.BLOOP, false) { idi("tema/opste") }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 KarticaIgre("Knjige", "Pisci, dela i likovi.", Boje.teal, Color.White, Maskota.ZIG, false, Modifier.weight(1f)) { idi("tema/knjige") }
-                KarticaIgre("Slikari", "Ko je naslikao ovo delo?", Boje.roze, Boje.mastilo, Maskota.LUMI, false, Modifier.weight(1f)) { idi("tema/slikari") }
+                KarticaIgre("Slikari: majstori", "Manje poznata dela.", Boje.ljubicasta, Color.White, Maskota.ZIG, false, Modifier.weight(1f)) { idi("tema/slikari-tesko") }
             }
-            KarticaIgre("Slikari: majstori", "Samo manje poznata dela. Za one koji idu po muzejima.", Boje.ljubicasta, Color.White, Maskota.ZIG, false) { idi("tema/slikari-tesko") }
             Text("Kategorije", style = naslov(26.sp), modifier = Modifier.padding(top = 8.dp))
             // Kategorije opšteg fonda (questions.tags), isto kao iOS KvizKatalog.teme.
             listOf(
@@ -121,9 +118,22 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 }
             }
             KarticaIgre("Nemoguća pitanja", "Samo najteža pitanja iz baze.", Color(0xFFE5385C), Color.White, Maskota.LUMI, false) { idi("tema/tesko") }
-            KarticaIgre("Brzi kviz", "Tačno ili netačno, 60 sekundi.", Boje.zuta, Boje.mastilo, Maskota.ZIG, false) { idi("brzi") }
             Spacer(Modifier.height(80.dp))
         }
+    }
+}
+
+/** Mala kartica igre (tri u redu): maskota i naslov. */
+@Composable
+private fun MalaIgra(naslovIgre: String, boja: Color, maskota: Maskota, modifier: Modifier = Modifier, radnja: () -> Unit) {
+    val tekstBoja = if (boja == Boje.ljubicasta || boja == Boje.mastilo || boja == Boje.teal) Color.White else Boje.tinta
+    Column(
+        modifier.height(128.dp).pop(boja).clickable(role = Role.Button, onClick = radnja).padding(8.dp)
+            .semantics(mergeDescendants = true) {},
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        MaskotaSlika(maskota, 60.dp)
+        Text(naslovIgre, style = naslov(15.sp).copy(color = tekstBoja, textAlign = androidx.compose.ui.text.style.TextAlign.Center, lineHeight = 16.sp), maxLines = 2)
     }
 }
 
