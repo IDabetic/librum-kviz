@@ -49,8 +49,11 @@ targets:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSRequiresIPhoneOS: true
+        # Pokretanje: krem pozadina (prati tamni režim) i maskota, bez belog bljeska.
         UILaunchScreen:
           UIColorName: Krem
+          UIImageName: Bloop
+          UIImageRespectsSafeAreaInsets: true
         # Scena je obavezna od iOS 27, inače aplikacija pada na startu.
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
