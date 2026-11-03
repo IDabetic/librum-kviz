@@ -1,0 +1,36 @@
+{
+  "ulaz": 117262,
+  "za_uvoz": 65096,
+  "odbaceno": {
+    "otvoreno pitanje (nema 3 netačna)": 51284,
+    "skoro duplikat": 274,
+    "duplikat": 262,
+    "prevod": 212,
+    "dužina": 85,
+    "odgovori se ponavljaju": 33,
+    "napomena": 16
+  },
+  "po_izvoru": {
+    "OpenTriviaQA": 42175,
+    "Librum": 10611,
+    "021.rs": 6611,
+    "OpenTDB": 4250,
+    "HKS": 1449
+  },
+  "kategorije": {
+    "opšte": 19468,
+    "film i tv": 12652,
+    "muzika": 8096,
+    "geografija": 4660,
+    "književnost": 4440,
+    "sport": 3569,
+    "istorija": 3259,
+    "jezik": 2896,
+    "nauka": 1792,
+    "priroda": 1451,
+    "umetnost": 864,
+    "religija i mitologija": 826,
+    "hrana i piće": 625,
+    "tehnika": 498
+  }
+}
