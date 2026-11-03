@@ -750,6 +750,7 @@ struct RazgovorView: View {
 struct PravilaZajedniceView: View {
     let prihvati: () -> Void
     let odustani: () -> Void
+    @State private var uslovi = false
     private static let pravila = [
         ("hand.raised", "Bez uvreda, pretnji i govora mržnje. Ni prema kome, ni u šali."),
         ("eye.slash", "Bez golotinje, nasilja i sadržaja neprikladnog za decu."),
@@ -770,7 +771,8 @@ struct PravilaZajedniceView: View {
                         Text(p.1).font(.tekst(15)).fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                Link("Uslovi korišćenja", destination: URL(string: "https://kviz.librum.club/uslovi-koriscenja")!).font(.tekst(14, .bold)).foregroundStyle(Color.teal)
+                Button("Uslovi korišćenja") { uslovi = true }.font(.tekst(14, .bold)).foregroundStyle(Color.teal)
+                    .sheet(isPresented: $uslovi) { NavigationStack { PravniTekstView(vrsta: .uslovi) } }
                 Button("Prihvatam", action: prihvati).buttonStyle(.primarno)
             }
         }

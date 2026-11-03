@@ -25,11 +25,15 @@ struct KvizStavka: Identifiable, Hashable {
         let pomoc = "Pomoć: jedna po partiji, iz dnevnog fonda od \(Napredak.pomociDnevno) za sve igre."
         switch vrsta {
         case .igra(.osvajanje): return [
-            "Igraju tri igrača na pravoj mapi sveta: 171 država u 17 regiona.",
-            "Na početku poteza jedno pitanje snabdevanja: tačno donosi pune vojske, netačno pola.",
-            "Napadaš samo susede, a preko mora idu morski putevi. Bitka je pitanje: tačan odgovor ruši branioca, kad oboje znate pobeđuje brži.",
-            "Ceo region donosi bonus vojske svakog poteza. Svako treće osvajanje u nizu daje +2 vojske, pala prestonica +5.",
-            "Partija traje 8 ili 12 krugova; pobeđuje ko ima najviše država, vojske i regiona.", pomoc + " Ovde je pomoć 50/50 na jednom pitanju."]
+            "Igra se na pravoj mapi: ceo svet (171 država, 17 regiona) ili jedan kontinent; protiv računara, jednog rivala ili do 12 igrača.",
+            "Pre prvog kruga sam biraš 6 država na svom kontinentu (prva je prestonica) i raspoređuješ 15 vojski; svaka država ima bar jednu.",
+            "Na početku poteza stižu pojačanja: polovina tvojih država (najmanje 3) plus bonus za svaki ceo region; idu na granice.",
+            "Napadaš samo susede (preko mora idu isprekidani morski putevi), iz države sa bar 2 vojske, do 5 napada po potezu.",
+            "Prazna država je jedno pitanje: tačno je osvajaš. Država igrača je 5 pitanja: više tačnih pobeđuje, kod istog broja brži.",
+            "Izgubljena bitka protiv igrača odnosi i državu iz koje si napao. Svako treće osvajanje zaredom daje +2 vojske, pala prestonica +5.",
+            "Na potezu imaš 30 sekundi, svaki dodir ih vraća na početak. Tri poteza zaredom bez napada znače ispadanje.",
+            "Ceo svet: pobeđuje ko prvi ispuni tajnu misiju, inače ko ima najviše poena posle 8 ili 12 krugova. Kontinent: ko ga ceo osvoji.",
+            pomoc + " Ovde je pomoć 50/50 na jednom pitanju."]
         case .igra(.pro): return [
             "Na svako pitanje imaš četiri ponuđena odgovora i 15 sekundi.",
             "Tačan odgovor +10, netačan −5 i jedan život. Imaš 10 života.",
@@ -42,6 +46,7 @@ struct KvizStavka: Identifiable, Hashable {
         case .igra(.duel): return [
             "Jedan na jedan, ista pitanja u isto vreme. Brzi meč ima 5 pitanja sa nasumičnim rivalom, a privatna soba 10, 25 ili 50 pitanja uz kod koji deliš.",
             "Tačno +10, netačno ili isteklo vreme −5. Nerešeno ide na zlatno pitanje.",
+            "Izazov bez čekanja: ti odigraš 10 pitanja odmah, rival ima 24 sata; ishod stiže u Sanduče.",
             "Ko napusti meč predaje ga: rival dobija +50.", pomoc + " Ovde je pomoć 50/50."]
         case .igra(.vesanje): return [
             "Pred tobom su prazna polja i kratak opis reči. Biraš slova: tačno se otkriva na svim mestima, netačno troši jedan od 6 života.",

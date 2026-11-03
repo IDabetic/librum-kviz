@@ -73,6 +73,8 @@ struct ProfilView: View {
                     Divider().overlay(Color.kremTamnija)
                     NavigationLink { StatistikaView() } label: { RedListe(ikonica: "chart.bar", naziv: "Statistika") }
                     Divider().overlay(Color.kremTamnija)
+                    NavigationLink { PravilaIgaraView() } label: { RedListe(ikonica: "book.pages", naziv: "Pravila igara") }
+                    Divider().overlay(Color.kremTamnija)
                     NavigationLink { SanduceView() } label: { RedListe(ikonica: "tray", naziv: "Sanduče", vrednost: napredak.neprocitanih > 0 ? "\(napredak.neprocitanih) novo" : nil) }
                 }
                 .mirna()
@@ -479,9 +481,11 @@ struct PodesavanjaView: View {
                         NavigationLink { BlokiraniView() } label: { RedListe(ikonica: "hand.raised.slash", naziv: "Blokirani igrači") }
                     }
                     Divider().overlay(Color.kremTamnija)
-                    Link(destination: URL(string: "https://kviz.librum.club/politika-privatnosti")!) { RedListe(ikonica: "hand.raised", naziv: "Politika privatnosti") }
+                    NavigationLink { PravilaIgaraView() } label: { RedListe(ikonica: "book.pages", naziv: "Pravila igara") }
                     Divider().overlay(Color.kremTamnija)
-                    Link(destination: URL(string: "https://kviz.librum.club/uslovi-koriscenja")!) { RedListe(ikonica: "doc.text", naziv: "Uslovi korišćenja") }
+                    NavigationLink { PravniTekstView(vrsta: .privatnost) } label: { RedListe(ikonica: "hand.raised", naziv: "Politika privatnosti") }
+                    Divider().overlay(Color.kremTamnija)
+                    NavigationLink { PravniTekstView(vrsta: .uslovi) } label: { RedListe(ikonica: "doc.text", naziv: "Uslovi korišćenja") }
                 }
                 .mirna()
                 if let greska { Text(greska).font(.tekst(14, .semibold)).foregroundStyle(Color.crvena) }

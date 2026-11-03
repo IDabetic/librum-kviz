@@ -1,0 +1,89 @@
+{
+  "privatnost": {
+    "naslov": "Politika privatnosti",
+    "azurirano": "Ažurirano: 3. novembar 2026. · verzija 2 (aplikacija)",
+    "delovi": [
+      { "naslov": "Ko smo", "tekst": ["Librum kviz (aplikacija za iPhone i Android i sajt kviz.librum.club) vodi Librum. Za sva pitanja o privatnosti pišite na info@librum.club. Politika je usklađena sa Zakonom o zaštiti podataka o ličnosti Republike Srbije i Opštom uredbom EU o zaštiti podataka (GDPR)."] },
+      { "naslov": "Koje podatke prikupljamo", "tekst": [
+        "Nalog: e-mail, nadimak, avatar, a po želji ime, prezime, grad i kratak opis. Lozinka se čuva samo kao heš; mi joj nemamo pristup.",
+        "Prijava preko Apple ili Google naloga: dobijamo samo e-mail (ili Apple-ovu skrivenu adresu) i potvrdu identiteta, nikad lozinku tog naloga.",
+        "Igra: rezultati, tačni i netačni odgovori, brzina, korišćene pomoći, viđena pitanja (da se ne ponavljaju) i napredak u partijama.",
+        "Zajednica: objave, komentari, srca, praćenja, poruke između igrača, prijave sadržaja i blokade.",
+        "Uređaj: token za obaveštenja (Apple APNs / Google Firebase), ako ih dozvolite; tehnički zapisi o greškama bez sadržaja poruka.",
+        "Ne prikupljamo lokaciju, kontakte, fotografije ni zdravstvene podatke, i ne tražimo brojeve dokumenata ni kartica."
+      ] },
+      { "naslov": "Zašto ih koristimo", "tekst": [
+        "Da biste igrali sa nalogom, bili na rang listama i videli statistiku.",
+        "Da vam pitanja ne bi bila ista 7 dana i da partije sa drugim igračima rade u realnom vremenu.",
+        "Da radi zajednica: objave, poruke, obaveštenja o izazovima, pratiocima i komentarima.",
+        "Da sprečimo varanje, uvrede i zloupotrebe i da moderatori pregledaju prijave.",
+        "Podatke ne prodajemo, ne delimo oglašivačima i u aplikaciji nema reklama ni praćenja između aplikacija."
+      ] },
+      { "naslov": "Gde se čuvaju i ko ih obrađuje", "tekst": [
+        "Baza i prijava: Supabase, Evropska unija (Frankfurt). Sajt: Vercel, EU region.",
+        "Obaveštenja: Apple Push Notification service i Google Firebase Cloud Messaging; šalje im se samo token uređaja i tekst obaveštenja.",
+        "Prijava: Apple (Sign in with Apple) i Google (Google Sign-In), samo kada sami izaberete taj način.",
+        "E-pošta za nalog (potvrda i oporavak lozinke): Resend.",
+        "Sa obrađivačima imamo ugovore o obradi podataka; podaci se ne prenose van EU/EEA osim kada to zahteva zakon."
+      ] },
+      { "naslov": "Šta vide drugi igrači", "tekst": [
+        "Javni su nadimak, avatar, opis, rezultati na rang listama, broj pratilaca i vaše objave i komentari.",
+        "Poruke vidite samo vi i igrač sa kojim se dopisujete; moderator ih otvara samo kada je poruka prijavljena.",
+        "Blokiran igrač ne vidi vaše objave, komentare ni profil i ne može da vam piše."
+      ] },
+      { "naslov": "Koliko dugo čuvamo", "tekst": [
+        "Nalog, rezultati i sadržaj: dok je nalog aktivan.",
+        "Brisanjem naloga u aplikaciji (Podešavanja → Obriši nalog) odmah se brišu nalog, profil, rezultati, objave, komentari, poruke i praćenja.",
+        "Tehnički zapisi: najviše 90 dana."
+      ] },
+      { "naslov": "Vaša prava", "tekst": [
+        "Imate pravo na pristup i kopiju podataka, ispravku, brisanje, ograničenje obrade i povlačenje saglasnosti (npr. isključivanje obaveštenja u podešavanjima telefona).",
+        "Zahtev pošaljite na info@librum.club sa naslovom „Zahtev za zaštitu podataka”; odgovaramo u roku od 30 dana.",
+        "Pritužbu možete podneti Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti (poverenik.rs)."
+      ] },
+      { "naslov": "Bezbednost i deca", "tekst": [
+        "Sva komunikacija je šifrovana (HTTPS/TLS), lozinke su heširane, a pristup bazi imaju samo ovlašćeni administratori.",
+        "O proboju koji može da ugrozi vaše podatke obavestićemo vas i Poverenika u roku od 72 sata.",
+        "Aplikacija je namenjena osobama starijim od 13 godina; mlađima je potrebna saglasnost roditelja ili staratelja."
+      ] },
+      { "naslov": "Izmene", "tekst": ["Bitne izmene najavljujemo u aplikaciji i, kada je primereno, e-poštom. Datum i verzija su na vrhu."] }
+    ]
+  },
+  "uslovi": {
+    "naslov": "Uslovi korišćenja",
+    "azurirano": "Ažurirano: 3. novembar 2026. · verzija 2 (aplikacija)",
+    "delovi": [
+      { "naslov": "Prihvatanje", "tekst": ["Korišćenjem aplikacije Librum kviz i sajta kviz.librum.club prihvatate ove uslove. Ako se ne slažete, ne koristite servis. Uslovi su ugovor između vas i Libruma."] },
+      { "naslov": "Šta je servis", "tekst": ["Besplatne igre znanja na srpskom: Osvajanje sveta, PRO kviz, Book kviz, Duel, Brzi kviz, Vešanje, Slikari, Dnevni izazov i kvizovi po temi, uz rang liste i zajednicu igrača. Pravila igara su u aplikaciji: Profil → Pravila igara."] },
+      { "naslov": "Nalog", "tekst": [
+        "Za rang liste i zajednicu potreban je nalog (e-pošta, Apple ili Google). Podaci moraju biti tačni, a nalog je samo vaš: ne delite lozinku.",
+        "Servis je za osobe starije od 13 godina; mlađima je potrebna saglasnost roditelja ili staratelja.",
+        "Nalog možete obrisati u svakom trenutku u aplikaciji (Podešavanja → Obriši nalog)."
+      ] },
+      { "naslov": "Pravila zajednice (nulta tolerancija)", "tekst": [
+        "Zabranjeni su uvrede, pretnje, govor mržnje, uznemiravanje, golotinja, nasilje, spam, prevare, lažni profili i objavljivanje tuđih ličnih podataka, u objavama, komentarima, porukama, nadimcima i predlozima pitanja.",
+        "Svaki sadržaj i igrača možete prijaviti ili blokirati. Tri prijave odmah sakrivaju objavu ili komentar, a moderator pregleda prijave u roku od 24 sata.",
+        "Kršenje pravila vodi uklanjanju sadržaja i privremenom ili trajnom gašenju naloga, bez prethodne opomene."
+      ] },
+      { "naslov": "Fer igra", "tekst": [
+        "Zabranjeni su botovi, skripte, više naloga radi varanja, nameštanje rezultata i kopiranje baze pitanja.",
+        "U partijama sa drugim igračima: ko tri poteza zaredom ne odigra, ispada; ko napusti duel, predaje ga.",
+        "Rezultati dobijeni varanjem se brišu, a nalog gasi."
+      ] },
+      { "naslov": "Vaš sadržaj", "tekst": [
+        "Kada objavite, komentarišete ili predložite pitanje, dajete Librumu neisključivu, besplatnu licencu da ga prikaže i koristi u servisu. Autorska prava zadržavate.",
+        "Garantujete da sadržaj ne krši tuđa prava. Netačno pitanje prijavite zastavicom na kartici pitanja."
+      ] },
+      { "naslov": "Pitanja i tačnost", "tekst": ["Pitanja su iz javnih izvora i naših urednika. Trudimo se da budu tačna, ali ne garantujemo tačnost svakog pitanja. Servis je za zabavu i učenje."] },
+      { "naslov": "Dostupnost i odgovornost", "tekst": [
+        "Servis je besplatan; možemo uvesti opcione plaćene dodatke, ali postojeći besplatni deo nećemo ukinuti bez najave.",
+        "Ne garantujemo neprekidan rad. U meri dozvoljenoj zakonom ne odgovaramo za posrednu ili posledičnu štetu nastalu korišćenjem servisa."
+      ] },
+      { "naslov": "Vlasništvo", "tekst": ["Ime, logo, maskote, dizajn, ilustracije i kod pripadaju Librumu, osim onoga što je označeno kao tuđe (npr. slike sa Wikimedia Commons sa svojim licencama)."] },
+      { "naslov": "Izmene i pravo", "tekst": [
+        "Bitne izmene najavljujemo u aplikaciji; nastavak korišćenja znači prihvatanje.",
+        "Primenjuje se pravo Republike Srbije; za sporove je nadležan stvarno nadležni sud u Beogradu. Kontakt: info@librum.club."
+      ] }
+    ]
+  }
+}
