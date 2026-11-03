@@ -553,3 +553,80 @@ fun RazgovorEkran(sesija: Sesija, sa: String, nadimak: String, nazad: () -> Unit
         if (pravila) PravilaZajednice(prihvati = { napredak.podesi { pravilaZajednice = true }; pravila = false; posalji() }, odustani = { pravila = false })
     }
 }
+
+
+/** Brojači za kartice (RPC moji_brojevi): nova obaveštenja (Profil) i nepročitane poruke (Igrači). */
+object Brojaci {
+    @Serializable private data class B(val obavestenja: Int, val poruke: Int)
+    val obavestenja = kotlinx.coroutines.flow.MutableStateFlow(0)
+    val poruke = kotlinx.coroutines.flow.MutableStateFlow(0)
+
+    suspend fun osvezi(s: Sesija) {
+        if (s.nalog.value == null) { obavestenja.value = 0; poruke.value = 0; return }
+        val b = runCatching { Supabase.json.decodeFromString<B>(Supabase.rpc("moji_brojevi", emptyMap(), s.vazeciToken())) }.getOrNull() ?: return
+        obavestenja.value = b.obavestenja; poruke.value = b.poruke
+    }
+}
+
+@Serializable data class ObavestenjeServera(
+    val vrsta: String, val ko: String, val nadimak: String, val avatar: String? = null, val tekst: String? = null,
+    val objava: Long? = null, val kod_sobe: String? = null, val kad: String, val novo: Boolean,
+)
+
+/** Sanduče: izazovi, novi pratioci, komentari, odgovori, srca i ishodi izazova (poslednjih 30 dana); otvaranje ih označava pročitanim. */
+@Composable
+fun SanduceEkran(sesija: Sesija, idi: (String) -> Unit, nazad: () -> Unit) {
+    var redovi by remember { mutableStateOf<List<ObavestenjeServera>?>(null) }
+    LaunchedEffect(Unit) {
+        redovi = runCatching { Supabase.json.decodeFromString<List<ObavestenjeServera>>(Supabase.rpc("moja_obavestenja", mapOf("p_oznaci" to true), sesija.vazeciToken())) }
+            .getOrDefault(emptyList())
+        Brojaci.obavestenja.value = 0
+    }
+    Box(Modifier.fillMaxSize()) {
+        Papir()
+        Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            KrugIkonica(Icons.AutoMirrored.Rounded.ArrowBack, "Nazad", nazad)
+            Text("Sanduče", style = naslov(32.sp))
+            val l = redovi
+            when {
+                l == null -> CircularProgressIndicator(color = Boje.mastilo)
+                l.isEmpty() -> Column(Modifier.fillMaxWidth().mirna().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    MaskotaSlika(Maskota.BLOOP, 90.dp)
+                    Text("Ovde stižu izazovi, novi pratioci i komentari.", style = tekst(15.sp, boja = Boje.sivaTekst))
+                }
+                else -> l.forEach { r ->
+                    val (ikonica, opis) = when (r.vrsta) {
+                        "izazov" -> Icons.Rounded.Bolt to "te izaziva na duel"
+                        "pratilac" -> Icons.Rounded.Groups to "te sada prati"
+                        "komentar" -> Icons.Rounded.ChatBubbleOutline to "je komentarisao tvoju objavu"
+                        "odgovor" -> Icons.Rounded.ChatBubbleOutline to "ti je odgovorio"
+                        "ishod" -> Icons.Rounded.EmojiEvents to "je odigrao tvoj izazov"
+                        else -> Icons.Rounded.Favorite to "voli tvoju objavu"
+                    }
+                    Row(
+                        Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(20.dp))
+                            .border(if (r.novo) 2.5.dp else 1.5.dp, if (r.novo) Boje.mastilo else Boje.kremTamnija, RoundedCornerShape(20.dp))
+                            .clickable(enabled = r.vrsta != "ishod") { if (r.vrsta == "izazov" && r.kod_sobe != null) idi("duel") else idi("igrac/${r.ko}") }
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Box {
+                            AvatarSlika(r.avatar, 44.dp)
+                            Box(Modifier.align(Alignment.BottomEnd).size(20.dp).background(Boje.roze, CircleShape).border(2.dp, Boje.krem, CircleShape), contentAlignment = Alignment.Center) {
+                                Icon(ikonica, null, tint = Color.White, modifier = Modifier.size(11.dp))
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(androidx.compose.ui.text.buildAnnotatedString {
+                                pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)); append(r.nadimak); pop(); append(" $opis")
+                            }, style = tekst(15.sp))
+                            r.tekst?.let { Text("„$it”", style = tekst(13.sp, boja = Boje.sivaTekst), maxLines = 2) }
+                            Text(Zajednica.pre(r.kad), style = tekst(12.sp, boja = Boje.sivaTekst))
+                        }
+                        if (r.novo) Box(Modifier.size(10.dp).background(Boje.roze, CircleShape).semantics { contentDescription = "Novo" })
+                    }
+                }
+            }
+        }
+    }
+}

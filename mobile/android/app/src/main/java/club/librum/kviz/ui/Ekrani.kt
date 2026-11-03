@@ -223,6 +223,11 @@ fun Profil(sesija: Sesija, idi: (String) -> Unit = {}) {
                             Dugme("Dodaj reč", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO) { idi("dodaj/vesanje") }
                         }
                     }
+                    val nova by club.librum.kviz.zajednica.Brojaci.obavestenja.collectAsState()
+                    Row(Modifier.fillMaxWidth().mirna().clickable { idi("sanduce") }.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Sanduče", style = tekst(16.sp, FontWeight.SemiBold), modifier = Modifier.weight(1f))
+                        if (nova > 0) Text("$nova novo", style = tekst(14.sp, FontWeight.Bold, Boje.roze))
+                    }
                     club.librum.kviz.zajednica.ProfilStatistike(mp)
                 }
                 Column(Modifier.fillMaxWidth().pop().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {

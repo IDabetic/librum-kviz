@@ -37,6 +37,10 @@ import androidx.navigation.compose.rememberNavController
 import club.librum.kviz.osvajanje.Mapa
 import club.librum.kviz.osvajanje.OsvajanjeTok
 import club.librum.kviz.zajednica.IgraciEkran
+import club.librum.kviz.zajednica.Brojaci
+import club.librum.kviz.zajednica.SanduceEkran
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import club.librum.kviz.igre.KvizIgraEkran
 import club.librum.kviz.servisi.dnevniIzazov
 import club.librum.kviz.zajednica.DodajPitanjeEkran
@@ -93,6 +97,10 @@ private fun Aplikacija() {
     val trenutna by nav.currentBackStackEntryAsState()
     val ruta = trenutna?.destination?.route
     LaunchedEffect(nalog?.id) { sesija.ucitajNadimak() }
+    // Brojači se osvežavaju pri svakom prelasku na karticu, kao na iOS-u.
+    LaunchedEffect(ruta, nalog?.id) { Brojaci.osvezi(sesija) }
+    val novaObavestenja by Brojaci.obavestenja.collectAsState()
+    val novePoruke by Brojaci.poruke.collectAsState()
 
     Scaffold(
         containerColor = Boje.krem,
@@ -103,7 +111,10 @@ private fun Aplikacija() {
                         NavigationBarItem(
                             selected = trenutna?.destination?.hierarchy?.any { it.route == k.ruta } == true,
                             onClick = { nav.navigate(k.ruta) { popUpTo("igre") { saveState = true }; launchSingleTop = true; restoreState = true } },
-                            icon = { Icon(k.ikonica, contentDescription = null) },
+                            icon = {
+                                val broj = when (k.ruta) { "igraci" -> novePoruke; "profil" -> novaObavestenja; else -> 0 }
+                                BadgedBox(badge = { if (broj > 0) Badge(containerColor = Boje.roze) { Text("$broj") } }) { Icon(k.ikonica, contentDescription = null) }
+                            },
                             label = { Text(k.natpis, style = tekst(12.sp, FontWeight.Bold)) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Boje.mastilo, unselectedIconColor = Boje.sivaTekst,
@@ -121,6 +132,7 @@ private fun Aplikacija() {
                 composable("igraci") { IgraciEkran(sesija) { nav.navigate(it) } }
                 composable("igrac/{id}") { e -> ProfilIgracaEkran(sesija, e.arguments?.getString("id").orEmpty(), { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("igraci/trazi") { TraziIgraceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("sanduce") { SanduceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("poruke") { PorukeEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("razgovor/{sa}/{ime}") { e -> RazgovorEkran(sesija, e.arguments?.getString("sa").orEmpty(), e.arguments?.getString("ime").orEmpty()) { nav.popBackStack() } }
                 composable("rang") { RangLista(sesija) { nav.navigate(it) } }
