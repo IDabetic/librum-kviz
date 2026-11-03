@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import SettingsForm from './SettingsForm'
+import MesanjeOdgovora from './MesanjeOdgovora'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,8 @@ export default async function AdminSettingsPage() {
     .select('id, first_name, last_name, nickname, city, avatar, role, email')
     .eq('id', user!.id)
     .single()
+  const { data: mesanje } = await supabase.rpc('admin_poslednje_mesanje')
+  const poslednjeMesanje = (mesanje as { kad: string; pitanja: number }[] | null)?.[0] ?? null
 
   return (
     <div className="max-w-2xl space-y-5">
@@ -24,6 +27,8 @@ export default async function AdminSettingsPage() {
       </div>
 
       <SettingsForm profile={profile!} email={user!.email || ''} />
+
+      <MesanjeOdgovora poslednje={poslednjeMesanje} />
     </div>
   )
 }
