@@ -851,6 +851,7 @@ class OsvajanjeModel(
         cekaOdbranu?.complete(Skor(0, Pravila.PITANJA_U_BITCI * Pravila.SEKUNDI_PO_PITANJU * 1000)); cekaOdbranu = null
         zatvaranje?.complete(Unit); zatvaranje = null
         sacuvaj()
+        najaviMisijuAkoTreba()
     }
 
     // ── Pomoći vojske ──
@@ -946,6 +947,7 @@ class OsvajanjeModel(
     private fun pocniPotez(novo: Stanje) {
         stanje = novo
         sacuvaj()
+        najaviMisijuAkoTreba()
         if (novo.faza != Faza.SNABDEVANJE) return
         zapocetPotez = novo.krug to novo.naPotezu
         // Pravi igrač sa drugog telefona igra sam; bota vodi samo domaćin.
@@ -976,6 +978,7 @@ class OsvajanjeModel(
                 .botIzdaja().botNajaviPohod().botUltimatum()
             delay(pauzaBota)
             while (napada < NAJVISE_NAPADA_BOTA) {
+                sacekajObavestenje()
                 val (odakle, kuda) = stanje.botSledeciNapad() ?: break
                 napada++
                 val preBitaka = stanje.bitaka; val preOblasti = stanje.oblasti
@@ -1039,6 +1042,7 @@ class OsvajanjeModel(
                     udari(odakle, kuda, ishod.osvojeno)
                 }
                 if (stanje.faza == Faza.KRAJ) break
+                najaviMisijuAkoTreba()
                 // Napad koji pravila odbiju ne menja ništa: bot bi ga birao zauvek i partija bi stala (vlasnik 05.11).
                 if (stanje.bitaka == preBitaka && stanje.oblasti == preOblasti) break
                 delay(pauzaBota)
@@ -1063,7 +1067,7 @@ class OsvajanjeModel(
                 delay(10_000)
                 if (stanje.faza == Faza.KRAJ || stanje.trenutni.covek || veza != null) return@launch
                 val otisak = "${stanje.krug}-${stanje.naPotezu}-${stanje.bitaka}-${stanje.faza}"
-                isto = if (otisak == poslednji && bitka == null) isto + 1 else 0
+                isto = if (otisak == poslednji && bitka == null && obavestenjeMisije == null) isto + 1 else 0
                 poslednji = otisak
                 if (isto < 3) continue
                 android.util.Log.w("Osvajac", "potez bota zaglavljen ($otisak), završava se")
@@ -1080,6 +1084,29 @@ class OsvajanjeModel(
 
     fun javi(tekst: String) {
         poruka = tekst
-        viewModelScope.launch { delay(4000); if (poruka == tekst) poruka = null }
+        viewModelScope.launch { delay(7000); if (poruka == tekst) poruka = null }
     }
+
+    // ── Obaveštenje o misiji (vlasnik 05.11: „sve se brzo dešava, ne vidim poruke”) ──
+
+    data class ObavestenjeMisije(val moja: Boolean, val ime: String, val tekst: String)
+    /** Veliko obaveštenje na sredini ekrana; botovi stoje dok ga igrač ne zatvori. Isto kao iOS. */
+    var obavestenjeMisije by mutableStateOf<ObavestenjeMisije?>(null); private set
+    private val najavljeneMisije = mutableSetOf<String>()
+
+    /** Čim neki tim ispuni misiju (i usred tuđeg poteza), igrač to vidi jasno, a ne tek posle poteza. */
+    fun najaviMisijuAkoTreba() {
+        if (veza != null || mojTim == null || stanje.faza == Faza.KRAJ || obavestenjeMisije != null) return
+        val ispunjene = stanje.misije.keys.filter { stanje.napredakMisije(it) >= 1 }.toSet()
+        najavljeneMisije.retainAll(ispunjene)
+        val t = (ispunjene - najavljeneMisije).sorted().firstOrNull() ?: return
+        najavljeneMisije += t
+        val ime = stanje.igraci.firstOrNull { it.tim == t && it.kapiten }?.ime ?: "Rival"
+        obavestenjeMisije = ObavestenjeMisije(t == mojTim, ime, stanje.tekstMisije(stanje.misije[t]))
+        Zvuk.pusti(Zvuk.Vrsta.OBAVESTENJE, 0.6f)
+    }
+
+    fun zatvoriObavestenjeMisije() { obavestenjeMisije = null }
+
+    private suspend fun sacekajObavestenje() { while (obavestenjeMisije != null) delay(300) }
 }

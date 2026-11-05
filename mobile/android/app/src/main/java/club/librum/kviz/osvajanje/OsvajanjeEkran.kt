@@ -1,5 +1,6 @@
 package club.librum.kviz.osvajanje
 
+import androidx.compose.foundation.layout.widthIn
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -446,6 +447,24 @@ fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: (
 
         AnimatedVisibility(model.bitka != null, enter = fadeIn(), exit = fadeOut()) {
             model.bitka?.let { BitkaEkran(model, it) }
+        }
+        // Misija ispunjena (moja ili rivalova): jasno, na sredini, igra stoji dok igrač ne pritisne „Razumem”.
+        model.obavestenjeMisije?.takeIf { model.bitka == null }?.let { o ->
+            Box(Modifier.fillMaxSize().background(Boje.senka.copy(alpha = 0.55f)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
+                Column(Modifier.padding(24.dp).widthIn(max = 380.dp).background(Boje.kartica, RoundedCornerShape(26.dp))
+                    .border(2.5.dp, Boje.mastilo, RoundedCornerShape(26.dp)).padding(22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Box(Modifier.size(72.dp).background(if (o.moja) Boje.zuta else Boje.crvena, CircleShape), contentAlignment = Alignment.Center) {
+                        Icon(if (o.moja) Icons.Rounded.Flag else Icons.Rounded.Warning, null, tint = if (o.moja) Boje.tinta else Color.White, modifier = Modifier.size(34.dp))
+                    }
+                    Text(if (o.moja) "Misija ispunjena!" else "${o.ime} je ispunio misiju!", style = naslov(26.sp), textAlign = TextAlign.Center)
+                    Text(o.tekst, style = tekst(15.sp, FontWeight.SemiBold, Boje.sivaTekst), textAlign = TextAlign.Center)
+                    Text(if (o.moja) "Pobeda nije još gotova: zadrži ove države dok tvoj tim ponovo ne dođe na red. Rivali će sada pokušati da ti ih preotmu."
+                         else "Ako zadrži ove države do svog sledećeg poteza, pobeđuje. Napadni njegove države i pokvari mu misiju.",
+                        style = tekst(16.sp, FontWeight.SemiBold), textAlign = TextAlign.Center)
+                    Dugme("Razumem") { model.zatvoriObavestenjeMisije() }
+                }
+            }
         }
         model.izdajaZa?.let { id ->
             Dijalog("Izdaješ saveznika?", "Napad na ${Mapa.oblast(id).ime} prekida savez. Gubiš sve karte, a svi vide da si izdao.", "Izdaj", "Odustani",

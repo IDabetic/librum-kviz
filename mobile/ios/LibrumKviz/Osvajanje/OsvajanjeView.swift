@@ -358,6 +358,7 @@ struct OsvajanjeIgraView: View {
         }
         .animation(.spring(duration: 0.3), value: model.poruka)
         .overlay { if misija, let t = model.mojTim { misijaList(t) } }
+        .overlay { if let o = model.obavestenjeMisije, model.bitka == nil { obavestenjeMisije(o) } }
         .overlay { if let ponuda = model.ponudaMisija { KarteMisijaView(model: model, ponuda: ponuda) } }
         .overlay(alignment: .top) { porukaRivala }
         .overlay(alignment: .top) { savetTraka }
@@ -785,6 +786,31 @@ struct OsvajanjeIgraView: View {
             .overlay { if pobednik.covek || st.strana(pobednik.tim) == model.mojTim.map({ st.strana($0) }) { Konfete().ignoresSafeArea() } }
             .overlay { if reprodukcija { ReprodukcijaView(istorija: model.istorija, stanje: st) { reprodukcija = false } } }
         }
+    }
+
+    /// Misija ispunjena (moja ili rivalova): jasno, na sredini, igra stoji dok igrač ne pritisne „Razumem”.
+    private func obavestenjeMisije(_ o: OsvajanjeModel.ObavestenjeMisije) -> some View {
+        ZStack {
+            Color.senka.opacity(0.55).ignoresSafeArea()
+            VStack(spacing: 14) {
+                Image(systemName: o.moja ? "flag.checkered" : "exclamationmark.triangle.fill")
+                    .font(.system(size: 34, weight: .bold)).foregroundStyle(o.moja ? Color.tinta : .white)
+                    .frame(width: 72, height: 72).background(o.moja ? Color.zuta : Color.crvena, in: Circle())
+                Naslov(tekst: o.moja ? "Misija ispunjena!" : "\(o.ime) je ispunio misiju!", velicina: 26).multilineTextAlignment(.center)
+                Text(o.tekst).font(.tekst(15, .semibold)).foregroundStyle(Color.sivaTekst).multilineTextAlignment(.center)
+                Text(o.moja
+                     ? "Pobeda nije još gotova: zadrži ove države dok tvoj tim ponovo ne dođe na red. Rivali će sada pokušati da ti ih preotmu."
+                     : "Ako zadrži ove države do svog sledećeg poteza, pobeđuje. Napadni njegove države i pokvari mu misiju.")
+                    .font(.tekst(16, .semibold)).foregroundStyle(Color.mastilo).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                Button("Razumem") { withAnimation { model.zatvoriObavestenjeMisije() } }.buttonStyle(.primarno)
+            }
+            .padding(22).frame(maxWidth: 380)
+            .background(Color.kartica, in: RoundedRectangle(cornerRadius: 26))
+            .overlay(RoundedRectangle(cornerRadius: 26).stroke(Color.mastilo, lineWidth: 2.5))
+            .padding(24)
+            .accessibilityElement(children: .contain).accessibilityAddTraits(.isModal)
+        }
+        .transition(.opacity)
     }
 
     /// Brza poruka igraču i predlog saveza (bot odgovara odmah).
