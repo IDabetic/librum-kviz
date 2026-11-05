@@ -36,7 +36,7 @@ function IgrajZajednoInner() {
   const searchParams = useSearchParams()
   const quizType: QuizType = searchParams.get('type') === 'kafana' ? 'kafana' : 'pro'
   const isKafana = quizType === 'kafana'
-  const heroAccent = isKafana ? '#b91c1c' : '#609DED'
+  const heroAccent = isKafana ? '#C42B4F' : '#12907E'
   const heroLabel = isKafana ? 'Multiplayer · muzika' : 'Multiplayer'
   const heroTitle = isKafana ? 'Kafanski duel' : 'Duel'
   const heroSub = isKafana
@@ -177,7 +177,7 @@ function IgrajZajednoInner() {
   const formatLabels: Record<string, string> = Object.fromEntries(DUEL_LENGTHS.map(f => [f.id, f.label]))
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen">
       <Header />
       <main className="max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="text-center mb-10">
@@ -185,21 +185,21 @@ function IgrajZajednoInner() {
             {heroLabel}
           </p>
           <h1 className="font-black tracking-tight leading-[1.1] mb-3"
-            style={{ color: '#343434', fontSize: 'clamp(32px, 5vw, 48px)' }}>
+            style={{ color: '#151515', fontSize: 'clamp(32px, 5vw, 48px)' }}>
             {heroTitle}
           </h1>
-          <p className="text-[14px] sm:text-[15px]" style={{ color: '#9C9C9C' }}>
+          <p className="text-[14px] sm:text-[15px]" style={{ color: '#6F6C66' }}>
             {heroSub}
           </p>
         </div>
 
-        <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto" style={{ background: '#F2F2F2' }}>
+        <div className="flex p-1 rounded-full mb-6 max-w-md mx-auto" style={{ background: '#E7E1D0' }}>
           {(['create', 'join'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className="flex-1 py-2.5 rounded-full text-[14px] font-semibold transition-all"
               style={tab === t
-                ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-                : { color: '#9C9C9C' }}>
+                ? { background: '#FFFFFF', color: '#151515', boxShadow: '0 2px 8px rgba(21,21,21,0.06)' }
+                : { color: '#6F6C66' }}>
               {t === 'create' ? 'Kreiraj' : 'Pridruži se'}
             </button>
           ))}
@@ -209,7 +209,7 @@ function IgrajZajednoInner() {
           <div className="card-soft p-6 sm:p-8">
             {!createdCode ? (
               <>
-                <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
+                <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#151515' }}>
                   Dužina duela
                 </label>
 
@@ -220,25 +220,25 @@ function IgrajZajednoInner() {
                       <button key={f.id} onClick={() => setSelectedFormat(f.id)}
                         className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-left transition-all"
                         style={sel
-                          ? { background: '#BCD9FF', border: '1.5px solid #609DED' }
-                          : { background: '#F2F2F2', border: '1.5px solid transparent' }}>
+                          ? { background: '#DFF3EE', border: '1.5px solid #12907E' }
+                          : { background: '#E7E1D0', border: '1.5px solid transparent' }}>
                         <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
                           style={sel
-                            ? { borderColor: '#609DED', background: '#609DED' }
-                            : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                            ? { borderColor: '#12907E', background: '#12907E' }
+                            : { borderColor: 'rgba(21,21,21,0.20)', background: 'white' }}>
                           {sel && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         <div className="flex-1">
-                          <div className="font-bold text-[15px] tracking-tight" style={{ color: '#343434' }}>{f.label}</div>
-                          <div className="text-[12px]" style={{ color: '#9C9C9C' }}>{f.desc}</div>
+                          <div className="font-bold text-[15px] tracking-tight" style={{ color: '#151515' }}>{f.label}</div>
+                          <div className="text-[12px]" style={{ color: '#6F6C66' }}>{f.desc}</div>
                         </div>
                       </button>
                     )
                   })}
                 </div>
 
-                <div className="rounded-2xl p-4 mb-5" style={{ background: '#FFECBC' }}>
-                  <p className="text-[12px] font-semibold leading-relaxed" style={{ color: '#9c7a13' }}>
+                <div className="rounded-2xl p-4 mb-5" style={{ background: '#FFF3C4' }}>
+                  <p className="text-[12px] font-semibold leading-relaxed" style={{ color: '#8A6A12' }}>
                     Oba igrača dobijaju <strong>ista pitanja</strong>. Tačan +10, pogrešan -5, vreme istekne -5. 15 sekundi po pitanju. Bez života, bez pomoći.
                   </p>
                 </div>
@@ -250,21 +250,21 @@ function IgrajZajednoInner() {
               </>
             ) : (
               <div className="text-center">
-                <p className="text-[13px] mb-1" style={{ color: '#9C9C9C' }}>
-                  Format: <strong style={{ color: '#343434' }}>{formatLabels[selectedFormat]}</strong>
+                <p className="text-[13px] mb-1" style={{ color: '#6F6C66' }}>
+                  Format: <strong style={{ color: '#151515' }}>{formatLabels[selectedFormat]}</strong>
                 </p>
-                <p className="text-[13px] mb-4" style={{ color: '#9C9C9C' }}>Pošalji ovaj kod prijatelju:</p>
+                <p className="text-[13px] mb-4" style={{ color: '#6F6C66' }}>Pošalji ovaj kod prijatelju:</p>
                 <div className="font-black py-7 px-8 rounded-3xl mb-6 inline-block"
-                  style={{ background: '#BCD9FF', color: '#343434', letterSpacing: '0.25em', fontSize: 'clamp(36px, 7vw, 56px)' }}>
+                  style={{ background: '#DFF3EE', color: '#151515', letterSpacing: '0.25em', fontSize: 'clamp(36px, 7vw, 56px)' }}>
                   {createdCode}
                 </div>
 
                 {guestJoined ? (
                   <div>
                     <div className="flex items-center gap-3 justify-center mb-5 px-4 py-3 rounded-2xl"
-                      style={{ background: '#E8F8F0' }}>
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#4CAF50' }} />
-                      <p className="text-[13px] font-semibold" style={{ color: '#15803d' }}>
+                      style={{ background: '#DFF3EE' }}>
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#12907E' }} />
+                      <p className="text-[13px] font-semibold" style={{ color: '#0E6F61' }}>
                         {guestName} se pridružio/la
                       </p>
                     </div>
@@ -276,8 +276,8 @@ function IgrajZajednoInner() {
                 ) : (
                   <div className="flex flex-col items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#609DED' }} />
-                      <p className="text-[13px]" style={{ color: '#9C9C9C' }}>Čekamo da se prijatelj pridruži…</p>
+                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#12907E' }} />
+                      <p className="text-[13px]" style={{ color: '#6F6C66' }}>Čekamo da se prijatelj pridruži…</p>
                     </div>
                     <button onClick={() => navigator.clipboard.writeText(createdCode)}
                       className="btn btn-secondary btn-md">
@@ -292,16 +292,16 @@ function IgrajZajednoInner() {
 
         {tab === 'join' && (
           <div className="card-soft p-6 sm:p-8">
-            <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#343434' }}>
+            <label className="block text-[13px] font-bold mb-3 tracking-tight" style={{ color: '#151515' }}>
               Upiši kod sobe
             </label>
             <input type="text" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
               onKeyDown={e => e.key === 'Enter' && handleJoin()} placeholder="AB12CD"
               maxLength={6}
               className="input mb-4 font-black text-center uppercase"
-              style={{ fontSize: 'clamp(28px, 6vw, 36px)', letterSpacing: '0.3em', color: '#343434' }} />
+              style={{ fontSize: 'clamp(28px, 6vw, 36px)', letterSpacing: '0.3em', color: '#151515' }} />
             {joinError && (
-              <div className="rounded-2xl px-4 py-3 text-[13px] font-medium mb-4" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+              <div className="rounded-2xl px-4 py-3 text-[13px] font-medium mb-4" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
                 {joinError}
               </div>
             )}

@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-
-// User-facing "Prijavi pitanje" endpoint. Logged-in users only; the
-// auth.uid() ends up in `user_id` server-side regardless of body. The
-// table itself is gated by RLS for SELECT/UPDATE (admins only) but
-// INSERT is permitted for any authed user, mirroring the same shape
-// as predlozi-pitanje.
+import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit } from '@/lib/rate-limit'
+import { PRAG_PRIJAVA, povuciPitanjaAutora, suspendujAutora } from '@/lib/suspenzija'
 
 const VALID_SOURCES = new Set(['questions', 'book_questions', 'kafana_questions', 'hangman_words'])
 
@@ -32,6 +29,14 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ ok: false, error: 'unauth' }, { status: 401 })
 
+  const limit = rateLimit(`report-question:${user.id}`, 10, 60_000)
+  if (!limit.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'rate-limited' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } },
+    )
+  }
+
   const { error } = await supabase.from('question_reports').insert({
     source: body.source,
     question_id: body.question_id,
@@ -41,7 +46,51 @@ export async function POST(req: Request) {
     status: 'pending',
   })
   if (error) {
+    if (error.code === '23505') return NextResponse.json({ ok: true, already: true })
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   }
+
+  try {
+    await posleDrugePrijave(body.source, body.question_id)
+  } catch {
+    // Prijava je upisana; suspenzija čeka da SQL kolone postoje.
+  }
+
   return NextResponse.json({ ok: true })
+}
+
+async function posleDrugePrijave(source: string, questionId: string) {
+  const admin = createAdminClient()
+  const { data: prijave } = await admin
+    .from('question_reports')
+    .select('user_id')
+    .eq('source', source)
+    .eq('question_id', questionId)
+
+  const jedinstveni = new Set((prijave ?? []).map(r => r.user_id).filter(Boolean))
+  if (jedinstveni.size < PRAG_PRIJAVA) return
+
+  await admin.from(source).update({ is_active: false }).eq('id', questionId)
+
+  const { data: predlog } = await admin
+    .from('question_submissions')
+    .select('submitted_by')
+    .eq('accepted_id', questionId)
+    .eq('accepted_table', source)
+    .eq('status', 'accepted')
+    .maybeSingle()
+
+  let autor = predlog?.submitted_by as string | null
+  if (!autor && source === 'hangman_words') {
+    const { data: pojam } = await admin
+      .from('hangman_words')
+      .select('created_by')
+      .eq('id', questionId)
+      .maybeSingle()
+    autor = (pojam?.created_by as string | null) ?? null
+  }
+  if (!autor) return
+
+  await suspendujAutora(autor)
+  await povuciPitanjaAutora(autor)
 }

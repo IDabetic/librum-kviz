@@ -1,87 +1,100 @@
 @import "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────────────
-   Design tokens — Apple-minimal, urban, cool
-   ───────────────────────────────────────────────────────────────── */
+/* Librum kviz — vizuelni jezik iz QuizPop kita: krem papir, tamno mastilo,
+   debele ivice sa tvrdom senkom, šarene kartice. Tokeni prate kit
+   (Quizpop · Theme), imena ostaju stara da sve strane prate bez prepravke. */
 @theme {
-  /* Primary */
-  --color-ink:        #343434;   /* dark black — primary text */
-  --color-blue:       #609DED;   /* primary action */
-  --color-yellow:     #FFCB46;   /* accent */
-  --color-bg:         #FAFAFA;   /* page background */
+  --color-ink:          #151515;
+  --color-blue:         #12907E;
+  --color-teal:         #12907E;
+  --color-pink:         #FF5FA2;
+  --color-orange:       #F4A33C;
+  --color-sky:          #6EC3F2;
+  --color-purple:       #6D4BC9;
+  --color-yellow:       #FFD84D;
+  --color-bg:           #F3F0E6;
+  --color-light-blue:   #DFF3EE;
+  --color-light-yellow: #FFF3C4;
+  --color-grey-dark:    #8F8A80;
+  --color-grey:         #6F6C66;
+  --color-grey-soft:    #E7E1D0;
+  --color-white:        #FFFFFF;
+  --color-success:      #12907E;
+  --color-danger:       #E5385C;
+  --color-warning:      #F4A33C;
+  --color-primary:      #12907E;
+  --color-primary-dark: #0E6F61;
+  --color-mint:         #12907E;
 
-  /* Secondary */
-  --color-light-blue:   #BCD9FF;
-  --color-light-yellow: #FFECBC;
-  --color-grey-dark:    #B9B9B9;
-  --color-grey:         #9C9C9C;
-  --color-grey-soft:    #F2F2F2;
-  --color-white:        #FCFCFC;
-
-  /* Semantic */
-  --color-success: #4CAF50;
-  --color-danger:  #E55353;
-  --color-warning: #FFCB46;
-
-  /* Aliases used throughout */
-  --color-primary:      #609DED;
-  --color-primary-dark: #4480c8;
-
-  --font-sans: var(--font-poppins), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-display: var(--font-archivo), "Archivo Black", system-ui, sans-serif;
 }
 
 :root {
-  --background: #FAFAFA;
-  --foreground: #343434;
+  --background: #F3F0E6;
+  --foreground: #151515;
+  --ivica: 2px solid #151515;
+  --senka: 0 4px 0 #151515;
 }
 
 html {
   overflow-x: hidden;
-  font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
+/* Talasasta tekstura papira iz kita (surface/texture), jedva vidljiva. */
 body {
-  background: var(--background);
+  background-color: #F3F0E6;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='28'%3E%3Cpath d='M0 14c20-8 40-8 80 0s60 8 80 0' fill='none' stroke='%23E7E1D0' stroke-width='1.4'/%3E%3C/svg%3E");
   color: var(--foreground);
   overflow-x: hidden;
-  letter-spacing: -0.01em;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
+/* Tamna strana (kit: Dark design). */
+.page-ink {
+  background-color: #12110F;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='28'%3E%3Cpath d='M0 14c20-8 40-8 80 0s60 8 80 0' fill='none' stroke='%2324221E' stroke-width='1.4'/%3E%3C/svg%3E");
+  color: #F3F0E6;
 }
+.page-ink .btn-secondary { color: #F3F0E6; border-color: #F3F0E6; background: transparent; box-shadow: none; }
+.page-ink .btn-secondary:hover:not(:disabled) { background: rgba(243, 240, 230, 0.08); }
+.page-ink .card-soft .btn-secondary { color: #151515; border-color: #151515; }
+.page-ink .btn-ghost { color: #F3F0E6; }
+.page-ink .btn-ghost:hover:not(:disabled) { background: rgba(243, 240, 230, 0.08); }
+.page-ink .card-soft { background: #24221E; color: #F3F0E6; border-color: #3B3832; }
 
-/* Headings — tighter tracking + balanced wraps */
-h1, h2, h3, h4, h5, h6 {
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Naslovi: Archivo Black u kurzivu, kao „Pick A Quiz To Play”. */
+h1, h2, h3, .naslov {
+  font-family: var(--font-archivo), "Archivo Black", system-ui, sans-serif;
+  font-style: italic;
+  font-weight: 400;
   letter-spacing: -0.02em;
+  line-height: 1.02;
   text-wrap: balance;
 }
+h4 { font-weight: 700; letter-spacing: -0.01em; }
 
-/* Selection */
-::selection {
-  background: #609DED;
-  color: white;
-}
+::selection { background: #FFD84D; color: #151515; }
 
-/* Scrollbar — minimal */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(52,52,52,0.15); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(52,52,52,0.25); }
+::-webkit-scrollbar-thumb { background: rgba(21,21,21,0.2); border-radius: 4px; }
 
-/* ─────────────────────────────────────────────────────────────────
-   Animations
-   ───────────────────────────────────────────────────────────────── */
+:focus-visible { outline: 3px solid #12907E; outline-offset: 2px; }
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes pop-in {
-  0%   { transform: scale(0.96); opacity: 0; }
-  100% { transform: scale(1);    opacity: 1; }
+  0%   { transform: scale(0.94); opacity: 0; }
+  70%  { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); }
 }
 @keyframes countdown {
   from { stroke-dashoffset: 0; }
@@ -91,148 +104,182 @@ h1, h2, h3, h4, h5, h6 {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-
-.animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-pop-in  { animation: pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-/* ─────────────────────────────────────────────────────────────────
-   Reusable utility classes (in spirit of Apple HIG)
-   ───────────────────────────────────────────────────────────────── */
-
-/* Soft frosted card — used everywhere */
-.card-soft {
-  background: #FCFCFC;
-  border: 1px solid rgba(52,52,52,0.06);
-  border-radius: 24px;
-  box-shadow: 0 1px 3px rgba(52,52,52,0.04), 0 4px 16px rgba(52,52,52,0.04);
+@keyframes lebdi {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-8px) rotate(2deg); }
 }
 
-.card-flat {
-  background: #FCFCFC;
-  border: 1px solid rgba(52,52,52,0.08);
+.animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-pop-in  { animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.maskota-lebdi   { animation: lebdi 4s ease-in-out infinite; }
+/* Natpis uz video Osvajanja uleće pri svakoj promeni. */
+@keyframes natpis { from { opacity: 0; transform: translateY(10px) rotate(-1deg); } to { opacity: 1; transform: none; } }
+.natpis-ulaz { animation: natpis .45s cubic-bezier(.2,.9,.3,1.2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in, .animate-pop-in, .skeleton, .maskota-lebdi, .natpis-ulaz { animation: none; }
+}
+
+/* Mirna bela kartica (kit: surface/card bez ivice). */
+.card-soft {
+  background: #FFFFFF;
+  border: 1.5px solid #E7E1D0;
   border-radius: 20px;
 }
 
-/* Buttons — primary blue, secondary outline, sizes S/M/L */
+.card-flat {
+  background: #FFFFFF;
+  border: 1.5px solid #E7E1D0;
+  border-radius: 16px;
+}
+
+/* Izražena kartica: debela ivica + tvrda senka (kit: bold card). */
+.card-pop {
+  border: 2.5px solid #151515;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 #151515;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  border-radius: 999px;
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-              background 0.15s ease,
-              box-shadow 0.2s ease,
-              border-color 0.15s ease;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
 }
-.btn:active:not(:disabled) { transform: scale(0.97); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Pritisak spušta dugme na senku, kao fizičko dugme. */
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #151515; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* Global pointer cursor for interactive elements. Buttons in some
-   browsers default to the text or arrow cursor — explicitly opt every
-   clickable thing into the pointing-hand cursor (X, "Prijavi pitanje",
-   recent users, logout, avatars, anchors, etc.). */
 button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
 a[href],
 label[for],
-summary {
-  cursor: pointer;
-}
+summary { cursor: pointer; }
 button:disabled,
-[role="button"][aria-disabled="true"] {
-  cursor: not-allowed;
-}
+[role="button"][aria-disabled="true"] { cursor: not-allowed; }
 
-.btn-sm { padding: 8px 18px; font-size: 13px; }
-.btn-md { padding: 12px 24px; font-size: 14px; }
-.btn-lg { padding: 16px 32px; font-size: 16px; }
+.btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 12px; }
+.btn-md { padding: 12px 22px; font-size: 15px; }
+.btn-lg { padding: 16px 28px; font-size: 16px; }
 
 .btn-primary {
-  background: #609DED;
-  color: white;
-  box-shadow: 0 4px 14px rgba(96, 157, 237, 0.30);
+  background: #151515;
+  color: #FFFFFF;
+  border-color: #151515;
+  box-shadow: 0 4px 0 rgba(21,21,21,0.35);
 }
-.btn-primary:hover:not(:disabled) {
-  background: #4480c8;
-  box-shadow: 0 6px 18px rgba(96, 157, 237, 0.40);
+.btn-primary:hover:not(:disabled) { background: #2E2B26; }
+
+.btn-teal {
+  background: #12907E;
+  color: #FFFFFF;
+  border-color: #151515;
+  box-shadow: var(--senka);
 }
+.btn-teal:hover:not(:disabled) { background: #0E6F61; }
 
 .btn-secondary {
-  background: transparent;
-  color: #343434;
-  border: 1.5px solid rgba(52,52,52,0.18);
+  background: #FFFFFF;
+  color: #151515;
+  border-color: #151515;
+  box-shadow: var(--senka);
 }
-.btn-secondary:hover:not(:disabled) {
-  border-color: #343434;
-  background: rgba(52,52,52,0.04);
-}
+.btn-secondary:hover:not(:disabled) { background: #FAF8F3; }
 
-.btn-ghost {
-  background: transparent;
-  color: #343434;
-}
-.btn-ghost:hover:not(:disabled) {
-  background: rgba(52,52,52,0.06);
-}
+.btn-ghost { background: transparent; color: #151515; }
+.btn-ghost:hover:not(:disabled) { background: rgba(21,21,21,0.06); }
 
 .btn-yellow {
-  background: #FFCB46;
-  color: #343434;
-  box-shadow: 0 4px 14px rgba(255, 203, 70, 0.35);
+  background: #FFD84D;
+  color: #151515;
+  border-color: #151515;
+  box-shadow: var(--senka);
 }
-.btn-yellow:hover:not(:disabled) {
-  background: #f5be33;
-  box-shadow: 0 6px 18px rgba(255, 203, 70, 0.45);
-}
+.btn-yellow:hover:not(:disabled) { background: #FFCF26; }
 
-/* Inputs — declared in @layer components so Tailwind utilities like
-   pl-11/pr-10 can override individual padding sides. */
 @layer components {
   .input {
     width: 100%;
-    padding-top: 14px;
-    padding-right: 18px;
-    padding-bottom: 14px;
-    padding-left: 18px;
+    padding: 14px 18px;
     font-size: 15px;
     font-weight: 500;
-    letter-spacing: -0.01em;
-    background: #FCFCFC;
-    border: 1.5px solid rgba(52,52,52,0.10);
-    border-radius: 14px;
-    color: #343434;
+    background: #FFFFFF;
+    border: 1.5px solid #E7E1D0;
+    border-radius: 16px;
+    color: #151515;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     outline: none;
   }
-  .input::placeholder { color: rgba(52,52,52,0.35); font-weight: 400; }
-  .input:focus {
-    border-color: #609DED;
-    box-shadow: 0 0 0 4px rgba(96, 157, 237, 0.12);
-  }
+  .input::placeholder { color: rgba(21,21,21,0.4); font-weight: 400; }
+  /* Fokus kao u kitu: crna ivica i tvrda senka. */
+  .input:focus { border: 2px solid #151515; box-shadow: 0 4px 0 #151515; }
 }
 
-/* Chip / tag */
+/* Oznaka: mali verzal sa obojenom tačkom, ne kapsula (pravilo: bez pilula). */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent !important;
 }
 
-/* Skeleton loader shimmer */
+/* Odgovor na pitanje (kit: Answer option). */
+.odgovor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 16px 10px 10px;
+  background: #FFFFFF;
+  border: 2px solid #151515;
+  border-radius: 18px;
+  box-shadow: 0 4px 0 #151515;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: left;
+  color: #151515;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+}
+.odgovor:hover:not(:disabled) { background: #FAF8F3; }
+.odgovor:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #151515; }
+.odgovor .slovo {
+  flex: none;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: #DFF3EE;
+  color: #12907E;
+  font-weight: 700;
+}
+.odgovor.tacan  { background: #DFF3EE; border-color: #12907E; box-shadow: 0 4px 0 #12907E; }
+.odgovor.tacan .slovo { background: #12907E; color: #FFFFFF; }
+.odgovor.netacan { background: #FFE3EA; border-color: #E5385C; box-shadow: 0 4px 0 #E5385C; }
+.odgovor.netacan .slovo { background: #E5385C; color: #FFFFFF; }
+.odgovor.izabran { background: #151515; color: #FFFFFF; }
+.odgovor.izabran .slovo { background: #FFD84D; color: #151515; }
+
+/* Podvučen izbor umesto tabova u kapsuli. */
+.izbor { display: flex; gap: 20px; border-bottom: 1.5px solid #E7E1D0; }
+.izbor > * { padding: 10px 0; font-weight: 700; color: #6F6C66; border-bottom: 3px solid transparent; margin-bottom: -1.5px; }
+.izbor > [aria-selected="true"], .izbor > .aktivan { color: #151515; border-color: #151515; }
+
 .skeleton {
-  background: linear-gradient(90deg, #F2F2F2 0%, #F8F8F8 50%, #F2F2F2 100%);
+  background: linear-gradient(90deg, #E7E1D0 0%, #F3F0E6 50%, #E7E1D0 100%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
-  border-radius: 12px;
+  border-radius: 14px;
 }

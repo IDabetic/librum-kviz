@@ -1,0 +1,3 @@
+-- Sanduče sa servera i brojači (PRIMENJENO 03.11): profiles.obavestenja_videna, objave_srca.created_at,
+-- moja_obavestenja(p_oznaci) (izazov, pratilac, komentar, odgovor, srce; 30 dana; bez blokiranih), moji_brojevi().
+-- Definicije su u Supabase migracijama „moja_obavestenja”.

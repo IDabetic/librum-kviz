@@ -76,12 +76,12 @@ function Timer({ left, total }: { left: number; total: number }) {
   const circ = 2 * Math.PI * r
   const progress = Math.max(0, left / total)
   const offset = circ * (1 - progress)
-  const color = progress > 0.4 ? '#4CAF50' : progress > 0.2 ? '#FFCB46' : '#E55353'
+  const color = progress > 0.4 ? '#12907E' : progress > 0.2 ? '#FFD84D' : '#E5385C'
   const pulse = left <= 5 ? 'animate-pulse' : ''
   return (
     <div className={`relative flex items-center justify-center ${pulse}`} style={{ width: 56, height: 56 }}>
       <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(52,52,52,0.10)" strokeWidth="3.5" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(21,21,21,0.10)" strokeWidth="3.5" />
         <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="3.5"
           strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset 0.95s linear, stroke 0.3s' }} />
@@ -441,9 +441,9 @@ export default function DuelGamePage() {
   // ── Render ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F3F0E6' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#609DED', borderTopColor: 'transparent' }} />
+          style={{ borderColor: '#12907E', borderTopColor: 'transparent' }} />
       </div>
     )
   }
@@ -452,19 +452,19 @@ export default function DuelGamePage() {
   if (room?.status === 'waiting') {
     const amGuest = myId === room.guest_id
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#FAFAFA' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F3F0E6' }}>
         <div className="card-soft p-9 max-w-sm text-center">
           <div className="text-5xl mb-5">⏳</div>
           {amGuest ? (
             <>
-              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#343434' }}>Ušao/la si u sobu!</h2>
-              <p className="text-[14px] mb-2" style={{ color: '#9C9C9C' }}>Čekamo da domaćin počne duel…</p>
+              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#151515' }}>Ušao/la si u sobu!</h2>
+              <p className="text-[14px] mb-2" style={{ color: '#6F6C66' }}>Čekamo da domaćin počne duel…</p>
             </>
           ) : (
             <>
-              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#343434' }}>Čekamo protivnika…</h2>
+              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#151515' }}>Čekamo protivnika…</h2>
               <div className="font-black py-5 px-7 rounded-2xl my-4 inline-block"
-                style={{ background: '#BCD9FF', color: '#343434', letterSpacing: '0.25em', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+                style={{ background: '#DFF3EE', color: '#151515', letterSpacing: '0.25em', fontSize: 'clamp(28px, 5vw, 40px)' }}>
                 {code}
               </div>
             </>
@@ -487,34 +487,34 @@ export default function DuelGamePage() {
   const opProf = opId ? profiles[opId] : null
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F3F0E6' }}>
 
       {/* HUD */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
           <button onClick={() => setShowExitConfirm(true)}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2]"
-            style={{ color: '#9C9C9C' }} aria-label="Izađi">
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[#E7E1D0]"
+            style={{ color: '#6F6C66' }} aria-label="Izađi">
             <IconClose size={18} strokeWidth={2.2} />
           </button>
 
           <div className="flex items-center gap-3 sm:gap-5 flex-1 justify-center">
-            <PlayerScore userId={myId || ''} name={myProf?.name || 'Ti'} avatar={myProf?.avatar} score={myScore} accent="#609DED" you />
+            <PlayerScore userId={myId || ''} name={myProf?.name || 'Ti'} avatar={myProf?.avatar} score={myScore} accent="#12907E" you />
             <div className="text-center">
               {isGolden ? (
                 <>
-                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#FFCB46' }}>Zlatno</div>
-                  <div className="font-black text-[16px]" style={{ color: '#FFCB46' }}>{goldenIdx}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#FFD84D' }}>Zlatno</div>
+                  <div className="font-black text-[16px]" style={{ color: '#FFD84D' }}>{goldenIdx}</div>
                 </>
               ) : (
                 <>
-                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>Pitanje</div>
-                  <div className="font-black text-[16px]" style={{ color: '#343434' }}>{current + 1}/{totalMain}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#6F6C66' }}>Pitanje</div>
+                  <div className="font-black text-[16px]" style={{ color: '#151515' }}>{current + 1}/{totalMain}</div>
                 </>
               )}
             </div>
-            <PlayerScore userId={opId || ''} name={opProf?.name || 'Protivnik'} avatar={opProf?.avatar} score={opScore} accent="#FFCB46" />
+            <PlayerScore userId={opId || ''} name={opProf?.name || 'Protivnik'} avatar={opProf?.avatar} score={opScore} accent="#FFD84D" />
           </div>
 
           <Timer left={Math.max(0, timeLeft)} total={TIME_PER_QUESTION} />
@@ -527,15 +527,15 @@ export default function DuelGamePage() {
 
           {isGolden && (
             <div className="rounded-2xl px-4 py-3 mb-4 text-center font-bold text-[13px]"
-              style={{ background: '#FFCB46', color: '#343434' }}>
+              style={{ background: '#FFD84D', color: '#151515' }}>
               ⚡ Zlatno pitanje — odlučuje pobednika
             </div>
           )}
 
-          <div className="card-soft p-6 sm:p-8 mb-4">
+          <div className="card-pop p-6 sm:p-8 mb-5" style={{ background: '#FFD84D' }}>
             <div className="flex items-start justify-between gap-3 mb-3">
-              <h2 className="font-bold tracking-tight leading-snug flex-1"
-                style={{ color: '#343434', fontSize: 'clamp(18px, 3vw, 22px)' }}>
+              <h2 className="leading-snug flex-1"
+                style={{ color: '#151515', fontSize: 'clamp(18px, 3vw, 22px)' }}>
                 {q.question_text}
               </h2>
               <ReportQuestionButton
@@ -550,23 +550,23 @@ export default function DuelGamePage() {
                 const isCorrect = i === q.correctIdx
                 const myPicked = i === myAns
                 const opPicked = revealed && i === opAns
-                let bg = '#FCFCFC', border = 'rgba(52,52,52,0.10)', fg = '#343434'
-                let labelBg = '#F2F2F2', labelFg = '#9C9C9C'
+                let bg = '#FFFFFF', border = '#151515', fg = '#151515'
+                let labelBg = '#DFF3EE', labelFg = '#6F6C66'
 
                 if (revealed) {
-                  if (isCorrect) { bg = '#E8F8F0'; border = '#4CAF50'; fg = '#15803d'; labelBg = '#4CAF50'; labelFg = 'white' }
-                  else if (myPicked || opPicked) { bg = '#FEE2E2'; border = '#E55353'; fg = '#b91c1c'; labelBg = '#E55353'; labelFg = 'white' }
-                  else { bg = '#F2F2F2'; border = 'transparent'; fg = '#9C9C9C' }
+                  if (isCorrect) { bg = '#DFF3EE'; border = '#12907E'; fg = '#0E6F61'; labelBg = '#12907E'; labelFg = 'white' }
+                  else if (myPicked || opPicked) { bg = '#FFE3EA'; border = '#E5385C'; fg = '#C42B4F'; labelBg = '#E5385C'; labelFg = 'white' }
+                  else { bg = 'rgba(255,255,255,0.45)'; border = 'transparent'; fg = '#6F6C66' }
                 } else if (myAnswered) {
-                  if (myPicked) { bg = '#BCD9FF'; border = '#609DED'; fg = '#1e5fa4'; labelBg = '#609DED'; labelFg = 'white' }
-                  else { bg = '#F2F2F2'; border = 'transparent'; fg = '#9C9C9C' }
+                  if (myPicked) { bg = '#DFF3EE'; border = '#12907E'; fg = '#0E6F61'; labelBg = '#12907E'; labelFg = 'white' }
+                  else { bg = 'rgba(255,255,255,0.45)'; border = 'transparent'; fg = '#6F6C66' }
                 }
 
                 return (
                   <button key={i} onClick={() => handleAnswer(i)}
                     disabled={myAnswered || revealed}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all disabled:cursor-default relative"
-                    style={{ background: bg, border: `1.5px solid ${border}`, color: fg }}>
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-[18px] text-left font-semibold transition-all disabled:cursor-default relative"
+                    style={{ background: bg, border: `2px solid ${border}`, boxShadow: border === 'transparent' ? 'none' : `0 4px 0 ${border}`, color: fg }}>
                     <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[13px] font-black flex-shrink-0"
                       style={{ background: labelBg, color: labelFg }}>
                       {revealed && isCorrect ? <IconCheck size={14} className="text-white" />
@@ -579,13 +579,13 @@ export default function DuelGamePage() {
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {myPicked && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: '#609DED', color: 'white' }}>
+                            style={{ background: '#12907E', color: 'white' }}>
                             Ti
                           </span>
                         )}
                         {opPicked && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: '#FFCB46', color: '#343434' }}>
+                            style={{ background: '#FFD84D', color: '#151515' }}>
                             Protivnik
                           </span>
                         )}
@@ -598,28 +598,28 @@ export default function DuelGamePage() {
 
             {/* Status / info */}
             {!revealed && myAnswered && (
-              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium text-center" style={{ background: '#F2F2F2', color: '#9C9C9C' }}>
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium text-center" style={{ background: '#E7E1D0', color: '#6F6C66' }}>
                 {opAnswered ? 'Otkrivamo odgovor…' : 'Odgovorio/la si — čekamo protivnika…'}
               </div>
             )}
             {revealed && q.info && (
-              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#BCD9FF', color: '#1e5fa4' }}>
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
                 {q.info}
               </div>
             )}
             {revealed && !q.info && (
               <div className="mt-5 grid grid-cols-2 gap-2 text-[12px]">
-                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#F2F2F2' }}>
-                  <span className="font-bold" style={{ color: '#609DED' }}>Ti:</span>{' '}
-                  {myAns === null ? <span style={{ color: '#9c7a13' }}>Vreme isteklo</span>
-                    : myAns === q.correctIdx ? <span style={{ color: '#15803d' }}>tačno +10</span>
-                    : <span style={{ color: '#b91c1c' }}>pogrešno -5</span>}
+                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#E7E1D0' }}>
+                  <span className="font-bold" style={{ color: '#12907E' }}>Ti:</span>{' '}
+                  {myAns === null ? <span style={{ color: '#8A6A12' }}>Vreme isteklo</span>
+                    : myAns === q.correctIdx ? <span style={{ color: '#0E6F61' }}>tačno +10</span>
+                    : <span style={{ color: '#C42B4F' }}>pogrešno -5</span>}
                 </div>
-                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#F2F2F2' }}>
-                  <span className="font-bold" style={{ color: '#FFCB46' }}>Protivnik:</span>{' '}
-                  {opAns === null ? <span style={{ color: '#9c7a13' }}>Vreme isteklo</span>
-                    : opAns === q.correctIdx ? <span style={{ color: '#15803d' }}>tačno +10</span>
-                    : <span style={{ color: '#b91c1c' }}>pogrešno -5</span>}
+                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#E7E1D0' }}>
+                  <span className="font-bold" style={{ color: '#FFD84D' }}>Protivnik:</span>{' '}
+                  {opAns === null ? <span style={{ color: '#8A6A12' }}>Vreme isteklo</span>
+                    : opAns === q.correctIdx ? <span style={{ color: '#0E6F61' }}>tačno +10</span>
+                    : <span style={{ color: '#C42B4F' }}>pogrešno -5</span>}
                 </div>
               </div>
             )}
@@ -630,11 +630,11 @@ export default function DuelGamePage() {
       {/* End overlay */}
       {navigatingToEnd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
-          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          style={{ background: 'rgba(21,21,21,0.40)' }}>
           <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
             <div className="text-5xl mb-4">🏁</div>
-            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#343434' }}>Kraj duela</h3>
-            <p className="text-[13px]" style={{ color: '#9C9C9C' }}>Računamo rezultat…</p>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#151515' }}>Kraj duela</h3>
+            <p className="text-[13px]" style={{ color: '#6F6C66' }}>Računamo rezultat…</p>
           </div>
         </div>
       )}
@@ -644,13 +644,13 @@ export default function DuelGamePage() {
           ends to /kraj after 2.2s so the score still gets recorded. */}
       {opponentLeft && !navigatingToEnd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
-          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          style={{ background: 'rgba(21,21,21,0.40)' }}>
           <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
             <div className="text-5xl mb-4">🚪</div>
-            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#343434' }}>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#151515' }}>
               {opProf?.name?.split(' ')[0] || 'Protivnik'} je napustio kviz
             </h3>
-            <p className="text-[13px]" style={{ color: '#9C9C9C' }}>
+            <p className="text-[13px]" style={{ color: '#6F6C66' }}>
               Tvoj rezultat se upisuje na rang listu.
             </p>
           </div>
@@ -660,10 +660,10 @@ export default function DuelGamePage() {
       {/* Exit confirm */}
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
-          style={{ background: 'rgba(52,52,52,0.40)' }}>
+          style={{ background: 'rgba(21,21,21,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
-            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#343434' }}>Izađi iz duela?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#9C9C9C' }}>Trenutni rezultat se upisuje na rang listu — predaješ duel.</p>
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#151515' }}>Izađi iz duela?</h3>
+            <p className="text-[13px] mb-6" style={{ color: '#6F6C66' }}>Trenutni rezultat se upisuje na rang listu — predaješ duel.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi
@@ -671,7 +671,7 @@ export default function DuelGamePage() {
               <button
                 onClick={async () => { await persistExit(); router.push('/igraj-zajedno') }}
                 className="btn btn-md flex-1"
-                style={{ background: '#E55353', color: 'white' }}>
+                style={{ background: '#E5385C', color: 'white' }}>
                 Izađi
               </button>
             </div>
@@ -679,7 +679,7 @@ export default function DuelGamePage() {
         </div>
       )}
 
-      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: '#9C9C9C' }}>
+      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: '#6F6C66' }}>
         ukupno: {fmtTime(Math.floor((Date.now() - startTimeRef.current) / 1000))}
       </div>
     </div>
@@ -691,13 +691,13 @@ function PlayerScore({ userId, name, avatar, score, accent, you }: {
 }) {
   const inner = (
     <>
-      <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: '#F2F2F2', border: `2px solid ${accent}` }}>
+      <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: '#E7E1D0', border: `2px solid ${accent}` }}>
         {avatar
           ? <Image src={`/avatars/${avatar}`} alt={name} width={36} height={36} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center text-[12px] font-bold" style={{ background: accent, color: 'white' }}>{name[0]}</div>}
       </div>
       <div className="min-w-0">
-        <div className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: '#9C9C9C' }}>
+        <div className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: '#6F6C66' }}>
           {you ? 'Ti' : name.split(' ')[0]}
         </div>
         <div className="font-black text-[18px] tracking-tight" style={{ color: accent }}>{score}</div>

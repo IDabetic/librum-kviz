@@ -156,20 +156,20 @@ export default async function RangListaAdmin({ searchParams }: { searchParams: P
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>Rang liste</h1>
-        <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>
+        <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Rang liste</h1>
+        <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
           Pregled i moderacija sesija. Sumnjive partije se mogu obrisati.
         </p>
       </div>
 
       {/* Period filter — server-rendered pills (no client state needed). */}
-      <div className="flex p-1 rounded-full max-w-md" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full max-w-md" style={{ background: '#E7E1D0' }}>
         {periods.map(p => (
           <a key={p.id} href={`/majmun/rang-lista?period=${p.id}`}
             className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold text-center transition-all"
             style={period === p.id
-              ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-              : { color: '#9C9C9C' }}>
+              ? { background: '#FFFFFF', color: '#151515', boxShadow: '0 2px 8px rgba(21,21,21,0.06)' }
+              : { color: '#6F6C66' }}>
             {p.label}
           </a>
         ))}

@@ -273,18 +273,18 @@ export default function BrziKvizStart() {
   // ── Render ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F3F0E6' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#609DED', borderTopColor: 'transparent' }} />
+          style={{ borderColor: '#12907E', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   if (!current && !gameOver) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#FAFAFA' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F3F0E6' }}>
         <div className="card-soft p-8 max-w-sm text-center">
-          <p className="font-bold text-[16px] mb-3" style={{ color: '#343434' }}>Nema dostupnih pitanja.</p>
+          <p className="font-bold text-[16px] mb-3" style={{ color: '#151515' }}>Nema dostupnih pitanja.</p>
           <Link href="/brzi-kviz" className="btn btn-primary btn-md">Nazad</Link>
         </div>
       </div>
@@ -296,23 +296,23 @@ export default function BrziKvizStart() {
     const total = correct + wrong
     const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#FAFAFA' }}>
+      <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#F3F0E6' }}>
         <div className="max-w-xl mx-auto">
           <div className="card-soft overflow-hidden">
-            <div className="px-7 py-10 text-center" style={{ background: 'linear-gradient(135deg, #BCD9FF 0%, #FFECBC 100%)' }}>
-              <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#343434', opacity: 0.6 }}>
+            <div className="px-7 py-10 text-center" style={{ background: 'linear-gradient(135deg, #DFF3EE 0%, #FFF3C4 100%)' }}>
+              <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#151515', opacity: 0.6 }}>
                 Kraj runde
               </p>
-              <div className="font-black tracking-tight leading-none" style={{ color: '#343434', fontSize: 'clamp(56px, 12vw, 96px)' }}>
+              <div className="font-black tracking-tight leading-none" style={{ color: '#151515', fontSize: 'clamp(56px, 12vw, 96px)' }}>
                 {score}
               </div>
-              <p className="text-[14px] font-semibold mt-2" style={{ color: '#609DED' }}>bodova za 60s</p>
+              <p className="text-[14px] font-semibold mt-2" style={{ color: '#12907E' }}>bodova za 60s</p>
             </div>
             <div className="p-7 sm:p-8">
               <div className="grid grid-cols-3 gap-3 mb-6">
-                <Stat label="Tačnih" value={correct} accent="#4CAF50" />
-                <Stat label="Pogr."  value={wrong}   accent="#E55353" />
-                <Stat label="Tačnost" value={`${accuracy}%`} accent="#343434" />
+                <Stat label="Tačnih" value={correct} accent="#12907E" />
+                <Stat label="Pogr."  value={wrong}   accent="#E5385C" />
+                <Stat label="Tačnost" value={`${accuracy}%`} accent="#151515" />
               </div>
               <div className="grid grid-cols-2 gap-3 mb-3">
                 {/* End screen lives in /brzi-kviz/start. Next.js Link to the
@@ -330,7 +330,7 @@ export default function BrziKvizStart() {
                 className="w-full"
               />
               <Link href="/brzi-kviz" className="block text-center mt-5 text-[13px] font-medium transition-opacity hover:opacity-70"
-                style={{ color: '#9C9C9C' }}>
+                style={{ color: '#6F6C66' }}>
                 ← Početna
               </Link>
             </div>
@@ -348,32 +348,32 @@ export default function BrziKvizStart() {
   const isTimeout = showResult && answered === null
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F3F0E6' }}>
 
       {/* HUD */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
+        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={handleExit}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#F2F2F2] flex-shrink-0"
-            style={{ color: '#9C9C9C' }} aria-label="Izađi">
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#E7E1D0] flex-shrink-0"
+            style={{ color: '#6F6C66' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
           </button>
 
           <div className="flex items-center gap-2 flex-1 justify-center">
-            <Stat label="Vreme"  value={`${roundTime}s`} bg={roundTime <= 10 ? '#FEE2E2' : '#F2F2F2'} fg={roundTime <= 10 ? '#E55353' : '#343434'} />
-            <Stat label="Bodovi" value={score} bg="#FFECBC" fg="#343434" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
-            <Stat label="Tačno"  value={correct} bg="#E8F8F0" fg="#15803d" />
-            <Stat label="Pogr."  value={wrong} bg="#FEE2E2" fg="#E55353" />
+            <Stat label="Vreme"  value={`${roundTime}s`} bg={roundTime <= 10 ? '#FFE3EA' : '#E7E1D0'} fg={roundTime <= 10 ? '#E5385C' : '#151515'} />
+            <Stat label="Bodovi" value={score} bg="#FFF3C4" fg="#151515" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
+            <Stat label="Tačno"  value={correct} bg="#DFF3EE" fg="#0E6F61" />
+            <Stat label="Pogr."  value={wrong} bg="#FFE3EA" fg="#E5385C" />
           </div>
 
           <div className="w-10 flex-shrink-0" />
         </div>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-2.5">
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(52,52,52,0.10)' }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(21,21,21,0.10)' }}>
             <div className="h-full rounded-full transition-all" style={{
               width: `${roundProgress * 100}%`,
-              background: roundProgress > 0.5 ? '#4CAF50' : roundProgress > 0.2 ? '#FFCB46' : '#E55353',
+              background: roundProgress > 0.5 ? '#12907E' : roundProgress > 0.2 ? '#FFD84D' : '#E5385C',
             }} />
           </div>
         </div>
@@ -387,19 +387,19 @@ export default function BrziKvizStart() {
 
             {/* Header strip with timer */}
             <div className="px-6 sm:px-8 py-4 flex items-center justify-between gap-3"
-              style={{ background: '#F2F2F2', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
-              <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
+              style={{ background: '#E7E1D0', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
+              <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#6F6C66' }}>
                 Pitanje
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider"
-                  style={{ color: qProgress > 0.5 ? '#15803d' : qProgress > 0.2 ? '#9c7a13' : '#E55353' }}>
+                  style={{ color: qProgress > 0.5 ? '#0E6F61' : qProgress > 0.2 ? '#8A6A12' : '#E5385C' }}>
                   {questionTime}s
                 </span>
                 <div className="w-9 h-9 rounded-full flex items-center justify-center font-black text-[14px]"
                   style={{
-                    background: qProgress > 0.5 ? '#E8F8F0' : qProgress > 0.2 ? '#FFECBC' : '#FEE2E2',
-                    color: qProgress > 0.5 ? '#15803d' : qProgress > 0.2 ? '#9c7a13' : '#E55353',
+                    background: qProgress > 0.5 ? '#DFF3EE' : qProgress > 0.2 ? '#FFF3C4' : '#FFE3EA',
+                    color: qProgress > 0.5 ? '#0E6F61' : qProgress > 0.2 ? '#8A6A12' : '#E5385C',
                   }}>
                   {questionTime}
                 </div>
@@ -409,7 +409,7 @@ export default function BrziKvizStart() {
             {/* QUESTION — hero */}
             <div className="px-6 sm:px-8 py-7">
               <p className="font-black tracking-tight leading-[1.2]"
-                style={{ color: '#343434', fontSize: 'clamp(20px, 4vw, 28px)' }}>
+                style={{ color: '#151515', fontSize: 'clamp(20px, 4vw, 28px)' }}>
                 {current.question}
               </p>
               <div className="mt-3 flex justify-end">
@@ -419,24 +419,24 @@ export default function BrziKvizStart() {
 
             {/* Divider with "ODGOVOR" label */}
             <div className="px-6 sm:px-8 flex items-center gap-3" style={{ marginTop: -4 }}>
-              <div className="flex-1 h-px" style={{ background: 'rgba(52,52,52,0.12)' }} />
-              <span className="text-[10px] font-bold uppercase tracking-[3px]" style={{ color: '#9C9C9C' }}>
+              <div className="flex-1 h-px" style={{ background: 'rgba(21,21,21,0.12)' }} />
+              <span className="text-[10px] font-bold uppercase tracking-[3px]" style={{ color: '#6F6C66' }}>
                 Predloženi odgovor
               </span>
-              <div className="flex-1 h-px" style={{ background: 'rgba(52,52,52,0.12)' }} />
+              <div className="flex-1 h-px" style={{ background: 'rgba(21,21,21,0.12)' }} />
             </div>
 
             {/* SHOWN ANSWER — clear claim card */}
             <div className="px-6 sm:px-8 py-7 text-center"
               style={{
                 background: showResult
-                  ? (isUserCorrect ? '#E8F8F0' : '#FEE2E2')
-                  : '#FFECBC',
+                  ? (isUserCorrect ? '#DFF3EE' : '#FFE3EA')
+                  : '#FFF3C4',
                 transition: 'background 0.3s',
               }}>
               <p className="font-black tracking-tight leading-tight"
                 style={{
-                  color: showResult ? (isUserCorrect ? '#15803d' : '#b91c1c') : '#343434',
+                  color: showResult ? (isUserCorrect ? '#0E6F61' : '#C42B4F') : '#151515',
                   fontSize: 'clamp(28px, 6vw, 44px)',
                 }}>
                 {current.shownAnswer}
@@ -445,33 +445,33 @@ export default function BrziKvizStart() {
 
             {/* Result reveal */}
             {showResult && (
-              <div className="px-6 sm:px-8 py-5 border-t" style={{ borderColor: 'rgba(52,52,52,0.06)' }}>
+              <div className="px-6 sm:px-8 py-5 border-t" style={{ borderColor: 'rgba(21,21,21,0.06)' }}>
                 <div className="flex items-center justify-center gap-2 mb-2">
                   {isUserCorrect ? (
                     <>
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#4CAF50' }}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#12907E' }}>
                         <IconCheck size={16} className="text-white" />
                       </div>
-                      <span className="font-black text-[16px]" style={{ color: '#15803d' }}>Tačno! +10</span>
+                      <span className="font-black text-[16px]" style={{ color: '#0E6F61' }}>Tačno! +10</span>
                     </>
                   ) : (
                     <>
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#E55353' }}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: '#E5385C' }}>
                         <IconWrong size={16} className="text-white" />
                       </div>
-                      <span className="font-black text-[16px]" style={{ color: '#b91c1c' }}>
+                      <span className="font-black text-[16px]" style={{ color: '#C42B4F' }}>
                         {isTimeout ? 'Vreme isteklo. -5' : 'Pogrešno. -5'}
                       </span>
                     </>
                   )}
                 </div>
                 {!current.isShownCorrect && (
-                  <p className="text-[13px] leading-relaxed mt-2 text-center" style={{ color: '#9C9C9C' }}>
-                    Tačan odgovor je: <strong style={{ color: '#343434' }}>{current.correctAnswer}</strong>
+                  <p className="text-[13px] leading-relaxed mt-2 text-center" style={{ color: '#6F6C66' }}>
+                    Tačan odgovor je: <strong style={{ color: '#151515' }}>{current.correctAnswer}</strong>
                   </p>
                 )}
                 {current.isShownCorrect && (
-                  <p className="text-[13px] leading-relaxed mt-2 text-center" style={{ color: '#9C9C9C' }}>
+                  <p className="text-[13px] leading-relaxed mt-2 text-center" style={{ color: '#6F6C66' }}>
                     Da, to je tačan odgovor.
                   </p>
                 )}
@@ -484,12 +484,12 @@ export default function BrziKvizStart() {
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => handleAnswer(true)}
                 className="py-6 rounded-3xl font-black text-[20px] tracking-tight transition-all hover:scale-[1.02] active:scale-95"
-                style={{ background: '#E8F8F0', color: '#15803d' }}>
+                style={{ background: '#DFF3EE', color: '#0E6F61' }}>
                 ✓ Tačno
               </button>
               <button onClick={() => handleAnswer(false)}
                 className="py-6 rounded-3xl font-black text-[20px] tracking-tight transition-all hover:scale-[1.02] active:scale-95"
-                style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+                style={{ background: '#FFE3EA', color: '#C42B4F' }}>
                 ✗ Netačno
               </button>
             </div>
@@ -507,9 +507,9 @@ function Stat({ label, value, bg, fg, accent, highlight, highlightKey }: {
 }) {
   if (accent) {
     return (
-      <div className="rounded-2xl p-3 text-center" style={{ background: '#F2F2F2' }}>
+      <div className="rounded-2xl p-3 text-center" style={{ background: '#E7E1D0' }}>
         <div className="font-black text-[18px] tracking-tight" style={{ color: accent }}>{value}</div>
-        <div className="text-[11px] font-medium mt-0.5" style={{ color: '#9C9C9C' }}>{label}</div>
+        <div className="text-[11px] font-medium mt-0.5" style={{ color: '#6F6C66' }}>{label}</div>
       </div>
     )
   }
@@ -519,7 +519,7 @@ function Stat({ label, value, bg, fg, accent, highlight, highlightKey }: {
       <div className="font-black text-[18px] sm:text-[22px] tracking-tight leading-none mt-0.5" style={{ color: fg }}>{value}</div>
       {highlight !== undefined && (
         <span key={highlightKey} className="absolute -top-2 left-1/2 -translate-x-1/2 font-black text-[13px] whitespace-nowrap"
-          style={{ color: highlight > 0 ? '#4CAF50' : '#E55353', animation: 'floatUp 0.9s ease-out forwards' }}>
+          style={{ color: highlight > 0 ? '#12907E' : '#E5385C', animation: 'floatUp 0.9s ease-out forwards' }}>
           {highlight > 0 ? `+${highlight}` : highlight}
         </span>
       )}

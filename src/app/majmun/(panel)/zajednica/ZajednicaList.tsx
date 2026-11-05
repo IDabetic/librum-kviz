@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export type RedPrijave = {
-  vrsta: 'objava' | 'komentar'
+  vrsta: 'objava' | 'komentar' | 'poruka'
   id: number
-  objava: number
+  objava: number | null
   tekst: string
   autor: string
   nadimak: string
@@ -28,7 +28,7 @@ export default function ZajednicaList({ redovi }: { redovi: RedPrijave[] }) {
   const [greska, setGreska] = useState<string | null>(null)
 
   async function moderisi(r: RedPrijave, radnja: 'vrati' | 'obrisi') {
-    if (radnja === 'obrisi' && !confirm(r.vrsta === 'objava' ? 'Obrisati objavu i sve komentare ispod nje?' : 'Obrisati komentar?')) return
+    if (radnja === 'obrisi' && !confirm(r.vrsta === 'objava' ? 'Obrisati objavu i sve komentare ispod nje?' : r.vrsta === 'poruka' ? 'Obrisati poruku?' : 'Obrisati komentar?')) return
     const kljuc = `${r.vrsta}-${r.id}`
     setRadi(kljuc); setGreska(null)
     const { error } = await createClient().rpc('admin_moderisi', { p_vrsta: r.vrsta, p_id: r.id, p_radnja: radnja })
@@ -40,7 +40,7 @@ export default function ZajednicaList({ redovi }: { redovi: RedPrijave[] }) {
   if (redovi.length === 0) {
     return (
       <div className="card-soft py-16 text-center">
-        <p className="font-bold text-[16px]" style={{ color: '#151515' }}>Nema prijavljenih objava ni komentara</p>
+        <p className="font-bold text-[16px]" style={{ color: '#151515' }}>Nema prijavljenih objava, komentara ni poruka</p>
       </div>
     )
   }
@@ -53,7 +53,7 @@ export default function ZajednicaList({ redovi }: { redovi: RedPrijave[] }) {
         return (
           <div key={kljuc} className="card-soft p-4 space-y-2">
             <div className="flex items-center gap-2 text-[12px] font-semibold" style={{ color: '#6F6C66' }}>
-              <span style={{ color: '#151515' }}>{r.vrsta === 'objava' ? 'Objava' : 'Komentar'}</span>
+              <span style={{ color: '#151515' }}>{r.vrsta === 'objava' ? 'Objava' : r.vrsta === 'poruka' ? 'Privatna poruka' : 'Komentar'}</span>
               <span>· {r.nadimak}</span>
               <span>· {r.prijava} {r.prijava === 1 ? 'prijava' : 'prijave'}{r.razlozi ? ` (${r.razlozi})` : ''}</span>
               <span>· {datum(r.poslednja)}</span>

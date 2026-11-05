@@ -1,0 +1,86 @@
+{
+ "_napomena": "Isti tekst kao iOS KvizStavka.pravila i PravilaIgaraView.zaSve; menja se na oba mesta.",
+ "osvajanje": [
+  "Igra se na pravoj mapi: ceo svet (171 država, 17 regiona) ili jedan kontinent; protiv računara, jednog rivala ili do 12 igrača.",
+  "Partija na poziv: „Pozovi prijatelje” pravi sobu sa kodom (timovi po dvoje ili svako za sebe, do 12 igrača). Prijatelji ulaze kodom, linkom ili porukom iz aplikacije, a partija kreće kad domaćin pritisne „Počni”; prazna mesta preuzimaju botovi.",
+  "Pre partije biraš vojsku: Legija (+1 tačan u napadu), Garda (+1 tačan u odbrani), Graditelji (+1 vojska po celom regionu), Izvidnica (više karata), Konjica (2 napada više) ili Mudraci (+5 s po pitanju).",
+  "Svaka vojska ima jednu svoju moć u pitanjima bitke i dve iste za sve (Promena pitanja, +10 sekundi), svaku jednom po krugu: Legija Siguran udar (svaki odgovor je tačan, pogodak vredi dva), Garda Štit (greška se briše uz novo pitanje), Graditelji Vreme stoji, Izvidnica Pola-pola, Konjica Juriš (sledeći tačan vredi dva), Mudraci Tačan odgovor.",
+  "Pre prvog kruga sam biraš 6 država na svom kontinentu (prva je prestonica) i raspoređuješ 15 vojski; svaka država ima bar jednu.",
+  "Na početku poteza stižu pojačanja: polovina tvojih država (najmanje 3) plus bonus za svaki ceo region. Sam ih raspoređuješ dodirom po svojim državama (ili „Rasporedi sam”); kad istekne vreme, ostatak ide na granice.",
+  "Napadaš samo susede (preko mora idu isprekidani morski putevi), iz države sa bar 2 vojske, do 5 napada po potezu.",
+  "Prazna država je jedno pitanje: tačno je osvajaš, a sa 3 ili više vojske u napadu greška ne košta vojsku. Država igrača je 5 pitanja po 20 sekundi: više tačnih pobeđuje, kod istog broja brži.",
+  "Vojska vredi: svaka vojska više od protivnika daje +1 tačan, najviše +2. Kad napadaš sa 4 vojske na 1, protivniku trebaju 3 tačna više.",
+  "Ratne karte umesto dnevnih pomoći: Špijun (otkriva tačan odgovor na prvo pitanje bitke), Pojačanje, Zamrzni granicu, Drugi pokušaj i Sabotaža. Dobijaš ih za pobedu nad igračem, ceo region i proboj; u ruci najviše 5.",
+  "Dodirni igrača za brzu poruku ili savez. Savez traje do kraja sledećeg kruga i saveznici se ne napadaju. Botovi se bore sa svima, i međusobno.",
+  "Svaka 4 kruga jedan kontinent dobija događaj na 2 kruga: Zima u Evropi, Zlatno doba Afrike, Monsun u Aziji, Zlatna groznica, Karneval ili Cunami.",
+  "Teren: planine (Alpi, Himalaji, Andi, Kavkaz) daju braniocu +1 tačan, napad preko mora traži tačan više, a poraz u pustinji košta vojsku više.",
+  "Linije snabdevanja: država odsečena od prestonice ne dobija pojačanja i gubi jednu vojsku po krugu.",
+  "Čuda sveta, jedno po kontinentu: Piramide (+2 vojske), Kineski zid (odbrana u Aziji +1), Akropolj (karta svakog kruga), Maču Pikču (bez magle), Kip slobode (napad više), Sidnejska opera (+5 s po pitanju).",
+  "Magla rata: kod dalekih država vidiš samo procenu vojske (≤2, 3–5, 6+). Svoje, saveznikove i susedne vidiš tačno.",
+  "U napadu biraš temu pitanja od tri ponuđene. U bitki od 5 pitanja posle drugog odgovora možeš da se povučeš: vojska ostaje, potez je gotov. Ulog (+1 ili +2) duplira dobitak i gubitak.",
+  "Marš: jednom po potezu vojska ide do svoje države udaljene do 3 koraka. Pohod: tajno najaviš region; ako ga držiš na početku sledećeg poteza, +3 vojske i karta.",
+  "Diplomatija: izdaja saveznika odnosi sve karte i oznaku izdajnika, sa saveznikom menjaš karte, a slabijem susedu šalješ ultimatum (preda državu ili ga napadaš sa +1 tačnim).",
+  "Izgubljena bitka protiv igrača odnosi i državu iz koje si napao. Svako treće osvajanje zaredom daje +2 vojske i kartu, pala prestonica +5.",
+  "Na potezu imaš 30 sekundi, svaki dodir ih vraća na početak. Tri poteza zaredom bez napada znače ispadanje.",
+  "Ceo svet: pobeđuje ko prvi ispuni tajnu misiju (30 različitih, iste ne dolaze ponovo iste nedelje), inače ko ima najviše poena posle 12, 20 ili 30 krugova (više igrača, duža partija). Sa više igrača misije traže srazmerno manje država i regiona. Kontinent: ko ga ceo osvoji.",
+  "Na kraju je tabela i XP po mestu (1. +150, 2. +80, 3. +40, ostali +20, pobeda još +50). Partija protiv računara se čuva: nastavljaš je sa početne."
+ ],
+ "pro": [
+  "Na svako pitanje imaš četiri ponuđena odgovora i 20 sekundi.",
+  "Tačan odgovor +10, netačan −5 i jedan život. Imaš 10 života.",
+  "Više tačnih zaredom donosi kombo bonuse: 5 zaredom +10, 10 +25, 20 +60, 50 +150, 100 +400.",
+  "Na svakih 50 pitanja dobijaš 5 života i dodatnu pomoć. Risk jednom u 10 pitanja: duplo dobijaš, duplo gubiš.",
+  "Kad potrošiš sve živote, rezultat ide na rang listu i tvoj profil.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre."
+ ],
+ "book": [
+  "Isti format kao PRO kviz, sa 10 života, ali su sva pitanja iz sveta književnosti.",
+  "Pitanja su iz različitih žanrova, a profil pamti u kom žanru si najjači.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre."
+ ],
+ "duel": [
+  "Jedan na jedan, ista pitanja u isto vreme. Brzi meč ima 5 pitanja sa nasumičnim rivalom, a privatna soba 10, 25 ili 50 pitanja uz kod koji deliš.",
+  "Tačno +10, netačno ili isteklo vreme −5. Nerešeno ide na zlatno pitanje.",
+  "Izazov bez čekanja: ti odigraš 10 pitanja odmah, rival ima 24 sata; ishod stiže u Sanduče.",
+  "Ko napusti meč predaje ga: rival dobija +50.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre. Ovde je pomoć 50/50."
+ ],
+ "vesanje": [
+  "Pred tobom su prazna polja i kratak opis reči. Biraš slova: tačno se otkriva na svim mestima, netačno troši jedan od 6 života.",
+  "Slovo +5 po pojavljivanju, promašaj −2. Cela reč donosi +20, a bez greške još +30.",
+  "Pogrešna cela reč odnosi 2 života.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre. Ovde pomoć otkriva jedno slovo."
+ ],
+ "brzi": [
+  "Tajmer od 60 sekundi kreće odmah. Za svaku tvrdnju biraš tačno ili netačno (dugmetom ili prevlačenjem kartice: desno tačno, levo netačno), 10 sekundi po tvrdnji.",
+  "Tačan odgovor +10, netačan −5. Niz tačnih množi poene: ×2 od 3 zaredom, ×3 od 6; greška vraća na ×1. Poslednjih 10 sekundi sve vredi duplo.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre. Ovde pomoć dodaje 10 sekundi."
+ ],
+ "dnevni": [
+  "Svakog dana u ponoć stiže novih 10 pitanja, ista za sve igrače.",
+  "Na rang listu dana ulazi samo prvi pokušaj; možeš da igraš opet, ali za vežbu.",
+  "Brzina se računa: ko odgovori tačno i brže, ide više.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre."
+ ],
+ "slikari": [
+  "Na svakoj slici je jedno delo. Biraš ko ga je naslikao, od četiri ponuđena slikara.",
+  "Deset slika, 20 sekundi po slici; sat ne teče dok se slika ne učita.",
+  "Tačno 100 poena, plus 2 za svaku preostalu sekundu i 20 od trećeg tačnog zaredom.",
+  "Slike su sa Wikimedia Commons, uz naziv dela, godinu i muzej posle odgovora.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre."
+ ],
+ "tema": [
+  "Deset pitanja, 20 sekundi po pitanju, četiri ponuđena odgovora.",
+  "Tačno 100 poena, plus 2 za svaku preostalu sekundu i 20 od trećeg tačnog zaredom.",
+  "Na kraju vidiš pregled svih odgovora i tačna rešenja.",
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre."
+ ],
+ "zaSve": [
+  "Pomoć: jedna po partiji, iz dnevnog fonda od 7 za sve igre. Fond se puni posle 24 sata.",
+  "Pitanja se ne ponavljaju 7 dana. Posle toga najviše 10% partije sme biti već viđeno, dok ne prođeš ceo fond.",
+  "Redosled odgovora se meša svake nedelje, pa ne vredi pamtiti „bilo je pod A”.",
+  "Rang liste se vode po igri za dan, nedelju, mesec i godinu; godišnja se briše 1. januara.",
+  "Rezultat ide na rang listu samo sa nalogom. Bez naloga igra radi, a napredak ostaje na telefonu.",
+  "Netačno pitanje prijavi zastavicom na kartici; urednik ga proveri i ispravi."
+ ]
+}

@@ -20,9 +20,9 @@ type Row = {
 }
 
 const STATUS_COLOR: Record<string, { bg: string; fg: string; label: string }> = {
-  pending:  { bg: '#FFECBC', fg: '#9c7a13', label: 'Na čekanju' },
-  reviewed: { bg: '#BCD9FF', fg: '#1e5fa4', label: 'Pregledano' },
-  resolved: { bg: '#E8F8F0', fg: '#15803d', label: 'Rešeno' },
+  pending:  { bg: '#FFF3C4', fg: '#8A6A12', label: 'Na čekanju' },
+  reviewed: { bg: '#DFF3EE', fg: '#0E6F61', label: 'Pregledano' },
+  resolved: { bg: '#DFF3EE', fg: '#0E6F61', label: 'Rešeno' },
 }
 
 function fmtDate(s: string): string {
@@ -55,33 +55,33 @@ export default function PrijaveList({ rows }: { rows: Row[] }) {
   if (rows.length === 0) {
     return (
       <div className="card-soft py-16 text-center">
-        <p className="font-bold text-[16px] mb-2" style={{ color: '#343434' }}>Nema prijava u ovoj kategoriji</p>
+        <p className="font-bold text-[16px] mb-2" style={{ color: '#151515' }}>Nema prijava u ovoj kategoriji</p>
       </div>
     )
   }
 
   return (
     <div className="card-soft overflow-hidden">
-      <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+      <div className="divide-y" style={{ borderColor: '#E7E1D0' }}>
         {rows.map(r => {
           const ss = STATUS_COLOR[r.status] || STATUS_COLOR.pending
           return (
             <div key={r.id} className="px-5 py-4">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="chip" style={{ background: ss.bg, color: ss.fg }}>{ss.label}</span>
-                <span className="chip" style={{ background: '#F2F2F2', color: '#343434' }}>{r.sourceLabel}</span>
-                <span className="text-[11px]" style={{ color: '#9C9C9C' }}>
+                <span className="chip" style={{ background: '#E7E1D0', color: '#151515' }}>{r.sourceLabel}</span>
+                <span className="text-[11px]" style={{ color: '#6F6C66' }}>
                   {r.reporterName} · {fmtDate(r.createdAt)}
                 </span>
               </div>
 
               {r.questionText && (
-                <p className="text-[14px] font-semibold leading-snug mb-2" style={{ color: '#343434' }}>
+                <p className="text-[14px] font-semibold leading-snug mb-2" style={{ color: '#151515' }}>
                   {r.questionText}
                 </p>
               )}
 
-              <div className="rounded-2xl px-4 py-3 mb-3 text-[13px]" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+              <div className="rounded-2xl px-4 py-3 mb-3 text-[13px]" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
                 <span className="font-bold">Razlog:</span> {r.reason}
               </div>
 
@@ -93,24 +93,24 @@ export default function PrijaveList({ rows }: { rows: Row[] }) {
                 )}
                 {r.status !== 'reviewed' && (
                   <button onClick={() => setStatus(r.id, 'reviewed')} disabled={busy === r.id}
-                    className="btn btn-sm" style={{ background: '#BCD9FF', color: '#1e5fa4' }}>
+                    className="btn btn-sm" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
                     Označi „Pregledano“
                   </button>
                 )}
                 {r.status !== 'resolved' && (
                   <button onClick={() => setStatus(r.id, 'resolved')} disabled={busy === r.id}
-                    className="btn btn-sm" style={{ background: '#E8F8F0', color: '#15803d' }}>
+                    className="btn btn-sm" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
                     Reši
                   </button>
                 )}
                 {r.status !== 'pending' && (
                   <button onClick={() => setStatus(r.id, 'pending')} disabled={busy === r.id}
-                    className="btn btn-sm" style={{ background: '#FFECBC', color: '#9c7a13' }}>
+                    className="btn btn-sm" style={{ background: '#FFF3C4', color: '#8A6A12' }}>
                     Vrati na čekanje
                   </button>
                 )}
                 <button onClick={() => remove(r.id)} disabled={busy === r.id}
-                  className="btn btn-sm" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+                  className="btn btn-sm" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
                   Obriši
                 </button>
               </div>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { jeAvatarSajta } from '../igre-nazivi'
 
 type Row = {
   id: string
@@ -86,15 +87,15 @@ export default function KorisniciList({ rows, myId }: Props) {
   return (
     <>
       {error && (
-        <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+        <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
           {error}
         </div>
       )}
 
       {selected.size > 0 && (
         <div className="card-soft p-3 flex items-center justify-between gap-3 sticky top-2 z-30"
-          style={{ background: '#FFECBC' }}>
-          <p className="text-[13px] font-semibold" style={{ color: '#9c7a13' }}>
+          style={{ background: '#FFF3C4' }}>
+          <p className="text-[13px] font-semibold" style={{ color: '#8A6A12' }}>
             Odabrano: <strong>{selected.size}</strong>
           </p>
           <div className="flex gap-2">
@@ -102,7 +103,7 @@ export default function KorisniciList({ rows, myId }: Props) {
               className="btn btn-secondary btn-sm">Poništi</button>
             <button onClick={bulkDelete} disabled={pending}
               className="btn btn-sm"
-              style={{ background: '#E55353', color: 'white' }}>
+              style={{ background: '#E5385C', color: 'white' }}>
               {pending ? 'Brisanje…' : `Obriši ${selected.size}`}
             </button>
           </div>
@@ -110,15 +111,15 @@ export default function KorisniciList({ rows, myId }: Props) {
       )}
 
       <div className="card-soft overflow-hidden">
-        <div className="px-5 py-3 border-b flex items-center gap-3" style={{ borderColor: '#F2F2F2' }}>
+        <div className="px-5 py-3 border-b flex items-center gap-3" style={{ borderColor: '#E7E1D0' }}>
           <input type="checkbox" checked={allSelected} onChange={toggleAll}
             className="w-4 h-4 cursor-pointer" />
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#9C9C9C' }}>
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#6F6C66' }}>
             Označi sve na strani
           </span>
         </div>
 
-        <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
+        <div className="divide-y" style={{ borderColor: '#E7E1D0' }}>
           {rows.map(u => {
             const name = u.nickname || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Igrač'
             const isAdmin = ADMIN_ROLES.includes(u.role)
@@ -134,51 +135,51 @@ export default function KorisniciList({ rows, myId }: Props) {
 
             return (
               <div key={u.id}
-                className="px-5 py-4 hover:bg-[#F2F2F2] transition-colors flex items-center gap-3"
-                style={checked ? { background: 'rgba(96,157,237,0.08)' } : undefined}>
+                className="px-5 py-4 hover:bg-[#E7E1D0] transition-colors flex items-center gap-3"
+                style={checked ? { background: 'rgba(18,144,126,0.08)' } : undefined}>
                 <input type="checkbox" checked={checked} disabled={isSelf}
                   onChange={() => toggleOne(u.id)}
                   className="w-4 h-4 flex-shrink-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed" />
 
                 <Link href={`/majmun/korisnici/${u.id}`}
                   className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
-                    {u.avatar
+                  <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
+                    {jeAvatarSajta(u.avatar)
                       ? <Image src={`/avatars/${u.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-[13px] font-bold text-white" style={{ background: '#609DED' }}>{name[0]}</div>}
+                      : <div className="w-full h-full flex items-center justify-center text-[13px] font-bold text-white" style={{ background: '#12907E' }}>{name[0]}</div>}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#343434' }}>{name}</p>
+                      <p className="font-semibold text-[14px] truncate tracking-tight" style={{ color: '#151515' }}>{name}</p>
                       {isAdmin && (
-                        <span className="chip" style={{ background: '#FFCB46', color: '#343434' }}>{u.role.replace('_', ' ')}</span>
+                        <span className="chip" style={{ background: '#FFD84D', color: '#151515' }}>{u.role.replace('_', ' ')}</span>
                       )}
                       {isSelf && (
-                        <span className="chip" style={{ background: '#BCD9FF', color: '#1e5fa4' }}>ti</span>
+                        <span className="chip" style={{ background: '#DFF3EE', color: '#0E6F61' }}>ti</span>
                       )}
                       {isFresh && (
-                        <span className="chip" style={{ background: '#E8F8F0', color: '#15803d' }}>✨ Novo</span>
+                        <span className="chip" style={{ background: '#DFF3EE', color: '#0E6F61' }}>✨ Novo</span>
                       )}
                       {u.is_blocked && (
-                        <span className="chip" style={{ background: '#FEE2E2', color: '#b91c1c' }}>🚫 blokiran</span>
+                        <span className="chip" style={{ background: '#FFE3EA', color: '#C42B4F' }}>🚫 blokiran</span>
                       )}
                     </div>
-                    <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+                    <p className="text-[12px]" style={{ color: '#6F6C66' }}>
                       {u.email}{u.city ? ` · ${u.city}` : ''}
                     </p>
                   </div>
 
-                  <div className="hidden sm:flex flex-shrink-0 items-center gap-3 text-[11px]" style={{ color: '#9C9C9C' }}>
+                  <div className="hidden sm:flex flex-shrink-0 items-center gap-3 text-[11px]" style={{ color: '#6F6C66' }}>
                     {u.pro_games > 0 && (
                       <div className="text-right">
-                        <p className="font-bold text-[13px]" style={{ color: '#343434' }}>{u.pro_best}</p>
+                        <p className="font-bold text-[13px]" style={{ color: '#151515' }}>{u.pro_best}</p>
                         <p>rekord · {u.pro_games} {u.pro_games === 1 ? 'igra' : u.pro_games < 5 ? 'igre' : 'igara'}</p>
                       </div>
                     )}
                     {avgSec != null && (
                       <div className="text-right" title="Prosečno vreme po pitanju u PRO kvizu">
-                        <p className="font-bold text-[13px]" style={{ color: parseFloat(avgSec) < 5 ? '#E55353' : '#343434' }}>
+                        <p className="font-bold text-[13px]" style={{ color: parseFloat(avgSec) < 5 ? '#E5385C' : '#151515' }}>
                           {avgSec}s
                         </p>
                         <p>po pitanju</p>

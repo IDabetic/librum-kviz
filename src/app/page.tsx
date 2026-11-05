@@ -1,525 +1,178 @@
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import Script from 'next/script'
-import { IconStar } from '@/components/icons'
-import { Logo } from '@/components/Logo'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/server'
+import { OsvajanjeVideo } from '@/components/OsvajanjeVideo'
+import { Prodavnice } from '@/components/Prodavnice'
 
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
   mainEntity: [
-    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna platforma za kratke igre znanja na srpskom — PRO kviz, Book kviz, Kafanski kviz, Trivia duel, Vešanje i Brzi kviz. Pitanja pokrivaju književnost, istoriju, geografiju, sport, muziku, kulturu, prirodu i opšte znanje.' } },
-    { '@type': 'Question', name: 'Da li je Librum kviz besplatan?', acceptedAnswer: { '@type': 'Answer', text: 'Jeste — sve igre su potpuno besplatne. Potrebno je samo da napraviš nalog kako bi se rezultati upisivali na rang-listu i čuvali na tvom profilu.' } },
+    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna aplikacija sa igrama znanja na srpskom, za iPhone i Android. Glavna igra je Osvajanje sveta, a tu je još šest igara: PRO kviz, Book kviz, Trivia duel, Slikari, Vešanje i Brzi kviz.' } },
+    { '@type': 'Question', name: 'Kako se igra Osvajanje sveta?', acceptedAnswer: { '@type': 'Answer', text: 'Mapa ima 171 državu. Na početku poteza odgovaraš na pitanje i dobijaš vojske, pa napadaš susedne države; svaka bitka je jedno pitanje. Preko mora se ide samo morskim putevima. Ceo region donosi bonus vojske, a pobeđuje ko na kraju ima najviše poena.' } },
+    { '@type': 'Question', name: 'Da li je Librum kviz besplatan?', acceptedAnswer: { '@type': 'Answer', text: 'Jeste — aplikacija i sve igre su besplatne. Nalog ti treba samo da bi se rezultati upisivali na rang listu; isti nalog važi i na sajtu.' } },
     { '@type': 'Question', name: 'Kako se igra PRO kviz?', acceptedAnswer: { '@type': 'Answer', text: 'PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove i gradi kombo niz, a svaka greška skida jedan život. Igra traje dok imaš života.' } },
-    { '@type': 'Question', name: 'Mogu li da igram protiv prijatelja?', acceptedAnswer: { '@type': 'Answer', text: 'Možeš. Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ kod ili link prijatelju i odmerite znanje na istim pitanjima u realnom vremenu. Vešanje takođe ima mod za dvoje.' } },
-    { '@type': 'Question', name: 'Koje teme pokrivaju pitanja?', acceptedAnswer: { '@type': 'Answer', text: 'Opšte znanje, istorija, geografija, sport, nauka, film, muzika i književnost. Kafanski kviz je posvećen domaćoj i ex YU muzici, a Book kviz isključivo književnosti i žanrovima.' } },
+    { '@type': 'Question', name: 'Mogu li da igram protiv prijatelja?', acceptedAnswer: { '@type': 'Answer', text: 'Možeš. U aplikaciji: Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ kod prijatelju i odmerite znanje na istim pitanjima u realnom vremenu.' } },
+    { '@type': 'Question', name: 'Koje teme pokrivaju pitanja?', acceptedAnswer: { '@type': 'Answer', text: 'Opšte znanje, istorija, geografija, sport, nauka, film, muzika i književnost. Book kviz je posvećen isključivo književnosti i žanrovima.' } },
   ],
 }
 
-const GAMES = [
-  { href: '/pro-kviz',          label: 'PRO kviz',       emoji: '🎯', desc: 'Survival, lifelines',     gradient: 'linear-gradient(135deg, #BCD9FF 0%, #609DED 100%)', accent: '#1e5fa4' },
-  { href: '/book-kviz',      label: 'Book kviz',      emoji: '📚', desc: 'Književnost po žanru',     gradient: 'linear-gradient(135deg, #FFECBC 0%, #FFCB46 100%)', accent: '#9c7a13' },
-  { href: '/kafanski-kviz',  label: 'Kafanski kviz',  emoji: '🎵', desc: 'Muzika i hitovi',          gradient: 'linear-gradient(135deg, #FEE2E2 0%, #E55353 100%)', accent: '#b91c1c' },
-  { href: '/igraj-zajedno',  label: 'Trivia duel',    emoji: '⚔️', desc: 'Jedan na jedan',           gradient: 'linear-gradient(135deg, #FFCB46 0%, #FFECBC 100%)', accent: '#9c7a13' },
-  { href: '/vesanje',        label: 'Vešanje',        emoji: '🪢', desc: 'Pogađaj slovo',            gradient: 'linear-gradient(135deg, #E8F8F0 0%, #4CAF50 100%)', accent: '#15803d' },
-  { href: '/brzi-kviz',      label: 'Brzi kviz',      emoji: '⚡', desc: 'Tačno/netačno, 60s',      gradient: 'linear-gradient(135deg, #FEE2E2 0%, #b91c1c 100%)', accent: '#b91c1c' },
+type RedRanga = { mesto: number; user_id: string; nadimak: string | null; avatar: string | null; poeni: number; partija: number }
+type BrojeviPitanja = { kviz: number; knjige: number; kafana: number }
+
+/** Ista rang lista kao u aplikaciji (RPC rang_lista_igre): Osvajanje sveta ove nedelje. */
+const MESTA_NA_LISTI = 10
+
+const IGRE = [
+  { ime: 'PRO kviz', opis: 'Deset života, kombo nizovi, Risk i nedeljna rang lista.', boja: '#6D4BC9', tekst: '#FFFFFF', slika: 'pro' },
+  { ime: 'Book kviz', opis: 'Pisci, dela i likovi; 168 klasika sa svojim pitanjima.', boja: '#F4A33C', tekst: '#151515', slika: 'book' },
+  { ime: 'Duel', opis: 'Jedan na jedan uživo ili izazov prijatelju sa profila.', boja: '#151515', tekst: '#FFFFFF', slika: 'duel' },
+  { ime: 'Slikari', opis: 'Ko je naslikao ovo delo? 1.167 dela, od Leonarda do Pikasa.', boja: '#FF5FA2', tekst: '#151515', slika: 'slikari' },
+  { ime: 'Brzi kviz', opis: 'Tačno ili netačno, 60 sekundi, niz množi poene.', boja: '#FFD84D', tekst: '#151515', slika: 'brzi' },
+  { ime: 'Vešanje', opis: 'Pogodi reč slovo po slovo, sa našom azbukom.', boja: '#6EC3F2', tekst: '#151515', slika: 'vesanje' },
 ]
 
-type LeaderRow = {
-  user_id: string
-  score: number
-  questions_reached: number
-  // Resolved client-side from public_profiles (we don't embed profiles
-  // anymore — that table is locked down for anon).
-  profile?: { first_name: string | null; nickname: string | null; avatar: string | null } | null
-}
-
-// Round a question count down to its nearest thousand and add "k+".
-// 7534 → "7k+", 9056 → "9k+", 1200 → "1k+", anything below 1000 falls
-// back to the raw number with a "+" so the badge still reads natural.
-function formatQuestionCount(n: number): string {
-  if (n >= 1000) return `${Math.floor(n / 1000)}k+`
-  if (n > 0) return `${n}+`
-  return '—'
-}
-
-// Koliko pitanja fali do sledeće okrugle stotine/hiljade. Poziv na
-// doprinos radi bolje sa konkretnim brojem („još 43”) nego sa opštim
-// „pošalji pitanje”, a broj se sam obnavlja kako baza raste.
-function doOkruglog(n: number): { cilj: number; fali: number } | null {
-  if (n <= 0) return null
-  // Korak je namerno sitan: „još 58 do 9100” je poziv na koji neko može da
-  // odgovori danas, „još 958 do 10000” nije. Korak raste tek kad bi sitan
-  // postao besmislen.
-  const korak = n >= 50000 ? 1000 : n >= 10000 ? 500 : 100
-  const cilj = Math.floor(n / korak) * korak + korak
-  return { cilj, fali: cilj - n }
-}
+const MOGUCNOSTI = [
+  ['171 država', 'Prava mapa sveta sa 17 regiona; preko mora idu morski putevi.'],
+  ['Šest vojski', 'Legija, Garda, Graditelji, Izvidnica, Konjica i Mudraci, svaka sa svojom moći u bitki: siguran udar, štit, zaustavljen sat, pola-pola, juriš ili tačan odgovor.'],
+  ['Ratne karte', 'Špijun vidi odgovor, Pojačanje, Zamrzni granicu, Drugi pokušaj, Sabotaža.'],
+  ['Savezi i izdaje', 'Brze poruke, savez do kraja kruga, ultimatum slabijem susedu.'],
+  ['Teren i čuda', 'Planine brane, pustinja kažnjava; Piramide, Kineski zid, Akropolj…'],
+  ['Do 12 igrača', 'Protiv računara, prijatelja ili mešano; timovi po dvoje.'],
+]
 
 export default async function Home() {
   const supabase = await createClient()
-
-  // ⚠ 14.09.2026: ova tri poziva su ranije išla JEDAN ZA DRUGIM, iako nijedan
-  // ne zavisi od druga dva. Uz funkciju koja je do danas radila u `iad1`, a
-  // bazu u Frankfurtu, svaki je prelazio Atlantik i vraćao se, pa je naslovna
-  // umela da traje 16 s i probije Kulin prag od 20 s. Funkcija je premeštena u
-  // `fra1` (vercel.json), a ovde se ono što je nezavisno traži odjednom.
-  const [
-    { data: { user } },
-    { data: brojPitanja },
-    { data: topSedamDana },
-  ] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.rpc('broj_pitanja'),
-    (async () => {
-      // Server komponenta se izvršava jednom po zahtevu, pa je Date.now() ovde
-      // bezbedan; pravilo čistoće se pali odbrambeno.
-      // eslint-disable-next-line react-hooks/purity
-      const odSedamDana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      return supabase
-        .from('survivor_sessions')
-        .select('user_id, score, questions_reached')
-        .gte('created_at', odSedamDana)
-        .order('score', { ascending: false })
-        .limit(20)
-    })(),
+  // Nezavisni pozivi idu odjednom (funkcija je u fra1, baza u Frankfurtu; vidi vercel.json).
+  const [{ data: brojevi }, { data: rang }] = await Promise.all([
+    supabase.rpc('pitanja_u_igri'),
+    supabase.rpc('rang_lista_igre', { p_igra: 'osvajanje', p_period: 'nedelja', p_broj: MESTA_NA_LISTI }),
   ])
-
-  // Live count of multiple-choice questions across the three pools that
-  // power PRO, Brzi, Trivia duel, Book and Kafanski kviz. We deliberately
-  // skip hangman_words — those are guess-a-word entries, not "pitanja".
-  //
-  // Ide kroz RPC `broj_pitanja()` a ne kroz tri odvojena brojanja: RLS na
-  // `kafana_questions` dozvoljava čitanje samo prijavljenima, pa je
-  // neprijavljen posetilac video 7k+ umesto 9k+.
-  const totalQuestions = Number(brojPitanja) || 0
-  const questionsBadge = formatQuestionCount(totalQuestions)
-  const okrugli = doOkruglog(totalQuestions)
-
-  // Top 5 PRO scores in the last 7 days — gives anonymous visitors a
-  // taste of what's waiting after registration. Falls back to all-time
-  // top 5 if nobody played this week. Server component runs once per
-  // request, so Date.now() here is safe — purity rule fires defensively.
-  let top = topSedamDana
-  if (!top || top.length === 0) {
-    const fallback = await supabase
-      .from('survivor_sessions')
-      .select('user_id, score, questions_reached')
-      .order('score', { ascending: false })
-      .limit(20)
-    top = fallback.data ?? []
-  }
-  // Dedupe by user (each player's best entry only) and take top 5.
-  const seenUsers = new Set<string>()
-  const dedup: LeaderRow[] = []
-  for (const r of (top ?? []) as LeaderRow[]) {
-    if (!r.user_id || seenUsers.has(r.user_id)) continue
-    seenUsers.add(r.user_id)
-    dedup.push(r)
-    if (dedup.length >= 5) break
-  }
-  // Resolve display info from public_profiles (safe view — no email,
-  // no role). Anon visitors hit this code path too.
-  const topIds = dedup.map(r => r.user_id)
-  const { data: profs } = topIds.length
-    ? await supabase
-        .from('public_profiles')
-        .select('id, first_name, nickname, avatar')
-        .in('id', topIds)
-    : { data: [] as { id: string; first_name: string | null; nickname: string | null; avatar: string | null }[] }
-  const profMap = new Map((profs ?? []).map(p => [p.id, p]))
-  const leaderboard: LeaderRow[] = dedup.map(r => ({
-    ...r,
-    profile: profMap.get(r.user_id)
-      ? { first_name: profMap.get(r.user_id)!.first_name, nickname: profMap.get(r.user_id)!.nickname, avatar: profMap.get(r.user_id)!.avatar }
-      : null,
-  }))
+  const b = (brojevi ?? null) as BrojeviPitanja | null
+  const pitanja = b ? b.kviz + b.knjige + b.kafana : 0
+  const lista = (rang ?? []) as RedRanga[]
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#FAFAFA' }}>
-      {user ? (
-        <Header />
-      ) : (
-        <nav className="sticky top-0 z-40 backdrop-blur-xl"
-          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(52,52,52,0.06)' }}>
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Logo height={36} priority />
-            <div className="flex items-center gap-2">
-              <Link href="/auth/prijava" className="btn btn-ghost btn-sm">Prijava</Link>
-              <Link href="/auth/registracija" className="btn btn-primary btn-sm">Registracija</Link>
-            </div>
-          </div>
-        </nav>
-      )}
+    <div className="min-h-screen flex flex-col">
+      <Header />
 
-      {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative pt-16 pb-20 sm:pt-24 sm:pb-28 px-4 sm:px-6 overflow-hidden">
-        {/* Bigger, brighter ambient blobs for that playful first impression */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-10 -right-32 w-[480px] h-[480px] rounded-full opacity-50"
-            style={{ background: 'radial-gradient(circle, #BCD9FF 0%, transparent 70%)' }} />
-          <div className="absolute -bottom-32 -left-32 w-[520px] h-[520px] rounded-full opacity-50"
-            style={{ background: 'radial-gradient(circle, #FFECBC 0%, transparent 70%)' }} />
-          <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] rounded-full opacity-30"
-            style={{ background: 'radial-gradient(circle, #FEE2E2 0%, transparent 70%)' }} />
-        </div>
-
-        <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7"
-            style={{ background: '#FFECBC', color: '#9c7a13' }}>
-            <IconStar size={14} strokeWidth={2.5} />
-            <span className="text-[12px] font-semibold tracking-tight">
-              6 igara · <span suppressHydrationWarning>{questionsBadge}</span> pitanja u bazi · besplatno
-            </span>
-          </div>
-
-          {okrugli && (
-            <div className="mb-7 -mt-3">
-              <Link href="/dodaj-pitanja"
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full transition-all hover:opacity-80"
-                style={{ background: 'rgba(96,157,237,0.12)', color: '#1e5fa4' }}>
-                <span className="text-[12px] font-semibold tracking-tight">
-                  Još {okrugli.fali} {okrugli.fali === 1 ? 'pitanje' : 'pitanja'} do {okrugli.cilj}. Dodaj svoje →
-                </span>
-              </Link>
-            </div>
-          )}
-
-          <h1 className="font-black tracking-tight leading-[1.02] mb-6"
-            style={{ color: '#343434', fontSize: 'clamp(44px, 9vw, 96px)' }}>
-            Igraj. Saznaj.<br />
-            <span style={{ color: '#609DED' }}>Pobeđuj.</span>
-          </h1>
-
-          <p className="text-[16px] sm:text-[19px] max-w-xl mx-auto mb-10 leading-relaxed"
-            style={{ color: '#343434', opacity: 0.7 }}>
-            Hiljade pitanja iz književnosti, istorije, muzike, sporta i kulture.<br className="hidden sm:block" />
-            Sam protiv vremena ili izazovi prijatelja u realnom vremenu.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            {user ? (
-              <>
-                <Link href="/igre" className="btn btn-primary btn-lg w-full sm:w-auto sm:min-w-[200px]">
-                  Igraj sada
-                </Link>
-                <Link href="/ranglista" className="btn btn-secondary btn-lg w-full sm:w-auto sm:min-w-[200px]">
-                  Rang lista
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/registracija" className="btn btn-primary btn-lg w-full sm:w-auto sm:min-w-[200px]">
-                  Počni besplatno
-                </Link>
-                <Link href="/auth/prijava" className="btn btn-secondary btn-lg w-full sm:w-auto sm:min-w-[200px]">
-                  Imam nalog
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Games showcase ──────────────────────────────────────── */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#609DED' }}>
-              Šest igara, šest izazova
-            </p>
-            <h2 className="font-black tracking-tight leading-[1.05]"
-              style={{ color: '#343434', fontSize: 'clamp(30px, 5vw, 44px)' }}>
-              Izaberi svoj kviz.
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {GAMES.map(g => (
-              // Link straight to the public game landing — clean URL,
-              // no ?redirect= query param (Seobility flags dynamic
-              // params in internal links). The landing page itself
-              // gates play behind login for anon visitors.
-              <Link key={g.href}
-                href={g.href}
-                className="card-soft overflow-hidden group transition-transform hover:scale-[1.03]">
-                <div className="h-24 sm:h-28 flex items-center justify-center" style={{ background: g.gradient }}>
-                  <span className="text-[42px] sm:text-[48px] leading-none" aria-hidden>{g.emoji}</span>
-                </div>
-                <div className="p-3 sm:p-4 text-center">
-                  <p className="font-black tracking-tight text-[13px] sm:text-[14px]" style={{ color: g.accent }}>
-                    {g.label}
-                  </p>
-                  <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ color: '#9C9C9C' }}>{g.desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Mini leaderboard ────────────────────────────────────── */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6" style={{ background: '#F2F2F2' }}>
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-8">
-            <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#9c7a13' }}>
-              Najbolji ove nedelje
-            </p>
-            <h2 className="font-black tracking-tight leading-[1.05]"
-              style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 40px)' }}>
-              {user ? 'Penji se ka vrhu.' : 'Možeš li da ih sustigneš?'}
-            </h2>
-          </div>
-
-          {leaderboard.length === 0 ? (
-            <div className="card-soft p-10 text-center">
-              <div className="text-5xl mb-4">🎯</div>
-              <p className="font-bold text-[16px] mb-2" style={{ color: '#343434' }}>Rang lista čeka prvog igrača</p>
-              <p className="text-[13px] mb-5" style={{ color: '#9C9C9C' }}>Budi prvi koji će postaviti rekord.</p>
-              <Link href={user ? '/pro-kviz' : '/auth/registracija'} className="btn btn-primary btn-md">
-                {user ? 'Igraj PRO' : 'Registruj se'}
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className="card-soft overflow-hidden">
-                <div className="divide-y" style={{ borderColor: '#F2F2F2' }}>
-                  {leaderboard.map((r, i) => {
-                    const prof = r.profile
-                    const name = prof?.nickname || prof?.first_name || 'Igrač'
-                    const medals = ['🥇', '🥈', '🥉']
-                    return (
-                      <div key={r.user_id} className="flex items-center gap-3 px-5 py-3.5">
-                        <span className="w-8 text-center flex-shrink-0">
-                          {i < 3
-                            ? <span className="text-lg">{medals[i]}</span>
-                            : <span className="text-[14px] font-bold" style={{ color: '#9C9C9C' }}>{i + 1}</span>}
-                        </span>
-                        <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-white"
-                          style={{ background: '#609DED' }}>
-                          {prof?.avatar
-                            ? <Image src={`/avatars/${prof.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
-                            : <span className="text-[14px]">{name[0]?.toUpperCase()}</span>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[14px] truncate" style={{ color: '#343434' }}>{name}</p>
-                          <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
-                            {r.questions_reached} pitanja
-                          </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="font-black text-[18px] tracking-tight" style={{ color: '#343434' }}>{r.score}</div>
-                          <div className="text-[11px]" style={{ color: '#9C9C9C' }}>bodova</div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-5 text-center">
-                {user ? (
-                  <Link href="/ranglista" className="btn btn-secondary btn-md">
-                    Cela rang lista →
-                  </Link>
-                ) : (
-                  <Link href="/auth/registracija" className="btn btn-primary btn-md">
-                    Pridruži se i bori za vrh
-                  </Link>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* ── Stats strip ──────────────────────────────────────────── */}
-      <section className="py-12 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto card-soft px-6 sm:px-12 py-10"
-          style={{ background: 'linear-gradient(135deg, #FFECBC 0%, #FCFCFC 50%, #BCD9FF 100%)' }}>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            {[
-              { num: '5k+',  label: 'Pitanja u bazi' },
-              { num: '6',    label: 'Različitih igara' },
-              { num: '100%', label: 'Besplatno' },
-            ].map(({ num, label }) => (
-              <div key={label}>
-                <div className="font-black tracking-tight mb-1" style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 44px)' }}>
-                  {num}
-                </div>
-                <div className="text-[12px] sm:text-[13px] font-medium" style={{ color: '#343434', opacity: 0.65 }}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works ─────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6" style={{ background: '#F2F2F2' }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-[13px] font-bold uppercase tracking-widest mb-3" style={{ color: '#609DED' }}>
-              Tri koraka
-            </p>
-            <h2 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(28px, 5vw, 44px)' }}>
-              Jednostavno i brzo.
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { n: '01', emoji: '✍️', t: 'Registruj se',  d: 'Ime, email, lozinka. 10 sekundi.' },
-              { n: '02', emoji: '🎮', t: 'Odaberi igru',  d: 'Šest različitih kvizova — sam ili sa prijateljem.' },
-              { n: '03', emoji: '🏆', t: 'Skupljaj poene', d: 'Penji se rang listom i uskoro nagrade.' },
-            ].map(({ n, emoji, t, d }) => (
-              <div key={n} className="card-soft p-7 text-center transition-transform hover:-translate-y-1">
-                <div className="text-5xl mb-4">{emoji}</div>
-                <p className="font-black tracking-tight mb-2 text-[12px] uppercase tracking-widest" style={{ color: '#609DED' }}>
-                  Korak {n}
+      <main className="flex-1">
+        {/* Osvajanje sveta: snimak prave partije preko celog ekrana, natpis i zvuk */}
+        <section id="osvajanje" style={{ background: 'radial-gradient(120% 90% at 70% 0%, #1B5E54 0%, #0E3B34 45%, #12110F 100%)', color: '#F3F0E6' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-16">
+            <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-end">
+              <div>
+                <p className="chip mb-5" style={{ color: '#FFD84D', background: 'rgba(255,255,255,.08)' }}>
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#2FD27A' }} />
+                  {pitanja > 0 ? `${pitanja.toLocaleString('sr-RS')} pitanja u igri` : 'Aplikacija za iPhone i Android'}
                 </p>
-                <h3 className="font-bold text-[18px] mb-2 tracking-tight" style={{ color: '#343434' }}>{t}</h3>
-                <p className="text-[14px] leading-relaxed" style={{ color: '#9C9C9C' }}>{d}</p>
+                <h1 style={{ fontSize: 'clamp(46px, 8vw, 96px)', color: '#F3F0E6' }}>Osvoji svet <span style={{ color: '#FFD84D' }}>znanjem.</span></h1>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ──────────────────────────────────────────────────── */}
-      {!user && (
-        <section className="py-20 px-4 sm:px-6">
-          <div className="max-w-3xl mx-auto card-soft px-8 sm:px-16 py-14 text-center relative overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, #343434 0%, #1e5fa4 100%)', borderColor: '#343434' }}>
-            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-25"
-              style={{ background: '#FFCB46' }} />
-            <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-20"
-              style={{ background: '#E55353' }} />
-            <div className="relative">
-              <h2 className="font-black tracking-tight mb-4 leading-[1.05]"
-                style={{ color: '#FCFCFC', fontSize: 'clamp(28px, 5vw, 48px)' }}>
-                Spreman za izazov?
-              </h2>
-              <p className="mb-8 text-[15px] sm:text-[17px] max-w-md mx-auto" style={{ color: 'rgba(252,252,252,0.75)' }}>
-                Registracija je besplatna — odmah igraš prvi kviz.
-              </p>
-              <Link href="/auth/registracija" className="btn btn-yellow btn-lg">
-                Kreni odmah →
-              </Link>
+              <div>
+                <p className="text-[17px] leading-relaxed opacity-90">
+                  Strategija u kojoj svaka bitka pada na pitanju. Vojske, ratne karte, savezi i izdaje na pravoj mapi sveta,
+                  protiv računara ili prijatelja, do 12 igrača.
+                </p>
+                <div className="mt-6"><Prodavnice tamno /></div>
+              </div>
             </div>
+            <div className="mt-10"><OsvajanjeVideo /></div>
+            <dl className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                [pitanja > 0 ? pitanja.toLocaleString('sr-RS') : '150.000+', 'pitanja u bazi'],
+                ['171', 'država na mapi'],
+                ['7', 'igara znanja'],
+                ['2–12', 'igrača u partiji'],
+              ].map(([v, n]) => (
+                <div key={n} className="rounded-2xl px-5 py-4" style={{ background: 'rgba(255,255,255,.06)', border: '1.5px solid rgba(255,255,255,.14)' }}>
+                  <dt className="sr-only">{n}</dt>
+                  <dd className="naslov text-[28px] tabular-nums" style={{ color: '#FFD84D' }}>{v}</dd>
+                  <dd className="text-[13px] font-semibold opacity-80">{n}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </section>
-      )}
 
-      {/* SEO content — long-form, ~800 words of useful text covering
-          every keyword cluster (online kviz, kafanski kviz, kviz iz
-          književnosti, trivia duel, igra vešanja). Repeats the H1
-          verbs "Igraj / Saznaj / Pobeđuj" in body copy and adds a
-          visible FAQ that mirrors the FAQPage JSON-LD below. */}
-      <section className="py-14 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-[14px] leading-relaxed space-y-5" style={{ color: '#5a5a5a' }}>
-          <h2 className="font-black tracking-tight text-center mb-2" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
-            Besplatan online kviz znanja na srpskom
-          </h2>
-          <p>
-            <strong>Librum kviz</strong> je besplatna platforma za igre znanja na srpskom — online kviz koji
-            spaja kviz opšte kulture, muzički kviz, kviz iz književnosti i klasičnu igru pogađanja
-            reči na jednom mestu. Bez instalacije i bez reklama u toku igre: otvoriš sajt, napraviš
-            nalog za desetak sekundi i odmah kreneš da igraš. Filozofija je jednostavna —{' '}
-            <strong>igraj</strong> kratku partiju kad god imaš pet minuta, <strong>saznaj</strong> nešto
-            novo iz svake runde i <strong>pobeđuj</strong> penjući se na rang-listu protiv ostalih igrača iz
-            Srbije i regiona.
-          </p>
-          <p>
-            <Link href="/pro-kviz" className="font-semibold underline" style={{ color: '#609DED' }}>PRO kviz</Link>{' '}
-            je naš survival kviz znanja sa 10 života i rang-listom — najteži kviz opšteg znanja i najbolji
-            izazov za one koji žele da se takmiče. Svaki tačan odgovor nosi bodove i gradi kombo niz, dok
-            te svaka greška košta jednog života. Pitanja pokrivaju istoriju, geografiju, sport, nauku,
-            film, muziku i opštu kulturu, a dostupne su i pomoći (lifelines) kada zapneš.{' '}
-            <Link href="/book-kviz" className="font-semibold underline" style={{ color: '#9c7a13' }}>Book kviz</Link>{' '}
-            je kviz iz književnosti za ljubitelje knjiga: pitanja o piscima, romanima, književnim likovima
-            i žanrovima — od drame i ljubavnog romana do krimića i fantastike. Na kraju partije saznaš
-            koji književni žanr najbolje poznaješ, što je odličan test znanja iz književnosti i poziv da
-            otkriješ nešto novo za čitanje.
-          </p>
-          <p>
-            <Link href="/kafanski-kviz" className="font-semibold underline" style={{ color: '#b91c1c' }}>Kafanski kviz</Link>{' '}
-            je naš pub kviz i muzički kviz — preko 1000 pitanja o domaćoj i ex YU muzici, pevačima,
-            grupama i kultnim pesmama. Idealan je kviz za društvo, za kafanu i za kućno druženje: pusti
-            ga na telefonu ili laptopu i neka ekipa pogađa hitove. Ako tražiš pitanja za pub kviz na
-            srpskom, ovo je najbrži način da napraviš veče kviza bez pripreme.{' '}
-            <Link href="/igraj-zajedno" className="font-semibold underline" style={{ color: '#9c7a13' }}>Trivia duel</Link>{' '}
-            je multiplayer kviz protiv prijatelja u realnom vremenu — napraviš sobu, pošalješ kod ili
-            link, drugi igrač se pridruži i oboje dobijate ista pitanja. Pobednik je onaj sa više bodova,
-            a možete odmah pokrenuti revanš.
-          </p>
-          <p>
-            <Link href="/vesanje" className="font-semibold underline" style={{ color: '#15803d' }}>Igra vešanja</Link>{' '}
-            je klasična online igra pogađanja reči po kategorijama — sport, geografija, istorija,
-            kultura, priroda i predmeti — sa hintom za teže reči. Pogodna je i za decu i za odrasle, a
-            ima i mod za dvoje gde jedan zadaje a drugi pogađa.{' '}
-            <Link href="/brzi-kviz" className="font-semibold underline" style={{ color: '#b91c1c' }}>Brzi kviz</Link>{' '}
-            je tačno-netačno kviz od 60 sekundi — kratki, brzinski test znanja iz svih oblasti, savršen
-            za pauzu na poslu ili u prevozu. Cilj je da za jedan minut sakupiš što više tačnih odgovora.
-          </p>
-          <p>
-            Sve igre dele isti sistem profila, bodova i{' '}
-            <Link href="/ranglista" className="font-semibold underline" style={{ color: '#609DED' }}>rang-liste</Link>{' '}
-            sa filterima za danas, sedam dana, mesec i sve vreme — tako da uvek znaš gde si u odnosu na
-            druge. Na profilu vidiš broj odigranih partija, rekorde i prosečno vreme po pitanju za svaku
-            igru. Imaš zanimljivo pitanje? Pošalji ga preko{' '}
-            <Link href="/predlozi-pitanje" className="underline" style={{ color: '#609DED' }}>predloga pitanja</Link>{' '}
-            — ako prođe pregled urednika, ulazi u sledeći kviz i igraće ga svi.
-          </p>
+        {/* Šta sve može Osvajanje */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
+          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Šta sve ima u Osvajanju</h2>
+          <ul className="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {MOGUCNOSTI.map(([n, t]) => (
+              <li key={n} className="card-soft p-6">
+                <h3 className="text-[22px]">{n}</h3>
+                <p className="mt-2 text-[15px]" style={{ color: '#6F6C66' }}>{t}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-          {/* Visible FAQ — mirrors faqSchema for rich-result eligibility */}
-          <h2 className="font-black tracking-tight text-center pt-6" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
-            Često postavljana pitanja
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Šta je Librum kviz?</h3>
-              <p>
-                Librum kviz je besplatna platforma za kratke igre znanja na srpskom — PRO kviz, Book
-                kviz, Kafanski kviz, Trivia duel, Vešanje i Brzi kviz. Pitanja pokrivaju književnost,
-                istoriju, geografiju, sport, muziku, kulturu, prirodu i opšte znanje.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Da li je Librum kviz besplatan?</h3>
-              <p>
-                Jeste — sve igre su potpuno besplatne. Potrebno je samo da napraviš nalog kako bi se
-                rezultati upisivali na rang-listu i čuvali na tvom profilu.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Kako se igra PRO kviz?</h3>
-              <p>
-                PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove i
-                gradi kombo niz, a svaka greška skida jedan život. Igra traje dok imaš života — cilj je
-                da stigneš što dalje i osvojiš što više bodova.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Mogu li da igram protiv prijatelja?</h3>
-              <p>
-                Možeš. Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ kod ili link
-                prijatelju i odmerite znanje na istim pitanjima u realnom vremenu. Vešanje takođe ima
-                mod za dvoje.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold text-[15px] mb-1" style={{ color: '#343434' }}>Koje teme pokrivaju pitanja?</h3>
-              <p>
-                Opšte znanje, istorija, geografija, sport, nauka, film, muzika i književnost. Kafanski
-                kviz je posvećen domaćoj i ex YU muzici, a Book kviz isključivo književnosti i žanrovima.
-              </p>
-            </div>
+        {/* Ostale igre */}
+        <section id="igre" className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 scroll-mt-28">
+          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>I još šest igara</h2>
+          <p className="mt-2 text-[16px]" style={{ color: '#6F6C66' }}>Svaka se igra sama ili sa drugima: do 8 igrača ili timovi, protiv računara ili prijatelja.</p>
+          <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {IGRE.map(g => (
+              <div key={g.ime} className="card-pop relative overflow-hidden min-h-[170px] p-5 flex flex-col justify-end" style={{ background: g.boja, color: g.tekst }}>
+                <Image src={`/ilustracije/${g.slika}.png`} alt="" width={92} height={92} aria-hidden className="absolute right-3 top-3" />
+                <h3 className="text-[26px] relative">{g.ime}</h3>
+                <p className="relative mt-1 text-[14px] font-semibold opacity-85 max-w-[85%]">{g.opis}</p>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Rang lista: ista kao u aplikaciji */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
+          <div className="flex items-baseline justify-between mb-4 gap-4">
+            <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Osvajači ove nedelje</h2>
+            <Link href="/ranglista" className="text-[15px] font-bold underline underline-offset-4 shrink-0">Cela rang lista</Link>
+          </div>
+          {lista.length > 0 ? (
+            <ol className="card-soft divide-y divide-[#E7E1D0]">
+              {lista.map(r => (
+                <li key={r.user_id} className="flex items-center gap-4 px-5 py-3.5">
+                  <span className="w-9 h-9 grid place-items-center rounded-xl font-bold tabular-nums"
+                    style={{ background: r.mesto === 1 ? '#FFD84D' : '#F3F0E6', border: r.mesto === 1 ? '2px solid #151515' : 'none', color: '#151515' }}>
+                    {r.mesto}
+                  </span>
+                  <span className="flex-1 font-semibold truncate">{r.nadimak || 'Igrač'}</span>
+                  <span className="text-[13px] hidden sm:inline" style={{ color: '#6F6C66' }}>{r.partija} partija</span>
+                  <span className="naslov text-[20px] tabular-nums">{r.poeni.toLocaleString('sr-RS')}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="card-soft p-8 flex items-center gap-5">
+              <Image src="/maskote/Lumi.png" alt="" width={80} height={80} aria-hidden />
+              <p className="text-[16px]" style={{ color: '#6F6C66' }}>Rang lista se puni čim prve partije ove nedelje stignu iz aplikacije.</p>
+            </div>
+          )}
+        </section>
+
+        {/* Poziv na kraju */}
+        <section className="px-4 sm:px-6 pt-16 pb-6">
+          <div className="max-w-6xl mx-auto card-pop p-8 sm:p-12 relative overflow-hidden" style={{ background: '#151515', color: '#F3F0E6' }}>
+            <Image src="/maskote/Zig.png" alt="" width={150} height={150} aria-hidden className="absolute right-4 bottom-0 hidden sm:block" />
+            <h2 style={{ fontSize: 'clamp(32px, 5vw, 52px)' }}>Preuzmi i kreni u osvajanje.</h2>
+            <p className="mt-3 text-[16px] opacity-80 max-w-xl">Besplatno, bez reklama u toku igre. Jedan nalog za sve igre i rang listu.</p>
+            <div className="mt-7"><Prodavnice tamno /></div>
+          </div>
+        </section>
+
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-[15px] leading-[1.7] space-y-5" style={{ color: '#6F6C66' }}>
+          <h2 className="mb-2" style={{ color: '#151515', fontSize: 'clamp(26px, 4vw, 34px)' }}>Pitanja</h2>
+          {faqSchema.mainEntity.map(item => (
+            <div key={item.name} className="py-5" style={{ borderTop: '1.5px solid #E7E1D0' }}>
+              <h3 className="text-[19px] mb-2" style={{ color: '#151515' }}>{item.name}</h3>
+              <p>{item.acceptedAnswer.text}</p>
+            </div>
+          ))}
+        </section>
+      </main>
 
       <Footer />
 

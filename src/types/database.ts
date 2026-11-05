@@ -5,6 +5,8 @@ export type Profile = {
   first_name: string
   last_name: string
   created_at: string
+  suspended_until?: string | null
+  is_blocked?: boolean
 }
 
 export type Quiz = {
@@ -63,6 +65,20 @@ export type QuestionSubmission = {
   id: string
   question_text: string
   correct_answer: string
+  // Tri netačna odgovora kad je predlog stigao sa /dodaj-pitanja; prazan
+  // niz za starije predloge sa /predlozi-pitanje, gde ih urednik dopisuje.
+  wrong_answers: string[]
+  // U koji fond pitanja predlog ide: 'pro' | 'book' | 'kafana'.
+  segment: string
+  genre: string | null
+  // 'form' (obrazac), 'xml' ili 'xlsx' (grupni uvoz).
+  source: string
+  // 'pending' | 'accepted' | 'rejected'. Predlozi se ne brišu pri obradi
+  // nego menjaju status, da korisnik vidi šta je bilo sa njegovim pitanjem.
+  status: string
+  reject_reason: string | null
+  reviewed_at: string | null
+  reviewed_by: string | null
   submitted_by: string | null
   submitter_email: string | null
   created_at: string

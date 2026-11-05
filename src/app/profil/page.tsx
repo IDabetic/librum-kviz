@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { IconSettings, IconHome, IconSwords, IconHint, IconTime, IconStar } from '@/components/icons'
+import { jeAutorPitanja, ucitajPragBedza } from '@/lib/bedzevi'
 
 import Footer from '@/components/Footer'
 
@@ -13,13 +14,24 @@ function fmtTime(s: number): string {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
 }
 
-export default async function ProfilPage() {
+export default async function ProfilPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ suspendovan?: string }>
+}) {
+  const sp = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/prijava')
 
   const { data: profile } = await supabase
     .from('profiles').select('*').eq('id', user.id).single()
+
+  // Broj prihvaćenih pitanja nosi bedž „Autor pitanja”.
+  const { data: doprinos } = await supabase
+    .from('contributor_counts').select('accepted').eq('user_id', user.id).maybeSingle()
+  const prihvacenih = doprinos?.accepted ?? 0
+  const pragBedza = await ucitajPragBedza(supabase)
 
   // Pull stats for all games in parallel. Limits bumped from 20 → 5000
   // so play counts and avg-time stats are accurate (a user with 200
@@ -104,11 +116,6 @@ export default async function ProfilPage() {
 
   // Kafanski kviz stats
   const kSessions = kafana.data || []
-  const kTotal = kSessions.length
-  const kBest = kTotal ? Math.max(...kSessions.map(s => s.score)) : 0
-  const kBestQ = kTotal ? Math.max(...kSessions.map(s => s.questions_reached)) : 0
-  const kBestCombo = kTotal ? Math.max(...kSessions.map(s => s.best_combo)) : 0
-  const kAvgT = avgPerCorrect(kSessions)
 
   // Duel stats
   const dGames = duelGames.data || []
@@ -129,34 +136,58 @@ export default async function ProfilPage() {
   const initials = (profile?.first_name?.[0] || '') + (profile?.last_name?.[0] || '') || displayName[0]
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-screen">
       <Header />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        {(sp.suspendovan === '1' || (profile?.suspended_until && new Date(profile.suspended_until as string) > new Date())) && (
+          <div className="card-soft p-5 mb-6" style={{ background: '#FFE3EA', borderColor: '#E5385C' }}>
+            <p className="font-bold text-[15px] mb-1" style={{ color: '#C42B4F' }}>Nalog je suspendovan na 3 dana</p>
+            <p className="text-[13px]" style={{ color: '#151515' }}>
+              Dva igrača su prijavila tvoje pitanje kao netačno. Ne možeš da igraš ni da šalješ pitanja
+              do {profile?.suspended_until
+                ? new Date(profile.suspended_until as string).toLocaleString('sr-RS')
+                : 'isteka kazne'}
+              . Sva tvoja objavljena pitanja su povučena.
+            </p>
+          </div>
+        )}
 
         {/* ─ Profile card ────────────────────────────────────────────── */}
         <div className="card-soft p-6 sm:p-8 mb-6">
           <div className="flex items-start sm:items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-[#F2F2F2]">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
                 {profile?.avatar
                   ? <Image src={`/avatars/${profile.avatar}`} alt="Avatar" width={80} height={80} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center font-black text-[24px]" style={{ background: '#609DED', color: 'white' }}>{initials.toUpperCase()}</div>}
+                  : <div className="w-full h-full flex items-center justify-center font-black text-[24px]" style={{ background: '#12907E', color: 'white' }}>{initials.toUpperCase()}</div>}
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="font-black tracking-tight truncate" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 30px)' }}>
+                <h1 className="font-black tracking-tight truncate" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 30px)' }}>
                   {displayName}
                 </h1>
                 {profile?.nickname && (
-                  <p className="text-[13px] truncate" style={{ color: '#9C9C9C' }}>{profile.first_name} {profile.last_name}</p>
+                  <p className="text-[13px] truncate" style={{ color: '#6F6C66' }}>{profile.first_name} {profile.last_name}</p>
                 )}
-                <p className="text-[12px] truncate" style={{ color: '#9C9C9C' }}>{profile?.email}</p>
-                {profile?.city && <p className="text-[12px] truncate" style={{ color: '#9C9C9C' }}>📍 {profile.city}</p>}
+                <p className="text-[12px] truncate" style={{ color: '#6F6C66' }}>{profile?.email}</p>
+                {jeAutorPitanja(prihvacenih, pragBedza) && (
+                  <Link href="/autori-pitanja" className="chip mt-1.5 inline-flex"
+                    style={{ background: '#FFF3C4', color: '#8A6A12' }}>
+                    🏅 Autor pitanja · {prihvacenih}
+                  </Link>
+                )}
+                {profile?.city && <p className="text-[12px] truncate" style={{ color: '#6F6C66' }}>📍 {profile.city}</p>}
               </div>
             </div>
-            <Link href="/profil/podesavanja" className="btn btn-secondary btn-sm flex-shrink-0">
-              <IconSettings size={14} strokeWidth={2.2} />
-              Podešavanja
-            </Link>
+            <div className="flex gap-2 flex-shrink-0">
+              <Link href="/moja-pitanja" className="btn btn-secondary btn-sm">
+                <IconHint size={14} strokeWidth={2.2} />
+                Moja pitanja
+              </Link>
+              <Link href="/profil/podesavanja" className="btn btn-secondary btn-sm">
+                <IconSettings size={14} strokeWidth={2.2} />
+                Podešavanja
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -164,7 +195,7 @@ export default async function ProfilPage() {
         <div className="grid sm:grid-cols-2 gap-3 mb-6">
           {/* PRO kviz */}
           <GameCard
-            Icon={IconHome} label="PRO kviz" accent="#609DED" bg="#BCD9FF"
+            Icon={IconHome} label="PRO kviz" accent="#12907E" bg="#DFF3EE"
             primary={{ value: sBest, label: 'Rekord bodova' }}
             secondary={[
               { value: sTotal, label: 'Partija' },
@@ -176,7 +207,7 @@ export default async function ProfilPage() {
           />
           {/* Book kviz */}
           <GameCard
-            Icon={IconStar} label="Book kviz" accent="#9c7a13" bg="#FFECBC"
+            Icon={IconStar} label="Book kviz" accent="#8A6A12" bg="#FFF3C4"
             primary={{ value: bBest, label: 'Rekord bodova' }}
             secondary={[
               { value: bTotal, label: 'Partija' },
@@ -186,21 +217,9 @@ export default async function ProfilPage() {
             ]}
             href="/book-kviz"
           />
-          {/* Kafanski kviz */}
-          <GameCard
-            Icon={IconStar} label="Kafanski kviz" accent="#b91c1c" bg="#FEE2E2"
-            primary={{ value: kBest, label: 'Rekord bodova' }}
-            secondary={[
-              { value: kTotal, label: 'Partija' },
-              { value: kBestQ, label: 'Max pitanja' },
-              { value: kBestCombo, label: 'Najduži niz' },
-              ...(kAvgT ? [{ value: kAvgT, label: 'Vreme/tačno' }] : []),
-            ]}
-            href="/kafanski-kviz"
-          />
           {/* Trivia duel */}
           <GameCard
-            Icon={IconSwords} label="Trivia duel" accent="#9c7a13" bg="#FFECBC"
+            Icon={IconSwords} label="Trivia duel" accent="#8A6A12" bg="#FFF3C4"
             primary={{ value: dWins, label: 'Pobeda' }}
             secondary={[
               { value: dTotal, label: 'Duela' },
@@ -211,7 +230,7 @@ export default async function ProfilPage() {
           />
           {/* Vešanje */}
           <GameCard
-            Icon={IconHint} label="Vešanje" accent="#15803d" bg="#E8F8F0"
+            Icon={IconHint} label="Vešanje" accent="#0E6F61" bg="#DFF3EE"
             primary={{ value: hWins, label: 'Pobeda' }}
             secondary={[
               { value: hTotal, label: 'Partija' },
@@ -222,7 +241,7 @@ export default async function ProfilPage() {
           />
           {/* Brzi kviz */}
           <GameCard
-            Icon={IconTime} label="Brzi kviz" accent="#b91c1c" bg="#FEE2E2"
+            Icon={IconTime} label="Brzi kviz" accent="#C42B4F" bg="#FFE3EA"
             primary={{ value: qBest, label: 'Rekord bodova' }}
             secondary={[
               { value: qTotal, label: 'Rundi' },
@@ -235,9 +254,9 @@ export default async function ProfilPage() {
         </div>
 
         {/* ─ Recent activity (mixed) ────────────────────────────────── */}
-        {(sTotal + bTotal + kTotal + hTotal + qTotal) > 0 && (
+        {(sTotal + bTotal + hTotal + qTotal) > 0 && (
           <div className="card-soft p-6 sm:p-7">
-            <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#343434' }}>
+            <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#151515' }}>
               Skorašnja aktivnost
             </h2>
             <div className="space-y-1">
@@ -248,14 +267,13 @@ export default async function ProfilPage() {
           </div>
         )}
 
-        {(sTotal + bTotal + kTotal + hTotal + qTotal + dTotal) === 0 && (
+        {(sTotal + bTotal + hTotal + qTotal + dTotal) === 0 && (
           <div className="card-soft p-10 text-center">
-            <p className="font-bold text-[17px] mb-2" style={{ color: '#343434' }}>Još nisi igrao</p>
-            <p className="text-[14px] mb-6" style={{ color: '#9C9C9C' }}>Izaberi mod i kreni.</p>
+            <p className="font-bold text-[17px] mb-2" style={{ color: '#151515' }}>Još nisi igrao</p>
+            <p className="text-[14px] mb-6" style={{ color: '#6F6C66' }}>Izaberi mod i kreni.</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <Link href="/pro-kviz" className="btn btn-primary btn-md">PRO kviz</Link>
               <Link href="/book-kviz" className="btn btn-secondary btn-md">Book kviz</Link>
-              <Link href="/kafanski-kviz" className="btn btn-secondary btn-md">Kafanski kviz</Link>
               <Link href="/vesanje" className="btn btn-secondary btn-md">Vešanje</Link>
               <Link href="/brzi-kviz" className="btn btn-secondary btn-md">Brzi kviz</Link>
             </div>
@@ -281,17 +299,17 @@ function GameCard({ Icon, label, accent, bg, primary, secondary, href }: {
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
           <Icon size={18} className={`text-[${accent}]`} strokeWidth={2.2} />
         </div>
-        <p className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>{label}</p>
+        <p className="font-bold text-[14px] tracking-tight" style={{ color: '#151515' }}>{label}</p>
       </div>
       <div className="font-black tracking-tight leading-none mb-1" style={{ color: accent, fontSize: 'clamp(28px, 5vw, 36px)' }}>
         {primary.value}
       </div>
-      <p className="text-[11px] font-medium mb-4" style={{ color: '#9C9C9C' }}>{primary.label}</p>
-      <div className="grid gap-2 pt-3 border-t" style={{ borderColor: '#F2F2F2', gridTemplateColumns: `repeat(${Math.max(secondary.length, 1)}, 1fr)` }}>
+      <p className="text-[11px] font-medium mb-4" style={{ color: '#6F6C66' }}>{primary.label}</p>
+      <div className="grid gap-2 pt-3 border-t" style={{ borderColor: '#E7E1D0', gridTemplateColumns: `repeat(${Math.max(secondary.length, 1)}, 1fr)` }}>
         {secondary.map((s, i) => (
           <div key={i}>
-            <div className="font-bold text-[14px] tracking-tight" style={{ color: '#343434' }}>{s.value}</div>
-            <div className="text-[10px]" style={{ color: '#9C9C9C' }}>{s.label}</div>
+            <div className="font-bold text-[14px] tracking-tight" style={{ color: '#151515' }}>{s.value}</div>
+            <div className="text-[10px]" style={{ color: '#6F6C66' }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -312,7 +330,7 @@ type Activity = {
 function recentMix(survivor: SurvivorSession[], book: BookSession[], kafana: KafanaSession[], hangman: HangmanSession[], quick: QuickSession[]): Activity[] {
   const mix: Activity[] = []
   survivor.forEach(s => {
-    const accent = s.score >= 1000 ? '#4CAF50' : s.score >= 500 ? '#FFCB46' : '#609DED'
+    const accent = s.score >= 1000 ? '#12907E' : s.score >= 500 ? '#FFD84D' : '#12907E'
     mix.push({
       type: 'survivor',
       title: 'PRO kviz',
@@ -323,7 +341,7 @@ function recentMix(survivor: SurvivorSession[], book: BookSession[], kafana: Kaf
     })
   })
   book.forEach(b => {
-    const accent = b.score >= 500 ? '#4CAF50' : b.score >= 200 ? '#FFCB46' : '#9c7a13'
+    const accent = b.score >= 500 ? '#12907E' : b.score >= 200 ? '#FFD84D' : '#8A6A12'
     const detail = b.top_genre
       ? `${b.questions_reached} pit. · najjači: ${b.top_genre}`
       : `${b.questions_reached} pit. · ${fmtTime(b.total_time_seconds)}`
@@ -336,24 +354,13 @@ function recentMix(survivor: SurvivorSession[], book: BookSession[], kafana: Kaf
       date: new Date(b.created_at),
     })
   })
-  kafana.forEach(k => {
-    const accent = k.score >= 500 ? '#4CAF50' : k.score >= 200 ? '#FFCB46' : '#b91c1c'
-    mix.push({
-      type: 'kafana',
-      title: 'Kafanski kviz',
-      detail: `${k.questions_reached} pit. · niz ${k.best_combo} · ${fmtTime(k.total_time_seconds)}`,
-      score: k.score,
-      scoreColor: accent,
-      date: new Date(k.created_at),
-    })
-  })
   hangman.forEach(h => {
     mix.push({
       type: 'hangman',
       title: 'Vešanje',
       detail: `${h.category || 'Custom'} · ${h.won ? 'pobeda' : 'poraz'} · ${h.wrong_guesses} grešaka`,
       score: h.won ? `+${h.score}` : `${h.score}`,
-      scoreColor: h.won ? '#4CAF50' : '#E55353',
+      scoreColor: h.won ? '#12907E' : '#E5385C',
       date: new Date(h.created_at),
     })
   })
@@ -363,7 +370,7 @@ function recentMix(survivor: SurvivorSession[], book: BookSession[], kafana: Kaf
       title: 'Brzi kviz',
       detail: `${q.correct_count} tačnih · ${Math.round(Number(q.accuracy))}%`,
       score: q.score,
-      scoreColor: q.score >= 100 ? '#4CAF50' : q.score >= 50 ? '#FFCB46' : '#E55353',
+      scoreColor: q.score >= 100 ? '#12907E' : q.score >= 50 ? '#FFD84D' : '#E5385C',
       date: new Date(q.created_at),
     })
   })
@@ -378,16 +385,16 @@ type QuickSession = { score: number; correct_count: number; wrong_count: number;
 
 function ActivityRow({ entry }: { entry: Activity }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: '#F2F2F2' }}>
+    <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: '#E7E1D0' }}>
       <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[12px] flex-shrink-0"
         style={{ background: entry.scoreColor, color: 'white' }}>
         {entry.score}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-[14px] tracking-tight" style={{ color: '#343434' }}>
+        <p className="font-semibold text-[14px] tracking-tight" style={{ color: '#151515' }}>
           {entry.title}
         </p>
-        <p className="text-[12px]" style={{ color: '#9C9C9C' }}>
+        <p className="text-[12px]" style={{ color: '#6F6C66' }}>
           {entry.detail} · {entry.date.toLocaleDateString('sr')}
         </p>
       </div>

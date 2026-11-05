@@ -2,6 +2,8 @@
 
 import crypto from 'crypto'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit } from '@/lib/rate-limit'
 
 type Result = { ok: true } | { ok: false; error: string }
 
@@ -11,30 +13,30 @@ const SUPPORT = 'info@librum.club'
 function emailHtml(resetUrl: string): string {
   return `<!DOCTYPE html>
 <html>
-<body style="margin:0; padding:0; background:#FAFAFA;">
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #343434;">
+<body style="margin:0; padding:0; background:#F3F0E6;">
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #151515;">
   <div style="text-align:center; margin-bottom: 32px;">
-    <span style="font-size: 24px; font-weight: 900; letter-spacing: -1px;">Librum<span style="color:#609DED;">.</span></span>
+    <span style="font-size: 24px; font-weight: 900; letter-spacing: -1px;">Librum<span style="color:#12907E;">.</span></span>
   </div>
   <h1 style="font-size: 26px; font-weight: 900; letter-spacing: -1px; margin: 0 0 12px;">Resetuj lozinku</h1>
-  <p style="font-size: 15px; color: #9C9C9C; line-height: 1.55; margin: 0 0 28px;">
+  <p style="font-size: 15px; color: #6F6C66; line-height: 1.55; margin: 0 0 28px;">
     Primili smo zahtev da resetuješ lozinku za nalog na Librum Kvizu. Klikni na dugme da postaviš novu.
   </p>
   <p style="text-align:center; margin: 0 0 24px;">
-    <a href="${resetUrl}" style="display:inline-block; background:#609DED; color:white; font-weight:600; font-size:15px; padding:14px 32px; border-radius:999px; text-decoration:none;">
+    <a href="${resetUrl}" style="display:inline-block; background:#12907E; color:white; font-weight:600; font-size:15px; padding:14px 32px; border-radius:999px; text-decoration:none;">
       Postavi novu lozinku
     </a>
   </p>
-  <p style="font-size: 13px; color: #9C9C9C; line-height: 1.5; margin: 0 0 8px;">
+  <p style="font-size: 13px; color: #6F6C66; line-height: 1.5; margin: 0 0 8px;">
     Link važi 1 sat. Ako nisi tražio reset, slobodno ignoriši ovaj mejl — niko ne može da pristupi tvom nalogu bez ovog linka.
   </p>
-  <p style="font-size: 12px; color: #9C9C9C; word-break: break-all; margin: 16px 0 0;">
+  <p style="font-size: 12px; color: #6F6C66; word-break: break-all; margin: 16px 0 0;">
     Ako dugme ne radi, otvori ovaj URL ručno:<br/>
-    <a href="${resetUrl}" style="color:#609DED;">${resetUrl}</a>
+    <a href="${resetUrl}" style="color:#12907E;">${resetUrl}</a>
   </p>
-  <hr style="border:none; border-top:1px solid #F2F2F2; margin: 32px 0 16px;" />
-  <p style="font-size: 11px; color: #9C9C9C;">
-    Librum Kviz · <a href="https://kviz.librum.club" style="color:#9C9C9C;">kviz.librum.club</a> · ${SUPPORT}
+  <hr style="border:none; border-top:1px solid #E7E1D0; margin: 32px 0 16px;" />
+  <p style="font-size: 11px; color: #6F6C66;">
+    Librum Kviz · <a href="https://kviz.librum.club" style="color:#6F6C66;">kviz.librum.club</a> · ${SUPPORT}
   </p>
 </div>
 </body></html>`
@@ -51,13 +53,18 @@ function sha256(input: string): string {
 export async function sendCustomPasswordResetEmail(rawEmail: string): Promise<Result> {
   const email = rawEmail.trim().toLowerCase()
   if (!email) return { ok: false, error: 'Upiši email.' }
+  // Najviše 3 mejla za reset na istu adresu u 15 minuta (zaštita tuđeg sandučeta).
+  if (!rateLimit(`reset-lozinke:${email}`, 3, 15 * 60_000).ok) {
+    return { ok: false, error: 'Previše zahteva. Pokušaj ponovo za 15 minuta.' }
+  }
 
   // Generate raw token (sent in email) and hash (stored in DB)
   const rawToken = crypto.randomBytes(32).toString('base64url')
   const tokenHash = sha256(rawToken)
 
+  // Samo server sme da upiše token (05.11): sa javnim ključem bi napadač upisao svoj heš i preuzeo tuđi nalog.
   const supabase = await createClient()
-  const { data: created, error: rpcErr } = await supabase
+  const { data: created, error: rpcErr } = await createAdminClient()
     .rpc('request_password_reset', { p_email: email, p_token_hash: tokenHash })
 
   if (rpcErr) {
@@ -119,8 +126,7 @@ export async function redeemPasswordResetToken(rawToken: string, newPassword: st
   if (newPassword.length < 6) return { ok: false, error: 'Lozinka mora imati najmanje 6 karaktera.' }
 
   const tokenHash = sha256(rawToken)
-  const supabase = await createClient()
-  const { data, error } = await supabase
+  const { data, error } = await createAdminClient()
     .rpc('reset_password_with_token', { p_token_hash: tokenHash, p_new_password: newPassword })
 
   if (error) {

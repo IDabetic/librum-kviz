@@ -12,20 +12,20 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
   },
-  // 301 the old PRO-kviz route to the new keyword-friendly URL.
-  // /igraj → /pro-kviz (to match /book-kviz, /kafanski-kviz, …).
-  // Permanent so Google transfers any existing ranking signal and
-  // old bookmarks/links keep working. The exact-match + /:path*
-  // pair deliberately does NOT touch /igraj-zajedno (no slash after
-  // "igraj"), which stays its own route.
   async redirects() {
     return [
-      { source: '/igraj', destination: '/pro-kviz', permanent: true },
-      { source: '/igraj/:path*', destination: '/pro-kviz/:path*', permanent: true },
       // /leaderboard → /ranglista (route renamed to a Serbian slug).
       // Permanent so Google transfers ranking signal and old bookmarks
       // keep working.
       { source: '/leaderboard', destination: '/ranglista', permanent: true },
+      // Od 02.11.2026 igre žive samo u aplikaciji; stare adrese vode na landing.
+      // Privremeno (307), da se adrese mogu vratiti ako neka igra opet dobije veb stranu.
+      ...['/igre', '/osvajanje', '/pro-kviz', '/book-kviz', '/kafanski-kviz', '/brzi-kviz', '/vesanje', '/igraj-zajedno', '/kvizovi', '/igraj']
+        .flatMap(putanja => [
+          { source: putanja, destination: '/', permanent: false },
+          { source: `${putanja}/:ostalo*`, destination: '/', permanent: false },
+        ]),
+      { source: '/predlozi-pitanje', destination: '/dodaj-pitanja', permanent: false },
     ]
   },
   // Static assets get long-lived caching; HTML pages stay dynamic via
@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.vercel-insights.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -78,6 +78,11 @@ const nextConfig: NextConfig = {
       // Long-lived caching for static assets (specific paths win).
       {
         source: '/avatars/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        // Slike za kviz „Slikari” u aplikacijama (alati/slikari-iz-baze.py); ime je Wikidata ID, ne menja se.
+        source: '/slike/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {

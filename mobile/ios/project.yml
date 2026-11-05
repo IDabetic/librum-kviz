@@ -1,0 +1,109 @@
+name: LibrumKviz
+options:
+  bundleIdPrefix: club.librum.kviz
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: sr-Latn
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: 5M9USYD23V
+    CODE_SIGN_STYLE: Automatic
+targets:
+  LibrumKviz:
+    type: application
+    platform: iOS
+    sources:
+      - path: LibrumKviz
+      - path: ../fontovi
+        buildPhase: resources
+        excludes: ["*.txt"]
+      # Ista mapa kao veb i Android (alati/napravi-mapu.mjs).
+      - path: ../../src/lib/osvajanje/svet.json
+        buildPhase: resources
+      - path: ../../src/lib/osvajanje/rezervna-pitanja.json
+        buildPhase: resources
+      - path: ../../src/lib/osvajanje/cinjenice.json
+        buildPhase: resources
+      - path: ../../src/lib/igre/zanimljivosti.json
+        buildPhase: resources
+      - path: ../../src/lib/igre/kancelarija.json
+        buildPhase: resources
+      # Zvukovi (isečeni i ujednačeni iz vlasnikovih paketa), isti za Android.
+      - path: ../zvuci
+        type: folder
+        buildPhase: resources
+      - path: ../../src/lib/igre
+        type: folder
+        buildPhase: resources
+      # Avatari sa Knjigopolisa (alati/iseci-avatare.py), isti folder kao veb.
+      - path: ../../public/avatari
+        type: folder
+        buildPhase: resources
+    entitlements:
+      path: LibrumKviz/LibrumKviz.entitlements
+      properties:
+        aps-environment: development
+        com.apple.developer.applesignin: [Default]
+    info:
+      path: LibrumKviz/Info.plist
+      properties:
+        CFBundleDisplayName: "Librum kviz"
+        CFBundleDevelopmentRegion: sr-Latn
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSRequiresIPhoneOS: true
+        # Samo standardni HTTPS: bez upitnika o izvozu šifrovanja za svaki build.
+        ITSAppUsesNonExemptEncryption: false
+        # Pokretanje: tirkizna pozadina brenda i ikonica (isto kao prvi kadar animacije PocetakView), bez belog bljeska.
+        UILaunchScreen:
+          UIColorName: TealPocetak
+          UIImageName: Pocetak
+          UIImageRespectsSafeAreaInsets: true
+        # Scena je obavezna od iOS 27, inače aplikacija pada na startu.
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight, UIInterfaceOrientationPortraitUpsideDown]
+        UIAppFonts: [ArchivoBlack-Regular.ttf, SpaceGrotesk.ttf]
+        ITSAppUsesNonExemptEncryption: false
+        UIBackgroundModes: [remote-notification]
+        # librumkviz://duel/KOD i librumkviz://igrac/ID otvaraju izazov ili profil (deljenje van aplikacije).
+        CFBundleURLTypes:
+          - CFBundleURLName: club.librum.kviz
+            CFBundleURLSchemes: [librumkviz]
+        SUPABASE_URL: "$(SUPABASE_URL)"
+        SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
+        # Google prijava: iOS OAuth klijent iz Google Cloud projekta „Librum kviz” (javan, bez tajne); prazno = dugme se ne vidi.
+        GOOGLE_IOS_CLIENT_ID: "$(GOOGLE_IOS_CLIENT_ID)"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: club.librum.kviz
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    # Na nivou targeta, ne pod settings: inače xcodegen ignoriše fajl i SUPABASE_URL ostaje prazan (app zove localhost).
+    configFiles:
+      Debug: Konfiguracija.xcconfig
+      Release: Konfiguracija.xcconfig
+  LibrumKvizTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: LibrumKvizTests
+    dependencies:
+      - target: LibrumKviz
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  LibrumKviz:
+    build:
+      targets:
+        LibrumKviz: all
+        LibrumKvizTests: [test]
+    test:
+      targets: [LibrumKvizTests]

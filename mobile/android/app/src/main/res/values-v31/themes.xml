@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+: sistemski ekran pokretanja u boji brenda sa ikonicom, umesto bele pozadine. -->
+    <style name="Tema.LibrumKviz" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/krem</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowSplashScreenBackground">@color/krem</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/teal</item>
+    </style>
+</resources>

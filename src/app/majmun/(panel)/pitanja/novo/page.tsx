@@ -84,33 +84,33 @@ export default function NovoPitanjePage() {
 
       <Link href="/majmun/pitanja"
         className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-        style={{ color: '#609DED' }}>
+        style={{ color: '#12907E' }}>
         <IconBack size={16} strokeWidth={2.2} />
         Sva pitanja
       </Link>
 
-      <h1 className="font-black tracking-tight mb-6" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+      <h1 className="font-black tracking-tight mb-6" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>
         Novo PRO pitanje
       </h1>
 
       <div className="card-soft p-6 sm:p-8">
 
         {success && (
-          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#E8F8F0', color: '#15803d' }}>
-            <IconCheck size={16} className="text-[#15803d]" />
+          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium flex items-center gap-2" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
+            <IconCheck size={16} className="text-[#0E6F61]" />
             Pitanje sačuvano.
           </div>
         )}
 
         {error && (
-          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium" style={{ background: '#FEE2E2', color: '#b91c1c' }}>
+          <div className="rounded-2xl px-4 py-3 mb-5 text-[13px] font-medium" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
             {error}
           </div>
         )}
 
         {/* Question */}
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
             Tekst pitanja *
           </label>
           <textarea value={text} onChange={e => setText(e.target.value)}
@@ -120,7 +120,7 @@ export default function NovoPitanjePage() {
 
         {/* Options */}
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
             Odgovori * (klikni radio dugme za tačan)
           </label>
           <div className="space-y-2">
@@ -129,8 +129,8 @@ export default function NovoPitanjePage() {
                 <button type="button" onClick={() => setCorrectIdx(i)}
                   className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
                   style={correctIdx === i
-                    ? { borderColor: '#4CAF50', background: '#4CAF50' }
-                    : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+                    ? { borderColor: '#12907E', background: '#12907E' }
+                    : { borderColor: 'rgba(21,21,21,0.20)', background: 'white' }}>
                   {correctIdx === i && <div className="w-2 h-2 rounded-full bg-white" />}
                 </button>
                 <input value={o} onChange={e => setOpt(i, e.target.value)}
@@ -139,16 +139,16 @@ export default function NovoPitanjePage() {
               </div>
             ))}
           </div>
-          <p className="text-[11px] mt-2" style={{ color: '#9C9C9C' }}>
-            Tačan: <strong style={{ color: '#4CAF50' }}>{['A','B','C','D'][correctIdx]}</strong>
+          <p className="text-[11px] mt-2" style={{ color: '#6F6C66' }}>
+            Tačan: <strong style={{ color: '#12907E' }}>{['A','B','C','D'][correctIdx]}</strong>
             {options[correctIdx].trim() && <> — {options[correctIdx]}</>}
           </p>
         </div>
 
         {/* Info */}
         <div className="mb-5">
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
-            Objašnjenje / Info <span className="font-normal" style={{ color: '#9C9C9C' }}>(opciono)</span>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
+            Objašnjenje / Info <span className="font-normal" style={{ color: '#6F6C66' }}>(opciono)</span>
           </label>
           <textarea value={info} onChange={e => setInfo(e.target.value)}
             className="input resize-none" rows={2}
@@ -158,7 +158,7 @@ export default function NovoPitanjePage() {
         {/* Difficulty + tags */}
         <div className="grid sm:grid-cols-2 gap-4 mb-5">
           <div>
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
               Težina
             </label>
             <div className="grid grid-cols-2 gap-1.5">
@@ -166,16 +166,16 @@ export default function NovoPitanjePage() {
                 <button key={d.id} type="button" onClick={() => setDifficulty(d.id)}
                   className="py-2 rounded-xl text-[12px] font-bold transition-all"
                   style={difficulty === d.id
-                    ? { background: '#609DED', color: 'white' }
-                    : { background: '#F2F2F2', color: '#9C9C9C' }}>
+                    ? { background: '#12907E', color: 'white' }
+                    : { background: '#E7E1D0', color: '#6F6C66' }}>
                   {d.label}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#343434' }}>
-              Tagovi <span className="font-normal" style={{ color: '#9C9C9C' }}>(zarez)</span>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
+              Tagovi <span className="font-normal" style={{ color: '#6F6C66' }}>(zarez)</span>
             </label>
             <input value={tags} onChange={e => setTags(e.target.value)}
               className="input" placeholder="književnost, ruska" />
@@ -187,11 +187,11 @@ export default function NovoPitanjePage() {
           <button type="button" onClick={() => setActive(a => !a)}
             className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0"
             style={active
-              ? { borderColor: '#4CAF50', background: '#4CAF50' }
-              : { borderColor: 'rgba(52,52,52,0.20)', background: 'white' }}>
+              ? { borderColor: '#12907E', background: '#12907E' }
+              : { borderColor: 'rgba(21,21,21,0.20)', background: 'white' }}>
             {active && <span className="text-white font-black text-[10px]">✓</span>}
           </button>
-          <span className="text-[13px] font-medium" style={{ color: '#343434' }}>
+          <span className="text-[13px] font-medium" style={{ color: '#151515' }}>
             Aktivno (vidljivo u igri)
           </span>
         </label>

@@ -8,8 +8,10 @@ const SOURCE_TO_EDIT_PATH: Record<string, string | null> = {
   book_questions: '/majmun/book-kviz',
   kafana_questions: '/majmun/kafana',
   hangman_words: '/majmun/vesanje',
+  karijera_pitanja: '/majmun/karijera/pitanja',
 }
 const SOURCE_LABEL: Record<string, string> = {
+  karijera_pitanja: 'Karijera (struka)',
   questions: 'PRO/Brzi/Duel',
   book_questions: 'Book kviz',
   kafana_questions: 'Kafanski kviz',
@@ -76,16 +78,16 @@ export default async function PrijavePage({ searchParams }: { searchParams: Prom
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-black tracking-tight" style={{ color: '#343434', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+          <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>
             Prijavljena pitanja
           </h1>
-          <p className="text-[13px] mt-1" style={{ color: '#9C9C9C' }}>
+          <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
             {count ?? rows.length} ukupno · prikaz: {filter === 'all' ? 'sve' : filter}
           </p>
         </div>
       </div>
 
-      <div className="flex p-1 rounded-full max-w-md" style={{ background: '#F2F2F2' }}>
+      <div className="flex p-1 rounded-full max-w-md" style={{ background: '#E7E1D0' }}>
         {[
           { id: 'pending',  label: `Na čekanju (${statusCounts.pending ?? 0})` },
           { id: 'reviewed', label: `Pregledano (${statusCounts.reviewed ?? 0})` },
@@ -95,8 +97,8 @@ export default async function PrijavePage({ searchParams }: { searchParams: Prom
           <a key={t.id} href={`/majmun/prijave?status=${t.id}`}
             className="flex-1 py-2 px-3 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap text-center"
             style={filter === t.id
-              ? { background: '#FCFCFC', color: '#343434', boxShadow: '0 2px 8px rgba(52,52,52,0.06)' }
-              : { color: '#9C9C9C' }}>
+              ? { background: '#FFFFFF', color: '#151515', boxShadow: '0 2px 8px rgba(21,21,21,0.06)' }
+              : { color: '#6F6C66' }}>
             {t.label}
           </a>
         ))}
