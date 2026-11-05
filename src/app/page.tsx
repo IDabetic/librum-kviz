@@ -5,6 +5,7 @@ import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/server'
 import { OsvajanjeVideo } from '@/components/OsvajanjeVideo'
+import { KarijeraVideo } from '@/components/KarijeraVideo'
 import { Prodavnice } from '@/components/Prodavnice'
 
 const faqSchema = {
@@ -108,6 +109,19 @@ export default async function Home() {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Karijerista: snimak prave runde sa telefona, natpis i muzika */}
+        <section id="karijerista" className="mt-16 scroll-mt-28" style={{ background: 'radial-gradient(120% 90% at 30% 0%, #2F5FD0 0%, #1B3C8F 50%, #12110F 100%)', color: '#F3F0E6' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-16">
+            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#FFD84D' }}>Nova igra</p>
+            <h2 style={{ fontSize: 'clamp(40px, 7vw, 80px)', color: '#F3F0E6' }}>Karijerista</h2>
+            <p className="mt-3 text-[17px] leading-relaxed opacity-90 max-w-2xl">
+              Od probnog rada u Korporaciji do svog nebodera. Zaposli se u firmi drugog igrača, vodi svoju i čuvaj rekord, sve na pitanjima.
+            </p>
+            <div className="mt-10"><KarijeraVideo /></div>
+            <div className="mt-10"><Prodavnice tamno /></div>
+          </div>
         </section>
 
         {/* Ostale igre */}
