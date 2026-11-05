@@ -79,29 +79,29 @@ export default async function AutorPage({ params }: Params) {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <Link href="/autori-pitanja"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-          style={{ color: '#23845C' }}>
+          style={{ color: 'var(--ok)' }}>
           <IconBack size={16} strokeWidth={2.2} />
           Autori pitanja
         </Link>
 
         <div className="card-soft p-6 sm:p-7 mb-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[#EDE5D5]">
+            <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[var(--line)]">
               {profil.avatar
                 ? <Image src={`/avatars/${profil.avatar}`} alt={ime} width={64} height={64} className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-xl font-bold"
-                    style={{ background: '#FDC361', color: '#1A1B3A' }}>{ime[0]}</div>}
+                    style={{ background: '#FDC361', color: 'var(--ink)' }}>{ime[0]}</div>}
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="font-black tracking-tight truncate"
-                style={{ color: '#1A1B3A', fontSize: 'clamp(22px, 4vw, 30px)' }}>
+                style={{ color: 'var(--ink)', fontSize: 'clamp(22px, 4vw, 30px)' }}>
                 {ime}
               </h1>
-              <p className="text-[13px] mt-0.5" style={{ color: '#4F5170' }}>
+              <p className="text-[13px] mt-0.5" style={{ color: 'var(--ink-2)' }}>
                 {prihvacenih} {prihvacenih === 1 ? 'pitanje' : 'pitanja'} u kvizu
               </p>
               {jeAutorPitanja(prihvacenih, prag) && (
-                <span className="chip mt-2 inline-flex" style={{ background: '#FFF5E0', color: '#8A6A12' }}>
+                <span className="chip mt-2 inline-flex" style={{ background: 'var(--warn-50)', color: 'var(--warn-t)' }}>
                   🏅 Autor pitanja
                 </span>
               )}
@@ -127,7 +127,7 @@ export default async function AutorPage({ params }: Params) {
 
         {lista.length === 0 ? (
           <div className="card-soft p-10 text-center">
-            <p className="text-[14px]" style={{ color: '#4F5170' }}>
+            <p className="text-[14px]" style={{ color: 'var(--ink-2)' }}>
               Ovaj korisnik još nema prihvaćeno pitanje.
             </p>
           </div>
@@ -136,16 +136,16 @@ export default async function AutorPage({ params }: Params) {
             {lista.map(p => {
               const seg = segment(p.segment ?? 'pro')
               return (
-                <div key={p.id} className="px-5 py-4 border-b border-[#EDE5D5] last:border-0">
+                <div key={p.id} className="px-5 py-4 border-b border-[var(--line)] last:border-0">
                   <div className="flex items-start gap-3">
                     <span className="chip flex-shrink-0 mt-0.5" style={{ background: seg.tint, color: seg.accent }}>
                       {seg.emoji}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[14px] font-semibold" style={{ color: '#1A1B3A' }}>
+                      <p className="text-[14px] font-semibold" style={{ color: 'var(--ink)' }}>
                         {p.question_text}
                       </p>
-                      <p className="text-[11px] mt-0.5" style={{ color: '#4F5170' }}>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--ink-2)' }}>
                         {seg.label}{p.genre ? ` · ${p.genre}` : ''}
                       </p>
                     </div>
@@ -156,9 +156,9 @@ export default async function AutorPage({ params }: Params) {
           </div>
         )}
 
-        <p className="text-[12px] text-center mt-6" style={{ color: '#4F5170' }}>
+        <p className="text-[12px] text-center mt-6" style={{ color: 'var(--ink-2)' }}>
           Odgovori se ne prikazuju — ovde stoji samo šta je autor dao kvizu.{' '}
-          <Link href="/dodaj-pitanja" className="font-semibold underline" style={{ color: '#23845C' }}>
+          <Link href="/dodaj-pitanja" className="font-semibold underline" style={{ color: 'var(--ok)' }}>
             Pošalji i ti
           </Link>
         </p>

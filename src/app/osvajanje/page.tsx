@@ -42,12 +42,12 @@ export default function OsvajanjePage() {
         <section className="mt-8 grid md:grid-cols-[1fr_1fr] gap-5">
           <div className="card-soft p-6">
             <h2 className="text-[28px] mb-4">Nova partija</h2>
-            <ul className="divide-y divide-[#EDE5D5]">
+            <ul className="divide-y divide-[var(--line)]">
               {TEZINE.map(t => (
                 <li key={t.id} className="py-3 flex items-center gap-3">
                   <span className="flex-1">
                     <span className="block font-bold">{t.ime}</span>
-                    <span className="block text-[13px]" style={{ color: '#4F5170' }}>{t.opis}</span>
+                    <span className="block text-[13px]" style={{ color: 'var(--ink-2)' }}>{t.opis}</span>
                   </span>
                   <Link href={`/osvajanje/igra?tezina=${t.id}&krugova=8`} className="btn btn-secondary btn-sm">8 krugova</Link>
                   <Link href={`/osvajanje/igra?tezina=${t.id}&krugova=12`} className="btn btn-primary btn-sm">12 krugova</Link>
@@ -61,7 +61,7 @@ export default function OsvajanjePage() {
             <ol className="space-y-3">
               {PRAVILA.map(([naslov, tekst], i) => (
                 <li key={naslov} className="flex gap-3">
-                  <span className="w-7 h-7 shrink-0 rounded-lg grid place-items-center text-[13px] font-bold" style={{ background: '#FDC361', border: '1.5px solid #1A1B3A' }}>{i + 1}</span>
+                  <span className="w-7 h-7 shrink-0 rounded-lg grid place-items-center text-[13px] font-bold" style={{ background: '#FDC361', border: '1.5px solid var(--ink)' }}>{i + 1}</span>
                   <p className="text-[14px] leading-relaxed"><strong>{naslov}.</strong> {tekst}</p>
                 </li>
               ))}

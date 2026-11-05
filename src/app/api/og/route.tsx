@@ -50,7 +50,7 @@ export async function GET() {
 
           {/* Headline */}
           <div style={{
-            color: '#1A1B3A',
+            color: 'var(--ink)',
             fontSize: 84,
             fontWeight: 900,
             letterSpacing: -3,
@@ -60,12 +60,12 @@ export async function GET() {
             alignItems: 'center',
           }}>
             <span>Usudi se da budeš</span>
-            <span style={{ color: '#23845C' }}>bolji od drugih.</span>
+            <span style={{ color: 'var(--ok)' }}>bolji od drugih.</span>
           </div>
 
           {/* Sub */}
           <div style={{
-            color: '#1A1B3A',
+            color: 'var(--ink)',
             fontSize: 26,
             fontWeight: 600,
             marginTop: 36,
@@ -90,7 +90,7 @@ export async function GET() {
         }}>
           <div style={{ width: 8, height: 8, borderRadius: 4, background: '#FDC361', display: 'flex' }} />
           <span style={{
-            color: '#1A1B3A',
+            color: 'var(--ink)',
             fontSize: 20,
             fontWeight: 700,
             letterSpacing: 3,

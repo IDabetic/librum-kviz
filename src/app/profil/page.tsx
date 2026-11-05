@@ -140,9 +140,9 @@ export default async function ProfilPage({
       <Header />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         {(sp.suspendovan === '1' || (profile?.suspended_until && new Date(profile.suspended_until as string) > new Date())) && (
-          <div className="card-soft p-5 mb-6" style={{ background: '#FFE3EA', borderColor: '#E5385C' }}>
-            <p className="font-bold text-[15px] mb-1" style={{ color: '#C42B4F' }}>Nalog je suspendovan na 3 dana</p>
-            <p className="text-[13px]" style={{ color: '#1A1B3A' }}>
+          <div className="card-soft p-5 mb-6" style={{ background: 'var(--bad-50)', borderColor: '#E5385C' }}>
+            <p className="font-bold text-[15px] mb-1" style={{ color: 'var(--bad-t)' }}>Nalog je suspendovan na 3 dana</p>
+            <p className="text-[13px]" style={{ color: 'var(--ink)' }}>
               Dva igrača su prijavila tvoje pitanje kao netačno. Ne možeš da igraš ni da šalješ pitanja
               do {profile?.suspended_until
                 ? new Date(profile.suspended_until as string).toLocaleString('sr-RS')
@@ -156,26 +156,26 @@ export default async function ProfilPage({
         <div className="card-soft p-6 sm:p-8 mb-6">
           <div className="flex items-start sm:items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4 sm:gap-5 flex-1 min-w-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-[#EDE5D5]">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-[var(--line)]">
                 {profile?.avatar
                   ? <Image src={`/avatars/${profile.avatar}`} alt="Avatar" width={80} height={80} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center font-black text-[24px]" style={{ background: '#23845C', color: 'white' }}>{initials.toUpperCase()}</div>}
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="font-black tracking-tight truncate" style={{ color: '#1A1B3A', fontSize: 'clamp(22px, 4vw, 30px)' }}>
+                <h1 className="font-black tracking-tight truncate" style={{ color: 'var(--ink)', fontSize: 'clamp(22px, 4vw, 30px)' }}>
                   {displayName}
                 </h1>
                 {profile?.nickname && (
-                  <p className="text-[13px] truncate" style={{ color: '#4F5170' }}>{profile.first_name} {profile.last_name}</p>
+                  <p className="text-[13px] truncate" style={{ color: 'var(--ink-2)' }}>{profile.first_name} {profile.last_name}</p>
                 )}
-                <p className="text-[12px] truncate" style={{ color: '#4F5170' }}>{profile?.email}</p>
+                <p className="text-[12px] truncate" style={{ color: 'var(--ink-2)' }}>{profile?.email}</p>
                 {jeAutorPitanja(prihvacenih, pragBedza) && (
                   <Link href="/autori-pitanja" className="chip mt-1.5 inline-flex"
-                    style={{ background: '#FFF5E0', color: '#8A6A12' }}>
+                    style={{ background: 'var(--warn-50)', color: 'var(--warn-t)' }}>
                     🏅 Autor pitanja · {prihvacenih}
                   </Link>
                 )}
-                {profile?.city && <p className="text-[12px] truncate" style={{ color: '#4F5170' }}>📍 {profile.city}</p>}
+                {profile?.city && <p className="text-[12px] truncate" style={{ color: 'var(--ink-2)' }}>📍 {profile.city}</p>}
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -256,7 +256,7 @@ export default async function ProfilPage({
         {/* ─ Recent activity (mixed) ────────────────────────────────── */}
         {(sTotal + bTotal + hTotal + qTotal) > 0 && (
           <div className="card-soft p-6 sm:p-7">
-            <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#1A1B3A' }}>
+            <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: 'var(--ink)' }}>
               Skorašnja aktivnost
             </h2>
             <div className="space-y-1">
@@ -269,8 +269,8 @@ export default async function ProfilPage({
 
         {(sTotal + bTotal + hTotal + qTotal + dTotal) === 0 && (
           <div className="card-soft p-10 text-center">
-            <p className="font-bold text-[17px] mb-2" style={{ color: '#1A1B3A' }}>Još nisi igrao</p>
-            <p className="text-[14px] mb-6" style={{ color: '#4F5170' }}>Izaberi mod i kreni.</p>
+            <p className="font-bold text-[17px] mb-2" style={{ color: 'var(--ink)' }}>Još nisi igrao</p>
+            <p className="text-[14px] mb-6" style={{ color: 'var(--ink-2)' }}>Izaberi mod i kreni.</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <Link href="/#igre" className="btn btn-primary btn-md">PRO kviz</Link>
               <Link href="/#igre" className="btn btn-secondary btn-md">Book kviz</Link>
@@ -299,17 +299,17 @@ function GameCard({ Icon, label, accent, bg, primary, secondary, href }: {
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: bg }}>
           <Icon size={18} className={`text-[${accent}]`} strokeWidth={2.2} />
         </div>
-        <p className="font-bold text-[14px] tracking-tight" style={{ color: '#1A1B3A' }}>{label}</p>
+        <p className="font-bold text-[14px] tracking-tight" style={{ color: 'var(--ink)' }}>{label}</p>
       </div>
       <div className="font-black tracking-tight leading-none mb-1" style={{ color: accent, fontSize: 'clamp(28px, 5vw, 36px)' }}>
         {primary.value}
       </div>
-      <p className="text-[11px] font-medium mb-4" style={{ color: '#4F5170' }}>{primary.label}</p>
-      <div className="grid gap-2 pt-3 border-t" style={{ borderColor: '#EDE5D5', gridTemplateColumns: `repeat(${Math.max(secondary.length, 1)}, 1fr)` }}>
+      <p className="text-[11px] font-medium mb-4" style={{ color: 'var(--ink-2)' }}>{primary.label}</p>
+      <div className="grid gap-2 pt-3 border-t" style={{ borderColor: 'var(--line)', gridTemplateColumns: `repeat(${Math.max(secondary.length, 1)}, 1fr)` }}>
         {secondary.map((s, i) => (
           <div key={i}>
-            <div className="font-bold text-[14px] tracking-tight" style={{ color: '#1A1B3A' }}>{s.value}</div>
-            <div className="text-[10px]" style={{ color: '#4F5170' }}>{s.label}</div>
+            <div className="font-bold text-[14px] tracking-tight" style={{ color: 'var(--ink)' }}>{s.value}</div>
+            <div className="text-[10px]" style={{ color: 'var(--ink-2)' }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -385,16 +385,16 @@ type QuickSession = { score: number; correct_count: number; wrong_count: number;
 
 function ActivityRow({ entry }: { entry: Activity }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: '#EDE5D5' }}>
+    <div className="flex items-center gap-3 py-3 border-b last:border-0" style={{ borderColor: 'var(--line)' }}>
       <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[12px] flex-shrink-0"
         style={{ background: entry.scoreColor, color: 'white' }}>
         {entry.score}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-[14px] tracking-tight" style={{ color: '#1A1B3A' }}>
+        <p className="font-semibold text-[14px] tracking-tight" style={{ color: 'var(--ink)' }}>
           {entry.title}
         </p>
-        <p className="text-[12px]" style={{ color: '#4F5170' }}>
+        <p className="text-[12px]" style={{ color: 'var(--ink-2)' }}>
           {entry.detail} · {entry.date.toLocaleDateString('sr')}
         </p>
       </div>

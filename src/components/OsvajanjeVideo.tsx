@@ -44,23 +44,23 @@ export function OsvajanjeVideo() {
 
   const [, naslov, tekst] = NATPISI[natpis]
   return (
-    <div className="relative w-full overflow-hidden rounded-[28px]" style={{ border: '3px solid #1A1B3A', boxShadow: '0 8px 0 #14152B, 0 40px 80px rgba(0,0,0,.45)' }}>
+    <div className="relative w-full overflow-hidden rounded-[24px]" style={{ border: '1px solid var(--line)', boxShadow: 'var(--senka-jaka)' }}>
       <video ref={video} className="block w-full" src="/video/osvajanje-siroko.mp4" poster="/video/osvajanje-siroko.jpg"
         autoPlay muted loop playsInline preload="metadata" onTimeUpdate={prati}
         aria-label="Snimak partije Osvajača: vojske osvajaju države na mapi sveta" />
       <button type="button" onClick={prebaciZvuk} aria-pressed={zvuk} aria-label={zvuk ? 'Isključi zvuk' : 'Uključi zvuk'}
         className="absolute right-4 top-4 w-12 h-12 grid place-items-center rounded-full"
-        style={{ background: '#FDC361', border: '1.5px solid #1A1B3A', boxShadow: 'var(--senka)' }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1B3A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M11 5 6 9H3v6h3l5 4V5z" fill="#1A1B3A" />
+        style={{ background: 'rgba(13,14,28,.55)', backdropFilter: 'blur(8px)', color: '#FFFFFF' }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" />
           {zvuk ? <><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" /></> : <><path d="m16 9 5 6" /><path d="m21 9-5 6" /></>}
         </svg>
       </button>
       {/* Natpis prati snimak; aria-live čita promenu i bez slike. */}
       <div key={natpis} aria-live="polite" className="natpis-ulaz sm:absolute sm:left-5 sm:bottom-5 sm:max-w-[420px] px-5 py-4 sm:rounded-2xl"
-        style={{ background: '#FDC361', color: '#1A1B3A', borderTop: '1.5px solid #1A1B3A' }}>
+        style={{ background: 'color-mix(in srgb, var(--surface) 88%, transparent)', backdropFilter: 'blur(12px)', color: 'var(--ink)', border: '1px solid var(--line)' }}>
         <p className="naslov text-[22px] leading-tight">{naslov}</p>
-        <p className="mt-1 text-[15px] font-semibold leading-snug">{tekst}</p>
+        <p className="mt-1 text-[15px] leading-snug" style={{ color: 'var(--ink-2)' }}>{tekst}</p>
       </div>
     </div>
   )

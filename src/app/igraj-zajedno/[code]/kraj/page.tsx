@@ -271,7 +271,7 @@ export default function DuelEndPage() {
   }
 
   return (
-    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: 'var(--bg)' }}>
       <div className="max-w-xl mx-auto">
 
         {/* Hero */}
@@ -308,9 +308,9 @@ export default function DuelEndPage() {
               <StatRow label="Tačnih"   me={r.myCorrect} op={r.opCorrect} />
               <StatRow label="Pogr."    me={r.myWrong}   op={r.opWrong} />
               <StatRow label="Tačnost"  me={`${myAccuracy}%`} op={`${opAccuracy}%`} />
-              <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: '#EDE5D5' }}>
-                <span className="text-[12px] font-medium" style={{ color: '#4F5170' }}>Vreme duela</span>
-                <span className="font-bold text-[13px]" style={{ color: '#1A1B3A' }}>{fmtTime(r.totalTime)}</span>
+              <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: 'var(--line)' }}>
+                <span className="text-[12px] font-medium" style={{ color: 'var(--ink-2)' }}>Vreme duela</span>
+                <span className="font-bold text-[13px]" style={{ color: 'var(--ink)' }}>{fmtTime(r.totalTime)}</span>
               </div>
             </div>
           </div>
@@ -328,7 +328,7 @@ export default function DuelEndPage() {
           <Link href="/ranglista" className="btn btn-secondary btn-lg">Rang lista</Link>
         </div>
         {opReady && !myReady && (
-          <p className="text-center text-[12px] font-semibold mb-3" style={{ color: '#8A6A12' }}>
+          <p className="text-center text-[12px] font-semibold mb-3" style={{ color: 'var(--warn-t)' }}>
             ⚡ {r.opName.split(' ')[0]} čeka revanš
           </p>
         )}
@@ -350,7 +350,7 @@ export default function DuelEndPage() {
         />
 
         <Link href="/igraj-zajedno" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"
-          style={{ color: '#4F5170' }}>
+          style={{ color: 'var(--ink-2)' }}>
           ← Izazovi drugog
         </Link>
       </div>
@@ -363,14 +363,14 @@ function PlayerCol({ userId, name, avatar, score, accent, you, winner }: {
 }) {
   const inner = (
     <>
-      <div className="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3" style={{ background: '#FFFFFF', border: `2px solid ${accent}` }}>
+      <div className="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3" style={{ background: 'var(--surface)', border: `2px solid ${accent}` }}>
         {avatar
           ? <Image src={`/avatars/${avatar}`} alt={name} width={56} height={56} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center text-[18px] font-bold" style={{ background: accent, color: 'white' }}>{name[0]}</div>}
       </div>
-      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#4F5170' }}>{you ? 'Ti' : name.split(' ')[0]}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--ink-2)' }}>{you ? 'Ti' : name.split(' ')[0]}</div>
       <div className="font-black tracking-tight" style={{ color: accent, fontSize: 'clamp(28px, 5vw, 36px)' }}>{score}</div>
-      <div className="text-[10px] font-medium mt-0.5" style={{ color: '#4F5170' }}>bodova</div>
+      <div className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--ink-2)' }}>bodova</div>
       {winner && <div className="mt-2 text-[18px]">🏆</div>}
     </>
   )
@@ -386,9 +386,9 @@ function PlayerCol({ userId, name, avatar, score, accent, you, winner }: {
 
 function StatRow({ label, me, op }: { label: string; me: number | string; op: number | string }) {
   return (
-    <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: '#EDE5D5' }}>
-      <span className="font-bold text-[13px]" style={{ color: '#23845C' }}>{me}</span>
-      <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#4F5170' }}>{label}</span>
+    <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: 'var(--line)' }}>
+      <span className="font-bold text-[13px]" style={{ color: 'var(--ok)' }}>{me}</span>
+      <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--ink-2)' }}>{label}</span>
       <span className="font-bold text-[13px]" style={{ color: '#FDC361' }}>{op}</span>
     </div>
   )

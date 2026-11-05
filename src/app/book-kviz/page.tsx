@@ -52,14 +52,14 @@ export default async function BookKvizLanding() {
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
         <div className="text-center mb-8">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#8A6A12' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--warn-t)' }}>
             Književnost
           </p>
           <h1 className="leading-[0.9] mb-3"
-            style={{ color: '#1A1B3A', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
+            style={{ color: 'var(--ink)', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
             Book kviz.
           </h1>
-          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#4F5170' }}>
+          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: 'var(--ink-2)' }}>
             Pitanja samo iz književnosti.<br />Na kraju saznaš u kom žanru si najjači.
           </p>
         </div>
@@ -68,32 +68,32 @@ export default async function BookKvizLanding() {
         {best && best.score > 0 ? (
           <div className="card-soft p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF5E0' }}>
-                <IconTrophy size={20} className="text-[#8A6A12]" strokeWidth={2.2} />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--warn-50)' }}>
+                <IconTrophy size={20} className="text-[var(--warn-t)]" strokeWidth={2.2} />
               </div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Tvoj najbolji rezultat</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>Tvoj najbolji rezultat</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.score}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Bodovi</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>{best.score}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>Bodovi</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.questions_reached}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Pitanja</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>{best.questions_reached}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>Pitanja</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                <div className="font-black text-[12px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.top_genre || '—'}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Najjači žanr</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                <div className="font-black text-[12px] tracking-tight" style={{ color: 'var(--ink)' }}>{best.top_genre || '—'}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>Najjači žanr</div>
               </div>
             </div>
           </div>
         ) : (
           <div className="card-soft p-5 mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF5E0' }}>
-              <IconStar size={20} className="text-[#8A6A12]" strokeWidth={2.2} />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--warn-50)' }}>
+              <IconStar size={20} className="text-[var(--warn-t)]" strokeWidth={2.2} />
             </div>
-            <p className="text-[14px]" style={{ color: '#1A1B3A' }}>
+            <p className="text-[14px]" style={{ color: 'var(--ink)' }}>
               Još nemaš rezultat. <strong>Vreme je za prvi pokušaj.</strong>
             </p>
           </div>
@@ -101,7 +101,7 @@ export default async function BookKvizLanding() {
 
         {/* Rules */}
         <div className="card-soft p-7 sm:p-8 mb-5">
-          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#1A1B3A' }}>
+          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: 'var(--ink)' }}>
             Pravila igre
           </h2>
           <div className="space-y-3.5">
@@ -119,8 +119,8 @@ export default async function BookKvizLanding() {
             </Rule>
           </div>
 
-          <div className="mt-6 pt-6 border-t" style={{ borderColor: '#EDE5D5' }}>
-            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: '#1A1B3A' }}>
+          <div className="mt-6 pt-6 border-t" style={{ borderColor: 'var(--line)' }}>
+            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
               Pomoći (1×)
             </p>
             <div className="grid grid-cols-3 gap-2 mb-3">
@@ -129,9 +129,9 @@ export default async function BookKvizLanding() {
                 { label: 'Preskoči',     desc: 'Bez gubitka života' },
                 { label: '+15 sekundi',  desc: 'Dodaj vreme' },
               ].map(({ label, desc }) => (
-                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: '#EDE5D5' }}>
-                  <div className="font-bold text-[12px] tracking-tight" style={{ color: '#1A1B3A' }}>{label}</div>
-                  <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>{desc}</div>
+                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: 'var(--line)' }}>
+                  <div className="font-bold text-[12px] tracking-tight" style={{ color: 'var(--ink)' }}>{label}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>{desc}</div>
                 </div>
               ))}
             </div>
@@ -148,7 +148,7 @@ export default async function BookKvizLanding() {
           </Link>
         )}
 
-        <p className="text-center text-[11px] mt-5" style={{ color: '#4F5170' }}>
+        <p className="text-center text-[11px] mt-5" style={{ color: 'var(--ink-2)' }}>
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
@@ -168,7 +168,7 @@ function Rule({ color, fg, Icon, children }: {
       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color }}>
         <Icon size={16} className={`text-[${fg}]`} strokeWidth={2.2} />
       </div>
-      <p className="text-[14px] leading-relaxed pt-1" style={{ color: '#1A1B3A' }}>
+      <p className="text-[14px] leading-relaxed pt-1" style={{ color: 'var(--ink)' }}>
         {children}
       </p>
     </div>

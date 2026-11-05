@@ -47,26 +47,26 @@ export default function KrajIgrePage() {
   const accent = tone === 'epic' ? '#FDC361' : tone === 'great' ? '#23845C' : tone === 'good' ? '#23845C' : '#4F5170'
 
   return (
-    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: 'var(--bg)' }}>
       <div className="max-w-xl mx-auto">
 
         {/* Hero */}
         <div className="card-soft overflow-hidden mb-4">
           <div className="px-7 py-10 sm:py-14 text-center" style={{ background: 'linear-gradient(135deg, #E8F6EF 0%, #FFF5E0 100%)' }}>
-            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#1A1B3A', opacity: 0.6 }}>
+            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--ink)', opacity: 0.6 }}>
               Kraj igre
             </p>
             <h1 className="font-black tracking-tight mb-2 leading-[1.05]"
-              style={{ color: '#1A1B3A', fontSize: 'clamp(36px, 7vw, 56px)' }}>
+              style={{ color: 'var(--ink)', fontSize: 'clamp(36px, 7vw, 56px)' }}>
               {headline}
             </h1>
-            <p className="text-[13px]" style={{ color: '#1A1B3A', opacity: 0.55 }}>
+            <p className="text-[13px]" style={{ color: 'var(--ink)', opacity: 0.55 }}>
               Stigao/la si do <strong>{questionsReached}</strong> pitanja
             </p>
           </div>
 
           <div className="p-7 sm:p-8 text-center">
-            <div className="font-black tracking-tight" style={{ color: '#1A1B3A', fontSize: 'clamp(56px, 12vw, 96px)', lineHeight: 1 }}>
+            <div className="font-black tracking-tight" style={{ color: 'var(--ink)', fontSize: 'clamp(56px, 12vw, 96px)', lineHeight: 1 }}>
               {score}
             </div>
             <div className="text-[14px] font-semibold mt-1" style={{ color: accent }}>bodova</div>
@@ -98,7 +98,7 @@ export default function KrajIgrePage() {
 
         {/* Back to home */}
         <Link href="/pro-kviz" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"
-          style={{ color: '#4F5170' }}>
+          style={{ color: 'var(--ink-2)' }}>
           ← Glavna stranica
         </Link>
       </div>
@@ -108,9 +108,9 @@ export default function KrajIgrePage() {
 
 function Stat({ label, value, accent }: { label: string; value: number | string; accent: string }) {
   return (
-    <div className="rounded-2xl p-3" style={{ background: '#EDE5D5' }}>
+    <div className="rounded-2xl p-3" style={{ background: 'var(--line)' }}>
       <div className="font-black text-[18px] tracking-tight" style={{ color: accent }}>{value}</div>
-      <div className="text-[11px] font-medium mt-0.5" style={{ color: '#4F5170' }}>{label}</div>
+      <div className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--ink-2)' }}>{label}</div>
     </div>
   )
 }

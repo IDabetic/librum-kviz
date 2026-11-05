@@ -40,7 +40,7 @@ function NovaLozinkaInner() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md">
 
         <div className="text-center mb-8">
@@ -48,33 +48,33 @@ function NovaLozinkaInner() {
         </div>
 
         <div className="card-soft p-7 sm:p-8">
-          <h1 className="font-black tracking-tight mb-2 text-center" style={{ color: '#1A1B3A', fontSize: 'clamp(22px, 4vw, 28px)' }}>
+          <h1 className="font-black tracking-tight mb-2 text-center" style={{ color: 'var(--ink)', fontSize: 'clamp(22px, 4vw, 28px)' }}>
             Nova lozinka
           </h1>
-          <p className="text-[13px] text-center mb-6" style={{ color: '#4F5170' }}>
+          <p className="text-[13px] text-center mb-6" style={{ color: 'var(--ink-2)' }}>
             Postavi novu lozinku za svoj nalog.
           </p>
 
           {phase === 'loading' && (
             <div className="text-center py-6">
               <div className="w-8 h-8 rounded-full border-2 animate-spin mx-auto"
-                style={{ borderColor: '#23845C', borderTopColor: 'transparent' }} />
+                style={{ borderColor: 'var(--ok)', borderTopColor: 'transparent' }} />
             </div>
           )}
 
           {phase === 'success' && (
             <div className="text-center py-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: '#E8F6EF' }}>
-                <IconCheck size={28} className="text-[#0A4C35]" />
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--ok-50)' }}>
+                <IconCheck size={28} className="text-[var(--ok-t)]" />
               </div>
-              <p className="font-bold text-[16px] mb-1" style={{ color: '#0A4C35' }}>Lozinka je promenjena!</p>
-              <p className="text-[13px]" style={{ color: '#4F5170' }}>Preusmeravam na prijavu…</p>
+              <p className="font-bold text-[16px] mb-1" style={{ color: 'var(--ok-t)' }}>Lozinka je promenjena!</p>
+              <p className="text-[13px]" style={{ color: 'var(--ink-2)' }}>Preusmeravam na prijavu…</p>
             </div>
           )}
 
           {phase === 'invalid' && (
             <div>
-              <div className="rounded-2xl px-4 py-3 text-[13px] font-medium mb-4" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
+              <div className="rounded-2xl px-4 py-3 text-[13px] font-medium mb-4" style={{ background: 'var(--bad-50)', color: 'var(--bad-t)' }}>
                 Link je istekao, već je iskorišćen ili je nevalidan. Zatraži novi sa stranice za prijavu.
               </div>
               <Link href="/auth/prijava" className="btn btn-primary btn-md w-full">Idi na prijavu</Link>
@@ -84,19 +84,19 @@ function NovaLozinkaInner() {
           {phase === 'ready' && (
             <form onSubmit={submit} className="space-y-3">
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#4F5170' }}>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-2)' }}>
                   <IconLock size={18} strokeWidth={2} />
                 </div>
                 <input type={show ? 'text' : 'password'} required value={pw} onChange={e => setPw(e.target.value)}
                   className="input pl-11 pr-10" placeholder="Nova lozinka" autoFocus />
                 <button type="button" onClick={() => setShow(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1" style={{ color: '#4F5170' }}>
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1" style={{ color: 'var(--ink-2)' }}>
                   {show ? <IconEyeOff size={18} strokeWidth={2} /> : <IconEye size={18} strokeWidth={2} />}
                 </button>
               </div>
 
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#4F5170' }}>
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--ink-2)' }}>
                   <IconLock size={18} strokeWidth={2} />
                 </div>
                 <input type={show ? 'text' : 'password'} required value={pw2} onChange={e => setPw2(e.target.value)}
@@ -104,7 +104,7 @@ function NovaLozinkaInner() {
               </div>
 
               {error && (
-                <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#FFE3EA', color: '#C42B4F' }}>
+                <div className="rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: 'var(--bad-50)', color: 'var(--bad-t)' }}>
                   {error}
                 </div>
               )}

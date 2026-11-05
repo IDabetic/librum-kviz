@@ -74,14 +74,14 @@ export default async function IgrajLandingPage() {
       <Header />
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
 
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] mb-5" style={{ color: '#2C2D81' }}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] mb-5" style={{ color: 'var(--brand)' }}>
           01 · Survivor
         </p>
         <h1 className="leading-[0.9] mb-5"
-          style={{ color: '#1A1B3A', fontSize: 'clamp(52px, 12vw, 96px)', fontWeight: 500 }}>
+          style={{ color: 'var(--ink)', fontSize: 'clamp(52px, 12vw, 96px)', fontWeight: 500 }}>
           10 života.
         </h1>
-        <p className="text-[17px] leading-snug mb-10 max-w-md" style={{ color: '#4F5170' }}>
+        <p className="text-[17px] leading-snug mb-10 max-w-md" style={{ color: 'var(--ink-2)' }}>
           Preživi što više pitanja. Svaka greška skida život. Rang-lista ne laže.
         </p>
 
@@ -89,10 +89,10 @@ export default async function IgrajLandingPage() {
         {best && best.score > 0 ? (
           <div className="card-soft p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF5E0' }}>
-                <IconTrophy size={20} className="text-[#8A6A12]" strokeWidth={2.2} />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--warn-50)' }}>
+                <IconTrophy size={20} className="text-[var(--warn-t)]" strokeWidth={2.2} />
               </div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Tvoj najbolji rezultat</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>Tvoj najbolji rezultat</p>
             </div>
             <div className="grid grid-cols-4 gap-2">
               {[
@@ -101,19 +101,19 @@ export default async function IgrajLandingPage() {
                 { label: 'Najduži niz', value: best.best_combo },
                 { label: 'Tačnost', value: `${Math.round(Number(best.accuracy))}%` },
               ].map(({ label, value }) => (
-                <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                  <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{value}</div>
-                  <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>{label}</div>
+                <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                  <div className="font-black text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>{value}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>{label}</div>
                 </div>
               ))}
             </div>
           </div>
         ) : (
           <div className="card-soft p-5 mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#E8F6EF' }}>
-              <IconStar size={20} className="text-[#0A4C35]" strokeWidth={2.2} />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--ok-50)' }}>
+              <IconStar size={20} className="text-[var(--ok-t)]" strokeWidth={2.2} />
             </div>
-            <p className="text-[14px]" style={{ color: '#1A1B3A' }}>
+            <p className="text-[14px]" style={{ color: 'var(--ink)' }}>
               Još nemaš rezultat. <strong>Vreme je za prvi pokušaj.</strong>
             </p>
           </div>
@@ -121,8 +121,8 @@ export default async function IgrajLandingPage() {
 
         {/* Today's top */}
         {todayBest && todayBest.score > 0 && todayBestName && (
-          <div className="card-soft p-4 mb-5 text-center" style={{ background: '#FFF5E0', borderColor: 'rgba(255,216,77,0.4)' }}>
-            <p className="text-[13px] font-medium" style={{ color: '#8A6A12' }}>
+          <div className="card-soft p-4 mb-5 text-center" style={{ background: 'var(--warn-50)', borderColor: 'rgba(255,216,77,0.4)' }}>
+            <p className="text-[13px] font-medium" style={{ color: 'var(--warn-t)' }}>
               ⚡ Danas u vrhu: <strong>{todayBestName}</strong> sa <strong>{todayBest.score} bodova</strong>. Možeš li bolje?
             </p>
           </div>
@@ -130,7 +130,7 @@ export default async function IgrajLandingPage() {
 
         {/* Rules */}
         <div className="card-soft p-7 sm:p-8 mb-5">
-          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#1A1B3A' }}>
+          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: 'var(--ink)' }}>
             Pravila igre
           </h2>
           <div className="space-y-3.5">
@@ -148,8 +148,8 @@ export default async function IgrajLandingPage() {
             </Rule>
           </div>
 
-          <div className="mt-6 pt-6 border-t" style={{ borderColor: '#EDE5D5' }}>
-            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: '#1A1B3A' }}>
+          <div className="mt-6 pt-6 border-t" style={{ borderColor: 'var(--line)' }}>
+            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
               Combo bonusi
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
@@ -160,16 +160,16 @@ export default async function IgrajLandingPage() {
                 { n: 50,  bonus: 150 },
                 { n: 100, bonus: 400 },
               ].map(({ n, bonus }) => (
-                <div key={n} className="rounded-2xl p-3" style={{ background: '#EDE5D5' }}>
-                  <div className="font-black text-[16px] tracking-tight" style={{ color: '#1A1B3A' }}>{n}×</div>
-                  <div className="text-[11px] font-bold" style={{ color: '#23845C' }}>+{bonus}</div>
+                <div key={n} className="rounded-2xl p-3" style={{ background: 'var(--line)' }}>
+                  <div className="font-black text-[16px] tracking-tight" style={{ color: 'var(--ink)' }}>{n}×</div>
+                  <div className="text-[11px] font-bold" style={{ color: 'var(--ok)' }}>+{bonus}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-6 pt-6 border-t" style={{ borderColor: '#EDE5D5' }}>
-            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: '#1A1B3A' }}>
+          <div className="mt-6 pt-6 border-t" style={{ borderColor: 'var(--line)' }}>
+            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
               Pomoći (1×)
             </p>
             <div className="grid grid-cols-3 gap-2 mb-3">
@@ -178,24 +178,24 @@ export default async function IgrajLandingPage() {
                 { label: 'Preskoči',     desc: 'Bez gubitka života' },
                 { label: '+15 sekundi',  desc: 'Dodaj vreme' },
               ].map(({ label, desc }) => (
-                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: '#EDE5D5' }}>
-                  <div className="font-bold text-[12px] tracking-tight" style={{ color: '#1A1B3A' }}>{label}</div>
-                  <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>{desc}</div>
+                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: 'var(--line)' }}>
+                  <div className="font-bold text-[12px] tracking-tight" style={{ color: 'var(--ink)' }}>{label}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>{desc}</div>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] leading-relaxed" style={{ color: '#4F5170' }}>
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--ink-2)' }}>
               Pomoći koristiš jednom po igri. Na svakih <strong>50 pitanja</strong> dobijaš novu bonus pomoć.
             </p>
           </div>
 
-          <p className="text-[11px] text-center mt-6 pt-5 border-t leading-relaxed" style={{ color: '#4F5170', borderColor: '#EDE5D5' }}>
+          <p className="text-[11px] text-center mt-6 pt-5 border-t leading-relaxed" style={{ color: 'var(--ink-2)', borderColor: 'var(--line)' }}>
             Kategorije se ne biraju — pitanja dolaze iz velike zajedničke baze.
           </p>
         </div>
 
         {/* Goal + CTA */}
-        <p className="text-center text-[13px] font-medium mb-3" style={{ color: '#23845C' }}>
+        <p className="text-center text-[13px] font-medium mb-3" style={{ color: 'var(--ok)' }}>
           Tvoj cilj: preživi <strong>50 pitanja</strong> i osvoji novih <strong>5 života</strong>.
         </p>
 
@@ -211,12 +211,12 @@ export default async function IgrajLandingPage() {
 
         {/* Duel CTA */}
         <Link href="/igraj-zajedno" className="mt-5 flex items-center justify-center gap-2 text-[13px] font-semibold transition-opacity hover:opacity-70"
-          style={{ color: '#4F5170' }}>
+          style={{ color: 'var(--ink-2)' }}>
           <IconSwords size={14} strokeWidth={2.2} />
           Želiš protiv nekoga? Pokreni duel →
         </Link>
 
-        <p className="text-center text-[11px] mt-5" style={{ color: '#4F5170' }}>
+        <p className="text-center text-[11px] mt-5" style={{ color: 'var(--ink-2)' }}>
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
@@ -236,7 +236,7 @@ function Rule({ color, fg, Icon, children }: {
       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color }}>
         <Icon size={16} className={`text-[${fg}]`} strokeWidth={2.2} />
       </div>
-      <p className="text-[14px] leading-relaxed pt-1" style={{ color: '#1A1B3A' }}>
+      <p className="text-[14px] leading-relaxed pt-1" style={{ color: 'var(--ink)' }}>
         {children}
       </p>
     </div>
