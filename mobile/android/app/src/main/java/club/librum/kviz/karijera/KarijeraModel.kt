@@ -55,7 +55,7 @@ object Karijera {
         val id: String, val ime: String, val korporacija: Boolean, val npc: Boolean = false, val vlasnik: String? = null,
         val vlasnik_ime: String = "", val pozicija: String = "", val nivo: Int = 1, val stil: Int = 1, val udeo: String = "posten",
         val kljucne: List<String> = emptyList(), val rekord: Int = 0, val rekord_ime: String? = null, val rekord_igrac: String? = null,
-        val zaposlenih: Int = 0, val botova: Int = 0, val zastita_do: String? = null,
+        val zaposlenih: Int = 0, val botova: Int = 0, val zastita_do: String? = null, val zastita_izabrana: Boolean? = null, val vlasnik_od: String? = null,
         val sef_tacno: Int? = null, val sef_netacno: Int? = null, val sef_ometanja: Int? = null, val struka_udeo: Int? = null,
         val sef_smeh: Boolean? = null, val teza: Boolean? = null, val sef_lik: String? = null,
         val slobodni: List<Int>? = null, val slobodan_danas: Boolean? = null, val stres: Double? = null,
@@ -151,6 +151,11 @@ object Karijera {
         mapOf("p_firma" to id, "p_tacno" to n.tacno, "p_netacno" to n.netacno, "p_ometanja" to n.ometanja, "p_smeh" to n.smeh, "p_lik" to n.lik))
     suspend fun podesiPitanja(id: String, struka: Int, fokus: List<String>, udeo: List<Int>, teza: Boolean): FirmaDetalj =
         rpc("karijera_podesi_pitanja", mapOf("p_firma" to id, "p_struka" to struka, "p_fokus" to fokus, "p_fokus_udeo" to udeo, "p_teza" to teza))
+    /** Zaštita od napada 3/5/7/10 dana od preuzimanja, jednom po vlasništvu (vlasnik 05.11). */
+    suspend fun izaberiZastitu(id: String, dana: Int): FirmaDetalj {
+        rpc<String>("karijera_zastita", mapOf("p_firma" to id, "p_dana" to dana))
+        return firma(id)
+    }
     suspend fun podesiSlobodne(id: String, dani: List<Int>): FirmaDetalj = rpc("karijera_podesi_slobodne", mapOf("p_firma" to id, "p_dani" to dani))
     suspend fun temeFokusa(): List<TemaFokusa> = rpc("karijera_teme_fokusa")
     suspend fun postaviMirni(da: Boolean): Mirni = rpc("karijera_mirni", mapOf("p_da" to da))
