@@ -43,11 +43,39 @@ final class Sesija {
         await ucitajNadimak()
     }
 
-    func prijavaTokenom(provajder: String, idToken: String, nonce: String?) async throws {
+    /// Apple šalje ime i prezime samo pri prvoj prijavi; upisuju se u profil ako su tamo prazni.
+    func prijavaTokenom(provajder: String, idToken: String, nonce: String?, ime: String? = nil, prezime: String? = nil) async throws {
         let t = try await api.prijavaTokenom(provajder: provajder, idToken: idToken, nonce: nonce)
         primeni(t)
         sacuvaj(t)
+        await upisiImeAkoNema(ime, prezime)
         await ucitajNadimak()
+    }
+
+    private func upisiImeAkoNema(_ ime: String?, _ prezime: String?) async {
+        guard ime?.isEmpty == false || prezime?.isEmpty == false, let staro = try? await licniPodaci() else { return }
+        var novo = staro
+        if (novo.first_name ?? "").isEmpty, let ime, !ime.isEmpty { novo.first_name = ime }
+        if (novo.last_name ?? "").isEmpty, let prezime, !prezime.isEmpty { novo.last_name = prezime }
+        if novo != staro { try? await sacuvajLicnePodatke(novo) }
+    }
+
+    /// Nalog bez nadimka (prvi ulaz preko Apple/Google) dobija nadimak sam: Apple (smernica 4, Sign in with Apple)
+    /// zabranjuje da se posle te prijave traže ime ili mejl. Igrač ga menja u Podešavanjima.
+    private func dodeliNadimak(osnova: String?) async {
+        let koren = Self.nadimakOd(osnova)
+        for pokusaj in 0..<5 {
+            let predlog = pokusaj == 0 && koren.count >= 3 ? koren : "\(koren.isEmpty ? "igrac" : koren)\(Int.random(in: 1000...9999))"
+            if (try? await sacuvajNadimak(predlog)) != nil { return }
+        }
+    }
+
+    /// Latinična mala slova i cifre, do 14 znakova (ostaje mesta za 4 cifre do granice od 20).
+    /// Primer: nadimakOd("Đorđe") == "djordje"
+    static func nadimakOd(_ s: String?) -> String {
+        let bez = (s ?? "").lowercased().replacingOccurrences(of: "đ", with: "dj")
+            .folding(options: .diacriticInsensitive, locale: Locale(identifier: "sr_Latn"))
+        return String(bez.unicodeScalars.filter { ("a"..."z").contains($0) || ("0"..."9").contains($0) }.map(Character.init).prefix(14))
     }
 
     func registracija(email: String, lozinka: String, ime: String, prezime: String, nadimak: String) async throws {
@@ -164,8 +192,9 @@ final class Sesija {
         let nick = profil.nickname.flatMap { $0.isEmpty ? nil : $0 }
         nadimak = nick ?? profil.first_name.flatMap { $0.isEmpty ? nil : $0 }
         avatar = profil.avatar
-        trebaDopuna = nick == nil
+        trebaDopuna = false
         sacuvajLicno()
+        if nick == nil { await dodeliNadimak(osnova: profil.first_name) }
     }
 
     private func sacuvajLicno() {

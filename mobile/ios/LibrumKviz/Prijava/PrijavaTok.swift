@@ -564,79 +564,6 @@ private struct GotovoEkran: View {
 }
 
 
-/// Prvi ulaz preko Apple ili Google naloga (vlasnik 03.11): nalog postoji, ali ime, prezime, nadimak i grad su obavezni
-/// pre igre, kao kod registracije mejlom. Nadimak se čuva poslednji, pa nedovršen unos opet otvara ovaj ekran.
-struct DopunaProfila: View {
-    @Environment(Sesija.self) private var sesija
-    enum Stanje: Equatable { case unos, greske, radi, zauzet, greska(String) }
-    @State private var licni = Sesija.LicniPodaci()
-    @State private var nadimak = ""
-    @State private var stanje: Stanje = .unos
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Naslov(tekst: "Još malo\no tebi", velicina: 36)
-                        Text("Nadimak vide drugi igrači i rang lista.").font(.tekst(15)).foregroundStyle(Color.sivaTekst)
-                    }
-                    Spacer()
-                    MaskotaSlika(maskota: .lumi, velicina: 80).rotationEffect(.degrees(-6))
-                }
-                PoljeUnosa(naziv: "Ime", tekst: polje(\.first_name), stanje: obavezno(licni.first_name, "Upiši ime."), sadrzaj: .givenName)
-                PoljeUnosa(naziv: "Prezime", tekst: polje(\.last_name), stanje: obavezno(licni.last_name, "Upiši prezime."), sadrzaj: .familyName)
-                PoljeUnosa(naziv: "Nadimak", tekst: $nadimak, stanje: nadimakStanje, sadrzaj: .nickname)
-                PoljeUnosa(naziv: "Grad", tekst: polje(\.city), stanje: obavezno(licni.city, "Upiši grad."), sadrzaj: .addressCity)
-                if case .greska(let poruka) = stanje { Text(poruka).font(.tekst(13, .semibold)).foregroundStyle(Color.crvena) }
-                Button { Task { await sacuvaj() } } label: {
-                    if stanje == .radi { HStack(spacing: 10) { ProgressView().tint(Color.naMastilu); Text("Čuvam…") } } else { Text("Nastavi") }
-                }
-                .buttonStyle(.primarno)
-                .disabled(stanje == .radi)
-                Button("Odjavi se") { Task { await sesija.odjava() } }
-                    .font(.tekst(14, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity)
-            }
-            .padding(.horizontal, 20).padding(.top, 24)
-        }
-        .background(Papir())
-        .task {
-            // Ime i prezime stižu iz Google naloga (okidač na serveru); Apple ih ne šalje.
-            if let l = try? await sesija.licniPodaci() { licni = l }
-        }
-        .onChange(of: nadimak) { if stanje == .zauzet { stanje = .unos } }
-    }
-
-    private func polje(_ k: WritableKeyPath<Sesija.LicniPodaci, String?>) -> Binding<String> {
-        Binding(get: { licni[keyPath: k] ?? "" }, set: { licni[keyPath: k] = $0 })
-    }
-
-    private func prazno(_ s: String?) -> Bool { (s ?? "").trimmingCharacters(in: .whitespaces).isEmpty }
-
-    private func obavezno(_ s: String?, _ poruka: String) -> PoljeUnosa.Stanje {
-        stanje == .greske && prazno(s) ? .greska(poruka) : .obicno
-    }
-
-    private var nadimakStanje: PoljeUnosa.Stanje {
-        if stanje == .zauzet { return .greska("Nadimak „\(nadimak)” je zauzet. Probaj drugi.") }
-        if stanje == .greske && nadimak.isEmpty { return .greska("Izaberi nadimak.") }
-        return nadimak.isEmpty || NalogEkranPravila.ispravanNadimak(nadimak) ? .obicno : .greska("3–20 slova, cifara, tačka ili crtica.")
-    }
-
-    private func sacuvaj() async {
-        guard !prazno(licni.first_name), !prazno(licni.last_name), !prazno(licni.city), NalogEkranPravila.ispravanNadimak(nadimak) else {
-            stanje = .greske; return
-        }
-        stanje = .radi
-        do {
-            try await sesija.sacuvajLicnePodatke(licni)
-            try await sesija.sacuvajNadimak(nadimak)
-        }
-        catch let g as Supabase.Greska { stanje = g.vrsta == .postoji ? .zauzet : .greska(g.poruka) }
-        catch { stanje = .greska(error.localizedDescription) }
-    }
-}
-
 /// Apple i Google prijava (ujedno i registracija: prvi ulaz pravi nalog). Dugme se vidi samo kad je provajder
 /// uključen u Supabase, pa aplikacija radi i pre podešavanja.
 struct SpoljnaPrijava: View {
@@ -749,7 +676,8 @@ struct SpoljnaPrijava: View {
         do {
             guard case .appleID(let c) = try await autorizacija.performRequest(zahtev),
                   let t = c.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) else { return }
-            try await sesija.prijavaTokenom(provajder: "apple", idToken: t, nonce: nonce)
+            try await sesija.prijavaTokenom(provajder: "apple", idToken: t, nonce: nonce,
+                                            ime: c.fullName?.givenName, prezime: c.fullName?.familyName)
         } catch let e as ASAuthorizationError where e.code == .canceled {
             return
         } catch {
