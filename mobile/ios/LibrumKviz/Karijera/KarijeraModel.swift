@@ -109,6 +109,9 @@ enum Karijera {
         let zaposlenih: Int
         let botova: Int
         let zastita_do: String?
+        /// Vlasnik je već izabrao zaštitu od napada (3/5/7/10 dana) za ovo vlasništvo.
+        let zastita_izabrana: Bool?
+        let vlasnik_od: String?
         // Šef i mešavina pitanja (vlasnik podešava u svojoj firmi); stari odgovori bez polja = podrazumevano.
         let sef_tacno, sef_netacno, sef_ometanja, struka_udeo: Int?
         let sef_smeh, teza: Bool?
@@ -289,6 +292,11 @@ enum Karijera {
     }
     static func podesiPitanja(_ id: String, struka: Int, fokus: [String], udeo: [Int], teza: Bool) async throws -> FirmaDetalj {
         try await rpc("karijera_podesi_pitanja", ["p_firma": id, "p_struka": struka, "p_fokus": fokus, "p_fokus_udeo": udeo, "p_teza": teza])
+    }
+    /// Zaštita firme od napada (3, 5, 7 ili 10 dana od preuzimanja), jednom po vlasništvu.
+    static func izaberiZastitu(_ id: String, dana: Int) async throws -> FirmaDetalj {
+        let _: String = try await rpc("karijera_zastita", ["p_firma": id, "p_dana": dana])
+        return try await firma(id)
     }
     static func podesiSlobodne(_ id: String, dani: [Int]) async throws -> FirmaDetalj {
         try await rpc("karijera_podesi_slobodne", ["p_firma": id, "p_dani": dani])

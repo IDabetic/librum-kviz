@@ -26,6 +26,7 @@ struct FirmaView: View {
     @State private var sefList = false
     @State private var pitanjaList = false
     @State private var slobodniList = false
+    @State private var zastitaList = false
 
     var body: some View {
         ScrollView {
@@ -71,6 +72,11 @@ struct FirmaView: View {
         .overlay {
             if slobodniList, case .gotovo(let f) = firma {
                 SlobodniDaniList(dani: f.slobodni ?? []) { d in slobodniList = false; Task { await vlasnik { try await Karijera.podesiSlobodne(f.id, dani: d) } } } zatvori: { slobodniList = false }
+            }
+        }
+        .overlay {
+            if zastitaList, case .gotovo(let f) = firma {
+                ZastitaList(od: f.vlasnik_od.flatMap(Karijera.datum) ?? .now) { d in zastitaList = false; Task { await vlasnik { try await Karijera.izaberiZastitu(f.id, dana: d) } } } zatvori: { zastitaList = false }
             }
         }
         .overlay {
@@ -267,6 +273,13 @@ struct FirmaView: View {
                 Button { slobodniList = true } label: { RedPodesavanja(ikonica: "calendar", boja: .ljubicasta, naziv: "Slobodni dani", vrednost: Karijera.daniOpis(f.slobodni)) }
                 Divider().overlay(Color.kremTamnija).padding(.leading, 60)
                 Button { pitanjaList = true } label: { RedPodesavanja(ikonica: "square.stack.3d.up.fill", boja: .nebo, naziv: "Pitanja u firmi", vrednost: "struka \(f.struka_udeo ?? 60)%") }
+                Divider().overlay(Color.kremTamnija).padding(.leading, 60)
+                // Vlasnik bira jednom koliko dugo niko ne može da napadne firmu (vlasnik 05.11).
+                Button { if f.zastita_izabrana != true { zastitaList = true } } label: {
+                    RedPodesavanja(ikonica: "shield.lefthalf.filled", boja: .teal, naziv: "Zaštita od napada",
+                                   vrednost: (f.zastita_do.flatMap(Karijera.datum)).map { $0 > .now ? "do " + $0.formatted(.dateTime.day().month(.abbreviated).locale(.srpski)) : "istekla" } ?? "nema")
+                }
+                .disabled(f.zastita_izabrana == true)
             }
             .buttonStyle(.plain)
             .mirna()
@@ -914,6 +927,37 @@ struct SlobodniDaniList: View {
     }
 }
 
+/// Izbor zaštite od napada: 3, 5, 7 ili 10 dana od preuzimanja firme, bira se jednom.
+struct ZastitaList: View {
+    let od: Date
+    let izaberi: (Int) -> Void
+    let zatvori: () -> Void
+    var body: some View {
+        DonjiList(zatvori: zatvori) {
+            VStack(alignment: .leading, spacing: 12) {
+                Naslov(tekst: "Zaštita od napada", velicina: 26)
+                Text("Dok traje zaštita, niko ne može da izazove tvoju firmu na duel: imaš vremena da napuniš kasu i postaviš rekord. Biraš jednom; novi vlasnik bira ponovo.")
+                    .font(.tekst(14)).foregroundStyle(Color.sivaTekst).fixedSize(horizontal: false, vertical: true)
+                VStack(spacing: 0) {
+                    ForEach([3, 5, 7, 10], id: \.self) { d in
+                        let kraj = Calendar.current.date(byAdding: .day, value: d, to: od) ?? od
+                        Button { izaberi(d) } label: {
+                            HStack {
+                                Text("\(d) dana").font(.tekst(16, .bold)).foregroundStyle(Color.mastilo)
+                                Spacer()
+                                Text(kraj > .now ? "do " + kraj.formatted(.dateTime.day().month(.wide).locale(.srpski)) : "rok je prošao")
+                                    .font(.tekst(14)).foregroundStyle(Color.sivaTekst)
+                            }
+                            .padding(.vertical, 14).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain).disabled(kraj <= .now)
+                        if d != 10 { Divider() }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Radnja iz kase na tamnoj kartici: ikonica, naziv i cena ili razlog zašto ne može (ne bledi).
 struct KasaPlocica: View {

@@ -6,6 +6,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.RecordVoiceOver
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
@@ -90,7 +91,7 @@ private fun KOkvir(nazad: () -> Unit, poruka: String? = null, ocisti: () -> Unit
     }
 }
 
-private enum class List_ { NEMA, BOT, KLJUCNE, IME, PRIJAVA, SEF, PITANJA, SLOBODNI }
+private enum class List_ { NEMA, BOT, KLJUCNE, IME, PRIJAVA, SEF, PITANJA, SLOBODNI, ZASTITA }
 
 /** Firma: svima zgrada, rekord, asistenti, zaposleni; vlasniku i upravljanje (kasa, plata, ključne oblasti, šef, pitanja, slobodni dani…). */
 @Composable
@@ -138,6 +139,22 @@ fun FirmaEkran(firmaId: String, ja: String?, idi: (KEkran) -> Unit, nazad: () ->
                 zatvori = { list = List_.NEMA })
             List_.SEF -> SefList(f.sefNivo, { list = List_.NEMA }) { n -> list = List_.NEMA; vlasnik { Karijera.podesiSefa(f.id, n) } }
             List_.PITANJA -> PitanjaFirmeList(f, { list = List_.NEMA }) { s, fo, u, t -> list = List_.NEMA; vlasnik { Karijera.podesiPitanja(f.id, s, fo, u, t) } }
+            List_.ZASTITA -> DonjiList({ list = List_.NEMA }) {
+                Text("Zaštita od napada", style = naslov(26.sp))
+                Text("Dok traje zaštita, niko ne može da izazove tvoju firmu na duel: imaš vremena da napuniš kasu i postaviš rekord. Biraš jednom; novi vlasnik bira ponovo.",
+                    style = tekst(14.sp, boja = Boje.sivaTekst))
+                val od = f.vlasnik_od?.let { Karijera.datum(it) } ?: java.time.OffsetDateTime.now()
+                listOf(3, 5, 7, 10).forEach { d ->
+                    val kraj = od.plusDays(d.toLong())
+                    val moze = kraj.isAfter(java.time.OffsetDateTime.now())
+                    Row(Modifier.fillMaxWidth().clickable(enabled = moze) { list = List_.NEMA; vlasnik { Karijera.izaberiZastitu(f.id, d) } }.padding(vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text("$d dana", style = tekst(16.sp, FontWeight.Bold, if (moze) Boje.mastilo else Boje.sivaTekst), modifier = Modifier.weight(1f))
+                        Text(if (moze) "do " + kraj.format(java.time.format.DateTimeFormatter.ofPattern("d. MMMM", java.util.Locale.forLanguageTag("sr-Latn"))) else "rok je prošao",
+                            style = tekst(14.sp, boja = Boje.sivaTekst))
+                    }
+                }
+            }
             List_.SLOBODNI -> {
                 var dani by remember { mutableStateOf(f.slobodni ?: emptyList()) }
                 DonjiList({ list = List_.NEMA }) {
@@ -219,6 +236,12 @@ fun FirmaEkran(firmaId: String, ja: String?, idi: (KEkran) -> Unit, nazad: () ->
                 RedPodesavanja(androidx.compose.material.icons.Icons.Rounded.CalendarMonth, Boje.ljubicasta, "Slobodni dani", Karijera.daniOpis(f.slobodni)) { list = List_.SLOBODNI }
                 HorizontalDivider(color = Boje.kremTamnija, modifier = Modifier.padding(start = 58.dp))
                 RedPodesavanja(androidx.compose.material.icons.Icons.Rounded.Layers, Boje.nebo, "Pitanja u firmi", "struka ${f.struka_udeo ?: 60}%") { list = List_.PITANJA }
+                HorizontalDivider(color = Boje.kremTamnija, modifier = Modifier.padding(start = 58.dp))
+                val zastitaDo = f.zastita_do?.let { Karijera.datum(it) }
+                RedPodesavanja(androidx.compose.material.icons.Icons.Rounded.Shield, Boje.teal, "Zaštita od napada",
+                    zastitaDo?.let { if (it.isAfter(java.time.OffsetDateTime.now())) "do " + it.format(java.time.format.DateTimeFormatter.ofPattern("d. MMM", java.util.Locale.forLanguageTag("sr-Latn"))) else "istekla" } ?: "nema") {
+                    if (f.zastita_izabrana != true) list = List_.ZASTITA
+                }
             }
         }
         if (f.botovi.isNotEmpty()) {
