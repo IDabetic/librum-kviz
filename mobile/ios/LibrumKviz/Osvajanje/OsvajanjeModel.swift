@@ -88,6 +88,9 @@ final class OsvajanjeModel {
     /// Kad u špilu ostane manje od ovoliko pitanja, stiže novi paket (bitka troši do 5, potez do 5 bitaka).
     private static let pragDopune = 30
     private var botRadi = false
+    /// Raste kad čuvar prekine zaglavljen potez bota: stari zadatak bota tada ne sme da završi potez drugi put.
+    private var generacijaBota = 0
+    private var cuvar: Task<Void, Never>?
     /// Igrač je izašao iz partije (X): botovi staju, sat i zvuci se gase (vlasnik 04.11: posle izlaska su i dalje ratovali).
     private(set) var napusteno = false
 
@@ -1375,14 +1378,19 @@ final class OsvajanjeModel {
     private func potezBota() async {
         guard !botRadi, !napusteno else { return }
         botRadi = true
-        defer { botRadi = false }
+        let generacija = generacijaBota
+        pokreniCuvara()
+        defer { if generacija == generacijaBota { botRadi = false } }
+        var napada = 0
         stanje = stanje.snabdevanje(tacno: slucajno.sledeci() < stanje.tacnostBota).botRasporedi().botOdbrana().botIgraKarte().botTraziSavez()
             .botIzdaja().botNajaviPohod().botUltimatum().botPomazeSavezniku()
         try? await Task.sleep(for: pauzaBota)
         await sacekajPauzu()
-        while !napusteno, let napad = stanje.botSledeciNapad() {
+        while !napusteno, generacija == generacijaBota, napada < Self.najviseNapadaBota, let napad = stanje.botSledeciNapad() {
             await sacekajPauzu()
-            guard !napusteno else { break }
+            guard !napusteno, generacija == generacijaBota else { break }
+            napada += 1
+            let pre = (stanje.bitaka, stanje.oblasti)
             izabrana = napad.odakle
             Zvuk.pusti(.botNapada, jacina: 0.45)
             try? await Task.sleep(for: pauzaBota)
@@ -1445,17 +1453,47 @@ final class OsvajanjeModel {
                 udari(napad.odakle, napad.kuda, ishod.osvojeno)
             }
             if stanje.faza == .kraj { break }
+            // Napad koji pravila odbiju ne menja ništa: bot bi ga birao zauvek i partija bi stala („Zig je na potezu”, vlasnik 05.11).
+            if stanje.bitaka == pre.0 && stanje.oblasti == pre.1 { break }
             try? await Task.sleep(for: pauzaBota)
         }
+        guard generacija == generacijaBota else { return }
         izabrana = nil
         botRadi = false
         await sacekajPauzu()
-        guard !napusteno else { return }
+        guard !napusteno, generacija == generacijaBota else { return }
         // Pre kraja poteza bot prebacuje vojsku iz unutrašnjosti na ugroženu granicu.
         if stanje.faza == .napad { stanje = stanje.botUtvrdi() }
         let novo = stanje.zavrsiPotez()
         objavi(novo)
         pocniPotez(novo)
+    }
+
+    /// Najviše napada jednog bota u potezu (osigurač; pravi potez ih ima nekoliko).
+    static let najviseNapadaBota = 40
+
+    /// Čuvar poteza bota: ako se potez ne pomeri 30 s (bez pauze i otvorene bitke), potez se završava, da partija ne stane.
+    private func pokreniCuvara() {
+        cuvar?.cancel()
+        cuvar = Task { [weak self] in
+            var poslednji = ""; var isto = 0
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(10))
+                guard let self, !self.napusteno, self.stanje.faza != .kraj, !self.stanje.trenutni.covek, self.veza == nil else { return }
+                let otisak = "\(self.stanje.krug)-\(self.stanje.naPotezu)-\(self.stanje.bitaka)-\(self.stanje.faza)"
+                isto = (otisak == poslednji && !self.pauza && self.bitka == nil) ? isto + 1 : 0
+                poslednji = otisak
+                guard isto >= 3 else { continue }
+                print("Osvajač: potez bota zaglavljen (\(otisak)), završava se")
+                self.generacijaBota += 1
+                self.botRadi = false
+                self.izabrana = nil
+                let novo = self.stanje.zavrsiPotez()
+                self.objavi(novo)
+                self.pocniPotez(novo)
+                return
+            }
+        }
     }
 
     func javi(_ tekst: String) {
