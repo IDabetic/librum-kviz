@@ -149,6 +149,8 @@ private fun Aplikacija() {
     val trenutna by nav.currentBackStackEntryAsState()
     val ruta = trenutna?.destination?.route
     LaunchedEffect(nalog?.id) { sesija.ucitajNadimak() }
+    // Prisustvo za „Na mreži”: otkucaj na 30 s dok je aplikacija otvorena i igrač prijavljen.
+    LaunchedEffect(nalog?.id) { while (nalog != null) { club.librum.kviz.zajednica.Prisustvo.javi(sesija); kotlinx.coroutines.delay(30_000) } }
     // Push posle prijave: dozvola se traži jednom (Android 13+), pa token ide na server; odbijena dozvola = bez pusha.
     val dozvolaPusha = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { data ->
         if (data) club.librum.kviz.servisi.Push.prijavi(sesija)
@@ -196,6 +198,7 @@ private fun Aplikacija() {
                 composable("igre") { Pocetna(nalog?.nadimak) { nav.navigate(it) } }
                 composable("igraci") { IgraciEkran(sesija) { nav.navigate(it) } }
                 composable("igrac/{id}") { e -> ProfilIgracaEkran(sesija, e.arguments?.getString("id").orEmpty(), { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("namrezi") { club.librum.kviz.zajednica.NaMreziEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("igraci/trazi") { TraziIgraceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("sanduce") { SanduceEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("pravila") { club.librum.kviz.ui.PravilaIgaraEkran { nav.popBackStack() } }

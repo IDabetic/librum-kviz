@@ -239,7 +239,7 @@ struct ProfilIgracaView: View {
             let partija: Int?; let rekord: Int?; let max_pitanja: Int?; let niz: Int?; let zanr: String?
             let pobeda: Int?; let bodovi: Int?; let tacnih: Int?; let tacnost: Int?; let poraza: Int?; let nereseno: Int?
         }
-        struct Veb: Codable { let pro: VebIgra?; let book: VebIgra?; let vesanje: VebIgra?; let brzi: VebIgra?; let duel: VebIgra? }
+        struct Veb: Codable { let pro: VebIgra?; let book: VebIgra?; let vesanje: VebIgra?; let brzi: VebIgra?; let duel: VebIgra?; let kafana: VebIgra?; let teme: VebIgra? }
         struct Skoro: Codable { let igra: String; let poeni: Int?; let kad: String }
         var id: String?
         let nadimak: String

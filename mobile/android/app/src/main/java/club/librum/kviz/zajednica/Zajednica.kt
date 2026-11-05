@@ -37,6 +37,9 @@ import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.MoreHoriz
@@ -114,15 +117,19 @@ object Zajednica {
     fun nazivVrste(v: String) = vrste.firstOrNull { it.first == v }?.second ?: "Objava"
     fun ikonicaVrste(v: String): ImageVector = vrste.firstOrNull { it.first == v }?.third ?: Icons.Rounded.Notes
     val nazivIgre = mapOf("dnevni" to "Dnevni izazov", "osvajanje" to "Osvajač", "pro" to "PRO kviz", "book" to "Book kviz", "duel" to "Duel",
-        "slikari" to "Slikari", "brzi" to "Brzi kviz", "vesanje" to "Vešanje", "tema" to "Kviz po temi", "karijera" to "Karijerista")
+        "slikari" to "Slikari", "brzi" to "Brzi kviz", "vesanje" to "Vešanje", "tema" to "Kviz po temi", "karijera" to "Karijerista", "kafana" to "Kafanski kviz")
 
     private inline fun <reified T> citaj(s: String): T = Supabase.json.decodeFromString(s)
 
     suspend fun tok(s: Sesija, vrsta: String, pre: Long? = null): List<Objava> =
         citaj(Supabase.rpc("tok_objava", mapOf("p_vrsta" to vrsta, "p_pre" to pre, "p_broj" to 20), s.vazeciToken()))
     suspend fun koStaIgra(s: Sesija): List<Igra> = runCatching { citaj<List<Igra>>(Supabase.rpc("ko_sta_igra", mapOf("p_broj" to 20), s.vazeciToken())) }.getOrDefault(emptyList())
-    suspend fun objavi(s: Sesija, vrsta: String, tekst: String, igra: String?, poeni: Int?) {
-        Supabase.rpc("nova_objava", mapOf("p_vrsta" to vrsta, "p_tekst" to tekst, "p_igra" to igra, "p_poeni" to poeni), s.vazeciToken())
+    /** Poslednja partija za „Moj rezultat” (izvor r:<id> ili k:<id>); server iz izvora upisuje igru i poene. */
+    @Serializable data class MojRezultat(val izvor: String, val igra: String, val poeni: Int, val tacnih: Int? = null, val kad: String)
+    suspend fun mojiRezultati(s: Sesija): List<MojRezultat> =
+        runCatching { citaj<List<MojRezultat>>(Supabase.rpc("moji_poslednji_rezultati", mapOf("p_broj" to 15), s.vazeciToken())) }.getOrDefault(emptyList())
+    suspend fun objavi(s: Sesija, vrsta: String, tekst: String, igra: String?, rezultat: String?) {
+        Supabase.rpc("nova_objava", mapOf("p_vrsta" to vrsta, "p_tekst" to tekst, "p_igra" to igra, "p_rezultat" to rezultat), s.vazeciToken())
     }
     suspend fun srceObjavi(s: Sesija, id: Long): Srce? = runCatching { citaj<Srce>(Supabase.rpc("srce_objavi", mapOf("p_id" to id), s.vazeciToken())) }.getOrNull()
     suspend fun srceKomentaru(s: Sesija, id: Long): Srce? = runCatching { citaj<Srce>(Supabase.rpc("srce_komentaru", mapOf("p_id" to id), s.vazeciToken())) }.getOrNull()
@@ -176,6 +183,9 @@ fun IgraciEkran(sesija: Sesija, idi: (String) -> Unit) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Igrači", style = naslov(34.sp), modifier = Modifier.weight(1f))
+                    // Na mreži (vlasnik 05.11): svi igrači koji su sada u aplikaciji.
+                    KrugIkonica(Icons.Rounded.Sensors, "Igrači na mreži") { idi("namrezi") }
+                    Spacer(Modifier.width(10.dp))
                     KrugIkonica(Icons.Rounded.Search, "Nađi igrače") { idi("igraci/trazi") }
                     Spacer(Modifier.width(10.dp))
                     KrugIkonica(Icons.AutoMirrored.Rounded.Send, "Poruke") { idi("poruke") }
@@ -347,9 +357,11 @@ private fun NovaObjava(sesija: Sesija, zatvori: () -> Unit, objavljeno: () -> Un
     var vrsta by remember { mutableStateOf("poziv_duel") }
     var igra by remember { mutableStateOf("osvajanje") }
     var tekst by remember { mutableStateOf("") }
-    var poeni by remember { mutableStateOf("") }
+    var rezultati by remember { mutableStateOf<List<Zajednica.MojRezultat>?>(null) }
+    var izabran by remember { mutableStateOf<Zajednica.MojRezultat?>(null) }
     var greska by remember { mutableStateOf<String?>(null) }
     val opseg = rememberCoroutineScope()
+    LaunchedEffect(vrsta) { if (vrsta == "rezultat" && rezultati == null) Zajednica.mojiRezultati(sesija).also { rezultati = it; izabran = it.firstOrNull() } }
     val igre = listOf("osvajanje", "duel", "pro", "slikari", "book", "brzi", "vesanje", "dnevni")
     DonjiList(zatvori) {
         Text("Nova objava", style = naslov(24.sp))
@@ -368,16 +380,37 @@ private fun NovaObjava(sesija: Sesija, zatvori: () -> Unit, objavljeno: () -> Un
                 }
             }
         }
-        if (vrsta != "tekst") {
+        if (vrsta != "tekst" && vrsta != "rezultat") {
             Text("Igra", style = tekst(14.sp, FontWeight.SemiBold))
             Row(Modifier.horizontalScroll(rememberScrollState())) { Izbor(igre.map { Zajednica.nazivIgre[it] ?: it }, igre.indexOf(igra)) { igra = igre[it] } }
         }
-        if (vrsta == "rezultat") PoljeTeksta(poeni, "Poeni") { poeni = it.filter(Char::isDigit).take(6) }
+        // Stvarni rezultat iz poslednjih partija (vlasnik 05.11), poeni se ne kucaju.
+        if (vrsta == "rezultat") {
+            Text("Izaberi rezultat", style = tekst(14.sp, FontWeight.SemiBold))
+            val l = rezultati
+            when {
+                l == null -> CircularProgressIndicator(color = Boje.mastilo)
+                l.isEmpty() -> Text("Još nemaš odigranih partija. Odigraj jednu, pa se vrati da je podeliš.", style = tekst(14.sp, boja = Boje.sivaTekst))
+                else -> Column(Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(16.dp)).border(1.5.dp, Boje.kremTamnija, RoundedCornerShape(16.dp))) {
+                    l.forEach { r ->
+                        Row(Modifier.fillMaxWidth().clickable { izabran = r }.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Icon(if (izabran == r) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null, tint = if (izabran == r) Boje.teal else Boje.kremTamnija)
+                            Column(Modifier.weight(1f)) {
+                                Text(Zajednica.nazivIgre[r.igra] ?: r.igra, style = tekst(15.sp, FontWeight.SemiBold))
+                                Text(Zajednica.pre(r.kad) + (r.tacnih?.let { " · $it tačnih" } ?: ""), style = tekst(12.sp, boja = Boje.sivaTekst))
+                            }
+                            Text(Zajednica.broj(r.poeni), style = naslov(20.sp))
+                        }
+                    }
+                }
+            }
+        }
         PoljeTeksta(tekst, when (vrsta) { "poziv_duel" -> "Ko sme na duel iz geografije?"; "poziv_tim" -> "Tražim saigrača za Osvajača"; "rezultat" -> "Ovo mi je novi rekord!"; else -> "Šta ima novo?" }, visina = 110) { tekst = it.take(500) }
         greska?.let { Text(it, style = tekst(14.sp, FontWeight.SemiBold, Boje.crvena)) }
-        Dugme("Objavi", omoguceno = vrsta != "tekst" || tekst.isNotBlank()) {
+        Dugme("Objavi", omoguceno = (vrsta != "tekst" || tekst.isNotBlank()) && (vrsta != "rezultat" || izabran != null)) {
             opseg.launch {
-                runCatching { Zajednica.objavi(sesija, vrsta, tekst, if (vrsta == "tekst") null else igra, if (vrsta == "rezultat") poeni.toIntOrNull() else null) }
+                runCatching { Zajednica.objavi(sesija, vrsta, tekst, if (vrsta == "tekst" || vrsta == "rezultat") null else igra, if (vrsta == "rezultat") izabran?.izvor else null) }
                     .onSuccess { objavljeno(); zatvori() }.onFailure { greska = it.message }
             }
         }

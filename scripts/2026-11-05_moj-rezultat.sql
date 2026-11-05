@@ -62,3 +62,7 @@ begin
   returning id into novi;
   return novi;
 end $$;
+
+-- karijera_58: objava odmah posle runde Karijeriste (igra 'karijera' + poeni) proverava se u karijera_runde.
+--   elsif not exists (... rezultati_igara ...) and not (p_igra = 'karijera' and exists (select 1 from karijera_runde k
+--         where k.user_id = auth.uid() and k.poeni = p_poeni and k.kad > now() - interval '30 days')) then

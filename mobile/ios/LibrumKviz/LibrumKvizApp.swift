@@ -131,6 +131,11 @@ struct Koren: View {
                 try? await Task.sleep(for: .seconds(8))
             }
         }
+        // Prisustvo za „Na mreži”: otkucaj na 30 s dok je aplikacija otvorena i prijavljen igrač.
+        .task(id: sesija.korisnikId) {
+            guard sesija.prijavljen else { return }
+            while !Task.isCancelled { await Zajednica.javiPrisustvo(sesija); try? await Task.sleep(for: .seconds(30)) }
+        }
         // Brojači na karticama: na svakih 60 s dok je aplikacija otvorena (shortcut: bez push-a; posle Firebase-a stiže odmah).
         .task(id: sesija.korisnikId) {
             while !Task.isCancelled { await Brojaci.deljeni.osvezi(sesija); try? await Task.sleep(for: .seconds(60)) }

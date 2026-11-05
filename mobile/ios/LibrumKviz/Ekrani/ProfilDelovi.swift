@@ -116,6 +116,14 @@ struct VebIgreStatistika: View {
             l.append(.init(naziv: "Brzi kviz", ikonica: "timer", boja: .zuta, glavno: (g.rekord ?? 0).srpski, glavnoNaziv: "rekord",
                            ostalo: ["\(g.partija ?? 0) rundi", "\(g.tacnih ?? 0) tačnih", "tačnost \(g.tacnost ?? 0)%"]))
         }
+        if let g = veb.kafana, (g.partija ?? 0) > 0 {
+            l.append(.init(naziv: "Kafanski kviz", ikonica: "music.note", boja: .narandzasta, glavno: (g.rekord ?? 0).srpski, glavnoNaziv: "rekord",
+                           ostalo: ["\(g.partija ?? 0) partija", "do \(g.max_pitanja ?? 0). pitanja", "tačnost \(g.tacnost ?? 0)%"]))
+        }
+        if let g = veb.teme, (g.partija ?? 0) > 0 {
+            l.append(.init(naziv: "Kvizovi po temi", ikonica: "square.grid.2x2", boja: .teal, glavno: (g.rekord ?? 0).srpski, glavnoNaziv: "rekord",
+                           ostalo: ["\(g.partija ?? 0) partija"]))
+        }
         if let g = veb.duel, (g.pobeda ?? 0) + (g.poraza ?? 0) + (g.nereseno ?? 0) > 0 {
             l.append(.init(naziv: "Duel", ikonica: "figure.boxing", boja: .roze, glavno: "\(g.pobeda ?? 0)", glavnoNaziv: "pobeda",
                            ostalo: ["\(g.poraza ?? 0) poraza", "\(g.nereseno ?? 0) nerešeno"]))
@@ -148,7 +156,7 @@ struct VebIgreStatistika: View {
 struct SkorasnjaAktivnost: View {
     let skoro: [ProfilIgracaView.Profil.Skoro]
     private static let nazivi = ["pro": "PRO kviz", "book": "Book kviz", "vesanje": "Vešanje", "brzi": "Brzi kviz", "duel": "Duel",
-                                 "slikari": "Slikari", "osvajanje": "Osvajač", "tema": "Kviz po temi", "karijera": "Karijerista"]
+                                 "slikari": "Slikari", "osvajanje": "Osvajač", "tema": "Kviz po temi", "karijera": "Karijerista", "kafana": "Kafanski kviz"]
 
     var body: some View {
         if !skoro.isEmpty {

@@ -226,17 +226,17 @@ struct IgreKrugovi: View {
     }
 
     private static let boje: [String: Color] = ["pro": .ljubicasta, "book": .narandzasta, "vesanje": .nebo, "brzi": .zuta,
-                                                "duel": .roze, "slikari": .roze, "tema": .teal, "dnevni": .zuta]
+                                                "duel": .roze, "slikari": .roze, "tema": .teal, "dnevni": .zuta, "kafana": .narandzasta]
 
     private var krugovi: [Krug] {
         var l: [Krug] = []
         let veb = profil.veb
         let ids = Set(profil.igre.map(\.igra)).subtracting(["osvajanje", "karijera"])
-            .union([veb?.pro, veb?.book, veb?.vesanje, veb?.brzi].enumerated().compactMap { i, g in (g?.partija ?? 0) > 0 ? ["pro", "book", "vesanje", "brzi"][i] : nil })
+            .union([veb?.pro, veb?.book, veb?.vesanje, veb?.brzi, veb?.kafana, veb?.teme].enumerated().compactMap { i, g in (g?.partija ?? 0) > 0 ? ["pro", "book", "vesanje", "brzi", "kafana", "tema"][i] : nil })
             .union((veb?.duel).map { ($0.pobeda ?? 0) + ($0.poraza ?? 0) + ($0.nereseno ?? 0) > 0 ? ["duel"] : [] } ?? [])
-        for id in ["pro", "book", "slikari", "brzi", "vesanje", "duel", "dnevni", "tema"] where ids.contains(id) {
+        for id in ["pro", "book", "slikari", "brzi", "vesanje", "duel", "kafana", "dnevni", "tema"] where ids.contains(id) {
             let a = profil.igre.first { $0.igra == id }
-            let w: ProfilIgracaView.Profil.VebIgra? = switch id { case "pro": veb?.pro; case "book": veb?.book; case "vesanje": veb?.vesanje; case "brzi": veb?.brzi; case "duel": veb?.duel; default: nil }
+            let w: ProfilIgracaView.Profil.VebIgra? = switch id { case "pro": veb?.pro; case "book": veb?.book; case "vesanje": veb?.vesanje; case "brzi": veb?.brzi; case "duel": veb?.duel; case "kafana": veb?.kafana; case "tema": veb?.teme; default: nil }
             var redovi: [(String, String)] = []
             let partija = (a?.partija ?? 0) + (w?.partija ?? 0)
             if partija > 0 { redovi.append(("Partija", partija.srpski)) }

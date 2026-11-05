@@ -70,7 +70,8 @@ import kotlinx.serialization.Serializable
     @Serializable data class Pitanja(val odgovora: Int, val jedinstvenih: Int, val ponovljenih: Int, val tacnost: Int? = null, val prosek_ms: Int? = null)
     @Serializable data class VebIgra(val partija: Int? = null, val rekord: Int? = null, val max_pitanja: Int? = null, val niz: Int? = null, val zanr: String? = null,
                                      val pobeda: Int? = null, val bodovi: Int? = null, val tacnih: Int? = null, val tacnost: Int? = null, val poraza: Int? = null, val nereseno: Int? = null)
-    @Serializable data class Veb(val pro: VebIgra? = null, val book: VebIgra? = null, val vesanje: VebIgra? = null, val brzi: VebIgra? = null, val duel: VebIgra? = null)
+    @Serializable data class Veb(val pro: VebIgra? = null, val book: VebIgra? = null, val vesanje: VebIgra? = null, val brzi: VebIgra? = null, val duel: VebIgra? = null,
+        val kafana: VebIgra? = null, val teme: VebIgra? = null)
     @Serializable data class Skoro(val igra: String, val poeni: Int? = null, val kad: String)
     @Serializable data class NacinOsvajanja(val sam: Int = 0, val savez: Int = 0, val zajedno: Int = 0, val izdaje: Int? = null, val verno: Int? = null)
 }
