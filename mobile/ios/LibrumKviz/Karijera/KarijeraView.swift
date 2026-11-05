@@ -42,7 +42,7 @@ struct KarijeraView: View {
                 case .ucitava:
                     VStack(spacing: 12) { Skelet(visina: 40); Skelet(visina: 220, radijus: 24); Skelet(visina: 120, radijus: 24) }
                 case .greska(let p):
-                    StanjeEkrana(maskota: .lumi, naslov: "Karijera se nije učitala", tekst: p, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
+                    StanjeEkrana(maskota: .lumi, naslov: "Karijerista se nije učitao", tekst: p, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
                 case .gotovo(let s):
                     if s.pozicija == nil { IzborPozicijeView(pozicije: s.pozicije, talenti: s.katalog_talenata ?? []) { id, pol, t, p in Task { await izaberi(id, pol, t, p) } } }
                     else { sadrzaj(s) }
@@ -130,7 +130,7 @@ struct KarijeraView: View {
 
     private func zaglavlje(_ s: Karijera.Stanje) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Oznaka(tekst: "Karijera")
+            Oznaka(tekst: "Karijerista")
             // Titula i struka uvek u jednom redu (dugačke struke se smanje, ne lome).
             Text("\(Karijera.titule[min(s.titula, 3)]) · \(s.mojaPozicija?.naziv(pol: s.pol) ?? "")")
                 .font(.naslov(28)).tracking(-0.5).foregroundStyle(Color.mastilo).lineLimit(1).minimumScaleFactor(0.5)
@@ -289,7 +289,7 @@ struct KarijeraKartica: View {
         HStack(alignment: .bottom, spacing: 8) {
             VStack(alignment: .leading, spacing: 6) {
                 Spacer(minLength: 0)
-                Text("Karijera").font(.naslov(36)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.8)
+                Text("Karijerista").font(.naslov(36)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.8)
                 Text("Od Korporacije do svog nebodera: probni rad, asistenti i duel za tuđu firmu.")
                     .font(.tekst(13, .semibold)).foregroundStyle(.white.opacity(0.9))
                     .fixedSize(horizontal: false, vertical: true)
@@ -498,7 +498,7 @@ struct IzborPozicijeView: View {
             "Dobrodošl\(z ? "a" : "i") u Korporaciju. Od danas radiš kao \(pozicija.lowercased()), na probnom radu.",
             "Ovde radiš za drugog. Šef prati svaki tvoj odgovor: kad pogrešiš, čućeš da \(z ? "si mogla" : "si mogao") bolje, a kad pogodiš, pohvaliće te. Ni jedno ni drugo ne shvataj lično: svaka primedba je znak da se boriš još jače.",
             "Kad položiš probni rad, dobijaš mogućnost da otvoriš svoju firmu. Onda ti \(z ? "si šefica" : "si šef"): zapošljavaš asistente (botove), a pravi igrači, ljudi kao ti, dolaze da rade kod tebe. Pazi: ti isti igrači mogu da ti preotmu firmu u duelu.",
-            "Važno: niko te ovde neće zaista vređati. Šef je šala na račun kancelarije, a nijedan vlasnik firme kroz Karijeru ne može da ti piše niti da te vređa. Cilj je samo zabava i učenje kroz pitanja.",
+            "Važno: niko te ovde neće zaista vređati. Šef je šala na račun kancelarije, a nijedan vlasnik firme kroz Karijeristu ne može da ti piše niti da te vređa. Cilj je samo zabava i učenje kroz pitanja.",
         ]
         return VStack(alignment: .leading, spacing: 14) {
             ZStack(alignment: .bottom) {

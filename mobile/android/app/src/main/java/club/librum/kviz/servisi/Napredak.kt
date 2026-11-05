@@ -238,7 +238,7 @@ class Napredak(context: Context) {
             Bedz("igara100", "Kvizomanija", "Odigraj 100 kvizova.", 0xFFF4A33C),
             Bedz("duel1", "Prva pobeda", "Pobedi u duelu.", 0xFFFF5FA2),
             Bedz("duel10", "Šampion", "Pobedi u 10 duela.", 0xFFFFD84D),
-            Bedz("svet", "Svetski putnik", "Odigraj Osvajanje sveta.", 0xFF6EC3F2),
+            Bedz("svet", "Svetski putnik", "Odigraj Osvajača.", 0xFF6EC3F2),
             Bedz("knjige", "Knjiški moljac", "50 tačnih u Book kvizu.", 0xFFF4A33C),
             Bedz("nivo5", "Nivo 5", "Dostigni nivo 5.", 0xFF12907E),
             Bedz("nivo10", "Nivo 10", "Dostigni nivo 10.", 0xFF6D4BC9),

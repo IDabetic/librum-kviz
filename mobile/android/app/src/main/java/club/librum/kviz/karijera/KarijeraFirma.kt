@@ -177,7 +177,7 @@ fun FirmaEkran(firmaId: String, ja: String?, idi: (KEkran) -> Unit, nazad: () ->
         // Upravljanje (vlasnik 05.11: „lepši UI, sada kao AI”): runda, kasa u tri pločice, plata, zbijen spisak podešavanja; bez kartice u kartici.
         if (f.ja_vlasnik) {
             Dugme("Igraj rundu u svojoj firmi") { idi(KEkran.RundaE(f.kratko, botovi = f.botovi)) }
-            Text("Bar jedna runda dnevno. Održavanje ${Karijera.novac(f.odrzavanje.toDouble())} dnevno iz kase.", style = tekst(13.sp, boja = Boje.sivaTekst))
+            Text("Kasa se puni od tvojih rundi u firmi (do 10 plaćenih dnevno) i od rundi zaposlenih. Održavanje ${Karijera.novac(f.odrzavanje.toDouble())} dnevno iz kase.", style = tekst(13.sp, boja = Boje.sivaTekst))
             // Kasa kao tamna kartica (vlasnik 05.11: „pregledno, ne bledo”): iznos krupno, tri radnje; kad radnja ne može, piše zašto.
             val cena = f.cena_nadogradnje; val treba = f.treba_zaposlenih
             val kasa = f.kasa ?: 0.0
@@ -495,7 +495,7 @@ fun CVEkran(igrac: String?, nazad: () -> Unit) {
             }
         }
         if (c.dogadjaji.isNotEmpty()) {
-            Text("Karijera", style = naslov(22.sp))
+            Text("Karijerista", style = naslov(22.sp))
             Column(Modifier.fillMaxWidth().mirna().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 c.dogadjaji.forEach { d ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

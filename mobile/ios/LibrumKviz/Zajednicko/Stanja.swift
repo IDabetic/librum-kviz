@@ -218,6 +218,20 @@ struct DonjiList<Sadrzaj: View>: View {
     }
 }
 
+extension View {
+    /// Donji list ili dijalog preko CELOG ekrana i kad ga otvara red u listi: `.overlay` na kartici objave
+    /// zatvarao je list u okvir kartice (vlasnik 05.11: „loš popup, katastrofa”). Prikaz bez sistemske animacije
+    /// pokrivača, list ima svoj izgled.
+    ///
+    /// Primer: `.prekoEkrana(meni) { DonjiList(zatvori: { meni = false }) { … } }`
+    func prekoEkrana<Sadrzaj: View>(_ prikazano: Bool, @ViewBuilder _ sadrzaj: @escaping () -> Sadrzaj) -> some View {
+        fullScreenCover(isPresented: Binding(get: { prikazano }, set: { _ in })) {
+            sadrzaj().presentationBackground(.clear)
+        }
+        .transaction(value: prikazano) { $0.disablesAnimations = true }
+    }
+}
+
 /// Red liste podešavanja ili profila: ikonica, naziv, vrednost, strelica.
 struct RedListe: View {
     let ikonica: String

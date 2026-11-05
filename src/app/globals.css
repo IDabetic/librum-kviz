@@ -112,7 +112,7 @@ h4 { font-weight: 700; letter-spacing: -0.01em; }
 .animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-pop-in  { animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .maskota-lebdi   { animation: lebdi 4s ease-in-out infinite; }
-/* Natpis uz video Osvajanja uleće pri svakoj promeni. */
+/* Natpis uz video Osvajača uleće pri svakoj promeni. */
 @keyframes natpis { from { opacity: 0; transform: translateY(10px) rotate(-1deg); } to { opacity: 1; transform: none; } }
 .natpis-ulaz { animation: natpis .45s cubic-bezier(.2,.9,.3,1.2); }
 

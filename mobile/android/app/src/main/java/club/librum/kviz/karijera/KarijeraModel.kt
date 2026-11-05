@@ -123,7 +123,7 @@ object Karijera {
     // ---- Pozivi ----
 
     suspend inline fun <reified T> rpc(ime: String, parametri: Map<String, Any?> = emptyMap()): T {
-        val token = Supabase.tokenIgraca?.invoke() ?: throw Greska("Prijavi se da bi igrao Karijeru.")
+        val token = Supabase.tokenIgraca?.invoke() ?: throw Greska("Prijavi se da bi igrao Karijeristu.")
         return Supabase.json.decodeFromString(Supabase.rpc(ime, parametri, token))
     }
 

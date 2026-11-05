@@ -59,7 +59,7 @@ struct PozivView: View {
             Text("Kod sobe").font(.tekst(13, .bold)).foregroundStyle(Color.tinta)
             Text(s.kod ?? "").font(.system(size: 40, weight: .heavy, design: .monospaced)).tracking(6).foregroundStyle(Color.tinta)
                 .textSelection(.enabled)
-            ShareLink(item: "Igrajmo Osvajanje sveta u Librum kvizu! Kod sobe: \(s.kod ?? "") · \(link)") {
+            ShareLink(item: "Igrajmo Osvajača u Librum kvizu! Kod sobe: \(s.kod ?? "") · \(link)") {
                 Label("Pošalji poziv", systemImage: "square.and.arrow.up").font(.tekst(15, .bold)).foregroundStyle(Color.naMastilu)
                     .padding(.horizontal, 18).frame(height: 46).background(Color.mastilo, in: RoundedRectangle(cornerRadius: 14))
             }
@@ -211,7 +211,7 @@ struct PozivView: View {
     private func pozovi(_ p: Prijatelj) async {
         guard let s = soba, let kod = s.kod else { return }
         pozvani.insert(p.id)
-        try? await Zajednica.posaljiPoruku(sesija, za: p.id, tekst: "Pozivam te u Osvajanje sveta! Kod sobe: \(kod) · \(link)")
+        try? await Zajednica.posaljiPoruku(sesija, za: p.id, tekst: "Pozivam te da igramo Osvajača! Kod sobe: \(kod) · \(link)")
     }
 
     private func pokreni() async {

@@ -26,7 +26,7 @@ struct KorakObilaska {
 
     /// Redosled koraka; korak čiji deo ekrana trenutno ne postoji prikazuje se na sredini, bez strelice.
     static let svi: [KorakObilaska] = [
-        .init(cilj: nil, naslov: "Dobro došao u Osvajanje sveta", tekst: "Za minut ti pokazujem šta je gde. Uvek možeš da ugasiš vodič na X."),
+        .init(cilj: nil, naslov: "Dobro došao u Osvajača", tekst: "Za minut ti pokazujem šta je gde. Uvek možeš da ugasiš vodič na X."),
         .init(cilj: .igraci, naslov: "Igrači", tekst: "Ovde su svi igrači i njihovi poeni. Dodirni igrača: vidiš njegovu vojsku i moći, šalješ mu poruku ili predlažeš savez. Kruna je kapiten, lanac je saveznik, a podignuta ruka izdajnik."),
         .init(cilj: .krug, naslov: "Krugovi", tekst: "Koji je krug i koliko ih ima. Kad krugovi isteknu, pobeđuje najviše poena, osim ako neko pre toga ispuni tajnu misiju."),
         .init(cilj: .mapa, naslov: "Mapa", tekst: "Prvo dodirni \(Pravila.pocetnihDrzava) slobodnih država na svom kontinentu. Prva je tvoja prestonica (kruna). Zatim dodiruj svoje države da im dodaš vojsku. Mapa se uvećava prstima."),

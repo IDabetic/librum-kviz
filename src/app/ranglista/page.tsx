@@ -8,13 +8,13 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Rang lista',
-  description: 'Rang lista Librum kviza uživo: Osvajanje sveta, PRO kviz, Book kviz, Duel, Slikari, Brzi kviz, Vešanje i Dnevni izazov. Ista lista kao u aplikaciji.',
+  description: 'Rang lista Librum kviza uživo: Osvajač, PRO kviz, Book kviz, Duel, Slikari, Brzi kviz, Vešanje i Dnevni izazov. Ista lista kao u aplikaciji.',
   alternates: { canonical: '/ranglista' },
 }
 
 /** Igre i periodi kao u aplikaciji (RangListaView.swift); lista dolazi iz iste RPC rang_lista_igre. */
 const IGRE = [
-  ['osvajanje', 'Osvajanje'], ['pro', 'PRO'], ['book', 'Book'], ['duel', 'Duel'],
+  ['osvajanje', 'Osvajač'], ['pro', 'PRO'], ['book', 'Book'], ['duel', 'Duel'],
   ['slikari', 'Slikari'], ['brzi', 'Brzi'], ['vesanje', 'Vešanje'], ['dnevni', 'Dnevni'],
 ] as const
 const PERIODI = [['dan', 'Dan'], ['nedelja', 'Nedelja'], ['mesec', 'Mesec'], ['godina', 'Godina']] as const

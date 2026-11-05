@@ -239,7 +239,7 @@ enum Karijera {
 
     static func rpc<T: Decodable>(_ ime: String, _ p: [String: Any] = [:]) async throws -> T {
         let token = try await Sesija.trenutna?.vazeciToken()
-        guard let token else { throw Supabase.Greska(poruka: "Prijavi se da bi igrao Karijeru.") }
+        guard let token else { throw Supabase.Greska(poruka: "Prijavi se da bi igrao Karijeristu.") }
         return try await Supabase.deljeni.rpc(ime, p, token: token)
     }
 

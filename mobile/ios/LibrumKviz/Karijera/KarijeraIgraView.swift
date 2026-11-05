@@ -416,7 +416,7 @@ struct IshodRundeView: View {
                 // Podeli ili objavi u Igračima (vlasnik 05.11), isto kao ostale igre.
                 HStack {
                     Spacer()
-                    PodeliRezultat(igra: "Karijera", naslov: firma.ime, veliko: "\(ishod.tacnih)/10",
+                    PodeliRezultat(igra: "Karijerista", naslov: firma.ime, veliko: "\(ishod.tacnih)/10",
                                    detalji: ["\(ishod.poeni) poena", "+\(ishod.ugled) ugleda"], ilustracija: firma.slika, boja: .nebo,
                                    objava: (igra: "karijera", poeni: ishod.poeni))
                 }
@@ -646,7 +646,11 @@ struct PripremaRunde: View {
                 Text("\(broj)").font(.naslov(56)).foregroundStyle(Color.mastilo).contentTransition(.numericText(countsDown: true))
                     .animation(.snappy, value: broj).accessibilityLabel("Runda počinje za \(broj)")
             }
-            Image(slika).resizable().scaledToFill().frame(maxWidth: .infinity).frame(height: 210).clipped()
+            // Slika ide u overlay okvira fiksne visine: sama `scaledToFill` javlja svoju punu širinu i razvlačila je
+            // ceo ekran preko ivica telefona (vlasnik 05.11, tamna tema, odsečen tekst levo i desno).
+            Color.clear.frame(maxWidth: .infinity).frame(height: 210)
+                .overlay { Image(slika).resizable().scaledToFill() }
+                .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.mastilo, lineWidth: 2))
                 .accessibilityHidden(true)

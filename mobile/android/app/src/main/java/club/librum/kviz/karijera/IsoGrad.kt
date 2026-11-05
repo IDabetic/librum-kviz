@@ -134,7 +134,7 @@ fun IsoGrad(modifier: Modifier, firme: List<GradFirma>, moje: Set<String>, posao
     }
 
     Canvas(modifier
-        .semantics { contentDescription = "Grad Karijere, ${firme.size} firmi. Pretraga iznad mape vodi do firme." }
+        .semantics { contentDescription = "Grad Karijeriste, ${firme.size} firmi. Pretraga iznad mape vodi do firme." }
         .pointerInput(prsten) {
             detectTransformGestures { _, pan, zoom, _ ->
                 zum = (zum * zoom).coerceIn(0.25f, 2.2f)

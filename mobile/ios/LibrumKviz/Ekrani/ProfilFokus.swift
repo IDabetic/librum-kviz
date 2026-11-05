@@ -54,7 +54,7 @@ struct OsvajacKartica: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Oznaka(tekst: "Osvajanje sveta", boja: .white.opacity(0.8))
+                        Oznaka(tekst: "Osvajač", boja: .white.opacity(0.8))
                         Text("Osvajač").font(.naslov(30)).foregroundStyle(.white)
                         Text(titula(g?.partija ?? 0)).font(.tekst(14, .semibold)).foregroundStyle(.white.opacity(0.85))
                     }
@@ -167,7 +167,7 @@ struct KarijeraProfilKartica: View {
         let firma = c.firme.first
         return HStack(alignment: .bottom, spacing: 10) {
             VStack(alignment: .leading, spacing: 8) {
-                Oznaka(tekst: "Karijera", boja: .white.opacity(0.8))
+                Oznaka(tekst: "Karijerista", boja: .white.opacity(0.8))
                 Text("\(Karijera.titule[min(c.titula, 3)]) · \(c.pozicija ?? "")").font(.naslov(22)).foregroundStyle(.white)
                     .lineLimit(2).minimumScaleFactor(0.8)
                 Text(firma.map { "Vlasnik: \($0.ime)" } ?? c.posao.map { "Radi u: \($0.ime)" } ?? "Bez posla")
@@ -188,7 +188,7 @@ struct KarijeraProfilKartica: View {
     private var prazna: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Oznaka(tekst: "Karijera", boja: .white.opacity(0.8))
+                Oznaka(tekst: "Karijerista", boja: .white.opacity(0.8))
                 Text("Kreni u karijeru").font(.naslov(22)).foregroundStyle(.white)
                 Text("Probni rad, svoj office i duel za tuđu firmu.").font(.tekst(13, .semibold)).foregroundStyle(.white.opacity(0.85))
             }

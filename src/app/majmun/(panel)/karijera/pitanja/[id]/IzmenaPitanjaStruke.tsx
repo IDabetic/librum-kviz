@@ -71,7 +71,7 @@ export default function IzmenaPitanjaStruke({ pitanje, prijave }: { pitanje: Pit
 
         <label className="flex items-center gap-3 cursor-pointer text-[13px] font-medium" style={{ color: '#151515' }}>
           <input type="checkbox" checked={aktivno} onChange={e => setAktivno(e.target.checked)} className="w-5 h-5 accent-[#12907E]" />
-          Aktivno (igra ga daje u Karijeri)
+          Aktivno (igra ga daje u Karijeristi)
         </label>
 
         {poruka && <p className="text-[13px] font-semibold" role="status" style={{ color: poruka.ok ? '#0E6F61' : '#C42B4F' }}>{poruka.tekst}</p>}

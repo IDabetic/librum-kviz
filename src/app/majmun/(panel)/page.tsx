@@ -56,7 +56,7 @@ export default async function AdminDashboard() {
     supabase.from('question_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
   ])
 
-  // Aplikacija, Karijera, Osvajanje i padovi (tabele nisu čitljive uredniku direktno, zato RPC).
+  // Aplikacija, Karijerista, Osvajač i padovi (tabele nisu čitljive uredniku direktno, zato RPC).
   const { data: pregledApp } = await supabase.rpc('admin_pregled')
   const pa = (pregledApp ?? {}) as Record<string, number>
 
@@ -137,8 +137,8 @@ export default async function AdminDashboard() {
       {/* ── Aplikacija (iOS i Android) ───────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Link href="/majmun/aktivnost"><Kpi Icon={IconTime} label="Partija u aplikaciji" value={fmtN(pa.app_partija ?? 0)} sub={`+${pa.app_danas ?? 0} danas`} bg="#DFF3EE" fg="#0E6F61" /></Link>
-        <Link href="/majmun/karijera"><Kpi Icon={IconTrophy} label="Karijera runde" value={fmtN(pa.karijera_rundi ?? 0)} sub={`+${pa.karijera_danas ?? 0} danas · ${pa.karijera_igraca ?? 0} igrača · ${pa.firmi_igraca ?? 0} firmi${pa.prijava_imena ? ` · ${pa.prijava_imena} prijava imena` : ''}`} bg="#FFF3C4" fg="#8A6A12" /></Link>
-        <Link href="/majmun/osvajanje"><Kpi Icon={IconSwords} label="Osvajanje sobe" value={fmtN(pa.osvajanje_soba ?? 0)} sub={`${pa.osvajanje_u_toku ?? 0} sa potezom u 24 h`} bg="#E7E1D0" fg="#151515" /></Link>
+        <Link href="/majmun/karijera"><Kpi Icon={IconTrophy} label="Karijerista runde" value={fmtN(pa.karijera_rundi ?? 0)} sub={`+${pa.karijera_danas ?? 0} danas · ${pa.karijera_igraca ?? 0} igrača · ${pa.firmi_igraca ?? 0} firmi${pa.prijava_imena ? ` · ${pa.prijava_imena} prijava imena` : ''}`} bg="#FFF3C4" fg="#8A6A12" /></Link>
+        <Link href="/majmun/osvajanje"><Kpi Icon={IconSwords} label="Osvajač sobe" value={fmtN(pa.osvajanje_soba ?? 0)} sub={`${pa.osvajanje_u_toku ?? 0} sa potezom u 24 h`} bg="#E7E1D0" fg="#151515" /></Link>
         <Link href="/majmun/padovi"><Kpi Icon={IconHint} label="Padovi aplikacije" value={fmtN(pa.padova_7d ?? 0)} sub="poslednjih 7 dana" bg="#FFE3EA" fg="#C42B4F" /></Link>
         <Link href="/majmun/sumnjivo"><Kpi Icon={IconUsers} label="Sumnjivi igrači" value={fmtN(pa.sumnjivih ?? 0)} sub="jake sumnje, 30 dana" bg="#FFE3EA" fg="#C42B4F" /></Link>
       </div>

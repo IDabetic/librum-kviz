@@ -266,7 +266,7 @@ final class Napredak {
         Bedz(id: "igara100", naziv: "Kvizomanija", opis: "Odigraj 100 kvizova.", ikonica: "trophy.fill", boja: 0xF4A33C),
         Bedz(id: "duel1", naziv: "Prva pobeda", opis: "Pobedi u duelu.", ikonica: "person.2.fill", boja: 0xFF5FA2),
         Bedz(id: "duel10", naziv: "Šampion", opis: "Pobedi u 10 duela.", ikonica: "medal.fill", boja: 0xFFD84D),
-        Bedz(id: "svet", naziv: "Svetski putnik", opis: "Odigraj Osvajanje sveta.", ikonica: "globe.europe.africa.fill", boja: 0x6EC3F2),
+        Bedz(id: "svet", naziv: "Svetski putnik", opis: "Odigraj Osvajača.", ikonica: "globe.europe.africa.fill", boja: 0x6EC3F2),
         Bedz(id: "knjige", naziv: "Knjiški moljac", opis: "50 tačnih u Book kvizu.", ikonica: "book.fill", boja: 0xF4A33C),
         Bedz(id: "nivo5", naziv: "Nivo 5", opis: "Dostigni nivo 5.", ikonica: "chart.line.uptrend.xyaxis", boja: 0x12907E),
         Bedz(id: "nivo10", naziv: "Nivo 10", opis: "Dostigni nivo 10.", ikonica: "sparkles", boja: 0x6D4BC9),

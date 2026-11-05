@@ -167,7 +167,7 @@ fun PozivEkran(sesija: Sesija, postavka: OsvajanjePostavka?, kod: String?, izadj
                         Text(s.kod.orEmpty(), style = naslov(40.sp, Boje.tinta).copy(fontFamily = FontFamily.Monospace, letterSpacing = 6.sp))
                         Box(Modifier.size(52.dp, 46.dp).background(Boje.tinta, RoundedCornerShape(14.dp)).clickable {
                             kontekst.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
-                                .putExtra(Intent.EXTRA_TEXT, "Igrajmo Osvajanje sveta u Librum kvizu! Kod sobe: ${s.kod} · $link"), null))
+                                .putExtra(Intent.EXTRA_TEXT, "Igrajmo Osvajača u Librum kvizu! Kod sobe: ${s.kod} · $link"), null))
                         }.semantics { contentDescription = "Pošalji poziv" }, contentAlignment = Alignment.Center) { Icon(Icons.Rounded.Share, null, tint = Boje.zuta) }
                     }
                     Text("Za stolom ${s.mesta.size} od ${s.velicina}", style = tekst(16.sp, FontWeight.Bold))
@@ -198,7 +198,7 @@ fun PozivEkran(sesija: Sesija, postavka: OsvajanjePostavka?, kod: String?, izadj
                                 Text(if (poslato) "Pozvan" else "Pozovi", style = tekst(14.sp, FontWeight.Bold, if (poslato) Boje.sivaTekst else Boje.teal),
                                     modifier = Modifier.clickable(enabled = !poslato) {
                                         pozvani = pozvani + p.id
-                                        opseg.launch { runCatching { Zajednica.posaljiPoruku(sesija, p.id, "Pozivam te u Osvajanje sveta! Kod sobe: ${s.kod} · $link") } }
+                                        opseg.launch { runCatching { Zajednica.posaljiPoruku(sesija, p.id, "Pozivam te da igramo Osvajača! Kod sobe: ${s.kod} · $link") } }
                                     })
                             }
                         }

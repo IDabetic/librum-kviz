@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 
 /**
- * Snimak prave runde Karijere sa telefona (iPhone 17 Pro Max simulator, demo nalog, 05.11.2026): grad, firma,
+ * Snimak prave runde Karijeriste sa telefona (iPhone 17 Pro Max simulator, demo nalog, 05.11.2026): grad, firma,
  * runda sa 50:50 i ishod. Natpis prati video po sekundama; muzika je Karijerina (`karijera_korporacija`) i pali se dodirom.
  * Snimak: public/video/karijera-telefon.mp4 (720×1478).
  *

@@ -28,8 +28,8 @@ type Profile = {
 const NAV = [
   { label: 'Dashboard',      href: '/majmun',                Icon: IconHome },
   { label: 'Aktivnost',      href: '/majmun/aktivnost',      Icon: IconTime,     hint: 'sve partije' },
-  { label: 'Karijera',       href: '/majmun/karijera',       Icon: IconTrophy,   hint: 'firme • pitanja' },
-  { label: 'Osvajanje',      href: '/majmun/osvajanje',      Icon: IconSwords,   hint: 'sobe' },
+  { label: 'Karijerista',       href: '/majmun/karijera',       Icon: IconTrophy,   hint: 'firme • pitanja' },
+  { label: 'Osvajač',      href: '/majmun/osvajanje',      Icon: IconSwords,   hint: 'sobe' },
   { label: 'Sumnjivo',       href: '/majmun/sumnjivo',       Icon: IconEye,      hint: 'varanje' },
   { label: 'Pitanja',        href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
   { label: 'Brzi kviz',      href: '/majmun/brzi-kviz',      Icon: IconTime,     hint: 'isti pool kao PRO' },

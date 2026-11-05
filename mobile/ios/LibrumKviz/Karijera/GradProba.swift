@@ -36,7 +36,7 @@ struct GradProba: View {
         .background(Color(hex: 0x9FD3EE))
         .gesture(MagnifyGesture().updating($zumGest) { v, s, _ in s = v.magnification }.onEnded { zum = min(1.6, max(0.4, zum * $0.magnification)) })
         .overlay(alignment: .top) {
-            Text("Grad Karijere · predlog").font(.tekst(14, .bold)).padding(.horizontal, 14).padding(.vertical, 8)
+            Text("Grad Karijeriste · predlog").font(.tekst(14, .bold)).padding(.horizontal, 14).padding(.vertical, 8)
                 .background(Color.kartica, in: RoundedRectangle(cornerRadius: 12)).padding(.top, 8)
         }
     }

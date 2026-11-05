@@ -438,7 +438,7 @@ private fun PrviDan(pozicija: String, z: Boolean, prijava: () -> Unit) {
     Text("Dobrodošl${if (z) "a" else "i"} u Korporaciju. Od danas radiš kao ${pozicija.lowercase()}, na probnom radu.", style = tekst(16.sp))
     Text("Ovde radiš za drugog. Šef prati svaki tvoj odgovor: kad pogrešiš, čućeš da ${if (z) "si mogla" else "si mogao"} bolje, a kad pogodiš, pohvaliće te. Ni jedno ni drugo ne shvataj lično: svaka primedba je znak da se boriš još jače.", style = tekst(16.sp))
     Text("Kad položiš probni rad, dobijaš mogućnost da otvoriš svoju firmu. Onda ti ${if (z) "si šefica" else "si šef"}: zapošljavaš asistente (botove), a pravi igrači, ljudi kao ti, dolaze da rade kod tebe. Pazi: ti isti igrači mogu da ti preotmu firmu u duelu.", style = tekst(16.sp))
-    Text("Važno: niko te ovde neće zaista vređati. Šef je šala na račun kancelarije, a nijedan vlasnik firme kroz Karijeru ne može da ti piše niti da te vređa. Cilj je samo zabava i učenje kroz pitanja.",
+    Text("Važno: niko te ovde neće zaista vređati. Šef je šala na račun kancelarije, a nijedan vlasnik firme kroz Karijeristu ne može da ti piše niti da te vređa. Cilj je samo zabava i učenje kroz pitanja.",
         style = tekst(16.sp, FontWeight.Bold), modifier = Modifier.fillMaxWidth().background(Boje.tealSvetla, RoundedCornerShape(16.dp)).padding(14.dp))
     Dugme("Prijavljujem se za posao", vrsta = VrstaDugmeta.ZUTO) { prijava() }
 }
@@ -449,7 +449,7 @@ fun KarijeraKarticaPocetna(otvori: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(250.dp).pop(KarijeraBoje.plava).clickable(role = Role.Button, onClick = otvori).padding(start = 22.dp, end = 14.dp, bottom = 20.dp),
         verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Karijera", style = naslov(36.sp, Color.White))
+            Text("Karijerista", style = naslov(36.sp, Color.White))
             Text("Od Korporacije do svog nebodera: probni rad, asistenti i duel za tuđu firmu.", style = tekst(13.sp, FontWeight.SemiBold, Color.White.copy(alpha = 0.9f)))
         }
         KSlika("karijera_zgrada_5_1", Modifier.width(110.dp).padding(top = 14.dp))

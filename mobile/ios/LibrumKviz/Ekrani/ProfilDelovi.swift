@@ -148,7 +148,7 @@ struct VebIgreStatistika: View {
 struct SkorasnjaAktivnost: View {
     let skoro: [ProfilIgracaView.Profil.Skoro]
     private static let nazivi = ["pro": "PRO kviz", "book": "Book kviz", "vesanje": "Vešanje", "brzi": "Brzi kviz", "duel": "Duel",
-                                 "slikari": "Slikari", "osvajanje": "Osvajanje", "tema": "Kviz po temi", "karijera": "Karijera"]
+                                 "slikari": "Slikari", "osvajanje": "Osvajač", "tema": "Kviz po temi", "karijera": "Karijerista"]
 
     var body: some View {
         if !skoro.isEmpty {

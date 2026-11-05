@@ -13,7 +13,7 @@ import { ProdavniceIkonice } from './Prodavnice'
  * @example <Header />
  */
 const VEZE = [
-  { href: '/#osvajanje', label: 'Osvajanje sveta' },
+  { href: '/#osvajanje', label: 'Osvajač' },
   { href: '/#igre', label: 'Igre' },
   { href: '/ranglista', label: 'Rang lista' },
 ]

@@ -771,7 +771,7 @@ struct OsvajanjeIgraView: View {
                         // Vlasnik 03.11: posle partije igrač ide na početak, ne korak nazad (u čekaonicu).
                         Button("Početak") { zatvori(); NotificationCenter.default.post(name: .naPocetak, object: nil) }.buttonStyle(.sekundarno)
                         if let ja = st.igraci.first(where: \.covek) {
-                            PodeliRezultat(igra: "Osvajanje sveta", naslov: pobednik.covek ? "Svet je moj!" : "Osvajanje sveta",
+                            PodeliRezultat(igra: "Osvajač", naslov: pobednik.covek ? "Svet je moj!" : "Osvajač",
                                            veliko: "\(st.oblastiIgraca(ja.id).count) država", detalji: ["\(st.poeni(ja.id)) poena"],
                                            ilustracija: "Igra_osvajanje", boja: .teal, objava: ("osvajanje", st.poeni(ja.id)))
                         }

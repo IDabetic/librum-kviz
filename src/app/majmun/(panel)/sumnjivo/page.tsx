@@ -13,7 +13,7 @@ const JACINA: Record<number, { naziv: string; boja: string }> = {
 }
 const PERIODI = [7, 30, 90]
 
-/** Nadzor varanja: igrači sa razlogom sumnje (brzina, iskakanje, Karijera, isti IP, dueli, krug praćenja), grupisano po igraču. */
+/** Nadzor varanja: igrači sa razlogom sumnje (brzina, iskakanje, Karijerista, isti IP, dueli, krug praćenja), grupisano po igraču. */
 export default async function SumnjivoPage({ searchParams }: { searchParams: Promise<{ dana?: string; sve?: string }> }) {
   const sp = await searchParams
   const dana = PERIODI.includes(Number(sp.dana)) ? Number(sp.dana) : 30
@@ -44,7 +44,7 @@ export default async function SumnjivoPage({ searchParams }: { searchParams: Pro
       <div>
         <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Sumnjivo</h1>
         <p className="text-[13px] mt-1 max-w-3xl" style={{ color: '#6F6C66' }}>
-          Igrači čije partije izgledaju kao varanje. Karijeru meri server sam (pravo trajanje runde i izdata pitanja); prebrza runda
+          Igrači čije partije izgledaju kao varanje. Karijeristu meri server sam (pravo trajanje runde i izdata pitanja); prebrza runda
           automatski gubi dodatak za brzinu. Ostalo su znaci za pregled, ne dokaz: isti IP može biti ista kuća ili mobilna mreža.
         </p>
       </div>

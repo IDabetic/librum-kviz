@@ -12,8 +12,8 @@ enum KarijeraVodic {
 
     /// Strane 0–1 idu pre izbora pola, pa nemaju {muški|ženski} oblike.
     static let strane: [Strana] = [
-        .init(id: 0, naslov: "Šta je Karijera", slika: "Karijera_Korporacija_1", pasusi: [
-            "Karijera je igra znanja i strategije u kojoj igraš protiv pravih ljudi, ne protiv računara. Počinješ kao junior u Korporaciji, a cilj je tvoja firma: od garaže do nebodera.",
+        .init(id: 0, naslov: "Šta je Karijerista", slika: "Karijera_Korporacija_1", pasusi: [
+            "Karijerista je igra znanja i strategije u kojoj igraš protiv pravih ljudi, ne protiv računara. Počinješ kao junior u Korporaciji, a cilj je tvoja firma: od garaže do nebodera.",
             "Svaka runda je 10 pitanja po 20 sekundi. Tačni odgovori donose novac, ugled i stručnost.",
             "Novac kupuje firmu i asistente, ugled donosi titulu (junior, senior, menadžer, direktor), a stručnost pokazuje u čemu si najjači. Sve to drugi igrači vide u tvom CV-u.",
         ]),

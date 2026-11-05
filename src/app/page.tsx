@@ -12,8 +12,8 @@ const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
   mainEntity: [
-    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna aplikacija sa igrama znanja na srpskom, za iPhone i Android. Glavna igra je Osvajanje sveta, a tu je još šest igara: PRO kviz, Book kviz, Trivia duel, Slikari, Vešanje i Brzi kviz.' } },
-    { '@type': 'Question', name: 'Kako se igra Osvajanje sveta?', acceptedAnswer: { '@type': 'Answer', text: 'Mapa ima 171 državu. Na početku poteza odgovaraš na pitanje i dobijaš vojske, pa napadaš susedne države; svaka bitka je jedno pitanje. Preko mora se ide samo morskim putevima. Ceo region donosi bonus vojske, a pobeđuje ko na kraju ima najviše poena.' } },
+    { '@type': 'Question', name: 'Šta je Librum kviz?', acceptedAnswer: { '@type': 'Answer', text: 'Librum kviz je besplatna aplikacija sa igrama znanja na srpskom, za iPhone i Android. Glavna igra je Osvajač, a tu je još šest igara: PRO kviz, Book kviz, Trivia duel, Slikari, Vešanje i Brzi kviz.' } },
+    { '@type': 'Question', name: 'Kako se igra Osvajač?', acceptedAnswer: { '@type': 'Answer', text: 'Mapa ima 171 državu. Na početku poteza odgovaraš na pitanje i dobijaš vojske, pa napadaš susedne države; svaka bitka je jedno pitanje. Preko mora se ide samo morskim putevima. Ceo region donosi bonus vojske, a pobeđuje ko na kraju ima najviše poena.' } },
     { '@type': 'Question', name: 'Da li je Librum kviz besplatan?', acceptedAnswer: { '@type': 'Answer', text: 'Jeste — aplikacija i sve igre su besplatne. Nalog ti treba samo da bi se rezultati upisivali na rang listu; isti nalog važi i na sajtu.' } },
     { '@type': 'Question', name: 'Kako se igra PRO kviz?', acceptedAnswer: { '@type': 'Answer', text: 'PRO kviz je survival igra. Počinješ sa 10 života, svaki tačan odgovor donosi bodove i gradi kombo niz, a svaka greška skida jedan život. Igra traje dok imaš života.' } },
     { '@type': 'Question', name: 'Mogu li da igram protiv prijatelja?', acceptedAnswer: { '@type': 'Answer', text: 'Možeš. U aplikaciji: Trivia duel je igra za dva igrača — pokreneš sobu, pošalješ kod prijatelju i odmerite znanje na istim pitanjima u realnom vremenu.' } },
@@ -24,7 +24,7 @@ const faqSchema = {
 type RedRanga = { mesto: number; user_id: string; nadimak: string | null; avatar: string | null; poeni: number; partija: number }
 type BrojeviPitanja = { kviz: number; knjige: number; kafana: number }
 
-/** Ista rang lista kao u aplikaciji (RPC rang_lista_igre): Osvajanje sveta ove nedelje. */
+/** Ista rang lista kao u aplikaciji (RPC rang_lista_igre): Osvajač ove nedelje. */
 const MESTA_NA_LISTI = 10
 
 const IGRE = [
@@ -61,7 +61,7 @@ export default async function Home() {
       <Header />
 
       <main className="flex-1">
-        {/* Osvajanje sveta: snimak prave partije preko celog ekrana, natpis i zvuk */}
+        {/* Osvajač: snimak prave partije preko celog ekrana, natpis i zvuk */}
         <section id="osvajanje" style={{ background: 'radial-gradient(120% 90% at 70% 0%, #1B5E54 0%, #0E3B34 45%, #12110F 100%)', color: '#F3F0E6' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-16">
             <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-end">
@@ -98,9 +98,9 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Šta sve može Osvajanje */}
+        {/* Šta sve može Osvajač */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
-          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Šta sve ima u Osvajanju</h2>
+          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Šta sve ima u Osvajaču</h2>
           <ul className="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {MOGUCNOSTI.map(([n, t]) => (
               <li key={n} className="card-soft p-6">

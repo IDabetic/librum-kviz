@@ -17,7 +17,7 @@ type Igrac = {
 
 const NASLOV = { color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }
 
-/** Karijera: firme (vlasnik, nivo, kasa, prijave imena) i igrači; pitanja struka su na posebnoj strani. */
+/** Karijerista: firme (vlasnik, nivo, kasa, prijave imena) i igrači; pitanja struka su na posebnoj strani. */
 export default async function KarijeraPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab = 'firme' } = await searchParams
   const supabase = await createClient()
@@ -41,7 +41,7 @@ export default async function KarijeraPage({ searchParams }: { searchParams: Pro
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-black tracking-tight" style={NASLOV}>Karijera</h1>
+          <h1 className="font-black tracking-tight" style={NASLOV}>Karijerista</h1>
           <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
             {otvorene.length} otvorenih firmi · {otvorene.filter(f => f.vlasnik).length} u vlasništvu igrača · {igraci.length} igrača · {rundiDanas} rundi danas
             {prijavljenih > 0 && <strong style={{ color: '#C42B4F' }}> · {prijavljenih} prijavljenih imena</strong>}
@@ -53,7 +53,7 @@ export default async function KarijeraPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      <nav className="flex gap-6 border-b" style={{ borderColor: '#E7E1D0' }} aria-label="Delovi Karijere">
+      <nav className="flex gap-6 border-b" style={{ borderColor: '#E7E1D0' }} aria-label="Delovi Karijeriste">
         {[{ id: 'firme', naziv: `Firme (${firme.length})` }, { id: 'igraci', naziv: `Igrači (${igraci.length})` }].map(t => (
           <Link key={t.id} href={`/majmun/karijera?tab=${t.id}`}
             className="pb-2.5 text-[14px] font-bold -mb-px border-b-2"
@@ -64,10 +64,10 @@ export default async function KarijeraPage({ searchParams }: { searchParams: Pro
       </nav>
 
       {greska ? (
-        <div className="card-soft p-5 text-[14px]" style={{ color: '#C42B4F' }}>Karijera nije učitana: {greska.message}</div>
+        <div className="card-soft p-5 text-[14px]" style={{ color: '#C42B4F' }}>Karijerista nije učitan: {greska.message}</div>
       ) : tab === 'igraci' ? (
         igraci.length === 0 ? (
-          <div className="card-soft p-8 text-center text-[14px]" style={{ color: '#6F6C66' }}>Još niko nije počeo Karijeru.</div>
+          <div className="card-soft p-8 text-center text-[14px]" style={{ color: '#6F6C66' }}>Još niko nije počeo Karijeristu.</div>
         ) : (
           <div className="card-soft overflow-x-auto">
             <table className="w-full text-[13px]">
