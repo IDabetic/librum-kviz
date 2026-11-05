@@ -387,6 +387,30 @@ enum KarijeraMuzika {
         let seme = id.unicodeScalars.reduce(0) { ($0 * 31 + Int($1.value)) % 997 }
         return mojaFirma[(danBroj + seme) % mojaFirma.count]
     }
+    /// Džez numere koje vlasnik bira u svojoj firmi (vlasnik 05.11, iz kupljenih paketa). „auto” = svakog dana druga.
+    static let izbor: [(kljuc: String, naziv: String, vrsta: Zvuk.Vrsta?)] = [
+        ("auto", "Svakog dana druga", nil),
+        (Zvuk.Vrsta.karijeraFirma.rawValue, "Soul džez bar", .karijeraFirma),
+        (Zvuk.Vrsta.karijeraFirma2.rawValue, "Kancelarijski džez", .karijeraFirma2),
+        (Zvuk.Vrsta.karijeraFirma3.rawValue, "Večernji džez", .karijeraFirma3),
+        (Zvuk.Vrsta.karijeraFirma4.rawValue, "Lagani džez", .karijeraFirma4),
+        (Zvuk.Vrsta.karijeraKorporacija.rawValue, "Džez klavir", .karijeraKorporacija),
+        (Zvuk.Vrsta.karijeraPosao.rawValue, "Džez valcer", .karijeraPosao),
+        (Zvuk.Vrsta.karijeraProbniKraj.rawValue, "Brzi džez", .karijeraProbniKraj),
+        ("tisina", "Bez muzike", nil),
+    ]
+    static var izabrana: String {
+        get { UserDefaults.standard.string(forKey: "karijera.muzikaFirme") ?? "auto" }
+        set { UserDefaults.standard.set(newValue, forKey: "karijera.muzikaFirme") }
+    }
+    /// Muzika runde u mojoj firmi po izboru vlasnika; nil = tišina.
+    static func mojaFirmaIzbor(_ id: String) -> Zvuk.Vrsta? {
+        switch izabrana {
+        case "auto": return zaMojuFirmu(id)
+        case "tisina": return nil
+        default: return Zvuk.Vrsta(rawValue: izabrana) ?? zaMojuFirmu(id)
+        }
+    }
     static func pusti(_ v: Zvuk.Vrsta, jacina: Float = 0.3) {
         petlje.filter { $0 != v }.forEach(Zvuk.stani)
         Zvuk.pusti(v, jacina: jacina, ponavljaj: true)

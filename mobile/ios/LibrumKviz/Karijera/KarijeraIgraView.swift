@@ -295,6 +295,8 @@ struct KarijeraRundaView: View {
     @State private var tracSlika = "Karijera_Trac_1"
     /// Potvrda izlaska usred runde (vlasnik 05.11: napuštena runda = 0 tačnih).
     @State private var izlaz = false
+    @State private var muzikaList = false
+    @State private var izabranaMuzika = KarijeraMuzika.izabrana
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -306,6 +308,8 @@ struct KarijeraRundaView: View {
                         .font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst).lineLimit(1).minimumScaleFactor(0.8)
                 }
                 Spacer()
+                // Svoja firma: vlasnik bira muziku runde gore desno (vlasnik 05.11).
+                if mojaFirma { KrugDugme(ikonica: "music.note", opis: "Muzika") { muzikaList = true } }
             }
             switch faza {
             case .ucitava:
@@ -336,8 +340,37 @@ struct KarijeraRundaView: View {
                         potvrdi: { izlaz = false; Task { await predaj(pitanja); zavrseno(); nazad() } }, zatvori: { izlaz = false })
             }
         }
+        .overlay {
+            if muzikaList {
+                DonjiList(zatvori: { muzikaList = false }) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Naslov(tekst: "Muzika u firmi", velicina: 26)
+                        VStack(spacing: 0) {
+                            ForEach(KarijeraMuzika.izbor, id: \.kljuc) { m in
+                                Button {
+                                    KarijeraMuzika.izabrana = m.kljuc; izabranaMuzika = m.kljuc
+                                    if let v = KarijeraMuzika.mojaFirmaIzbor(firma.id) { KarijeraMuzika.pusti(v) } else { KarijeraMuzika.stani() }
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: izabranaMuzika == m.kljuc ? "checkmark.circle.fill" : "circle")
+                                            .foregroundStyle(izabranaMuzika == m.kljuc ? Color.teal : Color.kremTamnija)
+                                        Text(m.naziv).font(.tekst(16, .semibold)).foregroundStyle(Color.mastilo)
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 12).contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityAddTraits(izabranaMuzika == m.kljuc ? .isSelected : [])
+                            }
+                        }
+                    }
+                }
+            }
+        }
         .onDisappear { KarijeraMuzika.stani() }
     }
+
+    private var mojaFirma: Bool { !firma.korporacija && firma.vlasnik == Sesija.trenutna?.korisnikId }
 
     private func ucitaj() async {
         faza = .ucitava
@@ -351,14 +384,14 @@ struct KarijeraRundaView: View {
             let p = try await stigla
             guard p.count == 10 else { faza = .greska("Stiglo je \(p.count) od 10 pitanja. Pokušaj ponovo."); return }
             faza = .igra(p)
-            KarijeraMuzika.pusti(muzikaRunde)
+            if let m = muzikaRunde { KarijeraMuzika.pusti(m) } else { KarijeraMuzika.stani() }
         } catch { faza = .greska(error.localizedDescription) }
     }
 
     /// Korporacija: džez klavir (poslednja runda probnog rada napetija); svoja firma: lounge; tuđa: valcer.
-    private var muzikaRunde: Zvuk.Vrsta {
+    private var muzikaRunde: Zvuk.Vrsta? {
         if firma.korporacija { return probni && probniRunda == 9 ? .karijeraProbniKraj : .karijeraKorporacija }
-        return firma.vlasnik == Sesija.trenutna?.korisnikId ? KarijeraMuzika.zaMojuFirmu(firma.id) : .karijeraPosao
+        return mojaFirma ? KarijeraMuzika.mojaFirmaIzbor(firma.id) : .karijeraPosao
     }
 
     /// Napuštena runda: šalje se kao 10 netačnih odgovora (0 tačnih), da izlazak ne bude način da se izbegne loša runda.

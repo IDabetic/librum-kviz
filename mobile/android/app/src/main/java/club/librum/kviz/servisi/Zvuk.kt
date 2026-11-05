@@ -27,7 +27,8 @@ object Zvuk {
         KARIJERA_REKORD("karijera_rekord"), KARIJERA_USPEH("karijera_uspeh"), KARIJERA_KASA("karijera_kasa"), KARIJERA_ZVONO("karijera_zvono"),
     }
 
-    private lateinit var kontekst: Context
+    lateinit var kontekst: Context
+        private set
     private val plejeri = mutableMapOf<Vrsta, MediaPlayer>()
 
     fun init(k: Context) { kontekst = k.applicationContext }
