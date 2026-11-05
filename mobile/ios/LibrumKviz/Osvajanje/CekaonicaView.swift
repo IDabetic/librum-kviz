@@ -237,7 +237,7 @@ struct OsvajanjeUvodView: View {
         HStack(alignment: .bottom, spacing: 8) {
             VStack(alignment: .leading, spacing: 8) {
                 Oznaka(tekst: "Glavna igra · 2 do 12 igrača", boja: .zuta)
-                Text("Osvajanje sveta").font(.naslov(32)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
+                Text("Osvajač").font(.naslov(32)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.6)
                 Text("Biraš države, vučeš tajnu misiju i osvajaš svet pitanjem po pitanjem.")
                     .font(.tekst(14, .semibold)).foregroundStyle(.white.opacity(0.9))
             }

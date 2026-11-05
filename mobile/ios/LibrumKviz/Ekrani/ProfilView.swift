@@ -499,7 +499,7 @@ struct PodesavanjaView: View {
                         HStack(spacing: 14) {
                             Image(systemName: "leaf").font(.system(size: 17, weight: .semibold)).frame(width: 24)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Mirni šef u Karijeri").font(.tekst(15, .semibold))
+                                Text("Mirni šef u Karijeristi").font(.tekst(15, .semibold))
                                 Text("Šef najviše blag, bez ometanja; bez dodatka za stres.").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
                             }
                             Spacer()
@@ -509,11 +509,11 @@ struct PodesavanjaView: View {
                                     do { mirni = try await Karijera.postaviMirni(v).mirni; Karijera.mirni = mirni }
                                     catch { mirni = !v; porukaKarijere = error.localizedDescription }
                                 }
-                            }), naziv: "Mirni šef u Karijeri")
+                            }), naziv: "Mirni šef u Karijeristi")
                         }
                         .padding(.horizontal, 16).frame(minHeight: 64)
                         Divider().overlay(Color.kremTamnija)
-                        Button { resetKarijere = true } label: { RedListe(ikonica: "arrow.counterclockwise", naziv: "Resetuj Karijeru", boja: .crvena) }.buttonStyle(.plain)
+                        Button { resetKarijere = true } label: { RedListe(ikonica: "arrow.counterclockwise", naziv: "Resetuj Karijeristu", boja: .crvena) }.buttonStyle(.plain)
                     }
                 }
                 .mirna()
@@ -571,11 +571,11 @@ struct PodesavanjaView: View {
                 } zatvori: { brisanje = false }
             }
             if resetKarijere {
-                Dijalog(naslov: "Resetovati Karijeru?", tekst: "Krećeš ispočetka: nova struka, pol i talenti. Brišu se kapital, ugled, ekspertiza i CV. Tvoje firme prelaze na upravu i mogu se preuzeti duelom. Ovo ne može da se vrati.",
+                Dijalog(naslov: "Resetovati Karijeristu?", tekst: "Krećeš ispočetka: nova struka, pol i talenti. Brišu se kapital, ugled, ekspertiza i CV. Tvoje firme prelaze na upravu i mogu se preuzeti duelom. Ovo ne može da se vrati.",
                         potvrda: "Resetuj", odustani: "Odustani", opasno: true) {
                     resetKarijere = false
                     Task {
-                        do { _ = try await Karijera.resetuj(); porukaKarijere = "Karijera je resetovana. Kreni ispočetka iz igre Karijera." }
+                        do { _ = try await Karijera.resetuj(); porukaKarijere = "Karijerista je resetovan. Kreni ispočetka iz igre Karijerista." }
                         catch { porukaKarijere = error.localizedDescription }
                     }
                 } zatvori: { resetKarijere = false }
@@ -630,7 +630,7 @@ struct IzmenaProfilaView: View {
                     Spacer()
                     Text("Uredi profil").font(.naslov(22))
                     Spacer()
-                    Color.clear.frame(width: 44)
+                    Color.clear.frame(width: 44, height: 44)
                 }
                 VStack(spacing: 10) {
                     AvatarSlika(avatar: avatar, velicina: 120, maskota: maskota)

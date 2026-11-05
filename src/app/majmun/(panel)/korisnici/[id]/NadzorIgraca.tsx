@@ -14,7 +14,7 @@ type Detalji = {
 const NASLOV = 'text-[11px] font-bold uppercase tracking-widest mb-3'
 const sek = (ms: number | null | undefined) => (ms == null ? '—' : `${(ms / 1000).toFixed(1)} s`)
 
-/** Nadzor jednog igrača (admin_igrac_detalji): sumnje, vreme po igri, Karijera, praćenja, blokade, mreža i povezani nalozi. */
+/** Nadzor jednog igrača (admin_igrac_detalji): sumnje, vreme po igri, Karijerista, praćenja, blokade, mreža i povezani nalozi. */
 export default async function NadzorIgraca({ id }: { id: string }) {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('admin_igrac_detalji', { p_id: id })
@@ -60,7 +60,7 @@ export default async function NadzorIgraca({ id }: { id: string }) {
               ))}
               {!!d.karijera?.runde && (
                 <tr className="border-t" style={{ borderColor: '#E7E1D0' }}>
-                  <td className="py-2 pr-3 font-semibold">Karijera</td>
+                  <td className="py-2 pr-3 font-semibold">Karijerista</td>
                   <td className="py-2 pr-3 text-right">{d.karijera.runde}</td>
                   <td className="py-2 pr-3 text-right">{sek(d.karijera.prosek_ms)}</td>
                   <td className="py-2 pr-3 text-right">{d.karijera.tacnost == null ? '—' : `${d.karijera.tacnost}%`}</td>

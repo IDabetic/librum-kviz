@@ -151,7 +151,7 @@ enum KvizKatalog {
         var l: [KvizStavka] = [
             KvizStavka(id: "dnevni", naslov: "Dnevni izazov", opis: "Istih 10 pitanja za sve danas. Jedan pokušaj, rang lista dana.", kategorija: "Opšte znanje",
                        boja: 0xFFD84D, maskota: .lumi, vrsta: .tema(fond: "dnevni", zanr: nil, tesko: false), tezina: "Dnevno", ikonica: "calendar"),
-            KvizStavka(id: "osvajanje", naslov: "Osvajanje sveta", opis: "171 država, vojske i bitke znanja protiv rivala.", kategorija: "Geografija",
+            KvizStavka(id: "osvajanje", naslov: "Osvajač", opis: "171 država, vojske i bitke znanja protiv rivala.", kategorija: "Geografija",
                        boja: 0x12907E, maskota: .mimi, vrsta: .igra(.osvajanje), tezina: "Strategija", ikonica: "globe.europe.africa"),
             KvizStavka(id: "opste", naslov: "Opšte znanje", opis: "Deset pitanja iz svega pomalo, 20 sekundi po pitanju.", kategorija: "Opšte znanje",
                        boja: 0xF4A33C, maskota: .bloop, vrsta: .tema(fond: "opste", zanr: nil, tesko: false), ikonica: "lightbulb", quizId: opsteZnanje),

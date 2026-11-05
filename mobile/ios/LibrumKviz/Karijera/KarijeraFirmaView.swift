@@ -209,7 +209,7 @@ struct FirmaView: View {
         VStack(alignment: .leading, spacing: 10) {
             NavigationLink { KarijeraRundaView(firma: f.kratko, botovi: f.botovi) { Task { await ucitaj(); promena() } }.bezSvajpaNazad() } label: { Text("Igraj rundu u svojoj firmi") }
                 .buttonStyle(.primarno)
-            Label("Bar jedna runda dnevno. Održavanje \(Karijera.novac(Double(f.odrzavanje))) dnevno iz kase.", systemImage: "info.circle")
+            Label("Kasa se puni od tvojih rundi u firmi (do 10 plaćenih dnevno) i od rundi zaposlenih. Održavanje \(Karijera.novac(Double(f.odrzavanje))) dnevno iz kase.", systemImage: "info.circle")
                 .font(.tekst(13)).foregroundStyle(Color.sivaTekst)
         }
         // Kasa kao tamna kartica (vlasnik 05.11: „pregledno, ne bledo”): iznos krupno, tri radnje; kad radnja ne može, piše zašto.
@@ -592,7 +592,7 @@ struct KarijeraCVView: View {
             .padding(14).mirna()
         }
         if !c.dogadjaji.isEmpty {
-            Text("Karijera").font(.naslov(22))
+            Text("Karijerista").font(.naslov(22))
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(c.dogadjaji.enumerated()), id: \.offset) { i, d in
                     HStack(alignment: .top, spacing: 12) {

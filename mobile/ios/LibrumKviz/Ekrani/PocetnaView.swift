@@ -33,7 +33,7 @@ struct PocetnaView: View {
                                 .background(Color.zuta, in: RoundedRectangle(cornerRadius: 12))
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Nastavi partiju").font(.tekst(16, .bold))
-                                Text("Osvajanje sveta · krug \(min(n.stanje.krug, n.stanje.ukupnoKrugova)) od \(n.stanje.ukupnoKrugova)")
+                                Text("Osvajač · krug \(min(n.stanje.krug, n.stanje.ukupnoKrugova)) od \(n.stanje.ukupnoKrugova)")
                                     .font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                             }
                             Spacer()
@@ -171,7 +171,7 @@ struct PocetnaView: View {
 
     @ViewBuilder private var nedeljniVrh: some View {
         HStack {
-            Text("Osvajanje: vrh nedelje").font(.naslov(24))
+            Text("Osvajač: vrh nedelje").font(.naslov(24))
             Spacer()
         }
         switch vrh {
@@ -181,7 +181,7 @@ struct PocetnaView: View {
             StanjeEkrana(maskota: .lumi, naslov: "Lista se nije učitala", tekst: poruka, dugme: "Pokušaj ponovo") { Task { await ucitajVrh() } }
                 .mirna()
         case .gotovo(let redovi) where redovi.isEmpty:
-            StanjeEkrana(maskota: .bloop, naslov: "Još niko ove nedelje", tekst: "Odigraj Osvajanje sveta i budi prvi na listi.").mirna()
+            StanjeEkrana(maskota: .bloop, naslov: "Još niko ove nedelje", tekst: "Odigraj Osvajača i budi prvi na listi.").mirna()
         case .gotovo(let redovi):
             VStack(spacing: 0) {
                 ForEach(Array(redovi.prefix(3).enumerated()), id: \.element.id) { i, r in

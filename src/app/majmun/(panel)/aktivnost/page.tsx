@@ -9,7 +9,7 @@ type Red = { kad: string; user_id: string | null; nadimak: string; igra: string;
 
 const PO_STRANI = 50
 
-/** Sve partije svih igara (aplikacija, Karijera, stare veb igre) od najnovije; filter po igri i igraču, keyset „Starije”. */
+/** Sve partije svih igara (aplikacija, Karijerista, stare veb igre) od najnovije; filter po igri i igraču, keyset „Starije”. */
 export default async function AktivnostPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams
   const supabase = await createClient()

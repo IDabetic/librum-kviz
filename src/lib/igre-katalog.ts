@@ -7,8 +7,8 @@ export const IGRE = [
   {
     href: '/osvajanje',
     n: '00',
-    label: 'Osvajanje sveta',
-    kratko: 'Osvajanje sveta',
+    label: 'Osvajač',
+    kratko: 'Osvajač',
     desc: 'Kontinenti, vojske i bitke znanja protiv rivala.',
     cta: 'Osvoji svet',
     accent: '#12907E',

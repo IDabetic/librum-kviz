@@ -46,7 +46,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /** Igre na ekranu pravila: ključ u pravila-igara.json, naziv i boja kartice (isto kao iOS katalog). */
 private val IGRE_PRAVILA = listOf(
-    Triple("dnevni", "Dnevni izazov", 0xFFFFD84D), Triple("osvajanje", "Osvajanje sveta", 0xFF12907E), Triple("pro", "PRO kviz", 0xFF6D4BC9),
+    Triple("dnevni", "Dnevni izazov", 0xFFFFD84D), Triple("osvajanje", "Osvajač", 0xFF12907E), Triple("pro", "PRO kviz", 0xFF6D4BC9),
     Triple("book", "Book kviz", 0xFFF4A33C), Triple("duel", "Duel", 0xFF151515), Triple("brzi", "Brzi kviz", 0xFFFFD84D),
     Triple("vesanje", "Vešanje", 0xFFFF5FA2), Triple("slikari", "Slikari", 0xFFFF5FA2), Triple("tema", "Kvizovi po temi", 0xFFF4A33C),
 )

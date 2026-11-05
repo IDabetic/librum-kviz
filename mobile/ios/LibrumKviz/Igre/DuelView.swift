@@ -196,7 +196,7 @@ private struct DuelTrazenje: View {
                 Label("Brzi meč · \(DuelModel.brzihPitanja) pitanja", systemImage: "bolt").font(.tekst(13, .bold)).foregroundStyle(.white)
                     .padding(.horizontal, 12).padding(.vertical, 6).background(.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
                 Spacer()
-                Color.clear.frame(width: 44)
+                Color.clear.frame(width: 44, height: 44)
             }
             Spacer()
             ZStack {

@@ -5,7 +5,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Osvajanje sveta – strateški kviz na mapi sveta',
+  title: 'Osvajač – strateški kviz na mapi sveta',
   description: 'Osvajaj kontinente odgovorima na pitanja. Vojske, proboj i bitke znanja protiv dva rivala. Besplatna igra znanja na srpskom.',
   alternates: { canonical: '/osvajanje' },
 }
@@ -33,7 +33,7 @@ export default function OsvajanjePage() {
           <span aria-hidden className="absolute rounded-full" style={{ width: 340, height: 340, right: -60, top: -40, background: 'rgba(255,255,255,0.14)' }} />
           <Image src="/maskote/Mimi.png" alt="" width={220} height={220} className="absolute right-2 top-6 maskota-lebdi hidden sm:block" aria-hidden priority />
           <p className="chip relative" style={{ color: '#FFD84D' }}>Glavna igra · 3 igrača</p>
-          <h1 className="relative mt-3" style={{ fontSize: 'clamp(46px, 9vw, 92px)' }}>Osvajanje<br />sveta</h1>
+          <h1 className="relative mt-3" style={{ fontSize: 'clamp(46px, 9vw, 92px)' }}>Osvajač</h1>
           <p className="relative mt-4 text-[17px] font-semibold max-w-md opacity-90">
             171 država, 17 regiona i dva rivala. Svaku državu osvajaš pitanjem.
           </p>

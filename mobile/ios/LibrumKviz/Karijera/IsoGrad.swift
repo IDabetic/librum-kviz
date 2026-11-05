@@ -117,7 +117,7 @@ struct IsoGrad: View {
                 centriraj = nil
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Grad Karijere, \(firme.count) firmi. Pretraga iznad mape vodi do firme.")
+            .accessibilityLabel("Grad Karijeriste, \(firme.count) firmi. Pretraga iznad mape vodi do firme.")
         }
     }
 

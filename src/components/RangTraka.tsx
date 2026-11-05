@@ -11,7 +11,7 @@ const OSVEZAVANJE_MS = 60_000
 const BROJ = 5
 
 /**
- * Rang lista uživo u zaglavlju: Osvajanje sveta ove nedelje, isti redosled kao u aplikaciji.
+ * Rang lista uživo u zaglavlju: Osvajač ove nedelje, isti redosled kao u aplikaciji.
  *
  * @example <RangTraka />
  */
@@ -37,10 +37,10 @@ export function RangTraka() {
   return (
     <div style={{ background: '#151515', color: '#F3F0E6' }}>
       <Link href="/ranglista" className="max-w-6xl mx-auto px-4 sm:px-6 h-9 flex items-center gap-4 overflow-x-auto whitespace-nowrap text-[13px]"
-        aria-label="Rang lista Osvajanja sveta ove nedelje, otvori celu listu">
+        aria-label="Rang lista Osvajača ove nedelje, otvori celu listu">
         <span className="flex items-center gap-2 font-bold shrink-0" style={{ color: '#FFD84D' }}>
           <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#2FD27A' }} aria-hidden />
-          Rang uživo · Osvajanje
+          Rang uživo · Osvajač
         </span>
         {(redovi ?? []).map(r => (
           <span key={r.user_id} className="flex items-center gap-1.5 shrink-0">

@@ -201,21 +201,21 @@ fun KarijeraPodesavanja() {
     Column(Modifier.fillMaxWidth().mirna()) {
         Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Mirni šef u Karijeri", style = tekst(15.sp, FontWeight.SemiBold))
+                Text("Mirni šef u Karijeristi", style = tekst(15.sp, FontWeight.SemiBold))
                 Text("Šef najviše blag, bez ometanja; bez dodatka za stres.", style = tekst(12.sp, boja = Boje.sivaTekst))
             }
-            KPrekidac(mirni, "Mirni šef u Karijeri") { v ->
+            KPrekidac(mirni, "Mirni šef u Karijeristi") { v ->
                 mirni = v
                 opseg.launch { runCatching { Karijera.postaviMirni(v) }.onSuccess { mirni = it.mirni; Karijera.mirni = it.mirni }.onFailure { mirni = !v; poruka = it.message } }
             }
         }
         androidx.compose.material3.HorizontalDivider(color = Boje.kremTamnija)
-        KRed("Resetuj Karijeru", boja = Boje.crvena) { potvrda = true }
+        KRed("Resetuj Karijeristu", boja = Boje.crvena) { potvrda = true }
     }
     poruka?.let { Text(it, style = tekst(14.sp, FontWeight.SemiBold, Boje.sivaTekst)) }
-    if (potvrda) club.librum.kviz.ui.Dijalog("Resetovati Karijeru?",
+    if (potvrda) club.librum.kviz.ui.Dijalog("Resetovati Karijeristu?",
         "Krećeš ispočetka: nova struka, pol i talenti. Brišu se kapital, ugled, ekspertiza i CV. Tvoje firme prelaze na upravu i mogu se preuzeti duelom. Ovo ne može da se vrati.",
         "Resetuj", "Odustani",
-        potvrdi = { potvrda = false; opseg.launch { runCatching { Karijera.resetuj() }.onSuccess { poruka = "Karijera je resetovana." }.onFailure { poruka = it.message } } },
+        potvrdi = { potvrda = false; opseg.launch { runCatching { Karijera.resetuj() }.onSuccess { poruka = "Karijerista je resetovan." }.onFailure { poruka = it.message } } },
         zatvori = { potvrda = false })
 }

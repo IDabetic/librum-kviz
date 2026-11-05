@@ -3,7 +3,7 @@ import { TEZINE, type Tezina } from '@/lib/osvajanje/pravila'
 import { Igra } from './Igra'
 
 export const metadata: Metadata = {
-  title: 'Osvajanje sveta – partija',
+  title: 'Osvajač – partija',
   robots: { index: false },
 }
 

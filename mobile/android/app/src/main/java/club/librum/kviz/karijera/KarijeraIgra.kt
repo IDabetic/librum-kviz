@@ -487,7 +487,7 @@ private fun PodeliRundu(o: Karijera.IshodRunde, firma: Karijera.Firma) {
     var otvoreno by remember { mutableStateOf(false) }
     var objavljeno by remember { mutableStateOf(false) }
     var greska by remember { mutableStateOf<String?>(null) }
-    val tekstObjave = "Karijera · ${firma.ime}: ${o.tacnih}/10 tačnih, ${o.poeni} poena"
+    val tekstObjave = "Karijerista · ${firma.ime}: ${o.tacnih}/10 tačnih, ${o.poeni} poena"
     Box(Modifier.size(44.dp).background(Boje.kartica, androidx.compose.foundation.shape.CircleShape).border(1.5.dp, Boje.kremTamnija, androidx.compose.foundation.shape.CircleShape)
         .clickable(role = androidx.compose.ui.semantics.Role.Button) { otvoreno = true }.semantics { contentDescription = "Podeli rezultat" }, contentAlignment = Alignment.Center) {
         androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Share, null, tint = Boje.mastilo, modifier = Modifier.size(20.dp))

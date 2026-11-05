@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Notes
@@ -112,8 +113,8 @@ object Zajednica {
         Triple("poziv_duel", "Poziv na duel", Icons.Rounded.Bolt), Triple("poziv_tim", "Tražim tim", Icons.Rounded.Groups))
     fun nazivVrste(v: String) = vrste.firstOrNull { it.first == v }?.second ?: "Objava"
     fun ikonicaVrste(v: String): ImageVector = vrste.firstOrNull { it.first == v }?.third ?: Icons.Rounded.Notes
-    val nazivIgre = mapOf("dnevni" to "Dnevni izazov", "osvajanje" to "Osvajanje sveta", "pro" to "PRO kviz", "book" to "Book kviz", "duel" to "Duel",
-        "slikari" to "Slikari", "brzi" to "Brzi kviz", "vesanje" to "Vešanje", "tema" to "Kviz po temi", "karijera" to "Karijera")
+    val nazivIgre = mapOf("dnevni" to "Dnevni izazov", "osvajanje" to "Osvajač", "pro" to "PRO kviz", "book" to "Book kviz", "duel" to "Duel",
+        "slikari" to "Slikari", "brzi" to "Brzi kviz", "vesanje" to "Vešanje", "tema" to "Kviz po temi", "karijera" to "Karijerista")
 
     private inline fun <reified T> citaj(s: String): T = Supabase.json.decodeFromString(s)
 
@@ -372,7 +373,7 @@ private fun NovaObjava(sesija: Sesija, zatvori: () -> Unit, objavljeno: () -> Un
             Row(Modifier.horizontalScroll(rememberScrollState())) { Izbor(igre.map { Zajednica.nazivIgre[it] ?: it }, igre.indexOf(igra)) { igra = igre[it] } }
         }
         if (vrsta == "rezultat") PoljeTeksta(poeni, "Poeni") { poeni = it.filter(Char::isDigit).take(6) }
-        PoljeTeksta(tekst, when (vrsta) { "poziv_duel" -> "Ko sme na duel iz geografije?"; "poziv_tim" -> "Tražim saigrača za Osvajanje"; "rezultat" -> "Ovo mi je novi rekord!"; else -> "Šta ima novo?" }, visina = 110) { tekst = it.take(500) }
+        PoljeTeksta(tekst, when (vrsta) { "poziv_duel" -> "Ko sme na duel iz geografije?"; "poziv_tim" -> "Tražim saigrača za Osvajača"; "rezultat" -> "Ovo mi je novi rekord!"; else -> "Šta ima novo?" }, visina = 110) { tekst = it.take(500) }
         greska?.let { Text(it, style = tekst(14.sp, FontWeight.SemiBold, Boje.crvena)) }
         Dugme("Objavi", omoguceno = vrsta != "tekst" || tekst.isNotBlank()) {
             opseg.launch {
@@ -420,7 +421,14 @@ private fun Komentari(sesija: Sesija, objava: Zajednica.Objava, zatvori: () -> U
             val redovi = lista.orEmpty().filter { it.roditelj == null }.flatMap { grana(it, 0) }
             LazyColumn(Modifier.weight(1f).padding(horizontal = 16.dp)) {
                 if (lista == null) item { CircularProgressIndicator(color = Boje.mastilo) }
-                else if (redovi.isEmpty()) item { Text("Još nema komentara. Napiši prvi.", style = tekst(15.sp, boja = Boje.sivaTekst), modifier = Modifier.padding(vertical = 20.dp)) }
+                // Prazno stanje u sredini slobodnog prostora, kao na iOS-u (vlasnik 05.11).
+                else if (redovi.isEmpty()) item {
+                    Column(Modifier.fillParentMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        Icon(Icons.Rounded.Forum, null, tint = Boje.sivaTekst, modifier = Modifier.size(32.dp))
+                        Text("Još nema komentara", style = tekst(17.sp, FontWeight.Bold), modifier = Modifier.padding(top = 6.dp))
+                        Text("Budi prvi koji će nešto reći.", style = tekst(14.sp, boja = Boje.sivaTekst))
+                    }
+                }
                 items(redovi, key = { it.first.id }) { (k, d) ->
                     Row(Modifier.fillMaxWidth().padding(start = (d * 22).dp, top = 10.dp, bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         AvatarSlika(k.avatar, if (d == 0) 36.dp else 28.dp)

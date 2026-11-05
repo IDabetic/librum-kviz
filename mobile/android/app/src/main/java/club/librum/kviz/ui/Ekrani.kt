@@ -112,11 +112,11 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 }
                 Column(Modifier.weight(1f)) {
                     Text("Nastavi partiju", style = tekst(15.sp, FontWeight.Bold))
-                    Text("Osvajanje sveta · krug ${minOf(sacuvana.stanje.krug, sacuvana.stanje.ukupnoKrugova)} od ${sacuvana.stanje.ukupnoKrugova}", style = tekst(13.sp, FontWeight.Normal, Boje.sivaTekst))
+                    Text("Osvajač · krug ${minOf(sacuvana.stanje.krug, sacuvana.stanje.ukupnoKrugova)} od ${sacuvana.stanje.ukupnoKrugova}", style = tekst(13.sp, FontWeight.Normal, Boje.sivaTekst))
                 }
             }
             // Vlasnik 03.11: Osvajanje sveta je jedna velika kartica, ispod šest igara u dva reda po tri.
-            KarticaIgre("Osvajanje sveta", "171 država, vojske i bitke znanja protiv rivala.", Boje.teal, Color.White, Maskota.MIMI, true, ilustracija = club.librum.kviz.R.drawable.igra_osvajanje) { idi("osvajanje") }
+            KarticaIgre("Osvajač", "171 država, vojske i bitke znanja protiv rivala.", Boje.teal, Color.White, Maskota.MIMI, true, ilustracija = club.librum.kviz.R.drawable.igra_osvajanje) { idi("osvajanje") }
             club.librum.kviz.karijera.KarijeraKarticaPocetna { idi("karijera") }
             listOf(
                 listOf(Triple("PRO kviz", "pro", Boje.ljubicasta to Maskota.LUMI), Triple("Book kviz", "book", Color(0xFFF4A33C) to Maskota.ZIG), Triple("Duel", "duel", Boje.mastilo to Maskota.BLOOP)),
@@ -224,7 +224,7 @@ fun Izbor(opcije: List<String>, izabrana: Int, promeni: (Int) -> Unit) {
 
 @Serializable private data class RedListe(val mesto: Int, val user_id: String, val nadimak: String, val avatar: String? = null, val poeni: Int, val partija: Int)
 
-private val IGRE_LISTE = listOf("dnevni" to "Dnevni", "osvajanje" to "Osvajanje", "pro" to "PRO", "book" to "Book", "duel" to "Duel", "slikari" to "Slikari", "brzi" to "Brzi", "vesanje" to "Vešanje")
+private val IGRE_LISTE = listOf("dnevni" to "Dnevni", "osvajanje" to "Osvajač", "pro" to "PRO", "book" to "Book", "duel" to "Duel", "slikari" to "Slikari", "brzi" to "Brzi", "vesanje" to "Vešanje")
 private val PERIODI = listOf("dan" to "Dan", "nedelja" to "Nedelja", "mesec" to "Mesec", "godina" to "Godina")
 
 /** Rang lista po igri i periodu (RPC rang_lista_igre), za sve ili samo igrače koje pratim; red vodi na profil. */
@@ -256,7 +256,7 @@ fun RangLista(sesija: club.librum.kviz.servisi.Sesija, idi: (String) -> Unit) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Spacer(Modifier.height(20.dp))
             Text("Rang lista", style = naslov(40.sp))
-            Izbor(listOf("Osvajač", "Karijera", "Ostale igre"), tabla) { t ->
+            Izbor(listOf("Osvajač", "Karijerista", "Ostale igre"), tabla) { t ->
                 tabla = t
                 val osv = IGRE_LISTE.indexOfFirst { it.first == "osvajanje" }
                 if (t == 0) igra = osv else if (t == 2 && igra == osv) igra = IGRE_LISTE.indexOfFirst { it.first == "pro" }

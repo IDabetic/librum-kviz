@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 
 /**
- * Snimak prave partije Osvajanja na širokom ekranu (potez igrača i botova, `-demo -demoIgrac` na iPadu), bez okvira telefona.
+ * Snimak prave partije Osvajača na širokom ekranu (potez igrača i botova, `-demo -demoIgrac` na iPadu), bez okvira telefona.
  * Natpis prati video po sekundama; ratna muzika (Pixabay, „Epic War Background Music”, HitsLab; Pixabay licenca bez navođenja) pali se dodirom, jer pregledači
  * ne puštaju zvuk bez dodira. Snimak: public/video/osvajanje-siroko.mp4 .
  *
@@ -47,7 +47,7 @@ export function OsvajanjeVideo() {
     <div className="relative w-full overflow-hidden rounded-[28px]" style={{ border: '3px solid #151515', boxShadow: '0 8px 0 #0B0A09, 0 40px 80px rgba(0,0,0,.45)' }}>
       <video ref={video} className="block w-full" src="/video/osvajanje-siroko.mp4" poster="/video/osvajanje-siroko.jpg"
         autoPlay muted loop playsInline preload="metadata" onTimeUpdate={prati}
-        aria-label="Snimak partije Osvajanje sveta: vojske osvajaju države na mapi sveta" />
+        aria-label="Snimak partije Osvajača: vojske osvajaju države na mapi sveta" />
       <button type="button" onClick={prebaciZvuk} aria-pressed={zvuk} aria-label={zvuk ? 'Isključi zvuk' : 'Uključi zvuk'}
         className="absolute right-4 top-4 w-12 h-12 grid place-items-center rounded-full"
         style={{ background: '#FFD84D', border: '2.5px solid #151515', boxShadow: '0 3px 0 #151515' }}>

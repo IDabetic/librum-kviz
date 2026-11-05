@@ -42,8 +42,8 @@ enum Zajednica {
     ]
     static func nazivVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.1 ?? "Objava" }
     static func ikonicaVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.2 ?? "text.bubble" }
-    static let nazivIgre = ["dnevni": "Dnevni izazov", "osvajanje": "Osvajanje sveta", "pro": "PRO kviz", "book": "Book kviz", "duel": "Duel", "slikari": "Slikari",
-                            "brzi": "Brzi kviz", "vesanje": "Vešanje", "tema": "Kviz po temi", "karijera": "Karijera"]
+    static let nazivIgre = ["dnevni": "Dnevni izazov", "osvajanje": "Osvajač", "pro": "PRO kviz", "book": "Book kviz", "duel": "Duel", "slikari": "Slikari",
+                            "brzi": "Brzi kviz", "vesanje": "Vešanje", "tema": "Kviz po temi", "karijera": "Karijerista"]
 
     private static func token(_ s: Sesija) async -> String? { try? await s.vazeciToken() }
 
@@ -296,7 +296,8 @@ struct KarticaObjave: View {
         .padding(16).mirna()
         .navigationDestination(isPresented: $duel) { TakmicenjeView(pozovi: (o.ko, o.nadimak)) }
         .navigationDestination(isPresented: $poruka) { RazgovorView(sa: o.ko, nadimak: o.nadimak, avatar: o.avatar) }
-        .overlay {
+        .prekoEkrana(meni || potvrda != nil) {
+            ZStack {
             if meni {
                 DonjiList(zatvori: { meni = false }) {
                     VStack(spacing: 0) {
@@ -310,8 +311,6 @@ struct KarticaObjave: View {
                     }
                 }
             }
-        }
-        .overlay {
             switch potvrda {
             case .brisanje:
                 Dijalog(naslov: "Obrisati objavu?", tekst: "Objava i komentari ispod nje nestaju za sve.", potvrda: "Obriši", odustani: "Odustani", opasno: true) {
@@ -336,6 +335,8 @@ struct KarticaObjave: View {
                 Dijalog(naslov: "Hvala na prijavi", tekst: "Posle tri prijave objava se sakriva dok je urednik ne pregleda.", potvrda: "U redu", odustani: "Zatvori") { potvrda = nil } zatvori: { potvrda = nil }
             case nil: EmptyView()
             }
+            }
+            .environment(sesija)
         }
     }
 
@@ -379,7 +380,7 @@ struct NovaObjavaView: View {
                     Spacer()
                     Text("Nova objava").font(.naslov(22))
                     Spacer()
-                    Color.clear.frame(width: 44)
+                    Color.clear.frame(width: 44, height: 44)
                 }
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                     ForEach(Zajednica.vrste, id: \.0) { v in
@@ -424,7 +425,7 @@ struct NovaObjavaView: View {
     private var primer: String {
         switch vrsta {
         case "poziv_duel": "Ko sme na duel iz geografije?"
-        case "poziv_tim": "Tražim saigrača za Osvajanje, timovi po dvoje."
+        case "poziv_tim": "Tražim saigrača za Osvajača, timovi po dvoje."
         case "rezultat": "Ovo mi je novi rekord!"
         default: "Šta ima novo?"
         }
@@ -461,20 +462,34 @@ struct KomentariView: View {
                 Spacer()
                 Text("Komentari").font(.naslov(22))
                 Spacer()
-                Color.clear.frame(width: 44)
+                Color.clear.frame(width: 44, height: 44)
             }
             .padding(16)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    switch stanje {
-                    case .ucitava: ForEach(0..<4, id: \.self) { _ in Skelet(visina: 56).padding(.vertical, 6) }
-                    case .greska(let p): StanjeEkrana(maskota: .lumi, naslov: "Komentari se nisu učitali", tekst: p, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
-                    case .gotovo(let l) where l.isEmpty: StanjeEkrana(maskota: .bloop, naslov: "Još nema komentara", tekst: "Napiši prvi.")
-                    case .gotovo(let l): ForEach(redovi(l)) { r in red(r) }
+            // Lista zauzima sav prostor između zaglavlja i polja (05.11: bez toga se sve centriralo usred lista).
+            Group {
+                switch stanje {
+                case .gotovo(let l) where l.isEmpty:
+                    VStack(spacing: 6) {
+                        Image(systemName: "bubble.left.and.bubble.right").font(.system(size: 30, weight: .semibold)).foregroundStyle(Color.sivaTekst)
+                        Text("Još nema komentara").font(.tekst(17, .bold)).foregroundStyle(Color.mastilo)
+                        Text("Budi prvi koji će nešto reći.").font(.tekst(14)).foregroundStyle(Color.sivaTekst)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                case .greska(let p):
+                    StanjeEkrana(maskota: .lumi, naslov: "Komentari se nisu učitali", tekst: p, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
+                        .frame(maxHeight: .infinity)
+                default:
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            if case .gotovo(let l) = stanje { ForEach(redovi(l)) { r in red(r) } }
+                            else { ForEach(0..<4, id: \.self) { _ in Skelet(visina: 56).padding(.vertical, 6) } }
+                        }
+                        .padding(.horizontal, 16).padding(.top, 4)
+                    }
+                    .frame(maxHeight: .infinity, alignment: .top)
                 }
-                .padding(.horizontal, 16)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             if sesija.prijavljen { unos } else {
                 Text("Prijavi se da bi komentarisao.").font(.tekst(14)).foregroundStyle(Color.sivaTekst).padding(16)
             }

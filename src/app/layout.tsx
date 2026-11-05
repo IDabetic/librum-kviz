@@ -23,7 +23,7 @@ const SITE_NAME = 'Librum Kviz'
 // the brand). Description trimmed to ~150 chars so it doesn't get cut
 // in SERPs (Seobility flagged the old one as 199px over the limit).
 const DEFAULT_TITLE = 'Librum kviz – besplatne online igre znanja na srpskom'
-const DEFAULT_DESC = 'Librum kviz: aplikacija sa igrama znanja na srpskom. Osvajanje sveta, PRO i Book kviz, trivia duel, vešanje i brzi kviz.'
+const DEFAULT_DESC = 'Librum kviz: aplikacija sa igrama znanja na srpskom. Osvajač, PRO i Book kviz, trivia duel, vešanje i brzi kviz.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

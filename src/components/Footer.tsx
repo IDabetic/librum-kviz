@@ -13,11 +13,11 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 grid md:grid-cols-[1.4fr_1fr] gap-10 items-start">
         <div>
           <p className="naslov text-[30px]">Librum kviz</p>
-          <p className="mt-2 text-[14px] opacity-75 max-w-md">Osvajanje sveta i još šest igara znanja na srpskom. Besplatno za iPhone i Android.</p>
+          <p className="mt-2 text-[14px] opacity-75 max-w-md">Osvajač i još šest igara znanja na srpskom. Besplatno za iPhone i Android.</p>
           <div className="mt-6"><Prodavnice tamno /></div>
         </div>
         <ul className="grid grid-cols-2 gap-3 text-[14px] font-semibold">
-          <li><Link href="/#osvajanje" className="hover:opacity-70">Osvajanje sveta</Link></li>
+          <li><Link href="/#osvajanje" className="hover:opacity-70">Osvajač</Link></li>
           <li><Link href="/#igre" className="hover:opacity-70">Igre</Link></li>
           <li><Link href="/ranglista" className="hover:opacity-70">Rang lista</Link></li>
           <li><a href="mailto:info@librum.club" className="hover:opacity-70">info@librum.club</a></li>

@@ -252,7 +252,7 @@ fun ProfilOstalo(p: ProfilIgraca) {
 }
 
 private val NAZIVI_AKTIVNOSTI = mapOf("pro" to "PRO kviz", "book" to "Book kviz", "vesanje" to "Vešanje", "brzi" to "Brzi kviz", "duel" to "Duel",
-    "slikari" to "Slikari", "osvajanje" to "Osvajanje", "tema" to "Kviz po temi", "karijera" to "Karijera")
+    "slikari" to "Slikari", "osvajanje" to "Osvajač", "tema" to "Kviz po temi", "karijera" to "Karijerista")
 
 private fun kada(iso: String): String {
     val d = runCatching { OffsetDateTime.parse(iso) }.getOrNull() ?: return ""

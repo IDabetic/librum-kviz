@@ -15,7 +15,7 @@ const STATUS: Record<string, { naziv: string; boja: string }> = {
 }
 const NACIN: Record<string, string> = { svakoZaSebe: 'Svako za sebe', timovi: 'Timovi', jedanNaJedan: 'Jedan na jedan' }
 
-/** Osvajanje sveta: sobe za igru preko mreže (ko igra, koliko poteza); partije protiv računara su u Aktivnosti. */
+/** Osvajač: sobe za igru preko mreže (ko igra, koliko poteza); partije protiv računara su u Aktivnosti. */
 export default async function OsvajanjePage({ searchParams }: { searchParams: Promise<{ pre?: string }> }) {
   const { pre } = await searchParams
   const supabase = await createClient()
@@ -26,7 +26,7 @@ export default async function OsvajanjePage({ searchParams }: { searchParams: Pr
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Osvajanje sveta</h1>
+          <h1 className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Osvajač</h1>
           <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>Sobe za igru sa drugim igračima, najnovije prve.</p>
         </div>
         <Link href="/majmun/aktivnost?igra=osvajanje" className="btn btn-secondary btn-md">Sve partije</Link>

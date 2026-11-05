@@ -34,10 +34,10 @@ export default async function PitanjaStrukaPage({ searchParams }: { searchParams
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/majmun/karijera" className="text-[13px] font-medium hover:underline" style={{ color: '#12907E' }}>← Karijera</Link>
+        <Link href="/majmun/karijera" className="text-[13px] font-medium hover:underline" style={{ color: '#12907E' }}>← Karijerista</Link>
         <h1 className="font-black tracking-tight mt-2" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 28px)' }}>Pitanja struka</h1>
         <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
-          Pitanja koja Karijera daje po struci. Opšta pitanja koja Karijera takođe koristi menjaju se u delu Pitanja.
+          Pitanja koja Karijerista daje po struci. Opšta pitanja koja Karijerista takođe koristi menjaju se u delu Pitanja.
         </p>
       </div>
 

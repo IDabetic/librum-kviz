@@ -4,8 +4,8 @@ package club.librum.kviz.karijera
 object KarijeraVodic {
     data class Strana(val id: Int, val naslov: String, val slika: String, val pasusi: List<String>)
     val strane = listOf(
-        Strana(0, "Šta je Karijera", "karijera_korporacija_1", listOf(
-            "Karijera je igra znanja i strategije u kojoj igraš protiv pravih ljudi, ne protiv računara. Počinješ kao junior u Korporaciji, a cilj je tvoja firma: od garaže do nebodera.",
+        Strana(0, "Šta je Karijerista", "karijera_korporacija_1", listOf(
+            "Karijerista je igra znanja i strategije u kojoj igraš protiv pravih ljudi, ne protiv računara. Počinješ kao junior u Korporaciji, a cilj je tvoja firma: od garaže do nebodera.",
             "Svaka runda je 10 pitanja po 20 sekundi. Tačni odgovori donose novac, ugled i stručnost.",
             "Novac kupuje firmu i asistente, ugled donosi titulu (junior, senior, menadžer, direktor), a stručnost pokazuje u čemu si najjači. Sve to drugi igrači vide u tvom CV-u.",
         )),

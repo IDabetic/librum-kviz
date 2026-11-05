@@ -7,7 +7,7 @@ enum IgraListe: String, CaseIterable, Identifiable {
     var naziv: String {
         switch self {
         case .dnevni: "Dnevni"
-        case .osvajanje: "Osvajanje"
+        case .osvajanje: "Osvajač"
         case .pro: "PRO"
         case .book: "Book"
         case .duel: "Duel"
@@ -53,7 +53,7 @@ struct RangListaView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Rang lista").font(.naslov(38)).padding(.top, 6)
-                PodvuceniIzbor(izbor: $tabla, opcije: [("osvajac", "Osvajač"), ("karijera", "Karijera"), ("ostale", "Ostale igre")])
+                PodvuceniIzbor(izbor: $tabla, opcije: [("osvajac", "Osvajač"), ("karijera", "Karijerista"), ("ostale", "Ostale igre")])
                     .onChange(of: tabla) { _, t in
                         if t == "osvajac" { igra = .osvajanje } else if t == "ostale", igra == .osvajanje { igra = .pro }
                     }
@@ -423,13 +423,13 @@ struct NacinOsvajanjaView: View {
         let redovi: [(String, String, Int)] = [("person.fill", "Sam", nacin.sam), ("person.2.wave.2.fill", "U savezu", nacin.savez), ("person.2.fill", "Zajedno u timu", nacin.zajedno)]
         let najcesci = redovi.max { $0.2 < $1.2 }!
         VStack(alignment: .leading, spacing: 10) {
-            Oznaka(tekst: "Osvajanje sveta · kako igra")
+            Oznaka(tekst: "Osvajač · kako igra")
             HStack(spacing: 10) {
                 Image(systemName: najcesci.0).font(.system(size: 18, weight: .bold)).frame(width: 40, height: 40)
                     .background(Color.zuta, in: RoundedRectangle(cornerRadius: 12)).foregroundStyle(Color.tinta)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Najčešće: \(najcesci.1.lowercased())").font(.tekst(16, .bold))
-                    Text("\(ukupno) \(ukupno == 1 ? "partija" : "partija") Osvajanja").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                    Text("\(ukupno) \(ukupno == 1 ? "partija" : "partija") Osvajača").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
                 }
             }
             if (nacin.izdaje ?? 0) > 0 || (nacin.verno ?? 0) > 0 {

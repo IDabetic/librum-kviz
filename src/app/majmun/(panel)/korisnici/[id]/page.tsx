@@ -175,7 +175,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       <Link href={`/majmun/aktivnost?igrac=${u.id}`} className="card-soft p-5 flex items-center justify-between hover:bg-[#F7F4EC] transition-colors">
         <span>
           <span className="block text-[14px] font-bold" style={{ color: '#151515' }}>Sva aktivnost igrača</span>
-          <span className="block text-[12px] mt-0.5" style={{ color: '#6F6C66' }}>Sve partije iz aplikacije i sa sajta: Karijera, Osvajanje, Slikari, kvizovi, vešanje</span>
+          <span className="block text-[12px] mt-0.5" style={{ color: '#6F6C66' }}>Sve partije iz aplikacije i sa sajta: Karijerista, Osvajač, Slikari, kvizovi, vešanje</span>
         </span>
         <span aria-hidden className="text-[18px]" style={{ color: '#12907E' }}>→</span>
       </Link>

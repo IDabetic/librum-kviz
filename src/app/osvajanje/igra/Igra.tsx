@@ -37,7 +37,7 @@ async function ucitajPaket(): Promise<Pitanje[]> {
 }
 
 /**
- * Cela partija Osvajanja sveta protiv dva bota.
+ * Cela partija Osvajača protiv dva bota.
  *
  * @example <Igra krugova={10} tezina="normalno" />
  */

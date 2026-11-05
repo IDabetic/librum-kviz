@@ -127,7 +127,7 @@ fun OsvajanjeUvod(ime: String?, pozovi: (OsvajanjePostavka) -> Unit = {}, kodom:
                 MaskotaSlika(Maskota.MIMI, 110.dp, Modifier.align(Alignment.BottomEnd).padding(8.dp))
                 Column(Modifier.padding(22.dp).padding(end = 110.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Oznaka("Glavna igra · 2 do 12 igrača", Boje.zuta)
-                    Text("Osvajanje\nsveta", style = naslov(42.sp).copy(color = Color.White, lineHeight = 44.sp))
+                    Text("Osvajač", style = naslov(42.sp).copy(color = Color.White, lineHeight = 44.sp))
                     Text("Biraš odakle napadaš i koga, pa pitanja odlučuju bitku.", style = tekst(15.sp, FontWeight.SemiBold, Color.White.copy(alpha = 0.9f)))
                 }
             }
