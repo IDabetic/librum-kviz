@@ -86,6 +86,20 @@ object KarijeraMuzika {
         val seme = id.fold(0) { a, c -> (a * 31 + c.code) % 997 }
         return mojaFirma[(dan + seme) % mojaFirma.size]
     }
+    /** Džez numere koje vlasnik bira u svojoj firmi (vlasnik 05.11), isto kao iOS KarijeraMuzika.izbor. */
+    val izbor: List<Pair<String, String>> = listOf("auto" to "Svakog dana druga", "karijera_firma" to "Soul džez bar", "karijera_firma_2" to "Kancelarijski džez",
+        "karijera_firma_3" to "Večernji džez", "karijera_firma_4" to "Lagani džez", "karijera_korporacija" to "Džez klavir", "karijera_posao" to "Džez valcer",
+        "karijera_probni_kraj" to "Brzi džez", "tisina" to "Bez muzike")
+    private fun prefs() = Zvuk.kontekst.getSharedPreferences("karijera", android.content.Context.MODE_PRIVATE)
+    var izabrana: String
+        get() = runCatching { prefs().getString("muzikaFirme", "auto") }.getOrNull() ?: "auto"
+        set(v) { runCatching { prefs().edit().putString("muzikaFirme", v).apply() } }
+    /** Muzika runde u mojoj firmi po izboru; null = tišina. */
+    fun mojaFirmaIzbor(id: String): Zvuk.Vrsta? = when (val k = izabrana) {
+        "auto" -> zaMojuFirmu(id)
+        "tisina" -> null
+        else -> Zvuk.Vrsta.entries.firstOrNull { it.fajl == k } ?: zaMojuFirmu(id)
+    }
     fun pusti(v: Zvuk.Vrsta, jacina: Float = 0.3f) { petlje.filter { it != v }.forEach(Zvuk::stani); Zvuk.pusti(v, jacina, ponavljaj = true) }
     fun stani() = petlje.forEach(Zvuk::stani)
 }

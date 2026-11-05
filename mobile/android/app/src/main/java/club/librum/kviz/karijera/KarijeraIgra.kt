@@ -1,5 +1,9 @@
 package club.librum.kviz.karijera
 
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -266,6 +270,8 @@ fun RundaEkran(firma: Karijera.Firma, probni: Boolean, botovi: List<Karijera.Bot
     var priprema by remember { mutableIntStateOf(PRIPREMA_SEKUNDI) }
     // Potvrda izlaska usred runde (vlasnik 05.11: napuštena runda = 0 tačnih).
     var izlaz by remember { mutableStateOf(false) }
+    var muzikaList by remember { mutableStateOf(false) }
+    var izabranaMuzika by remember { mutableStateOf(KarijeraMuzika.izabrana) }
     var zanimljivost by remember { mutableStateOf<Zanimljivost?>(null) }
     var tracSlika by remember { mutableStateOf("karijera_trac_1") }
     LaunchedEffect(pokusaj) {
@@ -279,7 +285,10 @@ fun RundaEkran(firma: Karijera.Firma, probni: Boolean, botovi: List<Karijera.Bot
         }
         stigla.onSuccess { p ->
             faza = if (p.size == 10) Faza.Igra(p) else Faza.Greska("Stiglo je ${p.size} od 10 pitanja. Pokušaj ponovo.")
-            if (p.size == 10) KarijeraMuzika.pusti(if (firma.korporacija) Zvuk.Vrsta.KARIJERA_KORPORACIJA else if (firma.vlasnik == ja) KarijeraMuzika.zaMojuFirmu(firma.id) else Zvuk.Vrsta.KARIJERA_POSAO)
+            if (p.size == 10) {
+                val m = if (firma.korporacija) Zvuk.Vrsta.KARIJERA_KORPORACIJA else if (firma.vlasnik == ja) KarijeraMuzika.mojaFirmaIzbor(firma.id) else Zvuk.Vrsta.KARIJERA_POSAO
+                if (m != null) KarijeraMuzika.pusti(m) else KarijeraMuzika.stani()
+            }
         }.onFailure { faza = Faza.Greska(it.message ?: "Greška") }
     }
     Box(Modifier.fillMaxSize()) {
@@ -291,6 +300,15 @@ fun RundaEkran(firma: Karijera.Firma, probni: Boolean, botovi: List<Karijera.Bot
                     Text(firma.ime, style = naslov(20.sp), maxLines = 1)
                     Text((if (probni) "Probni rad" else firma.udeoNaziv) + if (firma.slobodan_danas == true) " · slobodan dan, prekovremeno +10%" else "",
                         style = tekst(13.sp, FontWeight.SemiBold, Boje.sivaTekst), maxLines = 1)
+                }
+                // Svoja firma: vlasnik bira muziku runde gore desno (vlasnik 05.11).
+                if (!firma.korporacija && firma.vlasnik == ja) {
+                    Spacer(Modifier.weight(1f))
+                    Box(Modifier.size(44.dp).background(Boje.kartica, androidx.compose.foundation.shape.CircleShape)
+                        .border(1.5.dp, Boje.kremTamnija, androidx.compose.foundation.shape.CircleShape).clickable { muzikaList = true },
+                        contentAlignment = Alignment.Center) {
+                        Icon(androidx.compose.material.icons.Icons.Rounded.MusicNote, contentDescription = "Muzika", tint = Boje.mastilo)
+                    }
                 }
             }
             when (val f = faza) {
@@ -316,6 +334,19 @@ fun RundaEkran(firma: Karijera.Firma, probni: Boolean, botovi: List<Karijera.Bot
             }
         }
         val igra = faza as? Faza.Igra
+        if (muzikaList) club.librum.kviz.ui.DonjiList({ muzikaList = false }) {
+            Text("Muzika u firmi", style = naslov(26.sp))
+            KarijeraMuzika.izbor.forEach { (k, naziv) ->
+                Row(Modifier.fillMaxWidth().clickable {
+                    KarijeraMuzika.izabrana = k; izabranaMuzika = k
+                    KarijeraMuzika.mojaFirmaIzbor(firma.id)?.let { KarijeraMuzika.pusti(it) } ?: KarijeraMuzika.stani()
+                }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(if (izabranaMuzika == k) androidx.compose.material.icons.Icons.Rounded.CheckCircle else androidx.compose.material.icons.Icons.Rounded.RadioButtonUnchecked,
+                        contentDescription = null, tint = if (izabranaMuzika == k) Boje.teal else Boje.kremTamnija)
+                    Text(naziv, style = tekst(16.sp, FontWeight.SemiBold))
+                }
+            }
+        }
         if (izlaz && igra != null) club.librum.kviz.ui.Dijalog("Napustiti rundu?", "Ako izađeš sada, runda se računa kao 0 tačnih od 10, a plaćena runda se troši.", "Izađi", "Nastavi",
             potvrdi = {
                 izlaz = false; KarijeraMuzika.stani()
