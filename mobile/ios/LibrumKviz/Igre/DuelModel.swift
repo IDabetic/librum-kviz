@@ -103,6 +103,8 @@ final class DuelModel {
     init(sesija: Sesija) { self.sesija = sesija }
 
     var jaSamDomacin: Bool { soba?.host_id == sesija.korisnikId }
+    /// Nalog rivala za revanš (izazov istom igraču); nil kad rival nije poznat.
+    var rivalId: String? { jaSamDomacin ? soba?.guest_id : soba?.host_id }
     var moji: [Int?] { (jaSamDomacin ? soba?.host_answers : soba?.guest_answers) ?? [] }
     var njegovi: [Int?] { (jaSamDomacin ? soba?.guest_answers : soba?.host_answers) ?? [] }
     var mojiPoeni: Int { (jaSamDomacin ? soba?.host_score : soba?.guest_score) ?? 0 }

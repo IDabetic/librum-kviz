@@ -14,6 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import club.librum.kviz.osvajanje.*
 
 /** Isti slučajevi kao tests/osvajanje.test.mjs i PravilaTests.swift. */
 class PravilaTest {
@@ -169,10 +170,13 @@ class BotTest {
         assertTrue(Stanje.sansaBitke(0.75, 0.5, 5, true) < Stanje.sansaBitke(0.75, 0.5, 5, false))
     }
 
-    @Test fun botoviCiljajuJedinogCoveka() {
-        val s = botNaPotezu(Triple("SRB", "ti", 3), Triple("FRA", "mimi", 3), Triple("CHN", "zig", 9))
-        assertEquals("ti", s.ciljBota("mimi"))
-        assertEquals("ti", s.ciljBota("zig"))
+    /** Vlasnik 03.11: botovi ne idu samo na čoveka; cilj je najjači sused, bio on čovek ili bot (iOS isto). */
+    @Test fun botoviCiljajuRavnopravno() {
+        val s = botNaPotezu(Triple("SRB", "ti", 3), Triple("FRA", "mimi", 3), Triple("DEU", "zig", 9))
+        assertEquals("zig", s.ciljBota("mimi"))
+        assertEquals("mimi", s.ciljBota("zig"))
+        val jak = botNaPotezu(Triple("HUN", "ti", 12), Triple("ROU", "mimi", 3), Triple("UKR", "zig", 2))
+        assertEquals("jak čovek u susedstvu je cilj kao i svaki drugi", "ti", jak.ciljBota("mimi"))
     }
 
     @Test fun botZatvaraRegion() {
@@ -249,5 +253,106 @@ class IgreTest {
     @Test fun duelMesanjeKaoVeb() {
         assertEquals(listOf(2, 1, 0, 3), club.librum.kviz.igre.DuelMesanje.red("31628f47-f1e2-4f92-8be0-791c3cf231e3"))
         assertEquals(listOf(3, 1, 2, 0), club.librum.kviz.igre.DuelMesanje.red("abc"))
+    }
+}
+
+/** Iste provere kao iOS (PravilaTests.swift): cele partije botova, isto seme = ista partija, nevažeći napad ne ruši. */
+class StrategijaTest {
+    init { Mapa.ucitaj(java.io.File("../../../src/lib/osvajanje/svet.json").readText()) }
+
+    @Test fun celePartijeBotovaBezPadaIZaglavljivanja() {
+        for (seme in 1..20) for (igraca in listOf(2, 4, 6)) {
+            val r = Slucajno(seme * -1640531535)
+            val imena = listOf("Bloop", "Mimi", "Zig", "Lumi", "Sara", "Max")
+            val igraci = (0 until igraca).map { NoviIgrac("b$it", imena[it], 0xFF12907E, covek = false, tim = "T$it") }
+            var s = Stanje.nova(8, Tezina.TESKO, r, igraci = igraci)
+            var koraka = 0
+            while (s.faza != Faza.KRAJ && koraka < 5_000) {
+                koraka++
+                s = s.snabdevanje(r.sledeci() < s.tacnostBota).botRasporedi().botOdbrana().botIgraKarte().botTraziSavez()
+                    .botIzdaja().botNajaviPohod().botUltimatum()
+                var napada = 0
+                while (napada < 40) {
+                    val n = s.botSledeciNapad() ?: break
+                    napada++
+                    s = if (s.oblasti[n.second]?.vlasnik != null) s.postaviUlog(Stanje.ulogBota(0.8)).razresiBitkuSkorom(n.first, n.second, s.botSkor(r), s.botSkor(r)).first
+                    else s.razresiBitku(n.first, n.second, s.botOdgovor(r), null).first
+                    if (s.faza == Faza.KRAJ) break
+                }
+                assertTrue("bot ne prestaje da napada", napada < 40)
+                if (s.faza == Faza.NAPAD) s = s.botUtvrdi()
+                if (s.faza != Faza.KRAJ) s = s.zavrsiPotez()
+            }
+            assertTrue("partija $seme/$igraca zaglavljena", koraka < 5_000)
+        }
+    }
+
+    @Test fun istoSemeIstaPartija() {
+        val a = Stanje.nova(12, Tezina.NORMALNO, Slucajno(42), misije = true)
+        val b = Stanje.nova(12, Tezina.NORMALNO, Slucajno(42), misije = true)
+        assertEquals(a, b)
+        assertTrue(a.seme != null)
+    }
+
+    @Test fun napadKojiViseNeVaziSePreskace() {
+        var s = Stanje.nova(5, Tezina.NORMALNO, Slucajno(99)).snabdevanje(true)
+        while (s.faza == Faza.RASPORED) s = s.rasporedi(s.oblastiIgraca(s.trenutni.id).first())
+        val odakle = s.oblastiIgraca(s.trenutni.id).first { s.mete(it).isNotEmpty() }
+        val kuda = s.mete(odakle).first()
+        val promenjeno = s.copy(faza = Faza.RASPORED)
+        val (posle, ishod) = promenjeno.razresiBitkuSkorom(odakle, kuda, Skor(5, 1), Skor(0, 1))
+        assertEquals(promenjeno, posle)
+        assertFalse(ishod.osvojeno)
+    }
+
+    @Test fun jsonStanjaKaoIos() {
+        val s = Stanje.nova(12, Tezina.NORMALNO, Slucajno(7), misije = true)
+        val json = kotlinx.serialization.json.Json { encodeDefaults = false; explicitNulls = false }
+        val tekst = json.encodeToString(Stanje.serializer(), s)
+        assertTrue(tekst.contains("\"seme\":"))
+        assertEquals(s, json.decodeFromString(Stanje.serializer(), tekst))
+    }
+}
+
+/** Otisak partije za isto seme mora biti isti na iOS-u (PravilaTests.swift, OtisakPartijeTests) i Androidu. */
+class OtisakPartijeTest {
+    init { Mapa.ucitaj(java.io.File("../../../src/lib/osvajanje/svet.json").readText()) }
+
+    @Test fun otisak() {
+        val r = Slucajno(42)
+        var s = Stanje.nova(12, Tezina.NORMALNO, r, misije = true)
+        repeat(6) {
+            s = s.snabdevanje(true).botRasporedi().botOdbrana().botIgraKarte().botTraziSavez().botIzdaja().botNajaviPohod().botUltimatum()
+            var n = 0
+            while (n < 10) { val a = s.botSledeciNapad() ?: break; n++; s = if (s.oblasti[a.second]?.vlasnik != null) s.razresiBitkuSkorom(a.first, a.second, s.botSkor(r), s.botSkor(r)).first else s.razresiBitku(a.first, a.second, s.botOdgovor(r), null).first }
+            if (s.faza == Faza.NAPAD) s = s.botUtvrdi()
+            s = s.zavrsiPotez()
+        }
+        val otisak = "${s.seme}|" + s.igraci.joinToString(",") { "${it.id}:${it.prestonica}:${it.vojska?.name?.lowercase()}" } + "|" +
+            s.misije.toSortedMap().entries.joinToString(",") { "${it.key}=${it.value}" } + "|" +
+            s.igraci.joinToString(",") { "${it.tim}=${s.oblastiIgraca(it.id).size}/${s.oblastiIgraca(it.id).sumOf { o -> s.oblasti[o]!!.vojske }}" }
+        assertEquals("131503810|ti:PRK:mudraci,mimi:FRA:izvidnica,zig:AFG:graditelji|mimi=regiona6-kontinent,ti=drzava45x2,zig=evr-afr|ti=8/20,mimi=10/20,zig=9/10", otisak)
+    }
+}
+
+/** Botovi takmičenja: isti rezultati kao iOS (KvizTests.swift, TakmicenjeTests.testBotIstiKaoAndroid) za isto seme sobe. */
+class TakmicenjeBotTest {
+    @Test fun otisakBotova() {
+        val otisak = club.librum.kviz.igre.IgraTakmicenja.entries.joinToString(",") { g ->
+            val b = club.librum.kviz.igre.Takmicenje.Bot.rezultat(g, "normalno", 1095258902L, 2, g.broj, 40.0)
+            "${g.kljuc}=${b.poeni}/${b.tacnih}/${b.odigrano}"
+        }
+        assertEquals("pro=48/3/3,book=48/3/3,slikari=48/3/3,brzi=205/11/14,vesanje=36/1/1", otisak)
+    }
+}
+
+/** Vlasnik 03.11: svaka vojska ima jednu svoju moć i dve iste za sve (ključevi kao iOS rawValue). */
+class MocVojskeTest {
+    @org.junit.Test fun svakaVojskaSvojaMoc() {
+        val sve = club.librum.kviz.osvajanje.VrstaVojske.entries
+        org.junit.Assert.assertEquals(6, sve.map { it.moc }.toSet().size)
+        sve.forEach { org.junit.Assert.assertEquals(listOf(it.moc, club.librum.kviz.osvajanje.PomocVojske.ZAMENA, club.librum.kviz.osvajanje.PomocVojske.VREME), it.pomoci) }
+        org.junit.Assert.assertEquals(listOf("sigurniUdar", "stit", "vremeStoji", "polaPola", "juris", "tacanOdgovor", "zamena", "vreme"),
+            club.librum.kviz.osvajanje.PomocVojske.entries.map { it.kljuc })
     }
 }

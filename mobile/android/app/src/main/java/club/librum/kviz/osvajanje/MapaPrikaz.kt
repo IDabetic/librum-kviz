@@ -108,7 +108,16 @@ private object PutanjeMape {
  */
 @Composable
 fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: String?, dodir: (String) -> Unit, modifier: Modifier = Modifier,
-               meta: String? = null, izvori: List<String> = emptyList()) {
+               meta: String? = null, izvori: List<String> = emptyList(),
+               /** Magla rata: države čije vojske ovaj igrač ne vidi; umesto broja procena (≤2, 3–5, 6+). */
+               magla: Set<String> = emptySet(),
+               /** Efekti posle bitke (iOS Efekti): udar sa razlivanjem boje, iskakanje vojski, sjaj zatvorenog regiona. */
+               udar: OsvajanjeModel.Udar? = null, iskoci: List<OsvajanjeModel.Iskok> = emptyList(),
+               zatvoreni: List<OsvajanjeModel.ZatvorenRegion> = emptyList()) {
+    // Sat efekata: kuca dok traje bar jedan efekat, inače miruje (bez trošenja baterije).
+    var sad by remember { mutableStateOf(System.currentTimeMillis()) }
+    val poslednji = maxOf(udar?.kad ?: 0L, iskoci.maxOfOrNull { it.kad } ?: 0L, zatvoreni.maxOfOrNull { it.kad } ?: 0L)
+    LaunchedEffect(poslednji) { while (System.currentTimeMillis() - poslednji < 2_100) { androidx.compose.runtime.withFrameMillis { sad = System.currentTimeMillis() } } }
     // Partija na jednom kontinentu: u stanju su samo njegove države.
     val naKontinentu = stanje.oblasti.size < Mapa.oblasti.size
     val merac = rememberTextMeasurer()
@@ -140,7 +149,7 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
             val odsek = if (xs.size >= 10) xs.size / 10 else 0
             val x0 = xs[odsek]; val x1 = xs[xs.size - 1 - odsek]; val y0 = ys[odsek]; val y1 = ys[ys.size - 1 - odsek]
             val kk = min(sirinaPx / ((x1 - x0) * 1.15f + 60), visinaPx / ((y1 - y0) * 1.15f + 60))
-            razmera = (kk / osnova).coerceIn(1f, 8f)
+            razmera = (kk / osnova).coerceIn(1f, NAJVECI_ZUM)
             val k = osnova * razmera
             pomak = ogranici(Offset((Mapa.sirina / 2 - (x0 + x1) / 2) * k, (Mapa.visina / 2 - (y0 + y1) / 2) * k), k)
         }
@@ -174,19 +183,19 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
             pomak = ogranici(Offset((Mapa.sirina / 2 - (x0 + x1) / 2) * k, (Mapa.visina / 2 - (y0 + y1) / 2) * k), k)
         }
 
-        // Zum drži ono što je na sredini ekrana: pomak raste srazmerno, inače bi pogled odleteo ka sredini mape.
-        fun zumiraj(nova: Float) {
-            val r = nova.coerceIn(1f, 8f)
+        // Zum drži mesto ispod tačke `oko` (prsti, od sredine ekrana; dugmad zumiraju oko sredine), inače bi pogled odleteo.
+        fun zumiraj(nova: Float, oko: Offset = Offset.Zero) {
+            val r = nova.coerceIn(1f, NAJVECI_ZUM)
             val f = r / razmera
             razmera = r
-            pomak = ogranici(pomak * f, osnova * r)
+            pomak = ogranici((pomak - oko) * f + oko, osnova * r)
         }
 
         Canvas(
             Modifier.fillMaxSize().background(OKEAN)
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zum, _ ->
-                        zumiraj(razmera * zum)
+                    detectTransformGestures { teziste, pan, zum, _ ->
+                        zumiraj(razmera * zum, teziste - Offset(sirinaPx / 2, visinaPx / 2))
                         pomak = ogranici(pomak + pan, osnova * razmera)
                     }
                 }
@@ -244,6 +253,25 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
                         val put = PutanjeMape.sve[id] ?: continue
                         drawPath(put, Boje.zuta, style = Stroke(2.5f * gustina / k, join = StrokeJoin.Round))
                     }
+                    // Udar: osvojena država se „razlije” novom bojom, strela napada i talas oko mete (1,6 s).
+                    udar?.let { u ->
+                        val t = ((sad - u.kad) / 1600f).coerceIn(0f, 1f)
+                        if (t < 1f) {
+                            val a = Mapa.oblast(u.odakle); val b = Mapa.oblast(u.kuda)
+                            PutanjeMape.sve[u.kuda]?.let { put ->
+                                if (u.osvojeno && u.novaBoja != null) drawPath(put, Color(u.novaBoja).copy(alpha = (t * 1.6f).coerceAtMost(1f)))
+                                drawPath(put, Boje.crvena.copy(alpha = 1f - t), style = Stroke(4f * gustina / k, join = StrokeJoin.Round))
+                            }
+                            drawLine(Boje.crvena.copy(alpha = 1f - t), Offset(a.x, a.y), Offset(b.x, b.y), 3f * gustina / k)
+                            drawCircle(Boje.crvena.copy(alpha = (1f - t) * 0.8f), (6f + 40f * t) * gustina / k, Offset(b.x, b.y), style = Stroke(2.5f * gustina / k))
+                        }
+                    }
+                    // Ceo region je pao: zasvetli u boji novog vlasnika (2 s).
+                    for (z in zatvoreni) {
+                        val t = ((sad - z.kad) / 2000f).coerceIn(0f, 1f)
+                        if (t >= 1f) continue
+                        for (o in Mapa.oblasti) if (o.region == z.region) PutanjeMape.sve[o.id]?.let { drawPath(it, Color(z.boja).copy(alpha = 1f - t), style = Stroke(4f * gustina / k)) }
+                    }
                     izabrana?.let { id -> PutanjeMape.sve[id]?.let { drawPath(it, Boje.zuta, style = Stroke(5f * gustina / k, join = StrokeJoin.Round)) } }
                     meta?.let { id ->
                         PutanjeMape.sve[id]?.let {
@@ -270,14 +298,16 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
                 val vlasnik = stanje.igraci.firstOrNull { it.tim == st.vlasnik }
                 if (vlasnik == null && o.id !in mete) continue
                 val c = Offset(p.x + o.x * k, p.y + o.y * k)
-                val okvir = Rect(c.x - 11 * gustina, c.y - 9 * gustina, c.x + 11 * gustina, c.y + 9 * gustina)
+                val skriveno = o.id in magla
+                val pola = if (skriveno) 15 else 11
+                val okvir = Rect(c.x - pola * gustina, c.y - 9 * gustina, c.x + pola * gustina, c.y + 9 * gustina)
                 if (zauzeto.any { it.deflate(2 * gustina).overlaps(okvir) }) continue
                 zauzeto += okvir
                 val ugao = CornerRadius(6 * gustina)
                 drawRoundRect(Boje.tinta.copy(alpha = 0.55f), okvir.topLeft + Offset(0f, 1.5f * gustina), okvir.size, ugao)
                 drawRoundRect(vlasnik?.let { Color(it.boja) } ?: Color.White, okvir.topLeft, okvir.size, ugao)
                 drawRoundRect(Boje.tinta, okvir.topLeft, okvir.size, ugao, style = Stroke(1.2f * gustina))
-                val broj = merac.measure("${st.vojske}", naslov(11.sp).copy(color = if (vlasnik == null) Boje.tinta else Color.White))
+                val broj = merac.measure(if (skriveno) Stanje.procenaVojske(st.vojske) else "${st.vojske}", naslov(11.sp).copy(color = if (vlasnik == null) Boje.tinta else Color.White))
                 drawText(broj, topLeft = c - Offset(broj.size.width / 2f, broj.size.height / 2f))
                 if (o.id in prestonice) {
                     val kruna = Path().apply {
@@ -289,6 +319,15 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
                     drawPath(kruna, Boje.zuta)
                     drawPath(kruna, Boje.tinta, style = Stroke(1.2f * gustina))
                 }
+            }
+            // Promena vojske iskače iznad države (+2, −1) i izbledi naviše (1,4 s).
+            for (i in iskoci) {
+                val t = ((sad - i.kad) / 1400f).coerceIn(0f, 1f)
+                if (t >= 1f || i.oblast !in stanje.oblasti) continue
+                val o = Mapa.oblast(i.oblast)
+                val tekstPromene = merac.measure(if (i.promena > 0) "+${i.promena}" else "${i.promena}",
+                    naslov(14.sp).copy(color = (if (i.promena > 0) Boje.teal else Boje.crvena).copy(alpha = 1f - t)))
+                drawText(tekstPromene, topLeft = Offset(p.x + o.x * k - tekstPromene.size.width / 2f, p.y + o.y * k - (22 + 26 * t) * gustina))
             }
         }
 
@@ -305,3 +344,6 @@ fun MapaPrikaz(stanje: Stanje, izabrana: String?, mete: List<String>, fokus: Str
         }
     }
 }
+
+/** Jak zum kao na iOS-u, da se i male države (Luksemburg, Liban) lepo vide i tapnu. */
+private const val NAJVECI_ZUM = 20f

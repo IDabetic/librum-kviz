@@ -1,5 +1,8 @@
 package club.librum.kviz.igre
 
+import androidx.compose.ui.draw.alpha
+import kotlinx.coroutines.async
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -116,7 +119,7 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, quizId: Str
     suspend fun pokreni() {
         greska = null; pitanja = null
         runCatching { ucitaj().filter { it.options.size == 4 && it.correct_answer in 0..3 }.take(10).map(Prikaz::od) }
-            .onSuccess { if (it.isEmpty()) greska = "Pitanja nisu stigla." else { pitanja = it; indeks = 0; kviz = KlasicniKviz(); kraj = false; pomocIskoriscena = false
+            .onSuccess { if (it.isEmpty()) greska = "Pitanja nisu stigla." else { SlikeUnapred.pripremi(it.mapNotNull { p -> p.slika }); pitanja = it; indeks = 0; kviz = KlasicniKviz(); kraj = false; pomocIskoriscena = false
                 izabran = null; otkriveno = false; eliminisani = emptySet(); dodatno = 0; pocetak = System.currentTimeMillis() } }
             .onFailure { greska = it.message }
     }
@@ -195,8 +198,10 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, quizId: Str
                 Column(Modifier.fillMaxWidth().pop(Boje.zuta).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Oznaka(p.zanr ?: naslovKviza, Boje.tinta)
                     p.slika?.let { url -> SlikaSaMreze(url, Modifier.fillMaxWidth().height(220.dp)) { slikaSpremna = true } }
-                    Text(p.tekst, style = naslov(if (p.slika == null) 23.sp else 19.sp, Boje.tinta))
-                    p.opcije.forEachIndexed { i, o ->
+                    // Vlasnik 03.11 (kao iOS): pitanje i odgovori se pojavljuju zajedno sa slikom, ne sekund pre nje.
+                    val vidljivo = p.slika == null || slikaSpremna
+                    Text(p.tekst, style = naslov(if (p.slika == null) 23.sp else 19.sp, Boje.tinta), modifier = Modifier.alpha(if (vidljivo) 1f else 0f))
+                    if (vidljivo) p.opcije.forEachIndexed { i, o ->
                         val stanje = when {
                             !otkriveno -> if (i in eliminisani) StanjeOdgovora.BLEDO else StanjeOdgovora.OBICNO
                             i == p.tacan -> StanjeOdgovora.TACNO
@@ -219,18 +224,36 @@ fun KvizIgraEkran(sesija: Sesija, naslovKviza: String, igra: String, quizId: Str
     }
 }
 
-/** Slika sa mreže (Wikimedia) bez dodatne biblioteke; javlja kad je stigla ili kad nije uspela, da sat krene. */
-@Composable
-private fun SlikaSaMreze(url: String, modifier: Modifier, spremna: () -> Unit) {
-    val slika by androidx.compose.runtime.produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, url) {
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            runCatching {
+/** Slike pitanja (Slikari) preuzete unapred, čim se učita kviz, da se na pitanju pojave odmah (iOS SlikeUnapred). */
+object SlikeUnapred {
+    private val kes = android.util.LruCache<String, androidx.compose.ui.graphics.ImageBitmap>(60)
+    private val uToku = mutableMapOf<String, kotlinx.coroutines.Deferred<androidx.compose.ui.graphics.ImageBitmap?>>()
+    private val opseg = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
+
+    fun gotova(url: String): androidx.compose.ui.graphics.ImageBitmap? = kes.get(url)
+
+    @Synchronized private fun ucitaj(url: String) = uToku.getOrPut(url) {
+        opseg.async {
+            gotova(url) ?: runCatching {
                 val veza = java.net.URL(url).openConnection() as java.net.HttpURLConnection
                 veza.setRequestProperty("User-Agent", "LibrumKviz/1.0 (kviz.librum.club)")
                 veza.connectTimeout = 8000; veza.readTimeout = 10000
                 veza.inputStream.use { android.graphics.BitmapFactory.decodeStream(it) }?.asImageBitmap()
-            }.getOrNull()
+            }.getOrNull()?.also { kes.put(url, it) }
         }
+    }
+
+    /** Pokreće preuzimanje svih slika kviza; ponovni poziv za isti URL ne preuzima dva puta. */
+    fun pripremi(urlovi: List<String>) { urlovi.forEach { ucitaj(it) } }
+
+    suspend fun slika(url: String): androidx.compose.ui.graphics.ImageBitmap? = gotova(url) ?: ucitaj(url).await().also { synchronized(this) { uToku.remove(url) } }
+}
+
+/** Slika sa mreže (Wikimedia) iz keša ili čim stigne; javlja kad je stigla ili kad nije uspela, da sat krene. */
+@Composable
+internal fun SlikaSaMreze(url: String, modifier: Modifier, spremna: () -> Unit) {
+    val slika by androidx.compose.runtime.produceState(SlikeUnapred.gotova(url), url) {
+        value = value ?: SlikeUnapred.slika(url)
         spremna()
     }
     Box(modifier.background(Boje.kartica, androidx.compose.foundation.shape.RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {

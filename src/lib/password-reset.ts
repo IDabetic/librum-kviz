@@ -2,6 +2,8 @@
 
 import crypto from 'crypto'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { rateLimit } from '@/lib/rate-limit'
 
 type Result = { ok: true } | { ok: false; error: string }
 
@@ -51,13 +53,18 @@ function sha256(input: string): string {
 export async function sendCustomPasswordResetEmail(rawEmail: string): Promise<Result> {
   const email = rawEmail.trim().toLowerCase()
   if (!email) return { ok: false, error: 'Upiši email.' }
+  // Najviše 3 mejla za reset na istu adresu u 15 minuta (zaštita tuđeg sandučeta).
+  if (!rateLimit(`reset-lozinke:${email}`, 3, 15 * 60_000).ok) {
+    return { ok: false, error: 'Previše zahteva. Pokušaj ponovo za 15 minuta.' }
+  }
 
   // Generate raw token (sent in email) and hash (stored in DB)
   const rawToken = crypto.randomBytes(32).toString('base64url')
   const tokenHash = sha256(rawToken)
 
+  // Samo server sme da upiše token (05.11): sa javnim ključem bi napadač upisao svoj heš i preuzeo tuđi nalog.
   const supabase = await createClient()
-  const { data: created, error: rpcErr } = await supabase
+  const { data: created, error: rpcErr } = await createAdminClient()
     .rpc('request_password_reset', { p_email: email, p_token_hash: tokenHash })
 
   if (rpcErr) {
@@ -119,8 +126,7 @@ export async function redeemPasswordResetToken(rawToken: string, newPassword: st
   if (newPassword.length < 6) return { ok: false, error: 'Lozinka mora imati najmanje 6 karaktera.' }
 
   const tokenHash = sha256(rawToken)
-  const supabase = await createClient()
-  const { data, error } = await supabase
+  const { data, error } = await createAdminClient()
     .rpc('reset_password_with_token', { p_token_hash: tokenHash, p_new_password: newPassword })
 
   if (error) {

@@ -31,6 +31,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GOOGLE_IOS_CLIENT_ID</key>
+	<string>$(GOOGLE_IOS_CLIENT_ID)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
@@ -56,9 +58,9 @@
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
-		<string>Krem</string>
+		<string>TealPocetak</string>
 		<key>UIImageName</key>
-		<string>Bloop</string>
+		<string>Pocetak</string>
 		<key>UIImageRespectsSafeAreaInsets</key>
 		<true/>
 	</dict>

@@ -156,7 +156,9 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
     fun odgovori(kaze: Boolean?) {
         val iz = izjava ?: return
         if (otkriveno != null || kraj) return
-        otkriveno = igra.odgovor(iz, kaze, stit)
+        // Poslednjih 10 s runde vredi duplo (vlasnik 03.11, kao iOS).
+        val zavrsnica = System.currentTimeMillis() - pocetak >= (BrziKviz.SEKUNDI_RUNDE - BrziKviz.SEKUNDI_ZAVRSNICE) * 1000L
+        otkriveno = igra.odgovor(iz, kaze, zavrsnica = zavrsnica, stit = stit)
         if (stit && otkriveno == false) stit = false
         opseg.launch { delay(700); if (!kraj) sledeca() }
     }
@@ -197,7 +199,8 @@ fun BrziKvizEkran(sesija: Sesija, izadji: () -> Unit) {
                     KrugZatvori("Prekini") { opseg.launch { sacuvaj(); izadji() } }
                     Pokazatelj("Vreme", "$ostaloRunda", if (ostaloRunda < 10) Boje.crvenaSvetla else Boje.kartica, Modifier.weight(1f))
                     Pokazatelj("Poeni", "${igra.poeni}", Boje.zuta, Modifier.weight(1f))
-                    Pokazatelj("Tačnih", "${igra.tacnih}", Boje.tealSvetla, Modifier.weight(1f))
+                    // Množilac niza (×2 od 3 tačna zaredom, ×3 od 6), kao iOS.
+                    Pokazatelj("Množilac", "×${igra.mnozilac}", if (igra.mnozilac > 1) Boje.narandzasta else Boje.tealSvetla, Modifier.weight(1f))
                 }
                 Column(Modifier.fillMaxWidth().pop(Boje.zuta).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row { Oznaka("Tačno ili netačno?", Boje.tinta); Spacer(Modifier.weight(1f)); Text("$ostaloIzjava", style = naslov(22.sp, Boje.tinta)) }
@@ -314,16 +317,9 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
                             unos = novo
                         }, Modifier.size(1.dp).alpha(0.01f).focusRequester(fokus).semantics { contentDescription = "Otkucaj slovo" },
                             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false))
-                        LaunchedEffect(r.id) { delay(300); runCatching { fokus.requestFocus() }; tastatura?.show() }
-                        val iskoriscena = Vesanje.AZBUKA.filter { igra.iskorisceno(it) }
-                        if (iskoriscena.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            iskoriscena.forEach { sl ->
-                                val pogodak = r.word.uppercase(java.util.Locale.forLanguageTag("sr-Latn")).contains(sl)
-                                Text(sl, style = tekst(18.sp, FontWeight.Bold, if (pogodak) Boje.teal else if (igra.ugaseno(sl)) Boje.kremTamnija else Boje.crvena),
-                                    textDecoration = if (pogodak) null else TextDecoration.LineThrough)
-                            }
-                        }
-                        Dugme("Kucaj slova", vrsta = VrstaDugmeta.SEKUNDARNO) { runCatching { fokus.requestFocus() }; tastatura?.show() }
+                        // Vlasnik 03.11 (kao iOS): tastatura azbuke sa Č, Ć, Đ, Š, Ž koja boji iskorišćena slova; sistemska samo na dugme.
+                        AzbukaTastatura(igra) { slovo -> igra.pogodi(slovo); posle() }
+                        Dugme("Kucaj tastaturom telefona", vrsta = VrstaDugmeta.SEKUNDARNO) { runCatching { fokus.requestFocus() }; tastatura?.show() }
                     }
                     if (celaRec) {
                         OutlinedTextField(pokusaj, { pokusaj = it }, Modifier.fillMaxWidth(), label = { Text("Cela reč") }, singleLine = true,
@@ -353,8 +349,33 @@ fun VesanjeEkran(sesija: Sesija, izadji: () -> Unit) {
 }
 
 /** Vešala: konstrukcija stalno, pa glava, telo, ruke i noge, deo po deo na svaki izgubljen život (kao iOS VesalaCrtez). */
+/** Tastatura azbuke u tri reda: zeleno pogođeno, crveno promašeno, bledo ugašeno (50/50); dodir = pokušaj (iOS AzbukaTastatura). */
 @Composable
-private fun VesalaCrtez(greske: Int, kraj: Boolean, modifier: Modifier) {
+internal fun AzbukaTastatura(igra: Vesanje, pogodi: (String) -> Unit) {
+    val redovi = listOf(listOf("A", "B", "C", "Č", "Ć", "D", "Đ", "E", "F"), listOf("G", "H", "I", "J", "K", "L", "M", "N", "O"), listOf("P", "R", "S", "Š", "T", "U", "V", "Z", "Ž"))
+    val sr = java.util.Locale.forLanguageTag("sr-Latn")
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        redovi.forEach { red ->
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                red.forEach { slovo ->
+                    val iskorisceno = igra.iskorisceno(slovo)
+                    val pogodjeno = iskorisceno && igra.rec.uppercase(sr).contains(slovo)
+                    Box(
+                        Modifier.weight(1f).height(46.dp)
+                            .background(if (!iskorisceno) Boje.kartica else if (pogodjeno) Boje.teal else Boje.crvena.copy(alpha = 0.75f), RoundedCornerShape(10.dp))
+                            .border(if (iskorisceno) 0.dp else 1.5.dp, Boje.mastilo, RoundedCornerShape(10.dp))
+                            .clickable(enabled = !iskorisceno && igra.status == Vesanje.Status.IGRA) { pogodi(slovo) }
+                            .semantics { contentDescription = slovo + if (iskorisceno) (if (pogodjeno) ", pogođeno" else ", promašeno") else "" },
+                        contentAlignment = Alignment.Center,
+                    ) { Text(slovo, style = tekst(18.sp, FontWeight.Bold, if (iskorisceno) Color.White else Boje.mastilo)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun VesalaCrtez(greske: Int, kraj: Boolean, modifier: Modifier) {
     Canvas(modifier.semantics { contentDescription = if (greske == 0) "Vešala, još nijedan promašaj" else "Vešala, $greske od ${Vesanje.POCETNI_ZIVOTI} delova" }) {
         val w = size.width; val h = size.height
         val debljina = 4.dp.toPx()

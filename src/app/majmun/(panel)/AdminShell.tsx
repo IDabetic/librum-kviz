@@ -5,10 +5,11 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Logo } from '@/components/Logo'
+import { jeAvatarSajta } from './igre-nazivi'
 import { createClient } from '@/lib/supabase/client'
 import {
   IconHome, IconDiscover, IconSwords, IconHint, IconTrophy, IconTime,
-  IconUsers, IconSettings, IconLogout, IconMenu, IconClose, IconStar,
+  IconUsers, IconSettings, IconLogout, IconMenu, IconClose, IconStar, IconWrong, IconEye,
 } from '@/components/icons'
 
 type Profile = {
@@ -26,6 +27,10 @@ type Profile = {
 // have their own dedicated pool tables.
 const NAV = [
   { label: 'Dashboard',      href: '/majmun',                Icon: IconHome },
+  { label: 'Aktivnost',      href: '/majmun/aktivnost',      Icon: IconTime,     hint: 'sve partije' },
+  { label: 'Karijera',       href: '/majmun/karijera',       Icon: IconTrophy,   hint: 'firme • pitanja' },
+  { label: 'Osvajanje',      href: '/majmun/osvajanje',      Icon: IconSwords,   hint: 'sobe' },
+  { label: 'Sumnjivo',       href: '/majmun/sumnjivo',       Icon: IconEye,      hint: 'varanje' },
   { label: 'Pitanja',        href: '/majmun/pitanja',        Icon: IconDiscover, hint: 'PRO • Brzi • Duel' },
   { label: 'Brzi kviz',      href: '/majmun/brzi-kviz',      Icon: IconTime,     hint: 'isti pool kao PRO' },
   { label: 'Book kviz',      href: '/majmun/book-kviz',      Icon: IconStar },
@@ -37,6 +42,7 @@ const NAV = [
   { label: 'Korisnici',      href: '/majmun/korisnici',      Icon: IconUsers },
   { label: 'Rang lista',     href: '/majmun/rang-lista',     Icon: IconTrophy },
   { label: 'Trivia duel',    href: '/majmun/trivia-duel',    Icon: IconSwords,   hint: 'analitika' },
+  { label: 'Padovi',         href: '/majmun/padovi',         Icon: IconWrong,    hint: 'aplikacija' },
 ]
 
 export default function AdminShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
@@ -72,9 +78,10 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
       </div>
 
       {/* ── Sidebar ──────────────────────────────────────────────────── */}
-      <aside className={`fixed lg:sticky top-0 z-50 lg:z-auto h-screen w-72 flex-shrink-0 transition-transform lg:transition-none ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      {/* Na računaru meni nema svoj skrol: pruža se naniže koliko treba i skroluje sa stranom (vlasnik 05.11). */}
+      <aside className={`fixed lg:static top-0 z-50 lg:z-auto h-screen lg:h-auto lg:min-h-screen w-72 flex-shrink-0 overflow-y-auto lg:overflow-visible transition-transform lg:transition-none ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         style={{ background: '#FFFFFF', borderRight: '1px solid rgba(21,21,21,0.06)' }}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col min-h-full">
 
           {/* Logo block */}
           <div className="px-6 pt-7 pb-6">
@@ -87,7 +94,7 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
           {/* User card */}
           <div className="mx-4 mb-5 p-3 rounded-2xl flex items-center gap-3" style={{ background: '#E7E1D0' }}>
             <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-white">
-              {profile.avatar
+              {jeAvatarSajta(profile.avatar)
                 ? <Image src={`/avatars/${profile.avatar}`} alt={displayName} width={40} height={40} className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ background: '#12907E', color: 'white' }}>{displayName[0]}</div>}
             </div>
@@ -100,7 +107,7 @@ export default function AdminShell({ profile, children }: { profile: Profile; ch
           </div>
 
           {/* Nav */}
-          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 space-y-1">
             {NAV.map(item => {
               const { label, href, Icon } = item
               const hint = 'hint' in item ? item.hint : undefined

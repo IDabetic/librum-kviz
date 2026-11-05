@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation'
 import { IconBack } from '@/components/icons'
 import RoleEditor from './RoleEditor'
 import UserActions from './UserActions'
+import NadzorIgraca from './NadzorIgraca'
+import { jeAvatarSajta } from '../../igre-nazivi'
 
 export const dynamic = 'force-dynamic'
 
@@ -151,7 +153,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       <div className="card-soft p-6">
         <div className="flex items-center gap-4 mb-5">
           <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
-            {u.avatar
+            {jeAvatarSajta(u.avatar)
               ? <Image src={`/avatars/${u.avatar}`} alt={name} width={64} height={64} className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center font-bold text-[20px] text-white" style={{ background: '#12907E' }}>{name[0]}</div>}
           </div>
@@ -169,6 +171,16 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
       </div>
 
       <UserActions userId={u.id} email={u.email} isBlocked={!!u.is_blocked} />
+
+      <Link href={`/majmun/aktivnost?igrac=${u.id}`} className="card-soft p-5 flex items-center justify-between hover:bg-[#F7F4EC] transition-colors">
+        <span>
+          <span className="block text-[14px] font-bold" style={{ color: '#151515' }}>Sva aktivnost igrača</span>
+          <span className="block text-[12px] mt-0.5" style={{ color: '#6F6C66' }}>Sve partije iz aplikacije i sa sajta: Karijera, Osvajanje, Slikari, kvizovi, vešanje</span>
+        </span>
+        <span aria-hidden className="text-[18px]" style={{ color: '#12907E' }}>→</span>
+      </Link>
+
+      <NadzorIgraca id={u.id} />
 
       {/* Per-answer log overview (most precise time data) */}
       {logTotal > 0 && (

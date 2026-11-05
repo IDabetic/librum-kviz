@@ -3,7 +3,7 @@ import SwiftUI
 /// Društvena mreža kviza (scripts/2026-11-03_drustvena-mreza.sql), po uzoru na Librum eBook:
 /// objave (poziv na duel, traži tim, rezultat, tekst), srca, komentari u granama, blokade, prijave i poruke.
 enum Zajednica {
-    struct Objava: Decodable, Identifiable, Equatable {
+    struct Objava: Codable, Identifiable, Equatable {
         let id: Int
         let ko: String
         let nadimak: String
@@ -31,7 +31,7 @@ enum Zajednica {
         var moje_srce: Bool
         let moj: Bool
     }
-    struct Razgovor: Decodable, Identifiable { let sa: String; let nadimak: String; let avatar: String?; let poslednja: String; let kad: String; let moja: Bool; let neprocitanih: Int; var id: String { sa } }
+    struct Razgovor: Codable, Identifiable { let sa: String; let nadimak: String; let avatar: String?; let poslednja: String; let kad: String; let moja: Bool; let neprocitanih: Int; var id: String { sa } }
     struct Poruka: Decodable, Identifiable, Equatable { let id: Int; let moja: Bool; let tekst: String; let created_at: String }
     struct Igra: Decodable, Identifiable { let ko: String; let nadimak: String; let avatar: String?; let igra: String; let poeni: Int; let kad: String; var id: String { ko + kad } }
     struct Srce: Decodable { let moje_srce: Bool; let srca: Int }
@@ -43,7 +43,7 @@ enum Zajednica {
     static func nazivVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.1 ?? "Objava" }
     static func ikonicaVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.2 ?? "text.bubble" }
     static let nazivIgre = ["dnevni": "Dnevni izazov", "osvajanje": "Osvajanje sveta", "pro": "PRO kviz", "book": "Book kviz", "duel": "Duel", "slikari": "Slikari",
-                            "brzi": "Brzi kviz", "vesanje": "Vešanje", "tema": "Kviz po temi"]
+                            "brzi": "Brzi kviz", "vesanje": "Vešanje", "tema": "Kviz po temi", "karijera": "Karijera"]
 
     private static func token(_ s: Sesija) async -> String? { try? await s.vazeciToken() }
 
@@ -90,9 +90,8 @@ enum Zajednica {
 struct IgraciTabView: View {
     @Environment(Sesija.self) private var sesija
     @Environment(Napredak.self) private var napredak
-    @State private var pravila = false
     @State private var vrsta = "svi"
-    @State private var objave: Ucitano<[Zajednica.Objava]> = .ucitava
+    @State private var objave: Ucitano<[Zajednica.Objava]> = Kes.ucitano("tok-svi")
     @State private var igraju: [Zajednica.Igra] = []
     @State private var nova = false
     @State private var prijava = false
@@ -121,7 +120,7 @@ struct IgraciTabView: View {
                     .accessibilityLabel("Poruke, \(Brojaci.deljeni.poruke) nepročitanih")
                 }
                 if !igraju.isEmpty { sadIgraju }
-                Button { if !sesija.prijavljen { prijava = true } else if napredak.s.pravilaZajednice { nova = true } else { pravila = true } } label: {
+                Button { if !sesija.prijavljen { prijava = true } else { nova = true } } label: {
                     HStack(spacing: 12) {
                         AvatarSlika(avatar: sesija.avatar, velicina: 40)
                         Text("Pozovi na duel, traži tim ili podeli rezultat…").font(.tekst(15)).foregroundStyle(Color.sivaTekst).lineLimit(1)
@@ -158,11 +157,6 @@ struct IgraciTabView: View {
         .sheet(isPresented: $nova) { NovaObjavaView { Task { await ucitaj() } } }
         .sheet(item: $komentariZa) { o in KomentariView(objava: o) { broj in var n = o; n.komentara = broj; zameni(n) } }
         .fullScreenCover(isPresented: $prijava) { PrijavaTok() }
-        .overlay {
-            if pravila {
-                PravilaZajedniceView(prihvati: { napredak.podesi { $0.pravilaZajednice = true }; pravila = false; nova = true }, odustani: { pravila = false })
-            }
-        }
     }
 
     private var sadIgraju: some View {
@@ -194,9 +188,11 @@ struct IgraciTabView: View {
     }
 
     private func ucitaj() async {
+        if let k: [Zajednica.Objava] = Kes.ucitaj("tok-\(vrsta)") { objave = .gotovo(k) }
         do {
             let l = try await Zajednica.tok(sesija, vrsta: vrsta)
             objave = .gotovo(l); jos = l.count == 20
+            Kes.sacuvaj(l, "tok-\(vrsta)")
         } catch {
             if case .gotovo = objave { return }
             objave = .greska(error.localizedDescription)
@@ -298,7 +294,7 @@ struct KarticaObjave: View {
             .font(.tekst(15, .semibold)).foregroundStyle(Color.mastilo).buttonStyle(.plain).frame(height: 30)
         }
         .padding(16).mirna()
-        .navigationDestination(isPresented: $duel) { DuelView(izazovi: (o.ko, o.nadimak)) }
+        .navigationDestination(isPresented: $duel) { TakmicenjeView(pozovi: (o.ko, o.nadimak)) }
         .navigationDestination(isPresented: $poruka) { RazgovorView(sa: o.ko, nadimak: o.nadimak, avatar: o.avatar) }
         .overlay {
             if meni {
@@ -449,8 +445,6 @@ struct KomentariView: View {
     let objava: Zajednica.Objava
     var promenjenBroj: (Int) -> Void = { _ in }
     @Environment(Sesija.self) private var sesija
-    @Environment(Napredak.self) private var napredak
-    @State private var pravila = false
     @Environment(\.dismiss) private var zatvori
     @State private var stanje: Ucitano<[Zajednica.Komentar]> = .ucitava
     @State private var tekst = ""
@@ -487,11 +481,6 @@ struct KomentariView: View {
         }
         .background(Papir())
         .task { await ucitaj() }
-        .overlay {
-            if pravila {
-                PravilaZajedniceView(prihvati: { napredak.podesi { $0.pravilaZajednice = true }; pravila = false; Task { await posalji() } }, odustani: { pravila = false })
-            }
-        }
         .overlay {
             if let k = meniZa {
                 DonjiList(zatvori: { meniZa = nil }) {
@@ -585,7 +574,6 @@ struct KomentariView: View {
     }
 
     private func posalji() async {
-        guard napredak.s.pravilaZajednice else { pravila = true; return }
         let t = tekst
         tekst = ""
         do { try await Zajednica.komentarisi(sesija, objava: objava.id, tekst: t, roditelj: odgovorNa?.id); odgovorNa = nil; await ucitaj() }
@@ -603,7 +591,7 @@ struct KomentariView: View {
 
 struct PorukeView: View {
     @Environment(Sesija.self) private var sesija
-    @State private var stanje: Ucitano<[Zajednica.Razgovor]> = .ucitava
+    @State private var stanje: Ucitano<[Zajednica.Razgovor]> = Kes.ucitano("razgovori")
 
     var body: some View {
         ScrollView {
@@ -658,7 +646,11 @@ struct PorukeView: View {
 
     private func ucitaj() async {
         guard sesija.prijavljen else { return }
-        do { stanje = .gotovo(try await Zajednica.razgovori(sesija)) } catch { stanje = .greska(error.localizedDescription) }
+        do {
+            let l = try await Zajednica.razgovori(sesija)
+            stanje = .gotovo(l)
+            Kes.sacuvaj(l, "razgovori")
+        } catch { if case .gotovo = stanje {} else { stanje = .greska(error.localizedDescription) } }
     }
 }
 
@@ -667,11 +659,13 @@ struct RazgovorView: View {
     let nadimak: String
     let avatar: String?
     @Environment(Sesija.self) private var sesija
-    @Environment(Napredak.self) private var napredak
-    @State private var pravila = false
     @State private var poruke: [Zajednica.Poruka] = []
     @State private var tekst = ""
     @State private var greska: String?
+    /// Meni tuđe poruke (dug pritisak) ili razgovora (tri tačke): prijava i blokada, Apple 1.2.
+    @State private var meniPoruke: Zajednica.Poruka?
+    @State private var meniRazgovora = false
+    @State private var potvrda: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -682,6 +676,10 @@ struct RazgovorView: View {
                 }
                 .buttonStyle(.plain)
                 Spacer()
+                Button { meniRazgovora = true } label: {
+                    Image(systemName: "ellipsis").font(.system(size: 18, weight: .bold)).foregroundStyle(Color.mastilo).frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Više")
             }
             .padding(16)
             ScrollViewReader { skrol in
@@ -698,6 +696,8 @@ struct RazgovorView: View {
                                 if !p.moja { Spacer(minLength: 50) }
                             }
                             .id(p.id)
+                            .onLongPressGesture { if !p.moja { meniPoruke = p } }
+                            .accessibilityAction(named: "Prijavi poruku") { if !p.moja { meniPoruke = p } }
                         }
                     }
                     .padding(.horizontal, 16)
@@ -719,13 +719,27 @@ struct RazgovorView: View {
             .padding(16)
         }
         .background(Papir())
-        .toolbar(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
         .overlay {
-            if pravila {
-                PravilaZajedniceView(prihvati: { napredak.podesi { $0.pravilaZajednice = true }; pravila = false; Task { await posalji() } }, odustani: { pravila = false })
+            if let p = meniPoruke {
+                DonjiList(zatvori: { meniPoruke = nil }) {
+                    VStack(spacing: 0) {
+                        stavka("Prijavi poruku", "flag") { Task { await prijavi(p) } }
+                        stavka("Blokiraj \(nadimak)", "hand.raised", opasno: true) { Task { await blokiraj() } }
+                    }
+                }
+            } else if meniRazgovora {
+                DonjiList(zatvori: { meniRazgovora = false }) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Zadrži prst na poruci da je prijaviš.").font(.tekst(13)).foregroundStyle(Color.sivaTekst).padding(.bottom, 6)
+                        stavka("Blokiraj \(nadimak)", "hand.raised", opasno: true) { Task { await blokiraj() } }
+                    }
+                }
+            } else if let potvrda {
+                Dijalog(naslov: potvrda, tekst: "Urednik pregleda prijave u roku od 24 sata.", potvrda: "U redu", odustani: "Zatvori") { self.potvrda = nil } zatvori: { self.potvrda = nil }
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .task {
             // Novo stiže na svakih 5 s dok je razgovor otvoren (shortcut: bez realtime kanala; kad bude potrebno, Supabase Realtime).
             while !Task.isCancelled {
@@ -735,8 +749,23 @@ struct RazgovorView: View {
         }
     }
 
+    private func stavka(_ naziv: String, _ ikonica: String, opasno: Bool = false, radnja: @escaping () -> Void) -> some View {
+        Button { meniPoruke = nil; meniRazgovora = false; radnja() } label: {
+            HStack(spacing: 12) { Image(systemName: ikonica).frame(width: 24); Text(naziv).font(.tekst(16, .semibold)); Spacer() }
+                .foregroundStyle(opasno ? Color.crvena : Color.mastilo).padding(.vertical, 14).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func prijavi(_ p: Zajednica.Poruka) async {
+        if await Zajednica.radnja(sesija, "prijavi_poruku", ["p_poruka": p.id, "p_razlog": "uvreda"]) { potvrda = "Hvala na prijavi" }
+    }
+
+    private func blokiraj() async {
+        if await Zajednica.radnja(sesija, "blokiraj", ["p_id": sa, "p_da": true]) { potvrda = "\(nadimak) je blokiran" }
+    }
+
     private func posalji() async {
-        guard napredak.s.pravilaZajednice else { pravila = true; return }
         let t = tekst
         tekst = ""
         do {
@@ -751,40 +780,7 @@ struct RazgovorView: View {
 }
 
 
-// MARK: Pravila zajednice i blokirani
-
-/// Pravila zajednice: jednom, pre prve objave, komentara ili poruke (Apple traži prihvatanje za sadržaj korisnika).
-struct PravilaZajedniceView: View {
-    let prihvati: () -> Void
-    let odustani: () -> Void
-    @State private var uslovi = false
-    private static let pravila = [
-        ("hand.raised", "Bez uvreda, pretnji i govora mržnje. Ni prema kome, ni u šali."),
-        ("eye.slash", "Bez golotinje, nasilja i sadržaja neprikladnog za decu."),
-        ("megaphone", "Bez reklama, prevara i lažnih profila."),
-        ("lock", "Ne objavljuj tuđe lične podatke: telefon, adresu, mejl."),
-        ("flag", "Prijavi što krši pravila; tri prijave sakrivaju objavu odmah, urednik pregleda u roku od 24 h."),
-        ("person.crop.circle.badge.xmark", "Ko krši pravila gubi pravo na objave, a nalog može biti ugašen."),
-    ]
-
-    var body: some View {
-        DonjiList(zatvori: odustani) {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Pravila zajednice").font(.naslov(26))
-                Text("Igrači je prostor za izazove, rezultate i druženje. Pre prve objave prihvati pravila:").font(.tekst(14)).foregroundStyle(Color.sivaTekst)
-                ForEach(Self.pravila, id: \.1) { p in
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: p.0).font(.system(size: 16, weight: .bold)).frame(width: 24).foregroundStyle(Color.teal)
-                        Text(p.1).font(.tekst(15)).fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                Button("Uslovi korišćenja") { uslovi = true }.font(.tekst(14, .bold)).foregroundStyle(Color.teal)
-                    .sheet(isPresented: $uslovi) { NavigationStack { PravniTekstView(vrsta: .uslovi) } }
-                Button("Prihvatam", action: prihvati).buttonStyle(.primarno)
-            }
-        }
-    }
-}
+// MARK: Blokirani
 
 /// Spisak blokiranih igrača sa odblokiranjem (Podešavanja → Blokirani).
 struct BlokiraniView: View {
@@ -849,6 +845,7 @@ final class Brojaci {
     func osvezi(_ s: Sesija) async {
         struct B: Decodable { let obavestenja: Int; let poruke: Int }
         guard s.prijavljen, let t = try? await s.vazeciToken(), let b: B = try? await Supabase.deljeni.rpc("moji_brojevi", [:], token: t) else { return }
+        if b.obavestenja + b.poruke > obavestenja + poruke { Zvuk.pusti(.obavestenje, jacina: 0.35) }
         obavestenja = b.obavestenja; poruke = b.poruke
     }
     func procitanaObavestenja() { obavestenja = 0 }
@@ -864,6 +861,7 @@ struct ServerskaObavestenja: View {
     }
     @State private var redovi: [Red] = []
     @State private var duelKod: String?
+    @State private var sobaKod: String?
 
     var body: some View {
         VStack(spacing: 10) {
@@ -875,11 +873,13 @@ struct ServerskaObavestenja: View {
             Brojaci.deljeni.procitanaObavestenja()
         }
         .navigationDestination(item: $duelKod) { kod in DuelView(kodSobe: kod) }
+        .navigationDestination(item: $sobaKod) { kod in TakmicenjeView(kod: kod) }
     }
 
     @ViewBuilder private func red(_ r: Red) -> some View {
         let (ikonica, opis): (String, String) = switch r.vrsta {
         case "izazov": ("bolt.fill", "te izaziva na duel")
+        case "soba": ("person.3.fill", "te zove: " + (r.tekst.flatMap(IgraTakmicenja.init(rawValue:))?.naziv ?? "kviz"))
         case "pratilac": ("person.badge.plus", "te sada prati")
         case "komentar": ("bubble.right.fill", "je komentarisao tvoju objavu")
         case "odgovor": ("arrowshape.turn.up.left.fill", "ti je odgovorio")
@@ -894,7 +894,7 @@ struct ServerskaObavestenja: View {
                 }
             VStack(alignment: .leading, spacing: 3) {
                 (Text(r.nadimak).font(.tekst(15, .bold)) + Text(" " + opis).font(.tekst(15)))
-                if let t = r.tekst { Text("„\(t)”").font(.tekst(13)).foregroundStyle(Color.sivaTekst).lineLimit(2) }
+                if let t = r.tekst, r.vrsta != "soba" { Text("„\(t)”").font(.tekst(13)).foregroundStyle(Color.sivaTekst).lineLimit(2) }
                 Text(Zajednica.pre(r.kad)).font(.tekst(12)).foregroundStyle(Color.sivaTekst)
             }
             Spacer(minLength: 0)
@@ -908,6 +908,8 @@ struct ServerskaObavestenja: View {
             sadrzaj
         } else if r.vrsta == "izazov", let kod = r.kod_sobe {
             Button { duelKod = kod } label: { sadrzaj }.buttonStyle(.plain)
+        } else if r.vrsta == "soba", let kod = r.kod_sobe {
+            Button { sobaKod = kod } label: { sadrzaj }.buttonStyle(.plain)
         } else {
             NavigationLink { ProfilIgracaView(id: r.ko) } label: { sadrzaj }.buttonStyle(.plain)
         }

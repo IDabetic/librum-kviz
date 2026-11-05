@@ -3,9 +3,13 @@ import SwiftUI
 /// Praćenje, izazovi i pretraga igrača (tabele pracenja, izazovi; RPC trazi_igrace).
 @MainActor
 enum Drustvo {
-    struct Igrac: Decodable, Identifiable { let id: String; let nadimak: String; let avatar: String?; let pratim: Bool; let prati_mene: Bool }
+    struct Igrac: Codable, Identifiable { let id: String; let nadimak: String; let avatar: String?; let pratim: Bool; let prati_mene: Bool }
     struct Brojevi: Decodable { let pratilaca: Int; let prati: Int; let pratim: Bool }
-    struct Izazov: Decodable, Identifiable { let id: Int; let od: String; let kod_sobe: String?; let created_at: String }
+    struct Izazov: Decodable, Identifiable {
+        let id: Int; let od: String; let igra: String; let kod_sobe: String?; let created_at: String
+        /// Poziv u sobu za 2–8 igrača ('soba:pro' …); ostalo je Duel.
+        var soba: IgraTakmicenja? { igra.hasPrefix("soba:") ? IgraTakmicenja(rawValue: String(igra.dropFirst(5))) : nil }
+    }
 
     static func trazi(_ sesija: Sesija, _ upit: String) async throws -> [Igrac] {
         guard let t = try await sesija.vazeciToken() else { return [] }
@@ -45,7 +49,7 @@ enum Drustvo {
         guard let ja = sesija.korisnikId, let t = try? await sesija.vazeciToken() else { return [] }
         let od = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-1800))
         return (try? await Supabase.deljeni.citaj("izazovi", upit: [
-            .init(name: "select", value: "id,od,kod_sobe,created_at"), .init(name: "za", value: "eq.\(ja)"),
+            .init(name: "select", value: "id,od,igra,kod_sobe,created_at"), .init(name: "za", value: "eq.\(ja)"),
             .init(name: "status", value: "eq.ceka"), .init(name: "created_at", value: "gte.\(od)"), .init(name: "order", value: "created_at.desc"),
         ], token: t)) ?? []
     }
@@ -63,7 +67,7 @@ struct IgraciView: View {
     enum Prikaz: Hashable { case pratim, pratioci }
     @State private var prikaz: Prikaz = .pratim
     @State private var upit = ""
-    @State private var moji: Ucitano<[Drustvo.Igrac]> = .ucitava
+    @State private var moji: Ucitano<[Drustvo.Igrac]> = Kes.ucitano("moji-igraci")
     @State private var nadjeni: [Drustvo.Igrac]?
 
     var body: some View {
@@ -134,7 +138,11 @@ struct IgraciView: View {
 
     private func ucitaj() async {
         guard sesija.prijavljen else { return }
-        do { moji = .gotovo(try await Drustvo.moji(sesija)) } catch { moji = .greska(error.localizedDescription) }
+        do {
+            let l = try await Drustvo.moji(sesija)
+            moji = .gotovo(l)
+            Kes.sacuvaj(l, "moji-igraci")
+        } catch { if case .gotovo = moji {} else { moji = .greska(error.localizedDescription) } }
     }
 }
 
@@ -144,6 +152,7 @@ struct DolazniIzazovi: View {
     @State private var lista: [Drustvo.Izazov] = []
     @State private var imena: [String: String] = [:]
     @State private var ulazak: String?
+    @State private var soba: String?
 
     var body: some View {
         VStack(spacing: 10) {
@@ -152,15 +161,15 @@ struct DolazniIzazovi: View {
                     Image(systemName: "bolt.fill").foregroundStyle(Color.tinta).frame(width: 44, height: 44).background(Color.zuta, in: Circle())
                         .overlay(Circle().stroke(Color.mastilo, lineWidth: 2))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\(imena[iz.od] ?? "Igrač") te izaziva na duel").font(.tekst(15, .bold))
+                        Text("\(imena[iz.od] ?? "Igrač") " + (iz.soba.map { "te zove: \($0.naziv)" } ?? "te izaziva na duel")).font(.tekst(15, .bold))
                         Text("Soba \(iz.kod_sobe ?? "")").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
                     }
                     Spacer()
-                    Button { Task { await Drustvo.odgovori(sesija, izazov: iz.id, prihvatam: false); await ucitaj() } } label: {
+                    Button { Task { await odgovori(iz, false) } } label: {
                         Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).frame(width: 40, height: 40).background(Color.udubljeno, in: Circle())
                     }
                     .accessibilityLabel("Odbij")
-                    Button { Task { await Drustvo.odgovori(sesija, izazov: iz.id, prihvatam: true); ulazak = iz.kod_sobe } } label: {
+                    Button { Task { await odgovori(iz, true) } } label: {
                         Image(systemName: "checkmark").font(.system(size: 15, weight: .bold)).foregroundStyle(.white).frame(width: 40, height: 40).background(Color.teal, in: Circle())
                     }
                     .accessibilityLabel("Prihvati")
@@ -170,6 +179,17 @@ struct DolazniIzazovi: View {
         }
         .task { await ucitaj() }
         .navigationDestination(item: $ulazak) { DuelView(kodSobe: $0) }
+        .navigationDestination(item: $soba) { TakmicenjeView(kod: $0) }
+    }
+
+    /// Soba: prihvatanje je ulazak u lobi (server upisuje „prihvaćen”), odbijanje oslobađa mesto kod domaćina.
+    private func odgovori(_ iz: Drustvo.Izazov, _ prihvatam: Bool) async {
+        if iz.soba != nil, let kod = iz.kod_sobe {
+            if prihvatam { soba = kod } else { await Takmicenje.odbij(kod); await ucitaj() }
+            return
+        }
+        await Drustvo.odgovori(sesija, izazov: iz.id, prihvatam: prihvatam)
+        if prihvatam { ulazak = iz.kod_sobe } else { await ucitaj() }
     }
 
     private func ucitaj() async {

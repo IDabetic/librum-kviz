@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Politika privatnosti i uslovi korišćenja kao ekran u aplikaciji (tekst iz igre/pravno.json, isti za iOS i Android).
 struct PravniTekstView: View {
-    enum Vrsta: String { case privatnost, uslovi }
+    enum Vrsta: String, Identifiable { case privatnost, uslovi, licence; var id: String { rawValue } }
     let vrsta: Vrsta
 
     struct Deo: Decodable { let naslov: String; let tekst: [String] }

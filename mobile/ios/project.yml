@@ -28,6 +28,10 @@ targets:
         buildPhase: resources
       - path: ../../src/lib/osvajanje/cinjenice.json
         buildPhase: resources
+      - path: ../../src/lib/igre/zanimljivosti.json
+        buildPhase: resources
+      - path: ../../src/lib/igre/kancelarija.json
+        buildPhase: resources
       # Zvukovi (isečeni i ujednačeni iz vlasnikovih paketa), isti za Android.
       - path: ../zvuci
         type: folder
@@ -43,6 +47,7 @@ targets:
       path: LibrumKviz/LibrumKviz.entitlements
       properties:
         aps-environment: development
+        com.apple.developer.applesignin: [Default]
     info:
       path: LibrumKviz/Info.plist
       properties:
@@ -53,10 +58,10 @@ targets:
         LSRequiresIPhoneOS: true
         # Samo standardni HTTPS: bez upitnika o izvozu šifrovanja za svaki build.
         ITSAppUsesNonExemptEncryption: false
-        # Pokretanje: krem pozadina (prati tamni režim) i maskota, bez belog bljeska.
+        # Pokretanje: tirkizna pozadina brenda i ikonica (isto kao prvi kadar animacije PocetakView), bez belog bljeska.
         UILaunchScreen:
-          UIColorName: Krem
-          UIImageName: Bloop
+          UIColorName: TealPocetak
+          UIImageName: Pocetak
           UIImageRespectsSafeAreaInsets: true
         # Scena je obavezna od iOS 27, inače aplikacija pada na startu.
         UIApplicationSceneManifest:
@@ -72,6 +77,8 @@ targets:
             CFBundleURLSchemes: [librumkviz]
         SUPABASE_URL: "$(SUPABASE_URL)"
         SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
+        # Google prijava: iOS OAuth klijent iz Google Cloud projekta „Librum kviz” (javan, bez tajne); prazno = dugme se ne vidi.
+        GOOGLE_IOS_CLIENT_ID: "$(GOOGLE_IOS_CLIENT_ID)"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: club.librum.kviz

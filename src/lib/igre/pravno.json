@@ -1,89 +1,250 @@
 {
   "privatnost": {
     "naslov": "Politika privatnosti",
-    "azurirano": "Ažurirano: 3. novembar 2026. · verzija 2 (aplikacija)",
+    "azurirano": "Ažurirano: 5. novembar 2026. · verzija 6",
     "delovi": [
-      { "naslov": "Ko smo", "tekst": ["Librum kviz (aplikacija za iPhone i Android i sajt kviz.librum.club) vodi Librum. Za sva pitanja o privatnosti pišite na info@librum.club. Politika je usklađena sa Zakonom o zaštiti podataka o ličnosti Republike Srbije i Opštom uredbom EU o zaštiti podataka (GDPR)."] },
-      { "naslov": "Koje podatke prikupljamo", "tekst": [
-        "Nalog: e-mail, nadimak, avatar, a po želji ime, prezime, grad i kratak opis. Lozinka se čuva samo kao heš; mi joj nemamo pristup.",
-        "Prijava preko Apple ili Google naloga: dobijamo samo e-mail (ili Apple-ovu skrivenu adresu) i potvrdu identiteta, nikad lozinku tog naloga.",
-        "Igra: rezultati, tačni i netačni odgovori, brzina, korišćene pomoći, viđena pitanja (da se ne ponavljaju) i napredak u partijama.",
-        "Zajednica: objave, komentari, srca, praćenja, poruke između igrača, prijave sadržaja i blokade.",
-        "Uređaj: token za obaveštenja (Apple APNs / Google Firebase), ako ih dozvolite; tehnički zapisi o greškama bez sadržaja poruka.",
-        "Ne prikupljamo lokaciju, kontakte, fotografije ni zdravstvene podatke, i ne tražimo brojeve dokumenata ni kartica."
-      ] },
-      { "naslov": "Zašto ih koristimo", "tekst": [
-        "Da biste igrali sa nalogom, bili na rang listama i videli statistiku.",
-        "Da vam pitanja ne bi bila ista 7 dana i da partije sa drugim igračima rade u realnom vremenu.",
-        "Da radi zajednica: objave, poruke, obaveštenja o izazovima, pratiocima i komentarima.",
-        "Da sprečimo varanje, uvrede i zloupotrebe i da moderatori pregledaju prijave.",
-        "Podatke ne prodajemo, ne delimo oglašivačima i u aplikaciji nema reklama ni praćenja između aplikacija."
-      ] },
-      { "naslov": "Gde se čuvaju i ko ih obrađuje", "tekst": [
-        "Baza i prijava: Supabase, Evropska unija (Frankfurt). Sajt: Vercel, EU region.",
-        "Obaveštenja: Apple Push Notification service i Google Firebase Cloud Messaging; šalje im se samo token uređaja i tekst obaveštenja.",
-        "Prijava: Apple (Sign in with Apple) i Google (Google Sign-In), samo kada sami izaberete taj način.",
-        "E-pošta za nalog (potvrda i oporavak lozinke): Resend.",
-        "Sa obrađivačima imamo ugovore o obradi podataka; podaci se ne prenose van EU/EEA osim kada to zahteva zakon."
-      ] },
-      { "naslov": "Šta vide drugi igrači", "tekst": [
-        "Javni su nadimak, avatar, opis, rezultati na rang listama, broj pratilaca i vaše objave i komentari.",
-        "Poruke vidite samo vi i igrač sa kojim se dopisujete; moderator ih otvara samo kada je poruka prijavljena.",
-        "Blokiran igrač ne vidi vaše objave, komentare ni profil i ne može da vam piše."
-      ] },
-      { "naslov": "Koliko dugo čuvamo", "tekst": [
-        "Nalog, rezultati i sadržaj: dok je nalog aktivan.",
-        "Brisanjem naloga u aplikaciji (Podešavanja → Obriši nalog) odmah se brišu nalog, profil, rezultati, objave, komentari, poruke i praćenja.",
-        "Tehnički zapisi: najviše 90 dana."
-      ] },
-      { "naslov": "Vaša prava", "tekst": [
-        "Imate pravo na pristup i kopiju podataka, ispravku, brisanje, ograničenje obrade i povlačenje saglasnosti (npr. isključivanje obaveštenja u podešavanjima telefona).",
-        "Zahtev pošaljite na info@librum.club sa naslovom „Zahtev za zaštitu podataka”; odgovaramo u roku od 30 dana.",
-        "Pritužbu možete podneti Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti (poverenik.rs)."
-      ] },
-      { "naslov": "Bezbednost i deca", "tekst": [
-        "Sva komunikacija je šifrovana (HTTPS/TLS), lozinke su heširane, a pristup bazi imaju samo ovlašćeni administratori.",
-        "O proboju koji može da ugrozi vaše podatke obavestićemo vas i Poverenika u roku od 72 sata.",
-        "Aplikacija je namenjena osobama starijim od 13 godina; mlađima je potrebna saglasnost roditelja ili staratelja."
-      ] },
-      { "naslov": "Izmene", "tekst": ["Bitne izmene najavljujemo u aplikaciji i, kada je primereno, e-poštom. Datum i verzija su na vrhu."] }
+      {
+        "naslov": "Ko smo",
+        "tekst": [
+          "Librum kviz (aplikacija za iPhone i Android i sajt kviz.librum.club) vodi Go Simple, Ivan Dabetić preduzetnik, Trgovačka 1, 11307 Boleč, Republika Srbija, MB 68389631, PIB 115468360 (u daljem tekstu: Librum). Librum je rukovalac vašim podacima o ličnosti.",
+          "Za sva pitanja o privatnosti pišite na info@librum.club. Politika je usklađena sa Zakonom o zaštiti podataka o ličnosti Republike Srbije (ZZPL) i Opštom uredbom EU o zaštiti podataka (GDPR)."
+        ]
+      },
+      {
+        "naslov": "Koje podatke prikupljamo",
+        "tekst": [
+          "Nalog: e-mail, nadimak, avatar, a po želji ime, prezime, grad i kratak opis. Lozinka se čuva samo kao heš; mi joj nemamo pristup.",
+          "Prijava preko Apple ili Google naloga: dobijamo samo e-mail (ili Apple-ovu skrivenu adresu) i potvrdu identiteta, nikad lozinku tog naloga.",
+          "Igra: rezultati, tačni i netačni odgovori, brzina, korišćene pomoći i ratne karte, viđena pitanja (da se ne ponavljaju) i napredak u partijama, uključujući poteze, saveze i brze poruke u partijama Osvajanja sveta.",
+          "Karijera: izabrana struka, pol (koristi se samo da bi tekstovi i naziv struke bili u vašem rodu; naziv struke u tom rodu vide drugi igrači u CV-u), talenti i pomoći, rezultati rundi, viđena pitanja, kapital, ugled i stručnost po temama, firme koje vodite i imena koja im date, asistenti, izazovi i dueli, podešavanja šefa i mirni režim, i prijave neprimerenih imena firmi.",
+          "Zajednica: objave, komentari, srca, praćenja, poruke između igrača, prijave sadržaja i blokade.",
+          "Uređaj: token za obaveštenja (Apple APNs / Google Firebase), ako ih dozvolite; tehnički zapisi o greškama bez sadržaja poruka.",
+          "Zaštita od varanja: IP adresa i opis uređaja i aplikacije (user-agent) pri svakoj završenoj partiji, i stvarno trajanje rundi u Karijeri. Ne vezujemo ih ni za šta drugo i ne delimo ih ni sa kim.",
+          "Na telefonu (ne šalje se): izabrana vrsta vojske, tajne misije iz poslednjih 7 dana i nedovršena partija protiv računara, da biste je nastavili.",
+          "Ne prikupljamo lokaciju, kontakte, fotografije ni zdravstvene podatke, i ne tražimo brojeve dokumenata ni kartica."
+        ]
+      },
+      {
+        "naslov": "Zašto ih koristimo",
+        "tekst": [
+          "Da biste igrali sa nalogom, bili na rang listama i videli statistiku.",
+          "Da Karijera radi: plata, firme, rekordi, dueli za preuzimanje firme, CV i rang liste.",
+          "Da vam pitanja ne bi bila ista 7 dana i da partije sa drugim igračima rade u realnom vremenu.",
+          "Da radi zajednica: objave, poruke, obaveštenja o izazovima, pratiocima i komentarima.",
+          "Da sprečimo varanje, uvrede i zloupotrebe i da moderatori pregledaju prijave: IP adresa i trajanje partija služe da otkrijemo nemoguće brze odgovore i više naloga iste osobe. Prebrza runda u Karijeri automatski ostaje bez dodatka za brzinu; svaku drugu meru (npr. poništen rezultat ili zabranu) donosi čovek, posle pregleda.",
+          "Podatke ne prodajemo, ne delimo oglašivačima i u aplikaciji nema reklama ni praćenja između aplikacija."
+        ]
+      },
+      {
+        "naslov": "Pravni osnov",
+        "tekst": [
+          "Izvršenje ugovora (ovih uslova): nalog, igre, rang liste, Karijera i zajednica ne mogu da rade bez podataka koji su za to potrebni.",
+          "Legitimni interes: bezbednost servisa, sprečavanje varanja i zloupotreba, moderacija prijava i tehnički zapisi o greškama.",
+          "Pristanak: obaveštenja na telefonu i dodatni podaci profila (ime, prezime, grad, opis). Pristanak možete povući u svakom trenutku, bez uticaja na ranije zakonitu obradu.",
+          "Ne donosimo odluke isključivo automatskom obradom koje bi imale pravne posledice po vas. Automatska pravila u igri (npr. sakrivanje sadržaja posle tri prijave) pregleda moderator."
+        ]
+      },
+      {
+        "naslov": "Gde se čuvaju i ko ih obrađuje",
+        "tekst": [
+          "Baza i prijava: Supabase, Evropska unija (Frankfurt). Sajt: Vercel, EU region.",
+          "Sajt kviz.librum.club meri posećenost preko Google Analytics (bez naloga i imena); aplikacija nema analitiku ni praćenje.",
+          "Obaveštenja: Apple Push Notification service i Google Firebase Cloud Messaging; šalje im se samo token uređaja i tekst obaveštenja.",
+          "Prijava: Apple (Sign in with Apple) i Google (Google Sign-In), samo kada sami izaberete taj način.",
+          "E-pošta za nalog (potvrda i oporavak lozinke): Resend.",
+          "Sa obrađivačima imamo ugovore o obradi podataka; podaci se ne prenose van EU/EEA osim kada to zahteva zakon."
+        ]
+      },
+      {
+        "naslov": "Šta vide drugi igrači",
+        "tekst": [
+          "Javni su nadimak, avatar, opis, rezultati na rang listama, broj pratilaca i vaše objave i komentari.",
+          "U Karijeri su javni CV (struka, titula, firme, ugled, stručnost i istorija napredovanja), imena firmi, rekordi i rezultati duela.",
+          "Poruke vidite samo vi i igrač sa kojim se dopisujete; moderator ih otvara samo kada je poruka prijavljena.",
+          "Blokiran igrač ne vidi vaše objave, komentare ni profil i ne može da vam piše."
+        ]
+      },
+      {
+        "naslov": "Koliko dugo čuvamo",
+        "tekst": [
+          "Nalog, rezultati i sadržaj: dok je nalog aktivan.",
+          "Brisanjem naloga u aplikaciji (Podešavanja → Obriši nalog) odmah se brišu nalog, profil, rezultati, objave, komentari, poruke i praćenja.",
+          "Reset Karijere (Podešavanja → Resetuj Karijeru) briše kapital, ugled, stručnost, runde i CV. Vaše firme prelaze na „Upravu” i mogu se preuzeti duelom; ime firme ostaje uz firmu, a veza sa vašim nalogom se briše.",
+          "Nalog možete obrisati i bez aplikacije, e-poštom na info@librum.club; uputstvo je na kviz.librum.club/brisanje-naloga.",
+          "IP adresa i opis uređaja za zaštitu od varanja: 90 dana od poslednje partije sa te adrese, pa se brišu.",
+          "Tehnički zapisi: najviše 90 dana."
+        ]
+      },
+      {
+        "naslov": "Vaša prava",
+        "tekst": [
+          "Imate pravo na pristup i kopiju podataka, ispravku, brisanje, ograničenje obrade i povlačenje saglasnosti (npr. isključivanje obaveštenja u podešavanjima telefona).",
+          "Zahtev pošaljite na info@librum.club sa naslovom „Zahtev za zaštitu podataka”; odgovaramo u roku od 30 dana.",
+          "Pritužbu možete podneti Povereniku za informacije od javnog značaja i zaštitu podataka o ličnosti (poverenik.rs)."
+        ]
+      },
+      {
+        "naslov": "Bezbednost i deca",
+        "tekst": [
+          "Sva komunikacija je šifrovana (HTTPS/TLS), lozinke su heširane, a pristup bazi imaju samo ovlašćeni administratori.",
+          "O proboju koji može da ugrozi vaše podatke obavestićemo vas i Poverenika u roku od 72 sata.",
+          "Aplikacija je namenjena osobama od 13 godina. Za igrače mlađe od 15 godina potrebna je saglasnost roditelja ili staratelja (ZZPL, član 16). Ako saznamo da nalog ima dete mlađe od 13 godina, nalog brišemo."
+        ]
+      },
+      {
+        "naslov": "Izmene",
+        "tekst": [
+          "Bitne izmene najavljujemo u aplikaciji i, kada je primereno, e-poštom. Datum i verzija su na vrhu."
+        ]
+      }
     ]
   },
   "uslovi": {
     "naslov": "Uslovi korišćenja",
-    "azurirano": "Ažurirano: 3. novembar 2026. · verzija 2 (aplikacija)",
+    "azurirano": "Ažurirano: 5. novembar 2026. · verzija 4 (aplikacija)",
     "delovi": [
-      { "naslov": "Prihvatanje", "tekst": ["Korišćenjem aplikacije Librum kviz i sajta kviz.librum.club prihvatate ove uslove. Ako se ne slažete, ne koristite servis. Uslovi su ugovor između vas i Libruma."] },
-      { "naslov": "Šta je servis", "tekst": ["Besplatne igre znanja na srpskom: Osvajanje sveta, PRO kviz, Book kviz, Duel, Brzi kviz, Vešanje, Slikari, Dnevni izazov i kvizovi po temi, uz rang liste i zajednicu igrača. Pravila igara su u aplikaciji: Profil → Pravila igara."] },
-      { "naslov": "Nalog", "tekst": [
-        "Za rang liste i zajednicu potreban je nalog (e-pošta, Apple ili Google). Podaci moraju biti tačni, a nalog je samo vaš: ne delite lozinku.",
-        "Servis je za osobe starije od 13 godina; mlađima je potrebna saglasnost roditelja ili staratelja.",
-        "Nalog možete obrisati u svakom trenutku u aplikaciji (Podešavanja → Obriši nalog)."
-      ] },
-      { "naslov": "Pravila zajednice (nulta tolerancija)", "tekst": [
-        "Zabranjeni su uvrede, pretnje, govor mržnje, uznemiravanje, golotinja, nasilje, spam, prevare, lažni profili i objavljivanje tuđih ličnih podataka, u objavama, komentarima, porukama, nadimcima i predlozima pitanja.",
-        "Svaki sadržaj i igrača možete prijaviti ili blokirati. Tri prijave odmah sakrivaju objavu ili komentar, a moderator pregleda prijave u roku od 24 sata.",
-        "Kršenje pravila vodi uklanjanju sadržaja i privremenom ili trajnom gašenju naloga, bez prethodne opomene."
-      ] },
-      { "naslov": "Fer igra", "tekst": [
-        "Zabranjeni su botovi, skripte, više naloga radi varanja, nameštanje rezultata i kopiranje baze pitanja.",
-        "U partijama sa drugim igračima: ko tri poteza zaredom ne odigra, ispada; ko napusti duel, predaje ga.",
-        "Rezultati dobijeni varanjem se brišu, a nalog gasi."
-      ] },
-      { "naslov": "Vaš sadržaj", "tekst": [
-        "Kada objavite, komentarišete ili predložite pitanje, dajete Librumu neisključivu, besplatnu licencu da ga prikaže i koristi u servisu. Autorska prava zadržavate.",
-        "Garantujete da sadržaj ne krši tuđa prava. Netačno pitanje prijavite zastavicom na kartici pitanja."
-      ] },
-      { "naslov": "Pitanja i tačnost", "tekst": ["Pitanja su iz javnih izvora i naših urednika. Trudimo se da budu tačna, ali ne garantujemo tačnost svakog pitanja. Servis je za zabavu i učenje."] },
-      { "naslov": "Dostupnost i odgovornost", "tekst": [
-        "Servis je besplatan; možemo uvesti opcione plaćene dodatke, ali postojeći besplatni deo nećemo ukinuti bez najave.",
-        "Ne garantujemo neprekidan rad. U meri dozvoljenoj zakonom ne odgovaramo za posrednu ili posledičnu štetu nastalu korišćenjem servisa."
-      ] },
-      { "naslov": "Vlasništvo", "tekst": ["Ime, logo, maskote, dizajn, ilustracije i kod pripadaju Librumu, osim onoga što je označeno kao tuđe (npr. slike sa Wikimedia Commons sa svojim licencama)."] },
-      { "naslov": "Izmene i pravo", "tekst": [
-        "Bitne izmene najavljujemo u aplikaciji; nastavak korišćenja znači prihvatanje.",
-        "Primenjuje se pravo Republike Srbije; za sporove je nadležan stvarno nadležni sud u Beogradu. Kontakt: info@librum.club."
-      ] }
+      {
+        "naslov": "Prihvatanje",
+        "tekst": [
+          "Korišćenjem aplikacije Librum kviz i sajta kviz.librum.club prihvatate ove uslove. Ako se ne slažete, ne koristite servis. Uslovi su ugovor između vas i pružaoca servisa: Go Simple, Ivan Dabetić preduzetnik, Trgovačka 1, 11307 Boleč, Republika Srbija, MB 68389631, PIB 115468360 (u daljem tekstu: Librum)."
+        ]
+      },
+      {
+        "naslov": "Šta je servis",
+        "tekst": [
+          "Besplatne igre znanja i strategije na srpskom: Osvajanje sveta, Karijera, PRO kviz, Book kviz, Duel, Brzi kviz, Vešanje, Slikari, Dnevni izazov i kvizovi po temi, uz rang liste i zajednicu igrača. Pravila igara su u aplikaciji (Podešavanja → Pravila igara; za Karijeru i Karijera → Pravila i saveti) i deo su ovih uslova."
+        ]
+      },
+      {
+        "naslov": "Nalog",
+        "tekst": [
+          "Za rang liste i zajednicu potreban je nalog (e-pošta, Apple ili Google). Podaci moraju biti tačni, a nalog je samo vaš: ne delite lozinku.",
+          "Servis je za osobe od 13 godina; igračima mlađim od 15 godina potrebna je saglasnost roditelja ili staratelja.",
+          "Nalog možete obrisati u svakom trenutku u aplikaciji (Podešavanja → Obriši nalog)."
+        ]
+      },
+      {
+        "naslov": "Pravila zajednice (nulta tolerancija)",
+        "tekst": [
+          "Zabranjeni su uvrede, pretnje, govor mržnje, uznemiravanje, golotinja, nasilje, spam, prevare, lažni profili i objavljivanje tuđih ličnih podataka, u objavama, komentarima, porukama, nadimcima i predlozima pitanja.",
+          "Svaki sadržaj i igrača možete prijaviti ili blokirati. Tri prijave odmah sakrivaju objavu ili komentar, a moderator pregleda prijave u roku od 24 sata.",
+          "Kršenje pravila vodi uklanjanju sadržaja i privremenom ili trajnom gašenju naloga, bez prethodne opomene."
+        ]
+      },
+      {
+        "naslov": "Fer igra",
+        "tekst": [
+          "Zabranjeni su botovi, skripte, više naloga radi varanja, nameštanje rezultata i kopiranje baze pitanja.",
+          "U kvizovima nema pauze: vreme za pitanje teče i kad izađete iz aplikacije ili otvorite drugi ekran.",
+          "U Osvajanju sveta savezi, izdaje, ultimatumi i razmene su deo igre i ne smatraju se uznemiravanjem; dogovori van igre (npr. dva naloga iste osobe u jednoj partiji) jesu varanje.",
+          "U partijama sa drugim igračima: ko tri poteza zaredom ne odigra, ispada; ko napusti duel, predaje ga.",
+          "Rezultati dobijeni varanjem se brišu, a nalog gasi."
+        ]
+      },
+      {
+        "naslov": "Karijera: virtuelne vrednosti",
+        "tekst": [
+          "Kapital, plata, kasa firme, dividenda, ugled, titule, firme, zgrade i asistenti u Karijeri su virtuelni elementi igre. Nemaju novčanu vrednost, ne mogu se zameniti za novac ili robu, prodati, kupiti ni preneti na drugi nalog ili van igre.",
+          "Firmu i virtuelne vrednosti možete izgubiti po pravilima igre: duelom za preuzimanje, neaktivnošću, resetom Karijere ili brisanjem naloga. Librum može da menja pravila, iznose i ravnotežu igre. Ni u jednom od tih slučajeva ne postoji pravo na naknadu.",
+          "Izazovi, dueli i preuzimanje firme su deo igre i ne smatraju se uznemiravanjem."
+        ]
+      },
+      {
+        "naslov": "Karijera: šef, ometanja i imena firmi",
+        "tekst": [
+          "Šef, šefica i njihovi komentari, smeh i ometanja su šaljiva parodija kancelarijskog života. Likovi, NPC firme i njihovi vlasnici su izmišljeni; svaka sličnost sa stvarnim osobama ili firmama je slučajna. Komentari nisu upućeni vama lično i ne sadrže psovke ni lične uvrede.",
+          "Ako vam komentari ili ometanja ne prijaju, uključite „Mirni šef u Karijeri” u Podešavanjima: šef je tada najviše blag i ne ometa, a dodatak za stres se ne isplaćuje.",
+          "Igra sadrži animacije, odbrojavanje i vizuelne efekte (trešenje i zamagljenje kartice). Ako ste osetljivi na takve efekte, uključite mirni režim ili napravite pauzu.",
+          "Ime firme birate sami i odgovorni ste za njega. Zabranjena su uvredljiva i neprimerena imena, imena stvarnih firmi, robnih marki i poznatih ličnosti i imena kojima se lažno predstavljate. Tri prijave drugih igrača skidaju ime, a Librum može da ga ukloni i sam."
+        ]
+      },
+      {
+        "naslov": "Vaš sadržaj",
+        "tekst": [
+          "Kada objavite, komentarišete ili predložite pitanje, dajete Librumu neisključivu, besplatnu licencu da ga prikaže i koristi u servisu. Autorska prava zadržavate.",
+          "Garantujete da sadržaj ne krši tuđa prava. Netačno pitanje prijavite zastavicom na kartici pitanja."
+        ]
+      },
+      {
+        "naslov": "Pitanja i tačnost",
+        "tekst": [
+          "Pitanja su iz javnih izvora i naših urednika. Trudimo se da budu tačna, ali ne garantujemo tačnost svakog pitanja. Servis je za zabavu i učenje."
+        ]
+      },
+      {
+        "naslov": "Dostupnost i odgovornost",
+        "tekst": [
+          "Servis je besplatan; možemo uvesti opcione plaćene dodatke, ali postojeći besplatni deo nećemo ukinuti bez najave. Nagrade u novcu ili robi trenutno ne postoje; ako ih uvedemo, važiće posebna pravila objavljena unapred.",
+          "Servis pružamo „takav kakav jeste”. Ne garantujemo neprekidan rad, bez grešaka, niti da će rezultati, rang liste i virtuelne vrednosti biti sačuvani u svakom slučaju (npr. pri kvaru ili ispravci greške).",
+          "U meri dozvoljenoj zakonom Librum ne odgovara za posrednu ili posledičnu štetu, izgubljenu dobit ni gubitak virtuelnih vrednosti nastale korišćenjem servisa. Ovo ograničenje ne važi za štetu prouzrokovanu namerno ili krajnjom nepažnjom, ni za prava koja vam kao potrošaču pripadaju po zakonu.",
+          "Za sadržaj koji objavljuju drugi igrači odgovaraju oni sami; Librum uklanja nedozvoljen sadržaj kada sazna za njega."
+        ]
+      },
+      {
+        "naslov": "Licenca za korišćenje",
+        "tekst": [
+          "Librum vam daje ličnu, neisključivu, neprenosivu i opozivu licencu da aplikaciju instalirate na svoje uređaje i koristite je za lične, nekomercijalne potrebe, u skladu sa ovim uslovima.",
+          "Licenca ne obuhvata pravo da aplikaciju ili njene delove kopirate, menjate, prodajete, iznajmljujete, dekompilujete ili rastavljate, niti da je koristite za pravljenje drugog proizvoda, osim kada to zakon izričito dozvoljava.",
+          "Licenca prestaje kada obrišete nalog ili kada Librum ugasi nalog zbog kršenja ovih uslova."
+        ]
+      },
+      {
+        "naslov": "Vlasništvo nad igrama i idejama",
+        "tekst": [
+          "Igre Librum kviza, uključujući Osvajanje sveta i Karijeru, i njihove ideje, pravila, mehanike, sistem bodovanja, vrste vojske, ratne karte, događaje, tajne misije, mapu, struke, talente, pomoći, šefove, nazive, tekstove i izbor i uređenje pitanja, autorsko su delo i vlasništvo Libruma.",
+          "Ime Librum, logo, maskote, dizajn, zvuci i programski kod takođe pripadaju Librumu. Ilustracije, muzika, fontovi i slike drugih autora koriste se pod njihovim licencama; spisak je u Podešavanja → Licence i izvori.",
+          "Bez pisane saglasnosti Libruma zabranjeno je kopirati, prerađivati ili komercijalno koristiti igre, njihova pravila i ideje, bazu pitanja i vizuelni identitet, u celini ili delovima, u drugoj aplikaciji, igri, sajtu ili štampi.",
+          "Predlozi i ideje koje pošaljete Librumu (npr. novo pravilo ili pitanje) mogu se koristiti i menjati bez naknade, uz zadržavanje vašeg autorstva nad predloženim pitanjem."
+        ]
+      },
+      {
+        "naslov": "Izmene i pravo",
+        "tekst": [
+          "Bitne izmene najavljujemo u aplikaciji; nastavak korišćenja znači prihvatanje.",
+          "Ako neka odredba ovih uslova bude nevažeća, ostale ostaju na snazi. Ovi uslovi, pravila igara i politika privatnosti čine celinu ugovora.",
+          "Aplikaciju preuzetu iz App Store-a ili Google Play-a koristite i po njihovim pravilima. Apple i Google nisu strana ovog ugovora i ne odgovaraju za aplikaciju i njenu podršku; Apple i njegova zavisna društva su treća lica u čiju korist važe ovi uslovi i mogu ih sprovoditi.",
+          "Primenjuje se pravo Republike Srbije; za sporove je nadležan stvarno nadležni sud u Beogradu, osim ako zakon o zaštiti potrošača ne određuje drugačije. Kontakt: info@librum.club, Go Simple, Trgovačka 1, 11307 Boleč."
+        ]
+      }
+    ]
+  },
+  "licence": {
+    "naslov": "Licence i izvori",
+    "azurirano": "Ažurirano: 5. novembar 2026. · verzija 1",
+    "delovi": [
+      {
+        "naslov": "Ilustracije",
+        "tekst": [
+          "Ilustracije igara, zgrade, asistenti i šefovi Karijere i deo avatara napravljeni su uz Freepik (freepik.com), pod premium licencom Libruma, uključujući sadržaj napravljen alatom Freepik AI.",
+          "Poslovni avatari su iz kompleta sa Freepik-a, pod istom licencom."
+        ]
+      },
+      {
+        "naslov": "Slike u igri Slikari",
+        "tekst": [
+          "Reprodukcije umetničkih dela su sa Wikimedia Commons (commons.wikimedia.org). Dela su u javnom vlasništvu ili pod licencama Creative Commons; autor dela, naziv i izvor navedeni su uz svaku sliku u igri."
+        ]
+      },
+      {
+        "naslov": "Muzika i zvuci",
+        "tekst": [
+          "Muzika Karijere je licencirana sa Envato (AudioJungle) i Freepik, uz licencu za korišćenje u aplikaciji; kratki zvuci kase i zvona napravljeni su za Librum.",
+          "Muzika i zvuci ne smeju se izdvajati iz aplikacije niti koristiti van nje."
+        ]
+      },
+      {
+        "naslov": "Fontovi",
+        "tekst": [
+          "Archivo Black (Omnibus-Type) i Space Grotesk (Florian Karsten), pod licencom SIL Open Font License 1.1 (openfontlicense.org). Fontove možete slobodno koristiti i deliti po toj licenci; ne smeju se prodavati sami za sebe."
+        ]
+      },
+      {
+        "naslov": "Podaci i pitanja",
+        "tekst": [
+          "Pitanja pišu urednici Libruma i igrači, uz proveru činjenica iz javnih izvora. Imena država i zastave prate javne podatke.",
+          "Ako smatrate da je neki sadržaj vaš i da je korišćen bez dozvole, pišite na info@librum.club; uklonićemo ga ili navesti autora."
+        ]
+      }
     ]
   }
 }

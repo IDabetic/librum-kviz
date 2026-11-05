@@ -72,6 +72,15 @@ struct Supabase {
         case "Email not confirmed": return Greska(poruka: "Potvrdi email kodom koji smo ti poslali.", vrsta: .nepotvrdjen)
         default:
             if kod == 402 { return Greska(poruka: "Baza je trenutno nedostupna. Pokušaj kasnije.") }
+            // Greške baze (SQLSTATE od 5 znakova) igrač ne treba da čita; prikazujemo samo naše poruke iz funkcija
+            // (22023 pogrešan unos, P0001/P0002 pravila igre, 42501 prijava). Primer sakrivenog: 42702 „column reference is ambiguous”.
+            let nasa: Set<String> = ["22023", "P0001", "P0002", "42501"]
+            if k.count == 5, k.allSatisfy({ $0.isNumber || $0.isUppercase }), !nasa.contains(k) {
+                #if DEBUG
+                print("Greška servera \(k): \(poruka)")
+                #endif
+                return Greska(poruka: "Nešto nije u redu na serveru. Pokušaj ponovo za koji trenutak.")
+            }
             return Greska(poruka: poruka.isEmpty ? "Nešto nije u redu (greška \(kod)). Pokušaj ponovo." : poruka)
         }
     }
@@ -106,10 +115,15 @@ struct Supabase {
     }
 
     func registracija(email: String, lozinka: String, ime: String, prezime: String, nadimak: String) async throws {
-        _ = try await zahtev("auth/v1/signup", metod: "POST", telo: [
+        let d = try await zahtev("auth/v1/signup", metod: "POST", telo: [
             "email": email, "password": lozinka,
             "data": ["first_name": ime, "last_name": prezime, "nickname": nadimak],
         ])
+        // GoTrue za već potvrđen email vraća 200 bez mejla i sa praznim `identities` (ne otkriva nalog), pa to prevodimo u „postoji”.
+        if let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+           let identiteti = (o["identities"] ?? (o["user"] as? [String: Any])?["identities"]) as? [Any], identiteti.isEmpty {
+            throw Greska(poruka: "Ovaj email već ima nalog.", vrsta: .postoji)
+        }
     }
 
     /// Potvrda koda iz mejla (registracija ili zaboravljena lozinka); vraća sesiju.
@@ -138,23 +152,29 @@ struct Supabase {
 
     func rpc<T: Decodable>(_ ime: String, _ parametri: [String: Any], token: String? = nil) async throws -> T {
         let d = try await zahtev("rest/v1/rpc/\(ime)", metod: "POST", telo: parametri, token: token)
-        return try JSONDecoder().decode(T.self, from: d)
+        return try Self.dekodiraj(T.self, d)
     }
 
     func citaj<T: Decodable>(_ tabela: String, upit: [URLQueryItem], token: String? = nil) async throws -> T {
         let d = try await zahtev("rest/v1/\(tabela)", token: token, upit: upit)
-        return try JSONDecoder().decode(T.self, from: d)
+        return try Self.dekodiraj(T.self, d)
     }
 
     /// PATCH sa filterom (npr. room_code=eq.ABC); vraća izmenjene redove.
     func azuriraj<T: Decodable>(_ tabela: String, filter: [URLQueryItem], polja: [String: Any], token: String) async throws -> [T] {
         let d = try await zahtev("rest/v1/\(tabela)", metod: "PATCH", telo: polja, token: token, upit: filter, vratiRed: true)
-        return try JSONDecoder().decode([T].self, from: d)
+        return try Self.dekodiraj([T].self, d)
     }
 
     func upisiVrati<T: Decodable>(_ tabela: String, _ red: [String: Any], token: String) async throws -> [T] {
         let d = try await zahtev("rest/v1/\(tabela)", metod: "POST", telo: red, token: token, vratiRed: true)
-        return try JSONDecoder().decode([T].self, from: d)
+        return try Self.dekodiraj([T].self, d)
+    }
+
+    /// Neočekivan oblik odgovora ne sme da pokaže sistemsku englesku poruku („The data couldn’t be read…”).
+    private static func dekodiraj<T: Decodable>(_ tip: T.Type, _ d: Data) throws -> T {
+        do { return try JSONDecoder().decode(tip, from: d) }
+        catch is DecodingError { throw Greska(poruka: "Podaci nisu stigli u ispravnom obliku. Pokušaj ponovo za koji trenutak.") }
     }
 
     func upisi(_ tabela: String, _ red: [String: Any], token: String) async throws {

@@ -113,10 +113,54 @@ struct KvizDetaljiView: View {
         start = .pokrece
         do {
             pitanja = try await PaketPitanja.deljeni.kviz(Fond(rawValue: fond) ?? .opste, zanr: zanr, tesko: tesko, broj: stavka.brojPitanja)
+            // Sve slike kreću odmah; prva se čeka ovde (ekran „pokreće”), ostale stižu dok igraš.
+            let slike = pitanja.compactMap { $0.slika.flatMap(URL.init(string:)) }
+            SlikeUnapred.deljene.pripremi(slike)
+            if let prva = slike.first { _ = await SlikeUnapred.deljene.slika(prva) }
             start = .miruje
             igra = true
         } catch {
             start = .greska(error.localizedDescription)
+        }
+    }
+}
+
+/// Slika pitanja: iz keša unapred preuzetih (SlikeUnapred) bez čekanja, inače čim stigne.
+struct SlikaPitanja: View {
+    let url: URL
+    let najvisa: CGFloat
+    let spremna: () -> Void
+    @State private var slika: UIImage?
+    @State private var neuspeh = false
+
+    init(url: URL, najvisa: CGFloat, spremna: @escaping () -> Void) {
+        self.url = url; self.najvisa = najvisa; self.spremna = spremna
+        _slika = State(initialValue: MainActor.assumeIsolated { SlikeUnapred.deljene.gotova(url) })
+    }
+
+    var body: some View {
+        Group {
+            if let s = slika.map(Image.init(uiImage:)) {
+                // Okvir prati oblik slike (cela slika, bez sečenja); kad uska uspravna slika
+                // udari u najveću visinu, ivice puni zamućena kopija iste slike umesto belog.
+                s.resizable().scaledToFit()
+                    .frame(maxHeight: najvisa)
+                    .frame(maxWidth: .infinity)
+                    .background { s.resizable().scaledToFill().blur(radius: 22).overlay(Color.black.opacity(0.12)) }
+                    .clipped()
+            } else if neuspeh {
+                Label("Slika nije stigla. Pogađaj po nazivu dela.", systemImage: "photo.badge.exclamationmark")
+                    .font(.tekst(13, .bold)).foregroundStyle(Color.tinta).frame(maxWidth: .infinity, minHeight: 120)
+            } else {
+                Skelet(visina: 230, radijus: 14)
+            }
+        }
+        .task(id: url) {
+            neuspeh = false
+            slika = SlikeUnapred.deljene.gotova(url)
+            if slika == nil { slika = await SlikeUnapred.deljene.slika(url) }
+            neuspeh = slika == nil
+            spremna()
         }
     }
 }
@@ -146,6 +190,7 @@ struct KvizIgraView: View {
                 SpremiSeView(stavka: stavka, spremno: !prikazi.isEmpty) { pocetak = Date(); withAnimation { faza = .pitanje } }
             case .pitanje:
                 KvizPitanjaView(stavka: stavka, prikazi: prikazi, kviz: $kviz, prekini: { zatvori() }) { zavrsi() }
+                    .bezSvajpaNazad()
             case .rezultati:
                 KvizRezultatiView(stavka: stavka, kviz: kviz, sekundi: Int(Date().timeIntervalSince(pocetak)), ishod: ishod, prethodniNajbolji: prethodniNajbolji,
                                   pregled: { withAnimation { faza = .pregled } }, ponovo: { ponovo() }, zatvori: { zatvori() })
@@ -248,7 +293,6 @@ struct KvizPitanjaView: View {
     @State private var izabran: Int?
     @State private var otkriveno = false
     @State private var isteklo = false
-    @State private var pauza = false
     @State private var prekid = false
     @State private var sklonjeni: Set<Int> = []
     @State private var nagovestaj: String?
@@ -262,76 +306,90 @@ struct KvizPitanjaView: View {
     @State private var pomocIskoriscena = false
 
     private static let najvecaVisinaSlike: CGFloat = 300
+    private static let slikaPosleOdgovora: CGFloat = 90
     private let otkucaj = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     private var p: Prikaz { prikazi[redni] }
     private var zuri: Bool { ostalo <= 5 && !otkriveno }
+    @State private var uvecana: URL?
+    @Environment(\.accessibilityReduceMotion) private var manjeKretanja
 
     var body: some View {
         VStack(spacing: 14) {
             gornja
+            ScrollViewReader { skrol in
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    kartica
+                    kartica.animation(.spring(duration: 0.45, bounce: 0.2), value: redni)
                     if let nagovestaj, !otkriveno { MaskotaKaze(maskota: Maskota(rawValue: napredak.s.maskota) ?? .mimi, tekst: nagovestaj) }
                     if kviz.niz >= 2 && !otkriveno {
                         Label("\(kviz.niz) zaredom · čuvaj niz!", systemImage: "flame").font(.tekst(13, .bold)).frame(maxWidth: .infinity)
                     }
                 }
-                .padding(.bottom, otkriveno ? 220 : 12)
+                .padding(.bottom, 12)
             }
             .scrollBounceBehavior(.basedOnSize)
+            // Posle odgovora tačan odgovor mora da se vidi (i kad je četvrti, ispod slike).
+            .onChange(of: otkriveno) { _, da in
+                guard da else { return }
+                withAnimation(.easeInOut(duration: 0.3)) { skrol.scrollTo("odgovor-\(p.tacan)", anchor: .bottom) }
+            }
+            }
             // Pomoć je prikovana dole, da je duga slika ili dugo pitanje nikad ne gurnu van ekrana.
-            if !otkriveno { pomoci.padding(.bottom, 6) }
+            // Posle odgovora na istom mestu stoji uska traka ishoda: kartica sa obojenim tačnim odgovorom ostaje cela vidljiva.
+            if otkriveno { trakaIshoda.transition(.move(edge: .bottom).combined(with: .opacity)) } else { pomoci.padding(.bottom, 6) }
         }
         .padding(.horizontal, 16)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { visina = $0 }
         .background(Papir())
-        .overlay(alignment: .bottom) { if otkriveno { listOdgovora.transition(.move(edge: .bottom)) } }
-        .overlay { if pauza { pauzaSloj } }
         .overlay {
+            // Vreme teče i dok je dijalog otvoren: pauze nema ni u jednom kvizu (vlasnik 03.11, da se ne vara).
             if prekid {
-                Dijalog(naslov: "Prekinuti kviz?", tekst: "Odgovori iz ovog kviza se ne čuvaju.",
-                        potvrda: "Prekini", odustani: "Nastavi", opasno: true) { prekini() } zatvori: { prekid = false; pauza = false }
+                Dijalog(naslov: "Prekinuti kviz?", tekst: "Odgovori iz ovog kviza se ne čuvaju. Vreme za pitanje i dalje teče.",
+                        potvrda: "Prekini", odustani: "Nastavi", opasno: true) { prekini() } zatvori: { prekid = false }
             }
         }
         .onReceive(otkucaj) { _ in
-            guard !otkriveno, !pauza, !prekid, p.slika == nil || slikaSpremna else { return }
+            guard !otkriveno, p.slika == nil || slikaSpremna else { return }
             ostalo = max(0, ostalo - 0.1)
             if ostalo == 0 { odgovori(nil) }
         }
         .sensoryFeedback(.warning, trigger: zuri) { _, novo in novo }
         .onChange(of: zuri) { _, z in if z { Zvuk.pusti(.tikanje, jacina: 0.25, ponavljaj: true) } else { Zvuk.stani(.tikanje) } }
-        .onChange(of: pauza) { _, p in if p { Zvuk.stani(.tikanje) } }
         .onDisappear { Zvuk.stani(.tikanje) }
         .sensoryFeedback(trigger: otkriveno) { _, novo in novo ? (izabran == p.tacan ? .success : .error) : nil }
         .animation(.spring(duration: 0.35), value: otkriveno)
+        .overlay { if let uvecana { UvecanaSlika(url: uvecana, preostalo: Int(ostalo.rounded(.up))) { self.uvecana = nil }.transition(.opacity) } }
+        .animation(.easeOut(duration: 0.2), value: uvecana)
     }
 
+    /// Uska traka: zatvaranje, napredak i poeni, da pitanje i slika dobiju što više mesta.
     private var gornja: some View {
-        HStack(spacing: 12) {
-            KrugDugme(ikonica: "xmark", opis: "Prekini kviz") { pauza = true; prekid = true }
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Pitanje \(redni + 1) od \(prikazi.count)").font(.tekst(12, .bold)).foregroundStyle(Color.sivaTekst)
-                GeometryReader { g in
-                    RoundedRectangle(cornerRadius: 4).fill(Color.kartica).overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.mastilo, lineWidth: 1.5))
-                        .overlay(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4).fill(Color.teal).frame(width: g.size.width * Double(redni + (otkriveno ? 1 : 0)) / Double(prikazi.count))
-                        }
-                }
-                .frame(height: 10)
+        HStack(spacing: 10) {
+            Button { prekid = true } label: {
+                Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).foregroundStyle(Color.mastilo)
+                    .frame(width: 32, height: 32).background(Color.kartica, in: Circle()).overlay(Circle().stroke(Color.kremTamnija, lineWidth: 1.5))
+                    .frame(width: 44, height: 44).contentShape(Rectangle())
             }
-            KrugDugme(ikonica: "pause", opis: "Pauza") { pauza = true }
-            Text(kviz.poeni.formatted()).font(.tekst(15, .bold)).monospacedDigit().foregroundStyle(Color.naMastilu)
-                .padding(.horizontal, 12).frame(height: 40).background(Color.mastilo, in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityLabel("Prekini kviz")
+            Text("\(redni + 1)/\(prikazi.count)").font(.tekst(12, .bold)).monospacedDigit().foregroundStyle(Color.sivaTekst)
+                .accessibilityLabel("Pitanje \(redni + 1) od \(prikazi.count)")
+            GeometryReader { g in
+                RoundedRectangle(cornerRadius: 3).fill(Color.kartica).overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.mastilo, lineWidth: 1))
+                    .overlay(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3).fill(Color.teal).frame(width: g.size.width * Double(redni + (otkriveno ? 1 : 0)) / Double(prikazi.count))
+                    }
+            }
+            .frame(height: 6)
+            Text(kviz.poeni.formatted(.number.locale(.srpski))).font(.tekst(13, .bold)).monospacedDigit().foregroundStyle(Color.naMastilu)
+                .padding(.horizontal, 10).frame(height: 28).background(Color.mastilo, in: RoundedRectangle(cornerRadius: 10))
                 .contentTransition(.numericText()).accessibilityLabel("\(kviz.poeni) poena")
         }
-        .padding(.top, 8)
     }
 
     private var kartica: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label(p.zanr ?? stavka.kategorija, systemImage: stavka.ikonica).font(.tekst(12, .bold)).foregroundStyle(Color.tinta)
+                Label(p.zanr ?? (stavka.kategorija == "Teme" ? stavka.naslov : stavka.kategorija), systemImage: stavka.ikonica).font(.tekst(12, .bold)).foregroundStyle(Color.tinta)
                     .padding(.horizontal, 10).padding(.vertical, 5).overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.tinta, lineWidth: 1.5))
                 Spacer()
                 PrijaviPitanjeDugme(prikaz: p)
@@ -346,6 +404,8 @@ struct KvizPitanjaView: View {
             }
             .frame(height: 6)
             if let url = p.slika { slika(url) }
+            // Vlasnik 03.11: pitanje i odgovori se pojavljuju zajedno sa slikom, ne sekund pre nje (sat ionako čeka sliku).
+            Group {
             Text(p.tekst).font(.naslov(p.slika == nil ? 22 : 19)).foregroundStyle(Color.tinta).fixedSize(horizontal: false, vertical: true)
             if !sklonjeni.isEmpty && !otkriveno {
                 Label("Sklonjeno \(sklonjeni.count) netačna", systemImage: "circle.lefthalf.filled").font(.tekst(13, .bold)).foregroundStyle(Color.tinta)
@@ -354,38 +414,35 @@ struct KvizPitanjaView: View {
                 OdgovorDugme(slovo: ["A", "B", "C", "D"][i], tekst: p.opcije[i], stanje: stanje(i)) { odgovori(i) }
                     .disabled(otkriveno || sklonjeni.contains(i))
                     .opacity(sklonjeni.contains(i) && !otkriveno ? 0.25 : 1)
+                    .id("odgovor-\(i)")
             }
+            }
+            .opacity(p.slika == nil || slikaSpremna ? 1 : 0)
+            .animation(.easeOut(duration: 0.2), value: slikaSpremna)
         }
         .padding(16)
         .pop(.zuta)
         .scaleEffect(zuri ? 1.01 : 1)
         .animation(zuri ? .easeInOut(duration: 0.4).repeatForever() : .default, value: zuri)
+        // Svako pitanje je nova karta: okrene se oko uspravne ose, a odgovori uleću redom (OdgovorDugme).
+        .id(redni)
+        .transition(.asymmetric(insertion: .modifier(active: Okret(ugao: manjeKretanja ? 0 : 75), identity: Okret(ugao: 0)), removal: .opacity))
     }
 
     private func slika(_ url: URL) -> some View {
-        AsyncImage(url: url, transaction: Transaction(animation: .easeIn(duration: 0.2))) { faza in
-            switch faza {
-            case .success(let s):
-                // Okvir prati oblik slike (cela slika, bez sečenja); kad uska uspravna slika
-                // udari u najveću visinu, ivice puni zamućena kopija iste slike umesto belog.
-                s.resizable().scaledToFit()
-                    .frame(maxHeight: max(120, min(Self.najvecaVisinaSlike, visina * 0.26)))
-                    .frame(maxWidth: .infinity)
-                    .background { s.resizable().scaledToFill().blur(radius: 22).overlay(Color.black.opacity(0.12)) }
-                    .clipped()
-                    .onAppear { slikaSpremna = true }
-            case .failure:
-                Label("Slika nije stigla. Pogađaj po nazivu dela.", systemImage: "photo.badge.exclamationmark")
-                    .font(.tekst(13, .bold)).foregroundStyle(Color.tinta).frame(maxWidth: .infinity, minHeight: 120)
-                    .onAppear { slikaSpremna = true }
-            default:
-                Skelet(visina: 230, radijus: 14)
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 120)
+        // Posle odgovora slika se smanji, da sva četiri odgovora i traka ishoda stanu bez skrolovanja.
+        SlikaPitanja(url: url, najvisa: otkriveno ? Self.slikaPosleOdgovora : max(120, min(Self.najvecaVisinaSlike, visina * 0.26))) { slikaSpremna = true }
+        .frame(maxWidth: .infinity, minHeight: otkriveno ? Self.slikaPosleOdgovora : 120)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.tinta, lineWidth: 2))
-        .accessibilityLabel("Slika dela")
+        .overlay(alignment: .bottomTrailing) {
+            Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                .frame(width: 28, height: 28).background(Color.black.opacity(0.45), in: Circle()).padding(8).accessibilityHidden(true)
+        }
+        // Vlasnik 03.11: delo se uvećava prstima; vreme za pitanje i dalje teče (nema pauze).
+        .onTapGesture { uvecana = url }
+        .accessibilityLabel("Slika dela, dodirni za uvećanje")
+        .accessibilityAddTraits(.isButton)
     }
 
     private var pomoci: some View {
@@ -413,54 +470,34 @@ struct KvizPitanjaView: View {
         PomocDugme(vrsta: vrsta.rawValue, ikonica: vrsta.ikonica, naziv: vrsta.naziv, iskoriscenaUPartiji: $pomocIskoriscena, radnja: radnja)
     }
 
-    private var listOdgovora: some View {
+    /// Ishod u jednom redu ispod kartice (ne preko nje): naslov, tačan odgovor i „Dalje”; tačan je obojen i u kartici.
+    private var trakaIshoda: some View {
         let tacno = izabran == p.tacan
         let boja: Color = tacno ? .teal : isteklo ? .narandzasta : .crvena
         let tekstBoja: Color = isteklo && !tacno ? .tinta : .white
-        return VStack(alignment: .leading, spacing: 10) {
-            Text(tacno ? ["Bravo!", "Pogodak!", "Tako je!"][redni % 3] : isteklo ? "Vreme je isteklo" : "Promašaj")
-                .font(.naslov(32)).foregroundStyle(tekstBoja)
-            if tacno {
-                Text(["+\(poslednji.ukupno) poena", kviz.niz >= 2 ? "\(kviz.niz) zaredom" : nil, poslednji.brzina > 0 ? "brzina +\(poslednji.brzina)" : nil]
-                    .compactMap { $0 }.joined(separator: " · "))
-                    .font(.tekst(14, .bold)).foregroundStyle(tekstBoja)
+        let detalji = tacno
+            ? ["+\(poslednji.ukupno) poena", kviz.niz >= 2 ? "\(kviz.niz) zaredom" : nil].compactMap { $0 }.joined(separator: " · ")
+            : "Tačno: \(p.opcije[p.tacan])"
+        return HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(tacno ? ["Bravo!", "Pogodak!", "Tako je!"][redni % 3] : isteklo ? "Isteklo vreme" : "Promašaj")
+                    .font(.naslov(20)).lineLimit(1)
+                Text(detalji).font(.tekst(13, .bold)).lineLimit(2).minimumScaleFactor(0.8)
+                if let opis = p.opis { Text(opis).font(.tekst(11)).opacity(0.85).lineLimit(1) }
+                if !mreza.povezan { Label("Nema veze, rezultat čuvamo", systemImage: "wifi.slash").font(.tekst(11, .semibold)) }
             }
-            Text(tacno ? "Odgovor: \(p.opcije[p.tacan])." : "Tačan odgovor je \(p.opcije[p.tacan]).")
-                .font(.tekst(15, .semibold)).foregroundStyle(tekstBoja.opacity(0.92))
-            if let opis = p.opis { Text(opis).font(.tekst(13)).foregroundStyle(tekstBoja.opacity(0.85)) }
-            if !mreza.povezan {
-                Label("Veza je prekinuta. Igra ide dalje, rezultat čuvamo kad se veza vrati.", systemImage: "wifi.slash")
-                    .font(.tekst(13, .semibold)).foregroundStyle(tekstBoja)
+            .foregroundStyle(tekstBoja)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Button { sledece() } label: {
+                Text(redni + 1 < prikazi.count ? "Dalje" : "Rezultat").font(.tekst(15, .bold)).foregroundStyle(Color.naMastilu)
+                    .padding(.horizontal, 18).frame(height: 48).background(Color.mastilo, in: RoundedRectangle(cornerRadius: 14))
             }
-            Button(redni + 1 < prikazi.count ? "Sledeće pitanje" : "Vidi rezultat") { sledece() }.buttonStyle(.sekundarno).padding(.top, 4)
+            .accessibilityLabel(redni + 1 < prikazi.count ? "Sledeće pitanje" : "Vidi rezultat")
         }
-        .padding(.horizontal, 20).padding(.top, 22).padding(.bottom, 34)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            // Negativan razmak spušta pozadinu ispod donje ivice ekrana (kućni indikator).
-            UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous).fill(boja)
-                .overlay(UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous).stroke(Color.mastilo, lineWidth: 2.5))
-                .padding(.bottom, -80).padding(.horizontal, -2)
-        }
+        .padding(12)
+        .pop(boja, radijus: 18)
+        .padding(.bottom, 6)
         .accessibilityElement(children: .contain)
-    }
-
-    private var pauzaSloj: some View {
-        ZStack {
-            Color.senka.opacity(0.6).ignoresSafeArea()
-            if !prekid {
-                VStack(spacing: 14) {
-                    MaskotaSlika(maskota: .bloop, velicina: 100)
-                    Naslov(tekst: "Pauza", velicina: 34)
-                    Text("Vreme stoji. Pitanje \(redni + 1) od \(prikazi.count), \(kviz.poeni) poena.").font(.tekst(15)).foregroundStyle(Color.sivaTekst)
-                        .multilineTextAlignment(.center)
-                    Button("Nastavi") { pauza = false }.buttonStyle(.primarno)
-                    Button("Prekini kviz") { prekid = true }.buttonStyle(.sekundarno)
-                }
-                .padding(24).pop().padding(24)
-                .accessibilityAddTraits(.isModal)
-            }
-        }
     }
 
     private func stanje(_ i: Int) -> OdgovorDugme.Stanje {
@@ -686,7 +723,7 @@ struct KvizPregledView: View {
                         .background(Color.tealSvetla, in: RoundedRectangle(cornerRadius: 12))
                 }
                 if otvoreno && z.tacno {
-                    Text("Odgovoreno za \(String(format: "%.1f", Double(z.ms) / 1000)) s · +\(z.poeni) poena").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
+                    Text("Odgovoreno za \(String(format: "%.1f", locale: .srpski, Double(z.ms) / 1000)) s · +\(z.poeni) poena").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                 }
             }
             .padding(14).frame(maxWidth: .infinity, alignment: .leading)
@@ -694,5 +731,52 @@ struct KvizPregledView: View {
             .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(otvoreno ? Color.mastilo : Color.kremTamnija, lineWidth: otvoreno ? 2.5 : 1.5))
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Okret karte pitanja (ugao 0 = mirna); ivica karte se ne vidi ni na pola okreta.
+struct Okret: ViewModifier {
+    let ugao: Double
+    func body(content: Content) -> some View {
+        content.rotation3DEffect(.degrees(ugao), axis: (x: 0, y: 1, z: 0), perspective: 0.6).opacity(ugao > 60 ? 0 : 1)
+    }
+}
+
+/// Delo preko celog ekrana: štipanje uvećava (do 5×), prevlačenje pomera, dupli dodir vraća. Sat se vidi gore.
+private struct UvecanaSlika: View {
+    let url: URL
+    let preostalo: Int
+    let zatvori: () -> Void
+    @State private var razmera: CGFloat = 1
+    @State private var pomak: CGSize = .zero
+    @GestureState private var stipanje: CGFloat = 1
+    @GestureState private var vucenje: CGSize = .zero
+    private static let najvise: CGFloat = 5
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+            if let s = SlikeUnapred.deljene.gotova(url) {
+                Image(uiImage: s).resizable().scaledToFit()
+                    .scaleEffect(razmera * stipanje)
+                    .offset(x: pomak.width + vucenje.width, y: pomak.height + vucenje.height)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .gesture(SimultaneousGesture(
+                        MagnifyGesture().updating($stipanje) { v, st, _ in st = v.magnification }
+                            .onEnded { v in razmera = min(Self.najvise, max(1, razmera * v.magnification)); if razmera == 1 { pomak = .zero } },
+                        DragGesture().updating($vucenje) { v, st, _ in if razmera > 1 { st = v.translation } }
+                            .onEnded { v in if razmera > 1 { pomak.width += v.translation.width; pomak.height += v.translation.height } }))
+                    .onTapGesture(count: 2) { withAnimation(.spring(duration: 0.3)) { razmera = razmera > 1 ? 1 : 2.5; pomak = .zero } }
+                    .accessibilityLabel("Uvećana slika dela")
+            }
+            HStack {
+                KrugDugme(ikonica: "xmark", opis: "Zatvori uvećanje", radnja: zatvori)
+                Spacer()
+                Label("0:\(String(format: "%02d", preostalo))", systemImage: "timer").font(.tekst(14, .bold)).monospacedDigit()
+                    .foregroundStyle(.white).padding(.horizontal, 12).padding(.vertical, 7)
+                    .background(preostalo <= 5 ? Color.crvena : Color.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 10))
+            }
+            .padding(16)
+        }
     }
 }

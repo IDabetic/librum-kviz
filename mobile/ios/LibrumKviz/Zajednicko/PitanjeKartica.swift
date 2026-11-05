@@ -8,12 +8,24 @@ struct PitanjeKartica: View {
     var sekundi = Pravila.sekundiPoPitanju
     var dodatak: String? = nil
     var eliminisani: Set<Int> = []
+    /// Pomoć „Vreme stoji”: sat se zaustavlja, pitanje ne ističe.
+    var stoji = false
+    /// Pomoć „Siguran udar”: koji god odgovor da izabere, računa se kao tačan (pa se i prikazuje zeleno).
+    var sigurno = false
+    /// Pomoć „Štit”: pogrešan odgovor se ne vidi kao poraz, nego kao obrisana greška.
+    var stit = false
+    /// Boja kartice: žuta u svim igrama, plava u Karijeri (vlasnik 04.11).
+    var boja: Color = .zuta
+    /// Javlja čim je odgovor izabran (pre otkrivanja tačnog), npr. da Karijera skloni ometanje.
+    var izabrano: (() -> Void)? = nil
     let gotovo: (_ izabran: Int?, _ ms: Int) -> Void
 
     @State private var pocetak = Date()
     @State private var izabran: Int?
     @State private var otkriveno = false
     @State private var preostalo: Double = 1
+    /// Siguran udar: posle pola sekunde pogrešan izbor pozeleni („priznato”).
+    @State private var priznato = false
 
     private let trajanjeOtkrivanja: Duration = .milliseconds(3000)
 
@@ -23,18 +35,24 @@ struct PitanjeKartica: View {
                 Oznaka(tekst: oznaka, boja: .mastilo)
                 Spacer()
                 PrijaviPitanjeDugme(prikaz: prikaz)
-                TimelineView(.periodic(from: .now, by: 0.25)) { kontekst in
+                if stoji {
+                    Image(systemName: "pause.circle.fill").font(.system(size: 22, weight: .bold)).foregroundStyle(Color.teal)
+                        .accessibilityLabel("Sat stoji")
+                } else { TimelineView(.periodic(from: .now, by: 0.25)) { kontekst in
                     let ostalo = max(0, Double(sekundi) - kontekst.date.timeIntervalSince(pocetak))
+                    let zuri = ostalo <= 5 && !otkriveno
                     Text("\(Int(ostalo.rounded(.up)))").font(.naslov(22)).monospacedDigit()
+                        .foregroundStyle(zuri ? Color.crvena : Color.mastilo)
+                        .scaleEffect(zuri ? 1 + 0.12 * (ostalo.truncatingRemainder(dividingBy: 1)) : 1)
                         .onChange(of: Int(ostalo)) { _, sec in
                             if sec == 0 && !otkriveno { izaberi(nil) }
                             // Tihi sat samo u poslednjih 5 sekundi.
-                            if sec == 5 && !otkriveno { Zvuk.pusti(.tikanje, jacina: 0.25, ponavljaj: true) }
+                            if sec == 5 && !otkriveno { Zvuk.pusti(.petSekundi, jacina: 1.0); Zvuk.pusti(.tikanje, jacina: 0.25, ponavljaj: true) }
                         }
                         .accessibilityLabel("\(Int(ostalo)) sekundi")
-                }
+                } }
             }
-            TimelineView(.animation(paused: otkriveno)) { kontekst in
+            TimelineView(.animation(paused: otkriveno || stoji)) { kontekst in
                 let deo = max(0, 1 - kontekst.date.timeIntervalSince(pocetak) / Double(sekundi))
                 GeometryReader { g in
                     Capsule().fill(.white.opacity(0.6))
@@ -51,21 +69,33 @@ struct PitanjeKartica: View {
                     .disabled(otkriveno || eliminisani.contains(i))
                     .opacity(eliminisani.contains(i) && !otkriveno ? 0.3 : 1)
             }
+            if otkriveno, sigurno, priznato, izabran != nil, izabran != prikaz.tacan {
+                Label("Siguran udar: računa se kao tačan.", systemImage: "scope").font(.tekst(15, .bold)).foregroundStyle(Color.mastilo)
+            } else if otkriveno, stit, izabran != prikaz.tacan {
+                Label("Štit je obrisao grešku: stiže novo pitanje.", systemImage: "shield.fill").font(.tekst(15, .bold)).foregroundStyle(Color.mastilo)
+            }
             if otkriveno, let dodatak {
                 Text(dodatak).font(.tekst(15, .bold)).foregroundStyle(Color.mastilo)
             }
         }
         .padding(20)
-        .pop(.zuta)
-        .onAppear { pocetak = Date() }
+        .pop(boja)
+        .onAppear {
+            pocetak = Date()
+            #if DEBUG
+            // Snimak za sajt: igrač „razmisli” pa odgovori (uglavnom tačno).
+            if LibrumKvizApp.demoIgrac { Task { try? await Task.sleep(for: .seconds(2.4)); izaberi(Int.random(in: 0..<10) < 8 ? prikaz.tacan : (prikaz.tacan + 1) % prikaz.opcije.count) } }
+            #endif
+        }
         .onDisappear { Zvuk.stani(.tikanje) }
-        .sensoryFeedback(trigger: otkriveno) { _, _ in izabran == prikaz.tacan ? .success : .error }
+        .onChange(of: stoji) { _, s in if s { Zvuk.stani(.tikanje) } }
+        .sensoryFeedback(trigger: otkriveno) { _, _ in izabran == prikaz.tacan || (sigurno && izabran != nil) ? .success : .error }
     }
 
     private func stanje(_ i: Int) -> OdgovorDugme.Stanje {
         guard otkriveno else { return .obicno }
         if i == prikaz.tacan { return .tacno }
-        if i == izabran { return .netacno }
+        if i == izabran { return sigurno && priznato ? .tacno : .netacno }
         return .bledo
     }
 
@@ -73,9 +103,15 @@ struct PitanjeKartica: View {
         guard !otkriveno else { return }
         izabran = i
         otkriveno = true
+        izabrano?()
         Zvuk.stani(.tikanje)
-        Zvuk.pusti(i == nil ? .isteklo : i == prikaz.tacan ? .tacno : .netacno, jacina: 0.5)
+        let uspeh = i != nil && (i == prikaz.tacan || sigurno)
+        // Siguran udar sa pogrešnim izborom: prvo zvuk greške, pa „priznato” (gore).
+        Zvuk.pusti(i == nil && !sigurno ? .isteklo : (uspeh && !(sigurno && i != prikaz.tacan)) ? .tacno : stit ? .pomocVojske : .netacno, jacina: 0.5)
         let ms = Int(Date().timeIntervalSince(pocetak) * 1000)
+        if sigurno, i != nil, i != prikaz.tacan {
+            Task { try? await Task.sleep(for: .milliseconds(700)); withAnimation(.spring(duration: 0.4)) { priznato = true }; Zvuk.pusti(.pomocVojske, jacina: 0.45) }
+        }
         Task {
             try? await Task.sleep(for: trajanjeOtkrivanja)
             gotovo(i, ms)
@@ -89,6 +125,11 @@ struct OdgovorDugme: View {
     let tekst: String
     let stanje: Stanje
     let radnja: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var manjeKretanja
+    @State private var pojavio = false
+
+    /// Odgovori ulaze jedan za drugim (A, B, C, D), po 70 ms.
+    private var kasnjenje: Double { Double(["A", "B", "C", "D"].firstIndex(of: slovo) ?? 0) * 0.07 }
 
     var body: some View {
         let (pozadina, ivica, slovoPozadina, slovoBoja): (Color, Color, Color, Color) = switch stanje {
@@ -114,6 +155,51 @@ struct OdgovorDugme: View {
         }
         .buttonStyle(BezPrigusenja())
         .accessibilityLabel("\(slovo): \(tekst)")
+        // Vlasnik 03.11, „kao da sam u igri”: tačan pulsira uz iskrice, pogrešan se zatrese.
+        .keyframeAnimator(initialValue: Pokret(), trigger: stanje) { sadrzaj, p in
+            sadrzaj.scaleEffect(p.razmera).offset(x: p.pomak)
+        } keyframes: { _ in
+            KeyframeTrack(\.razmera) {
+                if stanje == .tacno && !manjeKretanja {
+                    SpringKeyframe(1.06, duration: 0.18); SpringKeyframe(1, duration: 0.3)
+                } else { LinearKeyframe(1, duration: 0.01) }
+            }
+            KeyframeTrack(\.pomak) {
+                if stanje == .netacno && !manjeKretanja {
+                    for x in [-10.0, 9, -7, 5, -3, 0] { LinearKeyframe(x, duration: 0.055) }
+                } else { LinearKeyframe(0, duration: 0.01) }
+            }
+        }
+        .overlay { if stanje == .tacno && !manjeKretanja { Iskrice().allowsHitTesting(false) } }
+        .opacity(pojavio || manjeKretanja ? 1 : 0)
+        .offset(y: pojavio || manjeKretanja ? 0 : 14)
+        .onAppear { withAnimation(.spring(duration: 0.4, bounce: 0.3).delay(kasnjenje)) { pojavio = true } }
+    }
+
+    struct Pokret { var razmera = 1.0; var pomak = 0.0 }
+}
+
+/// Osam iskrica koje se razlete sa tačnog odgovora i nestanu (0,7 s).
+struct Iskrice: View {
+    @State private var pocetak = Date()
+    var body: some View {
+        TimelineView(.animation) { t in
+            let f = min(1, t.date.timeIntervalSince(pocetak) / 0.7)
+            Canvas { ctx, v in
+                guard f < 1 else { return }
+                let c = CGPoint(x: v.width * 0.82, y: v.height / 2)
+                for i in 0..<8 {
+                    let ugao = Double(i) / 8 * 2 * .pi
+                    let d = 12 + 38 * (1 - pow(1 - f, 2))
+                    let p = CGPoint(x: c.x + cos(ugao) * d, y: c.y + sin(ugao) * d * 0.8)
+                    let r = 4.5 * (1 - f)
+                    var z = Path()
+                    z.move(to: CGPoint(x: p.x, y: p.y - r * 1.6)); z.addLine(to: CGPoint(x: p.x + r * 0.4, y: p.y))
+                    z.addLine(to: CGPoint(x: p.x, y: p.y + r * 1.6)); z.addLine(to: CGPoint(x: p.x - r * 0.4, y: p.y)); z.closeSubpath()
+                    ctx.fill(z, with: .color(i.isMultiple(of: 2) ? Color.zuta : Color.teal))
+                }
+            }
+        }
     }
 }
 

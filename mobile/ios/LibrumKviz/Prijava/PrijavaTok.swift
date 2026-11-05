@@ -31,6 +31,10 @@ struct PrijavaTok: View {
                 }
                 .toolbar(.hidden, for: .navigationBar)
         }
+        // Na iPadu prijava ostaje širine telefona, na sredini, kao uvod.
+        .frame(maxWidth: UvodView.najvecaSirina)
+        .frame(maxWidth: .infinity)
+        .background(Papir())
         .onAppear { if let pocetak, put.isEmpty { put = [pocetak] } }
     }
 
@@ -204,6 +208,17 @@ private struct NalogEkran: View {
                     .foregroundStyle(Color.tinta).padding(12).frame(maxWidth: .infinity, alignment: .leading).pop(.zuta, radijus: 16)
                 case .greska(let p): Label(p, systemImage: "exclamationmark.triangle").font(.tekst(14, .semibold))
                     .padding(12).frame(maxWidth: .infinity, alignment: .leading).pop(.crvenaSvetla, radijus: 16)
+                case .postoji:
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label("\(email) već ima nalog, zato nije stigao novi mejl. Prijavi se, ili postavi novu lozinku ako si je zaboravio.",
+                              systemImage: "person.crop.circle.badge.checkmark").font(.tekst(14, .semibold)).foregroundStyle(Color.mastilo)
+                        HStack(spacing: 16) {
+                            Button("Prijavi se") { idi(.prijava) }.bold()
+                            Button("Nova lozinka") { idi(.zaboravljena) }.bold()
+                        }
+                        .font(.tekst(14)).foregroundStyle(Color.teal)
+                    }
+                    .padding(12).frame(maxWidth: .infinity, alignment: .leading).pop(.zuta, radijus: 16)
                 default: EmptyView()
                 }
                 PoljeUnosa(naziv: "Ime", tekst: $ime, stanje: stanje == .greske && ime.trimmingCharacters(in: .whitespaces).isEmpty ? .greska("Upiši ime.") : .obicno, sadrzaj: .givenName)
@@ -549,39 +564,197 @@ private struct GotovoEkran: View {
 }
 
 
-/// Apple i Google prijava: dugme se vidi samo kad je provajder uključen u Supabase, pa aplikacija radi i pre podešavanja.
-/// shortcut: Google dugme čeka Google Sign-In SDK i Client ID; do tada se prikazuje samo Apple.
+/// Prvi ulaz preko Apple ili Google naloga (vlasnik 03.11): nalog postoji, ali ime, prezime, nadimak i grad su obavezni
+/// pre igre, kao kod registracije mejlom. Nadimak se čuva poslednji, pa nedovršen unos opet otvara ovaj ekran.
+struct DopunaProfila: View {
+    @Environment(Sesija.self) private var sesija
+    enum Stanje: Equatable { case unos, greske, radi, zauzet, greska(String) }
+    @State private var licni = Sesija.LicniPodaci()
+    @State private var nadimak = ""
+    @State private var stanje: Stanje = .unos
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Naslov(tekst: "Još malo\no tebi", velicina: 36)
+                        Text("Nadimak vide drugi igrači i rang lista.").font(.tekst(15)).foregroundStyle(Color.sivaTekst)
+                    }
+                    Spacer()
+                    MaskotaSlika(maskota: .lumi, velicina: 80).rotationEffect(.degrees(-6))
+                }
+                PoljeUnosa(naziv: "Ime", tekst: polje(\.first_name), stanje: obavezno(licni.first_name, "Upiši ime."), sadrzaj: .givenName)
+                PoljeUnosa(naziv: "Prezime", tekst: polje(\.last_name), stanje: obavezno(licni.last_name, "Upiši prezime."), sadrzaj: .familyName)
+                PoljeUnosa(naziv: "Nadimak", tekst: $nadimak, stanje: nadimakStanje, sadrzaj: .nickname)
+                PoljeUnosa(naziv: "Grad", tekst: polje(\.city), stanje: obavezno(licni.city, "Upiši grad."), sadrzaj: .addressCity)
+                if case .greska(let poruka) = stanje { Text(poruka).font(.tekst(13, .semibold)).foregroundStyle(Color.crvena) }
+                Button { Task { await sacuvaj() } } label: {
+                    if stanje == .radi { HStack(spacing: 10) { ProgressView().tint(Color.naMastilu); Text("Čuvam…") } } else { Text("Nastavi") }
+                }
+                .buttonStyle(.primarno)
+                .disabled(stanje == .radi)
+                Button("Odjavi se") { Task { await sesija.odjava() } }
+                    .font(.tekst(14, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 20).padding(.top, 24)
+        }
+        .background(Papir())
+        .task {
+            // Ime i prezime stižu iz Google naloga (okidač na serveru); Apple ih ne šalje.
+            if let l = try? await sesija.licniPodaci() { licni = l }
+        }
+        .onChange(of: nadimak) { if stanje == .zauzet { stanje = .unos } }
+    }
+
+    private func polje(_ k: WritableKeyPath<Sesija.LicniPodaci, String?>) -> Binding<String> {
+        Binding(get: { licni[keyPath: k] ?? "" }, set: { licni[keyPath: k] = $0 })
+    }
+
+    private func prazno(_ s: String?) -> Bool { (s ?? "").trimmingCharacters(in: .whitespaces).isEmpty }
+
+    private func obavezno(_ s: String?, _ poruka: String) -> PoljeUnosa.Stanje {
+        stanje == .greske && prazno(s) ? .greska(poruka) : .obicno
+    }
+
+    private var nadimakStanje: PoljeUnosa.Stanje {
+        if stanje == .zauzet { return .greska("Nadimak „\(nadimak)” je zauzet. Probaj drugi.") }
+        if stanje == .greske && nadimak.isEmpty { return .greska("Izaberi nadimak.") }
+        return nadimak.isEmpty || NalogEkranPravila.ispravanNadimak(nadimak) ? .obicno : .greska("3–20 slova, cifara, tačka ili crtica.")
+    }
+
+    private func sacuvaj() async {
+        guard !prazno(licni.first_name), !prazno(licni.last_name), !prazno(licni.city), NalogEkranPravila.ispravanNadimak(nadimak) else {
+            stanje = .greske; return
+        }
+        stanje = .radi
+        do {
+            try await sesija.sacuvajLicnePodatke(licni)
+            try await sesija.sacuvajNadimak(nadimak)
+        }
+        catch let g as Supabase.Greska { stanje = g.vrsta == .postoji ? .zauzet : .greska(g.poruka) }
+        catch { stanje = .greska(error.localizedDescription) }
+    }
+}
+
+/// Apple i Google prijava (ujedno i registracija: prvi ulaz pravi nalog). Dugme se vidi samo kad je provajder
+/// uključen u Supabase, pa aplikacija radi i pre podešavanja.
 struct SpoljnaPrijava: View {
     @Environment(Sesija.self) private var sesija
     @State private var provajderi: Set<String> = []
     @State private var nonce = ""
     @State private var greska: String?
+    @State private var pravni: PravniTekstView.Vrsta?
 
+    @Environment(\.authorizationController) private var autorizacija
+    @Environment(\.webAuthenticationSession) private var webPrijava
+
+    private static let googleKlijent = Bundle.main.object(forInfoDictionaryKey: "GOOGLE_IOS_CLIENT_ID") as? String ?? ""
+
+    // Samo okrugle ikonice, kao na sajtu (vlasnik: bez tekstualnog „Continue with Apple”).
     var body: some View {
         VStack(spacing: 10) {
-            if provajderi.contains("apple") {
-                SignInWithAppleButton(.continue) { zahtev in
-                    nonce = Self.nasumicno()
-                    zahtev.requestedScopes = [.email, .fullName]
-                    zahtev.nonce = Self.sha256(nonce)
-                } onCompletion: { ishod in
-                    switch ishod {
-                    case .success(let a):
-                        guard let c = a.credential as? ASAuthorizationAppleIDCredential, let t = c.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) else { return }
-                        Task {
-                            do { try await sesija.prijavaTokenom(provajder: "apple", idToken: t, nonce: nonce) }
-                            catch { greska = error.localizedDescription }
-                        }
-                    case .failure(let e):
-                        if (e as? ASAuthorizationError)?.code != .canceled { greska = e.localizedDescription }
+            HStack(spacing: 16) {
+                if provajderi.contains("apple") {
+                    ikonica(opis: "Prijava preko Apple naloga") { await apple() } slika: {
+                        Image(systemName: "apple.logo").font(.system(size: 24, weight: .semibold)).foregroundStyle(.black)
                     }
                 }
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: 54).clipShape(RoundedRectangle(cornerRadius: 16))
+                if provajderi.contains("google"), !Self.googleKlijent.isEmpty {
+                    ikonica(opis: "Prijava preko Google naloga") { await google() } slika: {
+                        Text("G").font(.system(size: 26, weight: .bold, design: .rounded)).foregroundStyle(Color(hex: 0x4285F4))
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            if !provajderi.isDisjoint(with: ["apple", "google"]) {
+                // Registracija mejlom ima kvačicu za uslove; ovde je prihvatanje ovim redom (Apple 1.2).
+                Text("Preko Apple ili Google naloga prihvataš [uslove](librumkviz://uslovi) i [privatnost](librumkviz://privatnost).")
+                    .font(.tekst(12)).foregroundStyle(Color.sivaTekst).tint(Color.teal).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity)
+                    .environment(\.openURL, OpenURLAction { url in pravni = url.host == "privatnost" ? .privatnost : .uslovi; return .handled })
             }
             if let greska { Text(greska).font(.tekst(13, .semibold)).foregroundStyle(Color.crvena) }
         }
         .task { provajderi = await Supabase.deljeni.ukljuceniProvajderi() }
+        .sheet(item: $pravni) { v in NavigationStack { PravniTekstView(vrsta: v) } }
+    }
+
+    private func ikonica(opis: String, radnja: @escaping () async -> Void, @ViewBuilder slika: () -> some View) -> some View {
+        Button { Task { await radnja() } } label: {
+            slika().frame(width: 56, height: 56).background(.white, in: Circle())
+                .overlay(Circle().stroke(Color.kremTamnija, lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(opis)
+    }
+
+    /// Google bez SDK-a: sistemski prozor za prijavu (PKCE, iOS klijent nema tajnu), pa id_token ide u Supabase.
+    private func google() async {
+        greska = nil
+        let klijent = Self.googleKlijent
+        // Povratna šema iOS klijenta je obrnut Client ID (Google je sam dozvoljava za taj klijent).
+        let sema = klijent.split(separator: ".").reversed().joined(separator: ".")
+        let povratak = "\(sema):/oauth2redirect"
+        let proveravac = Self.nasumicno()
+        nonce = Self.nasumicno()
+        let stanje = Self.nasumicno()
+        var adresa = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth")!
+        adresa.queryItems = [
+            .init(name: "client_id", value: klijent), .init(name: "redirect_uri", value: povratak),
+            .init(name: "response_type", value: "code"), .init(name: "scope", value: "openid email profile"),
+            .init(name: "code_challenge", value: Self.base64url(SHA256.hash(data: Data(proveravac.utf8)))),
+            .init(name: "code_challenge_method", value: "S256"), .init(name: "nonce", value: Self.sha256(nonce)),
+            .init(name: "state", value: stanje), .init(name: "prompt", value: "select_account"),
+        ]
+        do {
+            let odgovor = try await webPrijava.authenticate(using: adresa.url!, callbackURLScheme: sema, preferredBrowserSession: .ephemeral)
+            let upit = URLComponents(url: odgovor, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            guard upit.first(where: { $0.name == "state" })?.value == stanje,
+                  let kod = upit.first(where: { $0.name == "code" })?.value else { greska = "Google prijava nije uspela."; return }
+            let idToken = try await Self.googleToken(kod: kod, klijent: klijent, povratak: povratak, proveravac: proveravac)
+            try await sesija.prijavaTokenom(provajder: "google", idToken: idToken, nonce: nonce)
+        } catch let e as ASWebAuthenticationSessionError where e.code == .canceledLogin {
+            return
+        } catch {
+            greska = error.localizedDescription
+        }
+    }
+
+    private static func googleToken(kod: String, klijent: String, povratak: String, proveravac: String) async throws -> String {
+        var z = URLRequest(url: URL(string: "https://oauth2.googleapis.com/token")!)
+        z.httpMethod = "POST"
+        z.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        var telo = URLComponents()
+        telo.queryItems = [.init(name: "code", value: kod), .init(name: "client_id", value: klijent),
+                           .init(name: "redirect_uri", value: povratak), .init(name: "code_verifier", value: proveravac),
+                           .init(name: "grant_type", value: "authorization_code")]
+        z.httpBody = telo.percentEncodedQuery?.data(using: .utf8)
+        struct Odgovor: Decodable { let id_token: String }
+        let (d, _) = try await URLSession.shared.data(for: z)
+        guard let o = try? JSONDecoder().decode(Odgovor.self, from: d) else { throw URLError(.userAuthenticationRequired) }
+        return o.id_token
+    }
+
+    private static func base64url(_ h: SHA256.Digest) -> String {
+        Data(h).base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
+    }
+
+    private func apple() async {
+        greska = nil
+        nonce = Self.nasumicno()
+        let zahtev = ASAuthorizationAppleIDProvider().createRequest()
+        zahtev.requestedScopes = [.email, .fullName]
+        zahtev.nonce = Self.sha256(nonce)
+        do {
+            guard case .appleID(let c) = try await autorizacija.performRequest(zahtev),
+                  let t = c.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) else { return }
+            try await sesija.prijavaTokenom(provajder: "apple", idToken: t, nonce: nonce)
+        } catch let e as ASAuthorizationError where e.code == .canceled {
+            return
+        } catch {
+            greska = error.localizedDescription
+        }
     }
 
     private static func nasumicno() -> String {

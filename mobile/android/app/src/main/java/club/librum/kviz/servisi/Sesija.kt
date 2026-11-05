@@ -8,6 +8,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 private data class Profil(val nickname: String? = null, val first_name: String? = null, val avatar: String? = null)
 
+/** Lični podaci profila (ime, prezime, grad), kao iOS Sesija.LicniPodaci. */
+@Serializable
+data class LicniPodaci(val first_name: String? = null, val last_name: String? = null, val city: String? = null, val bio: String? = null)
+
 data class Nalog(val id: String, val email: String?, val nadimak: String?, val avatar: String? = null)
 
 /**
@@ -21,6 +25,52 @@ class Sesija(context: Context) {
     private var token: Token? = prefs.getString("token", null)?.let { runCatching { Supabase.json.decodeFromString<Token>(it) }.getOrNull() }
     private val _nalog = MutableStateFlow(token?.let { Nalog(it.user.id, it.user.email, prefs.getString("nadimak", null)) })
     val nalog: StateFlow<Nalog?> = _nalog
+    /** Prvi ulaz preko Google naloga: nema nadimka, app traži profil pre igre (kao iOS DopunaProfila). */
+    val trebaDopuna = MutableStateFlow(prefs.getBoolean("trebaDopuna", false))
+
+    suspend fun prijavaGoogle(idToken: String, nonce: String) {
+        sacuvaj(Supabase.prijavaTokenom("google", idToken, nonce))
+        ucitajNadimak()
+    }
+
+    suspend fun licniPodaci(): LicniPodaci {
+        val id = token?.user?.id ?: return LicniPodaci()
+        return Supabase.json.decodeFromString<List<LicniPodaci>>(
+            Supabase.citaj("profiles", listOf("select" to "first_name,last_name,city,bio", "id" to "eq.$id"), vazeciToken()),
+        ).firstOrNull() ?: LicniPodaci()
+    }
+
+    /** Dopuna profila: nadimak mora biti slobodan (javni profili), pa se upisuje sve odjednom. */
+    suspend fun dopuniProfil(licni: LicniPodaci, nadimak: String) {
+        val id = token?.user?.id ?: throw Greska("Prijavi se ponovo.")
+        val t = vazeciToken() ?: throw Greska("Prijavi se ponovo.")
+        val zauzet = Supabase.json.decodeFromString<List<Profil>>(Supabase.citaj("public_profiles",
+            listOf("select" to "nickname", "nickname" to "ilike.$nadimak", "id" to "neq.$id")))
+        if (zauzet.isNotEmpty()) throw Greska("Nadimak „$nadimak” je zauzet.")
+        Supabase.azuriraj("profiles", listOf("id" to "eq.$id"), mapOf("nickname" to nadimak, "first_name" to licni.first_name,
+            "last_name" to licni.last_name, "city" to licni.city), t)
+        ucitajNadimak()
+    }
+
+    /** Lični podaci sa izmene profila (kao iOS): prazno polje se čuva kao null, da profil ne prikazuje prazan red. */
+    suspend fun sacuvajLicnePodatke(p: LicniPodaci) {
+        val id = token?.user?.id ?: throw Greska("Prijavi se ponovo.")
+        val t = vazeciToken() ?: throw Greska("Prijavi se ponovo.")
+        fun ili(x: String?) = x?.trim()?.ifEmpty { null }
+        Supabase.azuriraj("profiles", listOf("id" to "eq.$id"), mapOf("first_name" to ili(p.first_name), "last_name" to ili(p.last_name),
+            "city" to ili(p.city), "bio" to ili(p.bio)), t)
+    }
+
+    /** Novi nadimak, ako je slobodan (javni profili). */
+    suspend fun sacuvajNadimak(novi: String) {
+        val id = token?.user?.id ?: throw Greska("Prijavi se ponovo.")
+        val t = vazeciToken() ?: throw Greska("Prijavi se ponovo.")
+        val zauzet = Supabase.json.decodeFromString<List<Profil>>(Supabase.citaj("public_profiles",
+            listOf("select" to "nickname", "nickname" to "ilike.$novi", "id" to "neq.$id")))
+        if (zauzet.isNotEmpty()) throw Greska("Nadimak „$novi” je zauzet. Probaj drugi.")
+        Supabase.azuriraj("profiles", listOf("id" to "eq.$id"), mapOf("nickname" to novi), t)
+        ucitajNadimak()
+    }
 
     suspend fun prijava(email: String, lozinka: String) {
         val t = Supabase.prijava(email.trim().lowercase(), lozinka)
@@ -32,9 +82,28 @@ class Sesija(context: Context) {
         Supabase.registracija(email.trim().lowercase(), lozinka, ime, prezime, nadimak)
     }
 
+    /** Kod iz mejla posle registracije ili za novu lozinku; posle uspeha igrač je prijavljen. */
+    suspend fun potvrdiKod(email: String, kod: String, oporavak: Boolean) {
+        sacuvaj(Supabase.potvrdiKod(email.trim().lowercase(), kod.trim(), if (oporavak) "recovery" else "signup"))
+        ucitajNadimak()
+    }
+
+    suspend fun posaljiKodPonovo(email: String) = Supabase.posaljiKodPonovo(email.trim().lowercase())
+
+    suspend fun zaboravljenaLozinka(email: String) = Supabase.zaboravljenaLozinka(email.trim().lowercase())
+
+    /** Zaboravljena lozinka: kod iz mejla + nova lozinka; igrač se prijavljuje tek kad je lozinka sačuvana. */
+    suspend fun oporaviLozinku(email: String, kod: String, lozinka: String) {
+        val t = Supabase.potvrdiKod(email.trim().lowercase(), kod.trim(), "recovery")
+        Supabase.novaLozinka(lozinka, t.access_token)
+        sacuvaj(t)
+        ucitajNadimak()
+    }
+
     suspend fun odjava() {
         token?.let { Supabase.odjava(it.access_token) }
         ocisti()
+        Kes.obrisiSve()
     }
 
     /** Trajno briše nalog na serveru (RPC obrisi_moj_nalog), pa odjavljuje. */
@@ -63,7 +132,9 @@ class Sesija(context: Context) {
             )
         }.getOrNull() ?: return
         val nadimak = redovi.firstOrNull()?.let { it.nickname ?: it.first_name }
-        prefs.edit().putString("nadimak", nadimak).apply()
+        val dopuna = redovi.firstOrNull()?.nickname.isNullOrBlank()
+        trebaDopuna.value = dopuna
+        prefs.edit().putString("nadimak", nadimak).putBoolean("trebaDopuna", dopuna).apply()
         _nalog.value = _nalog.value?.copy(nadimak = nadimak, avatar = redovi.firstOrNull()?.avatar)
     }
 
@@ -109,5 +180,6 @@ class Sesija(context: Context) {
         token = null
         prefs.edit().clear().apply()
         _nalog.value = null
+        trebaDopuna.value = false
     }
 }

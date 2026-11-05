@@ -80,6 +80,8 @@ struct PitanjaStatistika: View {
 /// Igre sa veba (kviz.librum.club/profil): PRO, Book, Vešanje, Brzi kviz, Duel.
 struct VebIgreStatistika: View {
     let veb: ProfilIgracaView.Profil.Veb
+    var partija = 0
+    var pitanja: ProfilIgracaView.Profil.Pitanja?
 
     var body: some View {
         let kartice = sadrzaj
@@ -118,6 +120,11 @@ struct VebIgreStatistika: View {
             l.append(.init(naziv: "Duel", ikonica: "figure.boxing", boja: .roze, glavno: "\(g.pobeda ?? 0)", glavnoNaziv: "pobeda",
                            ostalo: ["\(g.poraza ?? 0) poraza", "\(g.nereseno ?? 0) nerešeno"]))
         }
+        // Mreža je u dve kolone: neparan broj kartica ostavlja rupu, pa je popunjava zbir svih igara (vlasnik 03.11).
+        if l.count % 2 == 1 {
+            l.append(.init(naziv: "Sve igre", ikonica: "trophy", boja: .teal, glavno: partija.srpski, glavnoNaziv: "partija ukupno",
+                           ostalo: [pitanja.map { "\($0.odgovora.srpski) odgovora" }, pitanja?.tacnost.map { "tačnost \($0)%" }].compactMap { $0 }))
+        }
         return l
     }
 
@@ -141,7 +148,7 @@ struct VebIgreStatistika: View {
 struct SkorasnjaAktivnost: View {
     let skoro: [ProfilIgracaView.Profil.Skoro]
     private static let nazivi = ["pro": "PRO kviz", "book": "Book kviz", "vesanje": "Vešanje", "brzi": "Brzi kviz", "duel": "Duel",
-                                 "slikari": "Slikari", "osvajanje": "Osvajanje", "tema": "Kviz po temi"]
+                                 "slikari": "Slikari", "osvajanje": "Osvajanje", "tema": "Kviz po temi", "karijera": "Karijera"]
 
     var body: some View {
         if !skoro.isEmpty {
@@ -248,14 +255,10 @@ struct ProfilStatistike: View {
     let profil: ProfilIgracaView.Profil
 
     var body: some View {
+        // Isti raspored kao moj profil: Osvajač i Karijera, pa krugovi ostalih igara (ProfilFokus.swift).
         VStack(alignment: .leading, spacing: 18) {
-            if let p = profil.pitanja, p.odgovora > 0 { PitanjaStatistika(p: p) }
-            if let veb = profil.veb { VebIgreStatistika(veb: veb) }
-            if !profil.igre.isEmpty {
-                Text("U aplikaciji").font(.naslov(22))
-                StatistikaPoIgrama(profil: profil)
-            }
-            SkorasnjaAktivnost(skoro: profil.skoro ?? [])
+            ProfilFokus(profil: profil)
+            ProfilOstalo(profil: profil)
             if (profil.partija ?? 0) == 0 && profil.igre.isEmpty {
                 StanjeEkrana(maskota: .bloop, naslov: "Još nema partija", tekst: "Kad se odigra prva igra sa nalogom, rezultati će stajati ovde.")
             }

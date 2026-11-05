@@ -34,7 +34,7 @@ struct VesanjeView: View {
             } else if let rec {
                 ScrollView { sadrzaj(rec).padding(16) }
             } else {
-                ProgressView().controlSize(.large).tint(.mastilo)
+                UcitavanjeMaskota(maskota: .bloop, tekst: "Biram reč…")
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -76,7 +76,7 @@ struct VesanjeView: View {
             }
             .padding(20).pop(.zuta)
             .contentShape(Rectangle())
-            .onTapGesture { if igra.status == .igra && !celaRec { tastatura = true } }
+            .onTapGesture { tastatura = false }
 
             if igra.status == .igra {
                 if !celaRec {
@@ -91,12 +91,13 @@ struct VesanjeView: View {
                             guard novo.count > staro.count, novo.hasPrefix(staro) else { return }
                             for z in novo.dropFirst(staro.count) where igra.status == .igra {
                                 let slovo = String(z).uppercased()
-                                if Vesanje.azbuka.contains(slovo) && !igra.iskorisceno(slovo) { igra.pogodi(slovo) }
+                                if Vesanje.azbuka.contains(slovo) && !igra.iskorisceno(slovo) { igra.pogodi(slovo); Zvuk.pusti(igra.rec.uppercased().contains(slovo) ? .slovoDa : .slovoNe, jacina: 0.4) }
                             }
                         }
-                    iskoriscenaSlova
-                    if !tastatura {
-                        Button { tastatura = true } label: { Label("Kucaj slova", systemImage: "keyboard") }.buttonStyle(.sekundarno)
+                    // Vlasnik 03.11: tastatura sa našim slovima (Č, Ć, Đ, Š, Ž) koja boji iskorišćena; sistemska ostaje za brzo kucanje.
+                    AzbukaTastatura(igra: igra) { slovo in
+                        igra.pogodi(slovo)
+                        Zvuk.pusti(igra.rec.uppercased().contains(slovo) ? .slovoDa : .slovoNe, jacina: 0.4)
                     }
                 }
                 if celaRec {
@@ -105,7 +106,7 @@ struct VesanjeView: View {
                             .background(Color.kartica, in: RoundedRectangle(cornerRadius: 14))
                             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mastilo, lineWidth: 1.5))
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        Button("Pogodi") { igra.pogodiRec(pokusajReci); pokusajReci = ""; celaRec = false; tastatura = true }.buttonStyle(.primarno).frame(width: 110)
+                        Button("Pogodi") { igra.pogodiRec(pokusajReci); pokusajReci = ""; celaRec = false }.buttonStyle(.primarno).frame(width: 110)
                     }
                     Text("Pogrešna cela reč odnosi 2 života.").font(.tekst(13)).foregroundStyle(Color.sivaTekst)
                 } else {
@@ -130,31 +131,6 @@ struct VesanjeView: View {
         }
     }
 
-    /// Pogođena i promašena slova (umesto tastature na ekranu).
-    private var iskoriscenaSlova: some View {
-        let pog = Vesanje.azbuka.filter { igra.iskorisceno($0) && igra.rec.uppercased().contains($0) }
-        let pro = Vesanje.azbuka.filter { igra.iskorisceno($0) && !igra.rec.uppercased().contains($0) }
-        return VStack(alignment: .leading, spacing: 6) {
-            if pog.isEmpty && pro.isEmpty {
-                Text("Kucaj slova na tastaturi telefona.").font(.tekst(14)).foregroundStyle(Color.sivaTekst)
-            }
-            if !pro.isEmpty {
-                HStack(spacing: 6) {
-                    Text("Nema:").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
-                    Text(pro.joined(separator: " ")).font(.tekst(16, .bold)).foregroundStyle(Color.crvena).strikethrough()
-                }
-            }
-            if !pog.isEmpty {
-                HStack(spacing: 6) {
-                    Text("Ima:").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
-                    Text(pog.joined(separator: " ")).font(.tekst(16, .bold)).foregroundStyle(Color.teal)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-
     private func ucitaj() async {
         do { reci = try await PaketPitanja.deljeni.reci(); sledeca() } catch { greska = error.localizedDescription }
     }
@@ -170,7 +146,7 @@ struct VesanjeView: View {
         celaRec = false
         pomocIskoriscena = false
         unos = ""
-        tastatura = true
+        tastatura = false
     }
 
     private func sacuvaj() async {
@@ -235,5 +211,37 @@ struct VesalaCrtez: View {
         .sensoryFeedback(.error, trigger: greske)
         .accessibilityElement()
         .accessibilityLabel(greske == 0 ? "Vešala, još nijedan promašaj" : "Vešala, \(greske) od \(Vesanje.pocetniZivoti) delova")
+    }
+}
+
+/// Tastatura azbuke u tri reda: zeleno pogođeno, crveno promašeno, bledo ugašeno (50/50); dodir = pokušaj.
+struct AzbukaTastatura: View {
+    let igra: Vesanje
+    let pogodi: (String) -> Void
+    private static let redovi = [["A", "B", "C", "Č", "Ć", "D", "Đ", "E", "F"], ["G", "H", "I", "J", "K", "L", "M", "N", "O"], ["P", "R", "S", "Š", "T", "U", "V", "Z", "Ž"]]
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ForEach(Self.redovi, id: \.self) { red in
+                HStack(spacing: 5) {
+                    ForEach(red, id: \.self) { slovo in
+                        let iskorisceno = igra.iskorisceno(slovo)
+                        let pogodjeno = iskorisceno && igra.rec.uppercased().contains(slovo)
+                        Button { pogodi(slovo) } label: {
+                            Text(slovo).font(.tekst(18, .bold))
+                                .foregroundStyle(iskorisceno ? Color.white : Color.mastilo)
+                                .frame(maxWidth: .infinity).frame(height: 46)
+                                .background(iskorisceno ? (pogodjeno ? Color.teal : Color.crvena.opacity(0.75)) : Color.kartica,
+                                            in: RoundedRectangle(cornerRadius: 10))
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.mastilo, lineWidth: iskorisceno ? 0 : 1.5))
+                        }
+                        .buttonStyle(BezPrigusenja())
+                        .disabled(iskorisceno)
+                        .accessibilityLabel(slovo + (iskorisceno ? (pogodjeno ? ", pogođeno" : ", promašeno") : ""))
+                    }
+                }
+            }
+        }
+        .sensoryFeedback(.selection, trigger: igra.prikaz)
     }
 }

@@ -22,6 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -70,6 +76,9 @@ import club.librum.kviz.ui.Profil
 import club.librum.kviz.ui.RangLista
 import club.librum.kviz.ui.tekst
 
+/** DEBUG: probni ekrani Karijere umesto aplikacije. */
+private var karijeraProba = false
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +87,19 @@ class MainActivity : ComponentActivity() {
         Cinjenice.ucitaj(assets.open("cinjenice.json").bufferedReader().use { it.readText() })
         Napredak.deljeni = Napredak(applicationContext)
         Zvuk.init(applicationContext)
-        setContent { Aplikacija() }
+        club.librum.kviz.servisi.IzvestajOPadu.ukljuci(applicationContext)
+        kotlinx.coroutines.MainScope().launch { club.librum.kviz.servisi.IzvestajOPadu.posaljiSacuvan(applicationContext) }
+        // Razvojna proba (adb ... --ez bezPrijave true): ekrani igre sa drugima bez servera i lozinke, kao iOS `-bezPrijave`.
+        if (BuildConfig.DEBUG) club.librum.kviz.igre.Takmicenje.proba = intent.getBooleanExtra("bezPrijave", false)
+        // `--ez karijeraProba true`: probni ekrani Karijere sa izmišljenim podacima (DEBUG).
+        karijeraProba = BuildConfig.DEBUG && intent.getBooleanExtra("karijeraProba", false)
+        club.librum.kviz.ui.Boje.tema = Napredak.deljeni.s.tema
+        club.librum.kviz.servisi.Podsetnik.zakazi(applicationContext, Napredak.deljeni.s.podsetnik)
+        setContent {
+            val sistemTamno = androidx.compose.foundation.isSystemInDarkTheme()
+            club.librum.kviz.ui.Boje.tamno = when (club.librum.kviz.ui.Boje.tema) { "tamna" -> true; "svetla" -> false; else -> sistemTamno }
+            if (karijeraProba) club.librum.kviz.karijera.KarijeraProba() else Aplikacija()
+        }
         intent?.data?.let { Pozivnica.primi(it) }
     }
 
@@ -102,7 +123,12 @@ object Pozivnica {
     val ruta = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     fun primi(uri: android.net.Uri) {
         val vrednost = uri.pathSegments.firstOrNull()?.filter { it.isLetterOrDigit() || it == '-' } ?: return
-        ruta.value = when (uri.host) { "duel" -> "duel/kod/${vrednost.uppercase()}"; "igrac" -> "igrac/$vrednost"; else -> null }
+        ruta.value = when (uri.host) {
+            "duel" -> "duel/kod/${vrednost.uppercase()}"; "igrac" -> "igrac/$vrednost"
+            "osvajanje" -> "osvajanje/kod/${vrednost.uppercase()}"
+            "soba" -> "takmicenje/kod/${vrednost.uppercase()}"
+            else -> null
+        }
     }
 }
 
@@ -116,6 +142,8 @@ private fun Aplikacija() {
     val trenutna by nav.currentBackStackEntryAsState()
     val ruta = trenutna?.destination?.route
     LaunchedEffect(nalog?.id) { sesija.ucitajNadimak() }
+    val trebaDopuna by sesija.trebaDopuna.collectAsState()
+    if (nalog != null && trebaDopuna) { club.librum.kviz.ui.DopunaProfila(sesija); return }
     val pozivnica by Pozivnica.ruta.collectAsState()
     LaunchedEffect(pozivnica) { pozivnica?.let { nav.navigate(it); Pozivnica.ruta.value = null } }
     // Brojači se osvežavaju pri svakom prelasku na karticu, kao na iOS-u.
@@ -159,10 +187,20 @@ private fun Aplikacija() {
                 composable("poruke") { PorukeEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
                 composable("razgovor/{sa}/{ime}") { e -> RazgovorEkran(sesija, e.arguments?.getString("sa").orEmpty(), e.arguments?.getString("ime").orEmpty()) { nav.popBackStack() } }
                 composable("rang") { RangLista(sesija) { nav.navigate(it) } }
+                composable("karijera") { club.librum.kviz.karijera.KarijeraEkran(sesija) { nav.popBackStack() } }
+                composable("karijeracv/{id}") { e -> club.librum.kviz.karijera.CVEkran(e.arguments?.getString("id")) { nav.popBackStack() } }
                 composable("profil") { Profil(sesija) { nav.navigate(it) } }
+                composable("podesavanja") { club.librum.kviz.ui.PodesavanjaEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("izmena-profila") { club.librum.kviz.ui.IzmenaProfilaEkran(sesija) { nav.popBackStack() } }
+                composable("bedzevi") { club.librum.kviz.ui.BedzeviEkran { nav.popBackStack() } }
+                composable("statistika") { club.librum.kviz.ui.StatistikaEkran { nav.popBackStack() } }
+                composable("blokirani") { club.librum.kviz.ui.BlokiraniEkran(sesija) { nav.popBackStack() } }
                 composable("dodaj/{vrsta}") { e -> DodajPitanjeEkran(sesija, e.arguments?.getString("vrsta") ?: "pro") { nav.popBackStack() } }
-                composable("osvajanje") { OsvajanjeUvod(nalog?.nadimak) { p -> OsvajanjeTok.postavka = p; nav.navigate("osvajanje/igra") } }
-                composable("osvajanje/igra") { OsvajanjeTokEkran(sesija) { nav.popBackStack() } }
+                composable("osvajanje") { OsvajanjeUvod(nalog?.nadimak, { p -> OsvajanjeTok.postavka = p; nav.navigate("osvajanje/poziv") }, { k -> nav.navigate("osvajanje/kod/$k") }) { p -> OsvajanjeTok.postavka = p; nav.navigate("osvajanje/igra") } }
+                composable("osvajanje/igra") { OsvajanjeTokEkran(sesija, { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
+                composable("osvajanje/poziv") { club.librum.kviz.osvajanje.PozivEkran(sesija, club.librum.kviz.osvajanje.OsvajanjeTok.postavka, null, { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
+                composable("osvajanje/kod/{kod}") { e -> club.librum.kviz.osvajanje.PozivEkran(sesija, null, e.arguments?.getString("kod"), { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
+                composable("osvajanje/nastavak") { club.librum.kviz.osvajanje.OsvajanjeNastavak(sesija, { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
                 composable("pro") { ProKvizEkran(sesija, Survival.PRO) { nav.popBackStack() } }
                 composable("book") { ProKvizEkran(sesija, Survival.BOOK) { nav.popBackStack() } }
                 composable("dnevni") { KvizIgraEkran(sesija, "Dnevni izazov", "dnevni", null, { dnevniIzazov() }) { nav.popBackStack() } }
@@ -189,6 +227,29 @@ private fun Aplikacija() {
                 composable("duel") { DuelEkran(sesija) { nav.popBackStack() } }
                 composable("duel/izazov/{id}") { e -> DuelEkran(sesija, izazovi = e.arguments?.getString("id")) { nav.popBackStack() } }
                 composable("duel/kod/{kod}") { e -> DuelEkran(sesija, kodSobe = e.arguments?.getString("kod")) { nav.popBackStack() } }
+                composable("takmicenje") { club.librum.kviz.igre.TakmicenjeEkran(sesija, izadji = { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
+                composable("takmicenje/kod/{kod}") { e -> club.librum.kviz.igre.TakmicenjeEkran(sesija, kod = e.arguments?.getString("kod"), izadji = { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
+                composable("takmicenje/izazov/{id}/{ime}") { e ->
+                    club.librum.kviz.igre.TakmicenjeEkran(sesija, pozovi = e.arguments?.getString("id").orEmpty() to e.arguments?.getString("ime").orEmpty(), izadji = { nav.popBackStack() }) { nav.popBackStack("igre", false) }
+                }
+            }
+            // Poziv u sobu stiže preko bilo kog ekrana osim same igre (kao baner na iOS-u).
+            var poziv by remember { mutableStateOf<club.librum.kviz.igre.Takmicenje.Poziv?>(null) }
+            val odbijeni = remember { mutableSetOf<String>() }
+            LaunchedEffect(nalog?.id) {
+                while (nalog != null) {
+                    if (poziv == null) poziv = club.librum.kviz.igre.Takmicenje.pozivi(sesija).firstOrNull { it.kod !in odbijeni }
+                    kotlinx.coroutines.delay(club.librum.kviz.igre.Takmicenje.OSVEZAVANJE_MS * 3)
+                }
+            }
+            val opseg = rememberCoroutineScope()
+            poziv?.takeIf { ruta?.startsWith("takmicenje") != true }?.let { p ->
+                Box(Modifier.align(Alignment.TopCenter).statusBarsPadding()) {
+                    club.librum.kviz.igre.PozivBaner(p) { prihvata ->
+                        odbijeni += p.kod; poziv = null
+                        if (prihvata) nav.navigate("takmicenje/kod/${p.kod}") else opseg.launch { club.librum.kviz.igre.Takmicenje.odbij(sesija, p.kod) }
+                    }
+                }
             }
         }
     }

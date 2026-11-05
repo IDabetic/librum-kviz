@@ -76,11 +76,16 @@ const MORSKE = [
   ['LKA', 'IND'], ['AUS', 'IDN'], ['AUS', 'NZL'], ['AUS', 'PNG'], ['CUB', 'USA'], ['CUB', 'MEX'], ['TWN', 'CHN'],
   ['PHL', 'TWN'], ['PHL', 'MYS'], ['SWE', 'FIN'], ['DNK', 'SWE'], ['DNK', 'NOR'], ['SAU', 'EGY'], ['YEM', 'DJI'],
   ['CYP', 'TUR'], ['TTO', 'VEN'], ['JAM', 'CUB'], ['BHS', 'USA'], ['PRI', 'DOM'],
+  // Trinidad i Tobago mora imati suseda i u partiji samo na Severnoj Americi (03.11.2026).
+  ['TTO', 'PRI'],
 ]
 
 const sirovo = JSON.parse(fs.readFileSync(ulaz, 'utf8')).features
   .map(f => ({ ...f, properties: { id: SPOJI[f.properties.ADM0_A3] ?? f.properties.ADM0_A3 } }))
   .filter(f => !IZBACI.has(f.properties.id) && IMENA[f.properties.id])
+  // Francuska bez Francuske Gvajane (03.11.2026): parče u Južnoj Americi se nije moglo napasti u partiji na tom kontinentu.
+  .map(f => f.properties.id !== 'FRA' || f.geometry.type !== 'MultiPolygon' ? f
+    : { ...f, geometry: { ...f.geometry, coordinates: f.geometry.coordinates.filter(p => p[0][0][0] > -30) } })
 
 const regionOd = {}
 for (const [r, , spisak] of REGIONI) for (const id of spisak.split(' ')) regionOd[id] = r

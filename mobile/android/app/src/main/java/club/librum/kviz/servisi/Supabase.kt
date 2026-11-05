@@ -69,12 +69,19 @@ object Supabase {
     private fun prevedi(telo: String, kod: Int): String {
         val obj = runCatching { json.parseToJsonElement(telo).jsonObject }.getOrNull()
         val poruka = listOf("error_description", "msg", "message").firstNotNullOfOrNull { obj?.get(it)?.jsonPrimitive?.content }.orEmpty()
+        val oznaka = listOf("error_code", "code").firstNotNullOfOrNull { obj?.get(it)?.jsonPrimitive?.content }.orEmpty()
+        if (kod == 429 || "rate_limit" in oznaka || "only request this after" in poruka) return "Previše pokušaja. Sačekaj malo pa probaj ponovo."
+        if (oznaka == "otp_expired" || "expired" in poruka) return "Kod je istekao ili nije tačan. Zatraži novi."
+        if (oznaka == "same_password") return "Nova lozinka mora da se razlikuje od stare."
         return when (poruka) {
             "Invalid login credentials" -> "Pogrešan email ili lozinka."
             "User already registered" -> "Ovaj email je već registrovan."
-            "Email not confirmed" -> "Potvrdi email preko linka koji smo ti poslali."
+            "Email not confirmed" -> "Potvrdi email kodom (ili linkom) koji smo ti poslali."
             else -> when {
                 kod == 402 -> "Baza je trenutno nedostupna. Pokušaj kasnije."
+                // Greške baze (SQLSTATE, 5 znakova) se ne prikazuju; samo naše poruke iz funkcija (isto kao iOS, 05.11).
+                oznaka.length == 5 && oznaka.all { it.isDigit() || it.isUpperCase() } && oznaka !in setOf("22023", "P0001", "P0002", "42501") ->
+                    "Nešto nije u redu na serveru. Pokušaj ponovo za koji trenutak."
                 poruka.isEmpty() -> "Greška $kod. Pokušaj ponovo."
                 else -> poruka
             }
@@ -98,6 +105,11 @@ object Supabase {
         zahtev("auth/v1/token", "POST", objekat("email" to email, "password" to lozinka), upit = listOf("grant_type" to "password")),
     )
 
+    /** Prijava tokenom sa telefona (Google): Supabase proverava potpis i nonce. */
+    suspend fun prijavaTokenom(provajder: String, idToken: String, nonce: String?): Token = json.decodeFromString(
+        zahtev("auth/v1/token", "POST", objekat("provider" to provajder, "id_token" to idToken, "nonce" to nonce), upit = listOf("grant_type" to "id_token")),
+    )
+
     suspend fun osvezi(refresh: String): Token = json.decodeFromString(
         zahtev("auth/v1/token", "POST", objekat("refresh_token" to refresh), upit = listOf("grant_type" to "refresh_token")),
     )
@@ -107,6 +119,22 @@ object Supabase {
             "email" to email, "password" to lozinka,
             "data" to mapOf("first_name" to ime, "last_name" to prezime, "nickname" to nadimak),
         ))
+    }
+
+    /** Kod iz mejla (registracija „signup” ili zaboravljena lozinka „recovery”); vraća sesiju. */
+    suspend fun potvrdiKod(email: String, kod: String, vrsta: String): Token =
+        json.decodeFromString(zahtev("auth/v1/verify", "POST", objekat("type" to vrsta, "email" to email, "token" to kod)))
+
+    suspend fun posaljiKodPonovo(email: String) {
+        zahtev("auth/v1/resend", "POST", objekat("type" to "signup", "email" to email))
+    }
+
+    suspend fun zaboravljenaLozinka(email: String) {
+        zahtev("auth/v1/recover", "POST", objekat("email" to email))
+    }
+
+    suspend fun novaLozinka(lozinka: String, token: String) {
+        zahtev("auth/v1/user", "PUT", objekat("password" to lozinka), token)
     }
 
     suspend fun odjava(token: String) {

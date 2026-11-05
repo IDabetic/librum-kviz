@@ -1,17 +1,16 @@
 # Osvajanje: kako bot razmišlja
 
-Ažurirano: 03.11.2026. · verzija 1 · kod: `Pravila.swift` (iOS) i `Pravila.kt` (Android), odeljak „Mozak bota”, testovi `BotTests` / `BotTest`
+Ažurirano: 03.11.2026. · verzija 2 · kod: `Pravila.swift` (iOS) i `Pravila.kt` (Android), odeljak „Mozak bota”, testovi `BotTests` / `BotTest`
 
 Bot igra po istim pravilima kao čovek. Na pitanja odgovara sa tačnošću koju daje težina
-(lako 50%, normalno 62%, teško 75%), a pri tome odlučuje u pet koraka.
+(lako 50%, normalno 55%, teško 75%), a pri tome odlučuje u pet koraka.
 
 ## 1. Koga cilja
 
-- **Jedan čovek (ili jedan tim ljudi) protiv botova:** svi botovi ciljaju njega. Njegove države
-  vrede im više (+1,5), njegove vojske su im veća pretnja (×1,5), a kad drži ceo region, botovi
-  ga ruše.
-- **Više ljudi ili samo botovi:** cilj je najjači rival po snazi:
-  `države + vojske × 0,5 + bonus celih regiona × 3`.
+- **Svi ravnopravno** (vlasnik 03.11, v2): cilj je najjači **sused** koji nije saveznik, bio on čovek ili bot;
+  kad bot nema suseda, cilj je najjači rival na mapi. Zato se botovi kolju i međusobno.
+- Snaga: `države + vojske × 0,5 + bonus celih regiona × 3`. Države cilja vrede +1,5, njegove vojske su pretnja ×1,5.
+- Bot koristi ratne karte i traži saveze (docs/OSVAJANJE-STRATEGIJA.md).
 
 ## 2. Narav (stalna po igraču, ista na svakom telefonu)
 
@@ -36,7 +35,8 @@ Za svaki mogući napad bot računa:
 - Neutralna država (jedno pitanje): p = tačnost bota.
 - Država igrača (5 pitanja): tačna binomna verovatnoća da bot ima više tačnih od branioca.
   Kod jednakog broja odlučuje brzina, pa se računa pola-pola. Odbrana „Prednost” traži 2 tačna
-  više. Za čoveka bot pretpostavlja 65% tačnih, a za bota njegovu tačnost.
+  više. Za čoveka bot pretpostavlja 65% tačnih, a za bota njegovu tačnost. U šansu ulazi i
+  prednost vojske, Legije, Garde i Zime u Evropi (`pomakBitke`).
 
 **Dobitak** (u „državama”)
 - 1 za samu državu;
@@ -47,7 +47,7 @@ Za svaki mogući napad bot računa:
 - kontinent iz moje tajne misije: +0,8.
 
 **Gubitak**
-- Neutralna država: 0,5 (jedna vojska).
+- Neutralna država: 0,5 (jedna vojska); 0 kad napada sa 3 ili više vojske.
 - Država igrača: poraz odnosi i državu iz koje se napada sa preživelim vojskama, pa gubitak =
   `1 + (vojske u izvoru − 2) × 0,4`. Ako je izvor prestonica +4, a ako je izvor deo celog
   regiona, dodaje se još bonus tog regiona.
@@ -72,7 +72,7 @@ broj bitke, pa isti potez ispada isto na svakom telefonu.
 ## Testovi
 
 - šansa bitke: jednaki igrači 50%, jači preko 70%, „Prednost” smanjuje šansu;
-- sa jednim čovekom svi botovi ciljaju njega;
+- botovi ciljaju najjačeg suseda, čoveka ili bota ravnopravno;
 - bot zatvara region kad mu fali jedna država;
 - bot sa slabim znanjem ne napada igrača iz svoje prestonice (ocena < 0);
 - cela partija botova se završava bez greške.

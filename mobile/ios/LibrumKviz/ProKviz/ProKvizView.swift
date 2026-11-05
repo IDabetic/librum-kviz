@@ -19,6 +19,9 @@ struct ProKvizView: View {
 
     @State private var igra = ProKviz()
     @State private var spil: Spil?
+    @State private var dopunaRadi = false
+    /// Survival troši više od jednog paketa; nov stiže pre nego što špil krene ispočetka (pitanja se ne ponavljaju).
+    private static let dopunaIspod = 15
     @State private var pitanje: Prikaz?
     @State private var kljuc = UUID()
     @State private var sekundi = ProKviz.sekundi
@@ -62,7 +65,7 @@ struct ProKvizView: View {
                     .padding(16)
                 }
             } else {
-                ProgressView().controlSize(.large).tint(.mastilo)
+                UcitavanjeMaskota(maskota: .lumi, tekst: "Spremam pitanja…")
             }
         }
         .overlay(alignment: .top) {
@@ -91,7 +94,7 @@ struct ProKvizView: View {
             KrugDugme(ikonica: "xmark", opis: "Prekini") { potvrdaIzlaska = true }
             pokazatelj("Životi", "\(igra.zivoti)", igra.zivoti <= 3 ? .crvenaSvetla : .kartica)
             pokazatelj("Poeni", "\(igra.poeni)", .zuta)
-            pokazatelj("Niz", "\(igra.kombo)", .tealSvetla)
+            pokazatelj("Niz", "\(igra.kombo)", .tealSvetlaUvek)
         }
     }
 
@@ -183,7 +186,10 @@ struct ProKvizView: View {
 
     private func odgovori(_ tacan: Bool) {
         ishodi.append((pitanje?.id, tacan))
+        let zivota = igra.zivoti
         if let p = igra.odgovor(tacan: tacan) { javi(p) }
+        // Posle zvuka netačnog odgovora (PitanjeKartica) kratak „izgubljen život”.
+        if igra.zivoti < zivota { DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { Zvuk.pusti(.zivot, jacina: 0.4) } }
         if !igra.gotovo { sledece() }
     }
 
@@ -192,6 +198,12 @@ struct ProKvizView: View {
         sekundi = ProKviz.sekundi
         pitanje = spil?.sledece()
         kljuc = UUID()
+        guard let ostalo = spil?.ostalo, ostalo < Self.dopunaIspod, !dopunaRadi else { return }
+        dopunaRadi = true
+        Task {
+            if let nova = try? await PaketPitanja.deljeni.ucitaj(vrsta.fond) { spil?.dodaj(nova) }
+            dopunaRadi = false
+        }
     }
 
     private func javi(_ tekst: String) {

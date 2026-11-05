@@ -27,7 +27,7 @@ struct RangListaView: View {
         var naziv: String { switch self { case .dan: "Dan"; case .nedelja: "Nedelja"; case .mesec: "Mesec"; case .godina: "Godina" } }
     }
 
-    struct Red: Decodable, Identifiable {
+    struct Red: Codable, Identifiable {
         let mesto: Int
         let user_id: String
         let nadimak: String
@@ -37,22 +37,33 @@ struct RangListaView: View {
         let prosek_ms: Int?
         var id: String { user_id }
     }
-    struct MojeMesto: Decodable { let mesto: Int; let poeni: Int; let partija: Int; let prosek_ms: Int?; let ukupno: Int }
+    struct MojeMesto: Codable { let mesto: Int; let poeni: Int; let partija: Int; let prosek_ms: Int?; let ukupno: Int }
 
     @Environment(Sesija.self) private var sesija
     @State private var igra: IgraListe = .osvajanje
     @State private var period: Period = .nedelja
     /// „svi” ili „pratim” (ja i igrači koje pratim).
     @State private var krug = "svi"
-    @State private var stanje: Ucitano<[Red]> = .ucitava
+    @State private var stanje: Ucitano<[Red]> = Kes.ucitano("rang-osvajanje-nedelja-svi")
     @State private var moje: MojeMesto?
+    /// Vlasnik 04.11: glavna tabla ima tri liste: Osvajač, Karijera i ostale igre.
+    @State private var tabla = "osvajac"
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Rang lista").font(.naslov(38)).padding(.top, 6)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    PodvuceniIzbor(izbor: $igra, opcije: IgraListe.allCases.map { ($0, $0.naziv) })
+                PodvuceniIzbor(izbor: $tabla, opcije: [("osvajac", "Osvajač"), ("karijera", "Karijera"), ("ostale", "Ostale igre")])
+                    .onChange(of: tabla) { _, t in
+                        if t == "osvajac" { igra = .osvajanje } else if t == "ostale", igra == .osvajanje { igra = .pro }
+                    }
+                if tabla == "karijera" {
+                    KarijeraRangView(ugradjeno: true)
+                } else {
+                if tabla == "ostale" {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        PodvuceniIzbor(izbor: $igra, opcije: IgraListe.allCases.filter { $0 != .osvajanje }.map { ($0, $0.naziv) })
+                    }
                 }
                 if sesija.prijavljen {
                     PodvuceniIzbor(izbor: $krug, opcije: [("svi", "Svi igrači"), ("pratim", "Koje pratim")])
@@ -71,6 +82,7 @@ struct RangListaView: View {
                 }
                 Label(napomena, systemImage: "clock").font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst)
                 sadrzaj
+                }
             }
             .padding(16)
         }
@@ -118,7 +130,7 @@ struct RangListaView: View {
                     VStack(spacing: 6) {
                         AvatarSlika(avatar: tri[i].avatar, velicina: i == 0 ? 72 : 60, maskota: [Maskota.zig, .mimi, .lumi][i])
                         Text(tri[i].nadimak).font(.tekst(13, .bold)).foregroundStyle(Color.mastilo).lineLimit(1)
-                        Text(tri[i].poeni.formatted()).font(.tekst(12, .bold)).foregroundStyle(Color.naMastilu).padding(.horizontal, 8).padding(.vertical, 3)
+                        Text(tri[i].poeni.formatted(.number.locale(.srpski))).font(.tekst(12, .bold)).foregroundStyle(Color.naMastilu).padding(.horizontal, 8).padding(.vertical, 3)
                             .background(Color.mastilo, in: RoundedRectangle(cornerRadius: 8))
                         Text("\(tri[i].mesto)").font(.naslov(34)).foregroundStyle(Color.tinta).frame(maxWidth: .infinity).frame(height: [120, 90, 70][i])
                             .background([Color.zuta, .nebo, .roze][i], in: UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
@@ -142,7 +154,7 @@ struct RangListaView: View {
                 Text(detalj(partija: r.partija, ms: r.prosek_ms)).font(.tekst(12)).foregroundStyle(Color.sivaTekst)
             }
             Spacer()
-            Text(r.poeni.formatted()).font(.naslov(20)).monospacedDigit()
+            Text(r.poeni.formatted(.number.locale(.srpski))).font(.naslov(20)).monospacedDigit()
         }
         .foregroundStyle(Color.mastilo)
         .padding(.horizontal, 14).padding(.vertical, 10)
@@ -152,7 +164,7 @@ struct RangListaView: View {
 
     private func detalj(partija: Int, ms: Int?) -> String {
         let p = partija == 1 ? "1 partija" : "\(partija) partija"
-        return ms.map { "\(p) · \(String(format: "%.1f", Double($0) / 1000)) s po odgovoru" } ?? p
+        return ms.map { "\(p) · \(String(format: "%.1f", locale: .srpski, Double($0) / 1000)) s po odgovoru" } ?? p
     }
 
     @ViewBuilder private var mojeMestoKartica: some View {
@@ -164,7 +176,7 @@ struct RangListaView: View {
                     Text(detalj(partija: moje.partija, ms: moje.prosek_ms)).font(.tekst(12))
                 }
                 Spacer()
-                Text(moje.poeni.formatted()).font(.naslov(20)).monospacedDigit()
+                Text(moje.poeni.formatted(.number.locale(.srpski))).font(.naslov(20)).monospacedDigit()
             }
             .foregroundStyle(Color.tinta).padding(14).pop(.zuta, radijus: 18)
         } else {
@@ -181,12 +193,16 @@ struct RangListaView: View {
     }
 
     private func osvezi() async {
-        stanje = .ucitava
+        // Poslednja lista za ove filtere se crta odmah (bez skeleta), sveža stiže tiho.
+        let kljuc = "rang-\(igra.rawValue)-\(period.rawValue)-\(krug)"
+        stanje = Kes.ucitano(kljuc)
         do {
             let redovi: [Red] = try await Supabase.deljeni.rpc("rang_lista_igre", ["p_igra": igra.rawValue, "p_period": period.rawValue, "p_broj": 50, "p_krug": krug],
                                                             token: try? await sesija.vazeciToken())
             stanje = .gotovo(redovi)
+            Kes.sacuvaj(redovi, kljuc)
         } catch {
+            if case .gotovo = stanje { return }
             stanje = .greska(error.localizedDescription)
         }
         if let token = try? await sesija.vazeciToken() {
@@ -206,20 +222,25 @@ struct RangListaView: View {
 /// Javni profil drugog igrača: avatar, od kada igra i statistika po igri.
 struct ProfilIgracaView: View {
     let id: String
+    init(id: String) {
+        self.id = id
+        // Već viđen profil se crta odmah iz keša (bez skeleta), sveži stiže tiho.
+        _stanje = State(initialValue: Kes.ucitano("profil-\(id)"))
+    }
     @Environment(Sesija.self) private var sesija
     @State private var duel = false
     @State private var blokada = false
     @Environment(\.dismiss) private var nazad
     /// Odgovor RPC profil_igraca (scripts/2026-11-03_profil-kao-ig.sql); ista struktura za moj i tuđi profil.
-    struct Profil: Decodable {
-        struct Igra: Decodable { let igra: String; let partija: Int; let najbolje: Int; let prosek_ms: Int?; let tacnost: Int?; let sa_pomoci: Int? }
-        struct Pitanja: Decodable { let odgovora: Int; let jedinstvenih: Int; let ponovljenih: Int; let tacnost: Int?; let prosek_ms: Int? }
-        struct VebIgra: Decodable {
+    struct Profil: Codable {
+        struct Igra: Codable { let igra: String; let partija: Int; let najbolje: Int; let prosek_ms: Int?; let tacnost: Int?; let sa_pomoci: Int? }
+        struct Pitanja: Codable { let odgovora: Int; let jedinstvenih: Int; let ponovljenih: Int; let tacnost: Int?; let prosek_ms: Int? }
+        struct VebIgra: Codable {
             let partija: Int?; let rekord: Int?; let max_pitanja: Int?; let niz: Int?; let zanr: String?
             let pobeda: Int?; let bodovi: Int?; let tacnih: Int?; let tacnost: Int?; let poraza: Int?; let nereseno: Int?
         }
-        struct Veb: Decodable { let pro: VebIgra?; let book: VebIgra?; let vesanje: VebIgra?; let brzi: VebIgra?; let duel: VebIgra? }
-        struct Skoro: Decodable { let igra: String; let poeni: Int?; let kad: String }
+        struct Veb: Codable { let pro: VebIgra?; let book: VebIgra?; let vesanje: VebIgra?; let brzi: VebIgra?; let duel: VebIgra? }
+        struct Skoro: Codable { let igra: String; let poeni: Int?; let kad: String }
         var id: String?
         let nadimak: String
         let avatar: String?
@@ -239,6 +260,9 @@ struct ProfilIgracaView: View {
         var partija: Int?
         var veb: Veb?
         var skoro: [Skoro]?
+        /// Osvajanje: koliko partija sam, u savezu i zajedno (vlasnik 04.11).
+        struct NacinOsvajanja: Codable { let sam: Int; let savez: Int; let zajedno: Int; var izdaje: Int? = nil; var verno: Int? = nil }
+        var osvajanje_nacin: NacinOsvajanja?
     }
     @State private var stanje: Ucitano<Profil> = .ucitava
 
@@ -290,7 +314,8 @@ struct ProfilIgracaView: View {
             }
         }
         .navigationDestination(isPresented: $duel) {
-            if case .gotovo(let p) = stanje { DuelView(izazovi: (id, p.nadimak)) }
+            // Vlasnik 03.11: izazov ide kroz lobi (igra po izboru, rival prihvata ili odbija), ne kreće sam.
+            if case .gotovo(let p) = stanje { TakmicenjeView(pozovi: (id, p.nadimak)) }
         }
     }
 
@@ -302,11 +327,13 @@ struct ProfilIgracaView: View {
 
     /// `tiho`: posle praćenja se brojevi osveže bez skeleta.
     private func ucitaj(tiho: Bool = false) async {
-        if !tiho { stanje = .ucitava }
+        if !tiho, case .ucitava = stanje { stanje = Kes.ucitano("profil-\(id)") }
         do {
             let p: Profil = try await Supabase.deljeni.rpc("profil_igraca", ["p_id": id], token: try? await sesija.vazeciToken())
             stanje = .gotovo(p)
+            Kes.sacuvaj(p, "profil-\(id)")
         } catch {
+            if case .gotovo = stanje { return }
             stanje = .greska(error.localizedDescription)
         }
     }
@@ -322,12 +349,13 @@ struct StatistikaPoIgrama: View {
         VStack(spacing: 12) {
             HStack(spacing: 10) {
                 Plocica(ikonica: "gamecontroller", vrednost: "\(ukupno)", naziv: "Partija")
-                Plocica(ikonica: "bolt", vrednost: brzine.isEmpty ? "–" : String(format: "%.1f s", Double(brzine.reduce(0, +)) / Double(brzine.count) / 1000),
+                Plocica(ikonica: "bolt", vrednost: brzine.isEmpty ? "–" : String(format: "%.1f s", locale: .srpski, Double(brzine.reduce(0, +)) / Double(brzine.count) / 1000),
                         naziv: "Prosek odgovora", boja: .narandzasta)
                 Plocica(ikonica: "lifepreserver", vrednost: ukupno == 0 ? "–" : "\(profil.igre.reduce(0) { $0 + ($1.sa_pomoci ?? 0) } * 100 / ukupno)%",
                         naziv: "Sa pomoći", boja: .roze)
             }
             PomocUpotreba(poVrsti: profil.pomoci ?? [:])
+            if let n = profil.osvajanje_nacin, n.sam + n.savez + n.zajedno > 0 { NacinOsvajanjaView(nacin: n) }
             if profil.igre.isEmpty {
                 StanjeEkrana(maskota: .bloop, naslov: "Još nema partija", tekst: "Kad se odigra prva igra sa nalogom, rezultati će stajati ovde.")
             } else {
@@ -337,13 +365,13 @@ struct StatistikaPoIgrama: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(IgraListe(rawValue: g.igra)?.naziv ?? (g.igra == "tema" ? "Teme" : g.igra)).font(.tekst(15, .bold))
                                 Text([g.partija == 1 ? "1 partija" : "\(g.partija) partija", g.tacnost.map { "\($0)% tačno" },
-                                      g.prosek_ms.map { String(format: "%.1f s po odgovoru", Double($0) / 1000) },
+                                      g.prosek_ms.map { String(format: "%.1f s po odgovoru", locale: .srpski, Double($0) / 1000) },
                                       (g.sa_pomoci ?? 0) > 0 ? "pomoć u \(g.sa_pomoci!)" : nil].compactMap { $0 }.joined(separator: " · "))
                                     .font(.tekst(12)).foregroundStyle(Color.sivaTekst)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 0) {
-                                Text(g.najbolje.formatted()).font(.naslov(20)).monospacedDigit()
+                                Text(g.najbolje.formatted(.number.locale(.srpski))).font(.naslov(20)).monospacedDigit()
                                 Oznaka(tekst: "rekord")
                             }
                         }
@@ -382,5 +410,50 @@ struct PomocUpotreba: View {
             }
             .padding(14).frame(maxWidth: .infinity, alignment: .leading).mirna()
         }
+    }
+}
+
+
+/// Kako igrač igra Osvajanje: najčešći način istaknut, ispod udeo sva tri (sam, savez, zajedno).
+struct NacinOsvajanjaView: View {
+    let nacin: ProfilIgracaView.Profil.NacinOsvajanja
+
+    var body: some View {
+        let ukupno = max(1, nacin.sam + nacin.savez + nacin.zajedno)
+        let redovi: [(String, String, Int)] = [("person.fill", "Sam", nacin.sam), ("person.2.wave.2.fill", "U savezu", nacin.savez), ("person.2.fill", "Zajedno u timu", nacin.zajedno)]
+        let najcesci = redovi.max { $0.2 < $1.2 }!
+        VStack(alignment: .leading, spacing: 10) {
+            Oznaka(tekst: "Osvajanje sveta · kako igra")
+            HStack(spacing: 10) {
+                Image(systemName: najcesci.0).font(.system(size: 18, weight: .bold)).frame(width: 40, height: 40)
+                    .background(Color.zuta, in: RoundedRectangle(cornerRadius: 12)).foregroundStyle(Color.tinta)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Najčešće: \(najcesci.1.lowercased())").font(.tekst(16, .bold))
+                    Text("\(ukupno) \(ukupno == 1 ? "partija" : "partija") Osvajanja").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                }
+            }
+            if (nacin.izdaje ?? 0) > 0 || (nacin.verno ?? 0) > 0 {
+                HStack(spacing: 8) {
+                    Image(systemName: (nacin.izdaje ?? 0) > (nacin.verno ?? 0) ? "hand.raised.slash.fill" : "link")
+                        .font(.system(size: 14, weight: .bold)).foregroundStyle((nacin.izdaje ?? 0) > (nacin.verno ?? 0) ? Color.crvena : Color.teal)
+                    Text((nacin.izdaje ?? 0) > (nacin.verno ?? 0) ? "Nož u leđa: izdao saveznika \(nacin.izdaje ?? 0) puta" : "Veran saveznik: \(nacin.verno ?? 0) saveza do kraja, izdaja \(nacin.izdaje ?? 0)")
+                        .font(.tekst(13, .bold))
+                }
+            }
+            ForEach(redovi, id: \.1) { r in
+                HStack(spacing: 10) {
+                    Text(r.1).font(.tekst(13, .semibold)).frame(width: 110, alignment: .leading)
+                    GeometryReader { g in
+                        RoundedRectangle(cornerRadius: 4).fill(Color.udubljeno)
+                            .overlay(alignment: .leading) { RoundedRectangle(cornerRadius: 4).fill(Color.teal).frame(width: g.size.width * Double(r.2) / Double(ukupno)) }
+                    }
+                    .frame(height: 10)
+                    Text("\(r.2)").font(.tekst(13, .bold)).monospacedDigit().frame(width: 30, alignment: .trailing)
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+        .foregroundStyle(Color.mastilo)
+        .padding(14).frame(maxWidth: .infinity, alignment: .leading).mirna()
     }
 }

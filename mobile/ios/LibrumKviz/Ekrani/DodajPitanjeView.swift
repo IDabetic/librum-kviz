@@ -30,7 +30,8 @@ struct DodajPitanjeView: View {
                 Naslov(tekst: n.vrsta == .vesanje ? "Dodaj reč" : "Dodaj pitanje", velicina: 32)
                 Text("Urednici pregledaju svaki predlog. Kad prođe, ulazi u igru i piše se na tvom profilu.")
                     .font(.tekst(14)).foregroundStyle(Color.sivaTekst)
-                PodvuceniIzbor(izbor: $n.vrsta, opcije: Vrsta.allCases.map { ($0, $0.naziv) })
+                // Vlasnik 04.11: samo pitanje ili reč; sva pitanja idu u jedan fond (opšti), bez izbora igre.
+                PodvuceniIzbor(izbor: $n.vrsta, opcije: [(.pro, "Pitanje"), (.vesanje, "Reč za vešanje")])
                 if n.vrsta == .vesanje {
                     PoljeUnosa(naziv: "Pojam (4–18 slova)", tekst: $n.pitanje)
                     PoljeUnosa(naziv: "Opis, bez samog pojma", tekst: $n.tacan)
@@ -46,7 +47,6 @@ struct DodajPitanjeView: View {
                     }
                     PoljeUnosa(naziv: "Tačan odgovor", tekst: $n.tacan, stanje: n.tacan.isEmpty ? .obicno : .uRedu("Tačan"))
                     ForEach(0..<3, id: \.self) { i in PoljeUnosa(naziv: "Netačan odgovor \(i + 1)", tekst: $n.netacni[i]) }
-                    if n.vrsta == .book { PoljeUnosa(naziv: "Žanr (nije obavezno)", tekst: $n.zanr) }
                 }
                 switch stanje {
                 case .greska(let p): Label(p, systemImage: "exclamationmark.triangle").font(.tekst(14, .semibold)).foregroundStyle(Color.crvena)
@@ -67,6 +67,7 @@ struct DodajPitanjeView: View {
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
             if let d = UserDefaults.standard.data(forKey: Self.kljucNacrta), let s = try? JSONDecoder().decode(Nacrt.self, from: d) { n = s } else { n.vrsta = pocetnaVrsta }
+            if n.vrsta == .book { n.vrsta = .pro }
             if n.vrsta == .vesanje && n.zanr.isEmpty { n.zanr = Self.kategorijeVesanja[0] }
         }
         .onChange(of: n.vrsta) { _, v in if v == .vesanje && !Self.kategorijeVesanja.contains(n.zanr) { n.zanr = Self.kategorijeVesanja[0] } }

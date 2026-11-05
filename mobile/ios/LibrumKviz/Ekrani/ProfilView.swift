@@ -8,7 +8,8 @@ struct ProfilView: View {
     @Environment(Sesija.self) private var sesija
     @Environment(Napredak.self) private var napredak
     @State private var prijava = false
-    @State private var serverski: ProfilIgracaView.Profil?
+    /// Moj profil sa servera; do odgovora se crta poslednji sačuvani, da ekran ne menja izgled (vlasnik 04.11).
+    @State private var serverski: ProfilIgracaView.Profil? = Kes.ucitaj("moj-profil")
 
     var body: some View {
         ScrollView {
@@ -33,14 +34,23 @@ struct ProfilView: View {
                             }
                             .accessibilityLabel("Podeli profil")
                         }
-                        // Samo na mom profilu: predlog pitanja ili reči za vešanje.
-                        HStack(spacing: 10) {
-                            NavigationLink { DodajPitanjeView() } label: { Label("Dodaj pitanje", systemImage: "plus.bubble") }.buttonStyle(.sekundarno)
-                            NavigationLink { DodajPitanjeView(pocetnaVrsta: .vesanje) } label: { Label("Dodaj reč", systemImage: "textformat.abc") }.buttonStyle(.sekundarno)
-                        }
+                        // Samo na mom profilu: jedno dugme, unutra izbor pitanje ili reč (vlasnik 04.11).
+                        NavigationLink { DodajPitanjeView() } label: { Label("Dodaj pitanje", systemImage: "plus.bubble") }.buttonStyle(.sekundarno)
+                    }
+                    // Fokus profila: Osvajač i Karijera, pa nivo, pa ostale igre kao krugovi (vlasnik 04.11).
+                    ProfilFokus(profil: p)
+                    nivo
+                    ProfilOstalo(profil: p)
+                } else if sesija.prijavljen {
+                    // Prvi put, pre prvog odgovora: skelet istog rasporeda kao profil, ne stari izgled „gosta”.
+                    VStack(spacing: 14) {
+                        Skelet(visina: 96, radijus: 48).frame(width: 96)
+                        Skelet(visina: 28, radijus: 8).frame(width: 180)
+                        Skelet(visina: 54)
+                        Skelet(visina: 54)
                     }
                     nivo
-                    ProfilStatistike(profil: p)
+                    Skelet(visina: 160)
                 } else {
                 glava
                 nivo
@@ -53,7 +63,7 @@ struct ProfilView: View {
                     Skelet(visina: 160)
                 } else {
                     if let b = napredak.prosecnaBrzina {
-                        Label(String(format: "Prosečno %.1f s po odgovoru · pomoć u %d od %d partija", b, napredak.s.partijaSaPomoci, napredak.s.igara), systemImage: "bolt")
+                        Label(String(format: "Prosečno %.1f s po odgovoru · pomoć u %d od %d partija", locale: .srpski, b, napredak.s.partijaSaPomoci, napredak.s.igara), systemImage: "bolt")
                             .font(.tekst(13, .semibold)).foregroundStyle(Color.sivaTekst).frame(maxWidth: .infinity, alignment: .leading)
                     }
                     PomocUpotreba(poVrsti: napredak.s.pomociPoVrsti)
@@ -78,7 +88,10 @@ struct ProfilView: View {
         .fullScreenCover(isPresented: $prijava) { PrijavaTok() }
         .task(id: sesija.korisnikId) {
             guard let id = sesija.korisnikId else { serverski = nil; return }
-            serverski = try? await Supabase.deljeni.rpc("profil_igraca", ["p_id": id], token: try? await sesija.vazeciToken())
+            if let p: ProfilIgracaView.Profil = try? await Supabase.deljeni.rpc("profil_igraca", ["p_id": id], token: try? await sesija.vazeciToken()) {
+                serverski = p
+                Kes.sacuvaj(p, "moj-profil")
+            }
         }
     }
 
@@ -122,7 +135,7 @@ struct ProfilView: View {
                     Text("Nivo \(napredak.nivo)").font(.naslov(30))
                 }
                 Spacer()
-                Text("\(x.imam.formatted()) / \(x.treba.formatted()) XP").font(.tekst(13, .semibold)).monospacedDigit()
+                Text("\(x.imam.formatted(.number.locale(.srpski))) / \(x.treba.formatted(.number.locale(.srpski))) XP").font(.tekst(13, .semibold)).monospacedDigit()
             }
             GeometryReader { g in
                 RoundedRectangle(cornerRadius: 7).fill(Color.white).overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.tinta, lineWidth: 2))
@@ -444,6 +457,9 @@ struct PodesavanjaView: View {
     @State private var brisanje = false
     @State private var prijava = false
     @State private var greska: String?
+    @State private var resetKarijere = false
+    @State private var porukaKarijere: String?
+    @State private var mirni = Karijera.mirni
 
     var body: some View {
         ScrollView {
@@ -478,11 +494,33 @@ struct PodesavanjaView: View {
                         PodvuceniIzbor(izbor: $tema, opcije: [("sistem", "Auto"), ("svetla", "Svetla"), ("tamna", "Tamna")]).fixedSize()
                     }
                     .padding(.horizontal, 16).frame(minHeight: 54)
+                    if sesija.prijavljen {
+                        Divider().overlay(Color.kremTamnija)
+                        HStack(spacing: 14) {
+                            Image(systemName: "leaf").font(.system(size: 17, weight: .semibold)).frame(width: 24)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Mirni šef u Karijeri").font(.tekst(15, .semibold))
+                                Text("Šef najviše blag, bez ometanja; bez dodatka za stres.").font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                            }
+                            Spacer()
+                            Prekidac(ukljuceno: Binding(get: { mirni }, set: { v in
+                                mirni = v
+                                Task {
+                                    do { mirni = try await Karijera.postaviMirni(v).mirni; Karijera.mirni = mirni }
+                                    catch { mirni = !v; porukaKarijere = error.localizedDescription }
+                                }
+                            }), naziv: "Mirni šef u Karijeri")
+                        }
+                        .padding(.horizontal, 16).frame(minHeight: 64)
+                        Divider().overlay(Color.kremTamnija)
+                        Button { resetKarijere = true } label: { RedListe(ikonica: "arrow.counterclockwise", naziv: "Resetuj Karijeru", boja: .crvena) }.buttonStyle(.plain)
+                    }
                 }
                 .mirna()
+                if let poruka = porukaKarijere { Text(poruka).font(.tekst(14, .semibold)).foregroundStyle(Color.sivaTekst) }
                 Oznaka(tekst: "Podrška").padding(.top, 8)
                 VStack(spacing: 0) {
-                    Link(destination: URL(string: "mailto:podrska@librum.rs?subject=Librum%20kviz")!) { RedListe(ikonica: "bubble.left", naziv: "Pomoć i utisci") }
+                    Link(destination: URL(string: "mailto:info@librum.club?subject=Librum%20kviz")!) { RedListe(ikonica: "bubble.left", naziv: "Pomoć i utisci") }
                     Divider().overlay(Color.kremTamnija)
                     NavigationLink { DodajPitanjeView() } label: { RedListe(ikonica: "plus.bubble", naziv: "Pošalji pitanje") }
                     if sesija.prijavljen {
@@ -495,6 +533,8 @@ struct PodesavanjaView: View {
                     NavigationLink { PravniTekstView(vrsta: .privatnost) } label: { RedListe(ikonica: "hand.raised", naziv: "Politika privatnosti") }
                     Divider().overlay(Color.kremTamnija)
                     NavigationLink { PravniTekstView(vrsta: .uslovi) } label: { RedListe(ikonica: "doc.text", naziv: "Uslovi korišćenja") }
+                    Divider().overlay(Color.kremTamnija)
+                    NavigationLink { PravniTekstView(vrsta: .licence) } label: { RedListe(ikonica: "c.circle", naziv: "Licence i izvori") }
                 }
                 .mirna()
                 if let greska { Text(greska).font(.tekst(14, .semibold)).foregroundStyle(Color.crvena) }
@@ -514,6 +554,8 @@ struct PodesavanjaView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .fullScreenCover(isPresented: $prijava) { PrijavaTok(pocetak: sesija.prijavljen ? .zaboravljena : nil) }
+        // Mirni režim živi na serveru; Karijera.mirni je poznat tek posle ulaska u Karijeru.
+        .task { if sesija.prijavljen, let s = try? await Karijera.stanje() { mirni = s.mirni ?? false; Karijera.mirni = mirni } }
         .overlay {
             if odjava {
                 Dijalog(naslov: "Odjaviti se?", tekst: "Niz i napredak ostaju na ovom telefonu. Prijavi se ponovo kad hoćeš.",
@@ -527,6 +569,16 @@ struct PodesavanjaView: View {
                         do { try await sesija.obrisiNalog(); napredak.resetuj() } catch { greska = error.localizedDescription }
                     }
                 } zatvori: { brisanje = false }
+            }
+            if resetKarijere {
+                Dijalog(naslov: "Resetovati Karijeru?", tekst: "Krećeš ispočetka: nova struka, pol i talenti. Brišu se kapital, ugled, ekspertiza i CV. Tvoje firme prelaze na upravu i mogu se preuzeti duelom. Ovo ne može da se vrati.",
+                        potvrda: "Resetuj", odustani: "Odustani", opasno: true) {
+                    resetKarijere = false
+                    Task {
+                        do { _ = try await Karijera.resetuj(); porukaKarijere = "Karijera je resetovana. Kreni ispočetka iz igre Karijera." }
+                        catch { porukaKarijere = error.localizedDescription }
+                    }
+                } zatvori: { resetKarijere = false }
             }
         }
     }

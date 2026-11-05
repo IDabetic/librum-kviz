@@ -54,6 +54,8 @@ import club.librum.kviz.R
  */
 object Boje {
     var tamno by mutableStateOf(false)
+    /** Izbor iz Podešavanja: "sistem", "svetla" ili "tamna". */
+    var tema by mutableStateOf("sistem")
     private fun t(svetlo: Long, tamna: Long) = Color(if (tamno) tamna else svetlo)
 
     val krem get() = t(0xFFF3F0E6, 0xFF12110F)          // surface/canvas

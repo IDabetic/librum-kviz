@@ -13,6 +13,13 @@ final class VezaOsvajanja {
         var skor: Skor?
         /// Redni broj „bitke” na koju se „odbrana” odnosi.
         var bitka: Int?
+        /// Brza poruka („poruka”): ide odmah, i kad igrač nije na potezu (bag 04.11: protivniku nisu stizale).
+        var tekst: String?
+        var za: String?
+        /// Odgovor u bitki („odgovor”): ostali za stolom vide pitanje, izabrani odgovor i da li je tačan (bez pomoći).
+        var pitanje: String?
+        var odgovor: String?
+        var tacno: Bool?
     }
     struct Red: Decodable { let rb: Int; let ko: String; let akcija: Akcija }
 

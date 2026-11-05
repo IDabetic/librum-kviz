@@ -9,6 +9,9 @@ struct BrziKvizView: View {
     @State private var igra = BrziKviz()
     @State private var pitanja: [Pitanje] = []
     @State private var indeks = 0
+    @State private var dopunaRadi = false
+    /// Vlasnik 03.11: pitanja se nigde ne ponavljaju; pre nego što paket istekne stiže nov (server šalje samo neviđena).
+    private static let dopunaIspod = 15
     @State private var izjava: BrziKviz.Izjava?
     @State private var pocetak = Date()
     @State private var pocetakIzjave = Date()
@@ -21,6 +24,9 @@ struct BrziKvizView: View {
     @State private var zbirMs = 0
     @State private var greska: String?
     @State private var sacuvano = false
+    /// Prevlačenje kartice izjave: desno = tačno, levo = netačno.
+    @State private var prevlacenje: CGFloat = 0
+    private static let pragPrevlacenja: CGFloat = 90
 
     var body: some View {
         ZStack {
@@ -37,7 +43,7 @@ struct BrziKvizView: View {
             } else if let izjava {
                 igraEkran(izjava)
             } else {
-                ProgressView().controlSize(.large).tint(.mastilo)
+                UcitavanjeMaskota(maskota: .zig, tekst: "Spremam izjave…")
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -54,7 +60,12 @@ struct BrziKvizView: View {
                     KrugDugme(ikonica: "xmark", opis: "Prekini") { Task { await sacuvaj(); zatvori() } }
                     pokazatelj("Vreme", "\(Int(ostaloRunda.rounded(.up)))", ostaloRunda < 10 ? .crvenaSvetla : .kartica)
                     pokazatelj("Poeni", "\(igra.poeni)", .zuta)
-                    pokazatelj("Tačnih", "\(igra.tacnih)", .tealSvetla)
+                    pokazatelj("Množilac", "×\(igra.mnozilac * (ostaloRunda <= Double(BrziKviz.sekundiZavrsnice) ? 2 : 1))", igra.mnozilac > 1 ? .tealSvetlaUvek : .kartica)
+                }
+                if ostaloRunda <= Double(BrziKviz.sekundiZavrsnice) {
+                    Label("Završnica: duplo poena!", systemImage: "bolt.fill").font(.tekst(15, .bold)).foregroundStyle(Color.tinta)
+                        .frame(maxWidth: .infinity).padding(.vertical, 8).background(Color.zuta, in: RoundedRectangle(cornerRadius: 12))
+                        .transition(.scale.combined(with: .opacity))
                 }
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
@@ -73,6 +84,27 @@ struct BrziKvizView: View {
                     }
                 }
                 .padding(20).pop(.zuta)
+                // Vlasnik 03.11: brže od dugmadi — prevuci karticu desno (tačno) ili levo (netačno).
+                .overlay(alignment: prevlacenje > 0 ? .topTrailing : .topLeading) {
+                    if abs(prevlacenje) > 20 {
+                        Text(prevlacenje > 0 ? "TAČNO" : "NETAČNO").font(.naslov(22))
+                            .foregroundStyle(prevlacenje > 0 ? Color.teal : Color.crvena)
+                            .padding(.horizontal, 12).padding(.vertical, 6)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(prevlacenje > 0 ? Color.teal : Color.crvena, lineWidth: 3))
+                            .rotationEffect(.degrees(prevlacenje > 0 ? 12 : -12)).padding(14)
+                            .opacity(min(1, abs(prevlacenje) / Self.pragPrevlacenja))
+                    }
+                }
+                .offset(x: prevlacenje).rotationEffect(.degrees(Double(prevlacenje) / 20))
+                .gesture(DragGesture(minimumDistance: 12)
+                    .onChanged { v in if otkriveno == nil { prevlacenje = v.translation.width } }
+                    .onEnded { v in
+                        let x = v.translation.width
+                        withAnimation(.spring(duration: 0.3)) { prevlacenje = 0 }
+                        if abs(x) > Self.pragPrevlacenja { odgovori(x > 0) }
+                    })
+                .accessibilityHint("Prevuci desno za tačno, levo za netačno")
+                Text("Prevuci karticu → tačno · ← netačno").font(.tekst(12, .semibold)).foregroundStyle(Color.sivaTekst)
                 HStack(spacing: 12) {
                     Button { odgovori(false) } label: { Label("Netačno", systemImage: "xmark").labelStyle(.titleAndIcon) }
                         .buttonStyle(DugmeStil(vrsta: .sekundarno))
@@ -133,10 +165,23 @@ struct BrziKvizView: View {
         } catch { greska = error.localizedDescription }
     }
 
+    private func dopuniAkoTreba() {
+        guard pitanja.count - indeks < Self.dopunaIspod, !dopunaRadi else { return }
+        dopunaRadi = true
+        Task {
+            if let nova = try? await PaketPitanja.deljeni.ucitaj(.opste) {
+                let poznata = Set(pitanja.map(\.id))
+                pitanja += nova.filter { !poznata.contains($0.id) }
+            }
+            dopunaRadi = false
+        }
+    }
+
     private func sledeca() {
         guard !pitanja.isEmpty else { return }
         izjava = BrziKviz.Izjava(pitanja[indeks % pitanja.count])
         indeks += 1
+        dopuniAkoTreba()
         otkriveno = nil
         nagovestaj = nil
         pocetakIzjave = Date()
@@ -146,7 +191,8 @@ struct BrziKvizView: View {
         guard let iz = izjava, otkriveno == nil, !kraj else { return }
         if kaze != nil { zbirMs += Int(Date().timeIntervalSince(pocetakIzjave) * 1000) }
         let pre = igra
-        otkriveno = igra.odgovor(iz, kaze: kaze)
+        let zavrsnica = Double(BrziKviz.sekundiRunde) - Date().timeIntervalSince(pocetak) <= Double(BrziKviz.sekundiZavrsnice)
+        otkriveno = igra.odgovor(iz, kaze: kaze, zavrsnica: zavrsnica)
         if stit, otkriveno == false {
             igra = pre
             stit = false

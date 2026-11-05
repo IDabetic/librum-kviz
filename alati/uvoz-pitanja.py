@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Obrada novih pitanja iz Excel-a (kviz-srpski.xlsx) pre uvoza u bazu.
+Obrada novih pitanja (kviz-srpski.xlsx, srbija-kviz.xlsx, kviz-novi-koncept.xlsx, kontinenti/*.jsonl) pre uvoza u bazu.
 
 Koraci: čišćenje teksta → provera (4 različita odgovora, dužine) → provera prevoda
 (engleski ostaci, hrvatski oblici, ijekavica, ćirilica, pokvareni znaci) → duplikati
 (u fajlu i prema postojećim pitanjima iz baze) → kategorija po ključnim rečima.
 
-Ulaz:  putanja do .xlsx i (opciono) JSON postojećih pitanja [{"t": tekst}].
+Ulaz:  putanja do .xlsx ili .jsonl i (opciono) JSON postojećih pitanja [{"t": tekst}].
 Izlaz: folder sa uvoz.jsonl (za bazu), pregled.csv (za urednika) i izvestaj.json.
 
 Primer:
@@ -49,6 +49,8 @@ HRVATSKI = re.compile(
 )
 CIRILICA = re.compile(r"[Ѐ-ӿ]")
 POKVARENO = re.compile(r"Ã|Ä|Å|&quot;|&amp;|&#\d+;|�|\?\?")
+# „[slika] Koja biljka…”: izvor je imao sliku koju kviz nema (vlasnik 03.11: takva pitanja ne idu u igru).
+TRAZI_PRILOG = re.compile(r"[\[(]\s*(slik\w*|video\w*|audio\w*|zvuk\w*|fotografij\w*|image|picture|photo)\s*[\])]", re.IGNORECASE)
 NAVODI = re.compile(r"„[^”“]*[”“]|\"[^\"]*\"|“[^”]*”")
 CIR_LAT = dict(zip(
     "абвгдђежзијклљмнњопрстћуфхцчџшАБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШ",
@@ -68,6 +70,11 @@ def ocisti(t):
     t = re.sub(r"\s+", " ", t)
     t = t.replace(" ?", "?").replace(" ,", ",").replace(" .", ".")
     return t
+
+
+def bez_navodnika(t):
+    """Ponuđeni odgovori bez navodnika (vlasnik 05.11): „Hush” → Hush."""
+    return re.sub(r"[„“”\"«»]", "", t).strip()
 
 
 def veliko_prvo(t):
@@ -107,28 +114,54 @@ def problemi_prevoda(polja):
     return p
 
 
-def obradi(xlsx, postojeca, izlaz):
-    wb = openpyxl.load_workbook(xlsx, read_only=True)
-    sve = list(wb.worksheets[0].iter_rows(values_only=True))
-    zaglavlje, redovi = sve[0], sve[1:]
-    # Drugi oblik (srbija-kviz.xlsx): #, Kategorija, Podkategorija, Pitanje, Tačan, Netačan 1–3; kategorija je već data.
-    sa_kategorijom = len(zaglavlje) > 2 and str(zaglavlje[1]).lower() == "kategorija"
-    izvor_fajla = Path(xlsx).stem
+TEZINE = {"lako": "easy", "srednje": "medium", "teško": "hard", "tesko": "hard"}
+
+
+def redovi_izvora(putanja):
+    """Svi podržani oblici kao isti rečnik: kviz-srpski.xlsx, srbija-kviz.xlsx (sa kategorijom),
+    kviz-novi-koncept.xlsx (kolona word, kategorija i težina) i kontinenti/*.jsonl (ponuđeni sa tačnim, kontinent)."""
+    putanja = Path(putanja)
+    if putanja.suffix == ".jsonl":
+        for linija in putanja.read_text(encoding="utf-8").splitlines():
+            if not linija.strip():
+                continue
+            o = json.loads(linija)
+            # Dva oblika: kontinenti (odgovor + ponudjeni sa tačnim) i preformulisano (tacan + netacni).
+            tacan = o.get("odgovor") or o.get("tacan")
+            netacni = o.get("netacni") or [x for x in o.get("ponudjeni") or [] if ocisti(x) != ocisti(tacan)]
+            yield {"id": o.get("izvor_id"), "izvor": o.get("izvor"), "pitanje": o.get("pitanje"), "tacan": tacan,
+                   "netacni": (netacni + [None] * 3)[:3], "napomena": o.get("napomena") or None, "kategorija": o.get("kategorija"),
+                   "kontinent": o.get("kontinent"), "drzava": o.get("drzava")}
+        return
+    wb = openpyxl.load_workbook(putanja, read_only=True)
+    sve = wb.worksheets[0].iter_rows(values_only=True)
+    zaglavlje = [str(x or "").lower() for x in next(sve)]
+    sa_kategorijom = len(zaglavlje) > 2 and zaglavlje[1] == "kategorija"
+    for r in sve:
+        r = list(r) + [None] * 12
+        if sa_kategorijom:
+            yield {"id": r[0], "izvor": putanja.stem, "kategorija": r[1], "podkategorija": r[2], "pitanje": r[3], "tacan": r[4],
+                   "netacni": r[5:8], "napomena": None}
+        elif "word" in zaglavlje:
+            yield {"id": r[0], "izvor": r[1], "kategorija": r[3], "tezina": TEZINE.get(ocisti(r[4]).lower()), "pitanje": r[5],
+                   "tacan": r[6], "netacni": r[7:10], "napomena": None}
+        else:
+            yield {"id": r[0], "izvor": r[1], "pitanje": r[2], "tacan": r[3], "netacni": r[4:7], "napomena": r[7]}
+
+
+def obradi(ulaz, postojeca, izlaz):
+    redovi = list(redovi_izvora(ulaz))
     vidjeno = {kljuc(t["t"]) for t in postojeca}
     u_fajlu = set()
     razlozi = Counter()
     po_izvoru = Counter()
     kategorije = Counter()
     uvoz, pregled = [], []
-    for r in redovi:
-        data_kat = podkat = None
-        if sa_kategorijom:
-            rid, data_kat, podkat, pitanje, tacan, n1, n2, n3 = (list(r) + [None] * 8)[:8]
-            izvor, napomena = izvor_fajla, None
-        else:
-            rid, izvor, pitanje, tacan, n1, n2, n3, napomena = (list(r) + [None] * 8)[:8]
-        pitanje, tacan = veliko_prvo(u_latinicu(ocisti(pitanje))), veliko_prvo(u_latinicu(ocisti(tacan)))
-        netacni = [veliko_prvo(u_latinicu(ocisti(x))) for x in (n1, n2, n3)]
+    for red in redovi:
+        rid, izvor, napomena = red["id"], red["izvor"], red["napomena"]
+        data_kat, podkat = red.get("kategorija"), red.get("podkategorija")
+        pitanje, tacan = veliko_prvo(u_latinicu(ocisti(red["pitanje"]))), veliko_prvo(bez_navodnika(u_latinicu(ocisti(red["tacan"]))))
+        netacni = [veliko_prvo(bez_navodnika(u_latinicu(ocisti(x)))) for x in red["netacni"]]
         razlog = None
         if not pitanje or not tacan:
             razlog = "prazno"
@@ -136,6 +169,8 @@ def obradi(xlsx, postojeca, izlaz):
             razlog = "otvoreno pitanje (nema 3 netačna)"
         elif len({kljuc(x) for x in [tacan] + netacni}) < 4:
             razlog = "odgovori se ponavljaju"
+        elif TRAZI_PRILOG.search(pitanje):
+            razlog = "traži sliku ili zvuk"
         elif not (12 <= len(pitanje) <= 300) or max(len(x) for x in [tacan] + netacni) > 120:
             razlog = "dužina"
         elif napomena and ("pokvaren" in napomena or "skoro duplikat" in napomena):
@@ -160,7 +195,9 @@ def obradi(xlsx, postojeca, izlaz):
         kategorije[kat] += 1
         po_izvoru[izvor] += 1
         uvoz.append({"id": rid, "izvor": izvor, "pitanje": pitanje, "tacan": tacan, "netacni": netacni, "kategorija": kat,
-                     "podkategorija": ocisti(podkat) or None, "tezina": "hard" if izvor in ("HKS",) else "medium"})
+                     "podkategorija": ocisti(podkat) or None,
+                     "tezina": red.get("tezina") or ("hard" if izvor in ("HKS",) else "medium"),
+                     "kontinent": red.get("kontinent"), "drzava": red.get("drzava")})
     izlaz.mkdir(parents=True, exist_ok=True)
     with open(izlaz / "uvoz.jsonl", "w") as f:
         for u in uvoz:
@@ -185,6 +222,13 @@ def _provera():
     assert kategorija("Koja latinska izreka znači „iskoristi dan”?", "Carpe diem") == "jezik"
     assert u_latinicu("Ђурђевдан") == "Đurđevdan"
     assert veliko_prvo("džef") == "Džef"
+    assert TRAZI_PRILOG.search("[slika] Koja tropska biljka je ovo?") and not TRAZI_PRILOG.search("Ko je na slici „Mona Liza”?")
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False) as f:
+        f.write(json.dumps({"izvor_id": "x#1", "izvor": "K", "pitanje": "Glavni grad?", "odgovor": "Kardif",
+                            "ponudjeni": ["Kardif", "Svonsi", "Bangor", "Njuport"], "kontinent": "Evropa"}) + "\n")
+    red = next(redovi_izvora(f.name))
+    assert red["tacan"] == "Kardif" and red["netacni"] == ["Svonsi", "Bangor", "Njuport"] and red["kontinent"] == "Evropa"
 
 
 if __name__ == "__main__":

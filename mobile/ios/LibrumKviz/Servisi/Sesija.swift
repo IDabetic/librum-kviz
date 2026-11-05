@@ -11,6 +11,8 @@ final class Sesija {
     private(set) var nadimak: String?
     /// Avatar sa veba (`animal_07.png` u profiles.avatar), isti na sajtu i u aplikaciji.
     private(set) var avatar: String?
+    /// Prijavljen bez nadimka (prvi ulaz preko Apple ili Google naloga): app traži profil pre igre.
+    private(set) var trebaDopuna = false
     private var token: Supabase.Token?
 
     private let api = Supabase.deljeni
@@ -25,8 +27,14 @@ final class Sesija {
         defer { Sesija.trenutna = self }
         if let podaci = Self.citajKeychain(), let t = try? JSONDecoder().decode(Supabase.Token.self, from: podaci) {
             primeni(t)
+            // Nadimak i avatar od prvog kadra (pozdrav na početnoj, profil), sveži stižu iz ucitajNadimak.
+            if let k: Licno = Kes.ucitaj("moj-nalog"), k.id == t.user.id {
+                nadimak = k.nadimak; avatar = k.avatar; trebaDopuna = k.trebaDopuna
+            }
         }
     }
+
+    private struct Licno: Codable { let id: String; let nadimak: String?; let avatar: String?; let trebaDopuna: Bool }
 
     func prijava(email: String, lozinka: String) async throws {
         let t = try await api.prijava(email: email.trimmingCharacters(in: .whitespaces).lowercased(), lozinka: lozinka)
@@ -73,6 +81,8 @@ final class Sesija {
         guard zauzet.isEmpty else { throw Supabase.Greska(poruka: "Nadimak „\(novi)” je zauzet.", vrsta: .postoji) }
         let _: [Red] = try await api.azuriraj("profiles", filter: [URLQueryItem(name: "id", value: "eq.\(id)")], polja: ["nickname": novi], token: t)
         nadimak = novi
+        trebaDopuna = false
+        sacuvajLicno()
     }
 
     /// Lični podaci profila koje vide i drugi (ime, prezime, grad, „o meni”).
@@ -98,21 +108,25 @@ final class Sesija {
         guard let id = korisnikId, let t = try await vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se ponovo.") }
         struct Red: Decodable { let id: String }
         let _: [Red] = try await api.azuriraj("profiles", filter: [URLQueryItem(name: "id", value: "eq.\(id)")], polja: ["avatar": novi], token: t)
-        avatar = novi
+        avatar = novi; sacuvajLicno()
     }
 
     /// Rezultat partije za rang liste po igri (tabela rezultati_igara). Bez naloga se ništa ne šalje.
-    func upisiRezultat(igra: String, poeni: Int, tacnih: Int, netacnih: Int, prosekMs: Int?, pomoc: String? = nil) async {
+    func upisiRezultat(igra: String, poeni: Int, tacnih: Int, netacnih: Int, prosekMs: Int?, pomoc: String? = nil, nacin: String? = nil, izdaja: Int? = nil) async {
         guard let id = korisnikId, let t = try? await vazeciToken() else { return }
         var red: [String: Any] = ["user_id": id, "igra": igra, "poeni": max(0, poeni), "tacnih": tacnih, "netacnih": netacnih]
         if let prosekMs { red["prosek_ms"] = min(120_000, max(0, prosekMs)) }
         if let pomoc { red["pomoc"] = pomoc }
+        // Osvajanje: sam, savez ili zajedno (profil igrača pokazuje kako najčešće igra).
+        if let nacin { red["nacin"] = nacin }
+        if let izdaja { red["izdaja"] = izdaja }
         try? await api.upisi("rezultati_igara", red, token: t)
     }
 
     func odjava() async {
         if let t = token { await api.odjava(token: t.access_token) }
         ocisti()
+        Kes.obrisiSve()
     }
 
     /// Trajno briše nalog na serveru (RPC obrisi_moj_nalog), pa odjavljuje.
@@ -146,8 +160,17 @@ final class Sesija {
         let redovi: [Profil]? = try? await api.citaj("public_profiles", upit: [
             URLQueryItem(name: "select", value: "nickname,first_name,avatar"), URLQueryItem(name: "id", value: "eq.\(id)"),
         ])
-        nadimak = redovi?.first.flatMap { $0.nickname ?? $0.first_name }
-        avatar = redovi?.first?.avatar
+        guard let profil = redovi?.first else { return }
+        let nick = profil.nickname.flatMap { $0.isEmpty ? nil : $0 }
+        nadimak = nick ?? profil.first_name.flatMap { $0.isEmpty ? nil : $0 }
+        avatar = profil.avatar
+        trebaDopuna = nick == nil
+        sacuvajLicno()
+    }
+
+    private func sacuvajLicno() {
+        guard let id = korisnikId else { return }
+        Kes.sacuvaj(Licno(id: id, nadimak: nadimak, avatar: avatar, trebaDopuna: trebaDopuna), "moj-nalog")
     }
 
     private func primeni(_ t: Supabase.Token) {
@@ -157,7 +180,7 @@ final class Sesija {
     }
 
     private func ocisti() {
-        token = nil; korisnikId = nil; email = nil; nadimak = nil; avatar = nil
+        token = nil; korisnikId = nil; email = nil; nadimak = nil; avatar = nil; trebaDopuna = false
         SecItemDelete([kSecClass: kSecClassGenericPassword, kSecAttrAccount: Self.kljucKeychain] as CFDictionary)
     }
 

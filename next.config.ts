@@ -81,6 +81,11 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
+        // Slike za kviz „Slikari” u aplikacijama (alati/slikari-iz-baze.py); ime je Wikidata ID, ne menja se.
+        source: '/slike/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
         source: '/og-logo.png',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },

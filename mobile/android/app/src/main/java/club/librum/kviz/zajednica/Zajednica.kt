@@ -3,6 +3,7 @@ package club.librum.kviz.zajednica
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -112,7 +113,7 @@ object Zajednica {
     fun nazivVrste(v: String) = vrste.firstOrNull { it.first == v }?.second ?: "Objava"
     fun ikonicaVrste(v: String): ImageVector = vrste.firstOrNull { it.first == v }?.third ?: Icons.Rounded.Notes
     val nazivIgre = mapOf("dnevni" to "Dnevni izazov", "osvajanje" to "Osvajanje sveta", "pro" to "PRO kviz", "book" to "Book kviz", "duel" to "Duel",
-        "slikari" to "Slikari", "brzi" to "Brzi kviz", "vesanje" to "Vešanje", "tema" to "Kviz po temi")
+        "slikari" to "Slikari", "brzi" to "Brzi kviz", "vesanje" to "Vešanje", "tema" to "Kviz po temi", "karijera" to "Karijera")
 
     private inline fun <reified T> citaj(s: String): T = Supabase.json.decodeFromString(s)
 
@@ -501,6 +502,7 @@ fun PorukeEkran(sesija: Sesija, idi: (String) -> Unit, nazad: () -> Unit) {
 }
 
 /** Razgovor sa jednim igračem; novo stiže na svakih 5 s dok je otvoren. */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun RazgovorEkran(sesija: Sesija, sa: String, nadimak: String, nazad: () -> Unit) {
     val napredak = Napredak.deljeni
@@ -508,6 +510,10 @@ fun RazgovorEkran(sesija: Sesija, sa: String, nadimak: String, nazad: () -> Unit
     var tekst by remember { mutableStateOf("") }
     var greska by remember { mutableStateOf<String?>(null) }
     var pravila by remember { mutableStateOf(false) }
+    // Prijava tuđe poruke (dug pritisak) i blokada (tri tačke), Apple 1.2 / Google UGC.
+    var meniPoruke by remember { mutableStateOf<Zajednica.Poruka?>(null) }
+    var meniRazgovora by remember { mutableStateOf(false) }
+    var potvrda by remember { mutableStateOf<String?>(null) }
     val opseg = rememberCoroutineScope()
     val stanjeListe = rememberLazyListState()
     LaunchedEffect(sa) {
@@ -530,14 +536,17 @@ fun RazgovorEkran(sesija: Sesija, sa: String, nadimak: String, nazad: () -> Unit
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 KrugIkonica(Icons.AutoMirrored.Rounded.ArrowBack, "Nazad", nazad)
-                Text(nadimak, style = tekst(18.sp, FontWeight.Bold))
+                Text(nadimak, style = tekst(18.sp, FontWeight.Bold), modifier = Modifier.weight(1f))
+                KrugIkonica(Icons.Rounded.MoreHoriz, "Više") { meniRazgovora = true }
             }
             LazyColumn(Modifier.weight(1f).padding(horizontal = 16.dp), state = stanjeListe, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (poruke.isEmpty()) item { Text("Napiši prvu poruku.", style = tekst(14.sp, boja = Boje.sivaTekst)) }
                 items(poruke, key = { it.id }) { p ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (p.moja) Arrangement.End else Arrangement.Start) {
                         Text(p.tekst, style = tekst(16.sp, boja = if (p.moja) Boje.naMastilu else Boje.mastilo),
-                            modifier = Modifier.background(if (p.moja) Boje.mastilo else Boje.kartica, RoundedCornerShape(18.dp))
+                            modifier = Modifier
+                                .then(if (p.moja) Modifier else Modifier.combinedClickable(onClickLabel = null, onLongClickLabel = "Prijavi poruku", onLongClick = { meniPoruke = p }, onClick = {}))
+                                .background(if (p.moja) Boje.mastilo else Boje.kartica, RoundedCornerShape(18.dp))
                                 .border(if (p.moja) 0.dp else 1.5.dp, Boje.kremTamnija, RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 10.dp))
                     }
                 }
@@ -549,6 +558,25 @@ fun RazgovorEkran(sesija: Sesija, sa: String, nadimak: String, nazad: () -> Unit
                     Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = "Pošalji", tint = Boje.naMastilu)
                 }
             }
+        }
+        meniPoruke?.let { p ->
+            DonjiList({ meniPoruke = null }) {
+                StavkaMenija("Prijavi poruku", Icons.Rounded.Flag) {
+                    meniPoruke = null
+                    opseg.launch { if (Zajednica.radnja(sesija, "prijavi_poruku", mapOf("p_poruka" to p.id, "p_razlog" to "uvreda"))) potvrda = "Hvala na prijavi" }
+                }
+                StavkaMenija("Blokiraj $nadimak", Icons.Rounded.Block, opasno = true) { meniPoruke = null; potvrda = "blokada" }
+            }
+        }
+        if (meniRazgovora) DonjiList({ meniRazgovora = false }) {
+            Text("Zadrži prst na poruci da je prijaviš.", style = tekst(13.sp, boja = Boje.sivaTekst))
+            StavkaMenija("Blokiraj $nadimak", Icons.Rounded.Block, opasno = true) { meniRazgovora = false; potvrda = "blokada" }
+        }
+        when (val pt = potvrda) {
+            null -> Unit
+            "blokada" -> Dijalog("Blokirati $nadimak?", "Više se nećete videti: ni objave, ni komentari, ni poruke. Praćenje se briše.", "Blokiraj", "Odustani",
+                potvrdi = { potvrda = null; opseg.launch { if (Zajednica.radnja(sesija, "blokiraj", mapOf("p_id" to sa, "p_da" to true))) nazad() } }, zatvori = { potvrda = null })
+            else -> Dijalog(pt, "Urednik pregleda prijave u roku od 24 sata.", "U redu", "Zatvori", potvrdi = { potvrda = null }, zatvori = { potvrda = null })
         }
         if (pravila) PravilaZajednice(prihvati = { napredak.podesi { pravilaZajednice = true }; pravila = false; posalji() }, odustani = { pravila = false })
     }
@@ -597,6 +625,7 @@ fun SanduceEkran(sesija: Sesija, idi: (String) -> Unit, nazad: () -> Unit) {
                 else -> l.forEach { r ->
                     val (ikonica, opis) = when (r.vrsta) {
                         "izazov" -> Icons.Rounded.Bolt to "te izaziva na duel"
+                        "soba" -> Icons.Rounded.Groups to "te zove: " + (r.tekst?.let { club.librum.kviz.igre.IgraTakmicenja.od(it).naziv } ?: "kviz")
                         "pratilac" -> Icons.Rounded.Groups to "te sada prati"
                         "komentar" -> Icons.Rounded.ChatBubbleOutline to "je komentarisao tvoju objavu"
                         "odgovor" -> Icons.Rounded.ChatBubbleOutline to "ti je odgovorio"
@@ -606,7 +635,10 @@ fun SanduceEkran(sesija: Sesija, idi: (String) -> Unit, nazad: () -> Unit) {
                     Row(
                         Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(20.dp))
                             .border(if (r.novo) 2.5.dp else 1.5.dp, if (r.novo) Boje.mastilo else Boje.kremTamnija, RoundedCornerShape(20.dp))
-                            .clickable(enabled = r.vrsta != "ishod") { if (r.vrsta == "izazov" && r.kod_sobe != null) idi("duel/kod/${r.kod_sobe}") else idi("igrac/${r.ko}") }
+                            .clickable(enabled = r.vrsta != "ishod") {
+                                if (r.vrsta == "izazov" && r.kod_sobe != null) idi("duel/kod/${r.kod_sobe}")
+                                else if (r.vrsta == "soba" && r.kod_sobe != null) idi("takmicenje/kod/${r.kod_sobe}") else idi("igrac/${r.ko}")
+                            }
                             .padding(14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
@@ -620,7 +652,7 @@ fun SanduceEkran(sesija: Sesija, idi: (String) -> Unit, nazad: () -> Unit) {
                             Text(androidx.compose.ui.text.buildAnnotatedString {
                                 pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)); append(r.nadimak); pop(); append(" $opis")
                             }, style = tekst(15.sp))
-                            r.tekst?.let { Text("„$it”", style = tekst(13.sp, boja = Boje.sivaTekst), maxLines = 2) }
+                            r.tekst?.takeIf { r.vrsta != "soba" }?.let { Text("„$it”", style = tekst(13.sp, boja = Boje.sivaTekst), maxLines = 2) }
                             Text(Zajednica.pre(r.kad), style = tekst(12.sp, boja = Boje.sivaTekst))
                         }
                         if (r.novo) Box(Modifier.size(10.dp).background(Boje.roze, CircleShape).semantics { contentDescription = "Novo" })

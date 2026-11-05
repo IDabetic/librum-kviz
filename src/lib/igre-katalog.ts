@@ -9,7 +9,7 @@ export const IGRE = [
     n: '00',
     label: 'Osvajanje sveta',
     kratko: 'Osvajanje sveta',
-    desc: 'Kontinenti, vojske i bitke znanja protiv dva rivala.',
+    desc: 'Kontinenti, vojske i bitke znanja protiv rivala.',
     cta: 'Osvoji svet',
     accent: '#12907E',
     boja: '#12907E',

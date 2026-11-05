@@ -3,7 +3,7 @@ import ZajednicaList, { type RedPrijave } from './ZajednicaList'
 
 export const dynamic = 'force-dynamic'
 
-/** Moderacija društvene mreže iz aplikacije (objave i komentari): RPC admin_prijave_sadrzaja traži is_admin_user(). */
+/** Moderacija društvene mreže iz aplikacije (objave, komentari i prijavljene privatne poruke): RPC admin_prijave_sadrzaja traži is_admin_user(). */
 export default async function ZajednicaPage() {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('admin_prijave_sadrzaja')

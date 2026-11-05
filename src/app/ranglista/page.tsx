@@ -1,320 +1,80 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
-import Header from '@/components/Header'
 import Link from 'next/link'
-import LeaderboardTabs from './LeaderboardTabs'
-import { Logo } from '@/components/Logo'
-
+import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Rang lista – kviz sa rang listom, najbolji igrači Librum kviza',
-  description: 'Rang lista Librum kviza – najbolji igrači u PRO kvizu, Book kvizu, trivia duelu, vešanju i Brzom kvizu. Kviz sa rang listom za takmičenje na srpskom.',
-  keywords: [
-    'rang lista', 'kviz sa rang listom', 'kviz za takmičenje',
-    'kviz takmičenje online', 'najbolji igrači kviz', 'top igrači',
-    'kviz pobednici', 'Librum kviz', 'kviz Srbija', 'kviz na srpskom',
-  ],
+  title: 'Rang lista',
+  description: 'Rang lista Librum kviza uživo: Osvajanje sveta, PRO kviz, Book kviz, Duel, Slikari, Brzi kviz, Vešanje i Dnevni izazov. Ista lista kao u aplikaciji.',
   alternates: { canonical: '/ranglista' },
-  openGraph: {
-    title: 'Rang lista – Librum Kviz',
-    description: 'Najbolji rezultati u svim igrama Librum kviza.',
-    url: 'https://kviz.librum.club/ranglista',
-    type: 'website',
-    images: ['/og-share.jpg?v=6'],
-  },
 }
 
-export type SurvivorRow = {
-  userId: string; name: string; avatar: string | null
-  score: number; questionsReached: number; correctAnswers: number
-  accuracy: number; bestCombo: number; totalTime: number
-}
-export type DuelRow = {
-  userId: string; name: string; avatar: string | null
-  wins: number; losses: number; draws: number; plays: number
-}
-export type HangmanRow = {
-  userId: string; name: string; avatar: string | null
-  total: number; wins: number; winRate: number; bestScore: number; totalScore: number
-}
-export type QuickRow = {
-  userId: string; name: string; avatar: string | null
-  score: number; correct: number; wrong: number; accuracy: number; totalAnswered: number
-}
-export type BookRow = {
-  userId: string; name: string; avatar: string | null
-  score: number; questionsReached: number; accuracy: number
-  topGenre: string | null; topGenrePct: number | null
-}
-type Period = 'today' | 'week' | 'month' | 'all'
-type SB = Awaited<ReturnType<typeof createClient>>
+/** Igre i periodi kao u aplikaciji (RangListaView.swift); lista dolazi iz iste RPC rang_lista_igre. */
+const IGRE = [
+  ['osvajanje', 'Osvajanje'], ['pro', 'PRO'], ['book', 'Book'], ['duel', 'Duel'],
+  ['slikari', 'Slikari'], ['brzi', 'Brzi'], ['vesanje', 'Vešanje'], ['dnevni', 'Dnevni'],
+] as const
+const PERIODI = [['dan', 'Dan'], ['nedelja', 'Nedelja'], ['mesec', 'Mesec'], ['godina', 'Godina']] as const
+const BROJ_MESTA = 50
 
-// "Danas" must mean midnight in the user's timezone (Belgrade). Vercel
-// runs the server in UTC, so a naive setHours(0,0,0,0) would cut the
-// day at UTC midnight (01:00 or 02:00 Belgrade depending on DST). This
-// helper formats today's calendar date in Belgrade, computes the
-// running offset (handles DST automatically), and returns the UTC
-// instant that corresponds to 00:00 in Belgrade.
-const TZ = 'Europe/Belgrade'
+type Red = { mesto: number; user_id: string; nadimak: string | null; avatar: string | null; poeni: number; partija: number }
 
-function startOfTodayInTZ(): Date {
-  const now = new Date()
-  const day = new Intl.DateTimeFormat('en-CA', {
-    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(now)
-  const beoHour = parseInt(new Intl.DateTimeFormat('en-US', {
-    timeZone: TZ, hour: '2-digit', hour12: false,
-  }).format(now), 10)
-  let offsetH = beoHour - now.getUTCHours()
-  if (offsetH > 12) offsetH -= 24
-  if (offsetH < -12) offsetH += 24
-  const sign = offsetH >= 0 ? '+' : '-'
-  const offsetStr = `${sign}${String(Math.abs(offsetH)).padStart(2, '0')}:00`
-  return new Date(`${day}T00:00:00${offsetStr}`)
-}
-
-function startOf(period: Period): Date | null {
-  if (period === 'all') return null
-  if (period === 'today') return startOfTodayInTZ()
-  // Rolling 7- / 30-day windows from now (UTC arithmetic is fine here —
-  // the comparison is against created_at as an instant, no calendar
-  // boundary).
-  const d = new Date()
-  if (period === 'week') d.setUTCDate(d.getUTCDate() - 7)
-  if (period === 'month') d.setUTCDate(d.getUTCDate() - 30)
-  return d
-}
-
-function pickName(prof: { first_name?: string; last_name?: string; nickname?: string } | null): string {
-  if (!prof) return 'Igrač'
-  return prof.nickname || `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || 'Igrač'
-}
-
-// Resolve display info for a batch of user_ids via public_profiles
-// (a SECURITY-DEFINER view exposing only first_name/last_name/nickname/
-// avatar). We never embed `profiles(...)` anymore — that would hit the
-// locked-down profiles table and return nothing to anon.
-type ProfMap = Record<string, { name: string; avatar: string | null }>
-async function loadProfileMap(supabase: SB, userIds: string[]): Promise<ProfMap> {
-  const ids = [...new Set(userIds.filter(Boolean))]
-  if (ids.length === 0) return {}
-  const { data } = await supabase
-    .from('public_profiles')
-    .select('id, first_name, last_name, nickname, avatar')
-    .in('id', ids)
-  const map: ProfMap = {}
-  for (const p of (data || []) as { id: string; first_name: string; last_name: string; nickname: string; avatar: string | null }[]) {
-    map[p.id] = { name: pickName(p), avatar: p.avatar || null }
-  }
-  return map
-}
-
-// ── SURVIVOR ─────────────────────────────────────────────────────────────
-async function loadSurvivor(supabase: SB, since: Date | null): Promise<SurvivorRow[]> {
-  let q = supabase
-    .from('survivor_sessions')
-    .select('user_id, score, questions_reached, correct_answers, accuracy, best_combo, total_time_seconds')
-    .order('score', { ascending: false })
-    .limit(500)
-  if (since) q = q.gte('created_at', since.toISOString())
-  const { data } = await q
-  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
-  const seen = new Set<string>()
-  const rows: SurvivorRow[] = []
-  for (const r of (data || [])) {
-    if (!r.user_id || seen.has(r.user_id)) continue
-    seen.add(r.user_id)
-    const p = profMap[r.user_id]
-    rows.push({
-      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
-      score: r.score, questionsReached: r.questions_reached,
-      correctAnswers: r.correct_answers, accuracy: Number(r.accuracy),
-      bestCombo: r.best_combo, totalTime: r.total_time_seconds,
-    })
-    if (rows.length >= 200) break
-  }
-  return rows
-}
-
-// ── DUEL ─────────────────────────────────────────────────────────────────
-async function loadDuel(supabase: SB, since: Date | null): Promise<DuelRow[]> {
-  // New spec: a duel is finished when status='finished'. Older rooms may
-  // only have host_finished/guest_finished — keep them for back-compat.
-  let q = supabase
-    .from('game_rooms')
-    .select('host_id, guest_id, host_score, guest_score, host_finished, guest_finished, status')
-    .not('guest_id', 'is', null)
-    .limit(1000)
-  if (since) q = q.gte('created_at', since.toISOString())
-  const { data: games } = await q
-
-  const userIds = [...new Set((games || []).flatMap(g => [g.host_id, g.guest_id]).filter(Boolean))] as string[]
-  if (userIds.length === 0) return []
-  const profMap = await loadProfileMap(supabase, userIds)
-
-  const map: Record<string, DuelRow> = {}
-  function record(uid: string, my: number, op: number) {
-    if (!map[uid]) map[uid] = {
-      userId: uid, name: profMap[uid]?.name || 'Igrač', avatar: profMap[uid]?.avatar || null,
-      wins: 0, losses: 0, draws: 0, plays: 0,
-    }
-    map[uid].plays++
-    if (my > op) map[uid].wins++
-    else if (my < op) map[uid].losses++
-    else map[uid].draws++
-  }
-  ;(games || []).forEach(g => {
-    if (!g.host_id || !g.guest_id) return
-    // Accept either: new-flow (status=finished) OR old-flow (both finished flags)
-    const isFinished = g.status === 'finished' || (g.host_finished && g.guest_finished)
-    if (!isFinished) return
-    record(g.host_id, g.host_score ?? 0, g.guest_score ?? 0)
-    record(g.guest_id, g.guest_score ?? 0, g.host_score ?? 0)
-  })
-
-  return Object.values(map)
-    .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
-    .slice(0, 200)
-}
-
-// ── HANGMAN ──────────────────────────────────────────────────────────────
-async function loadHangman(supabase: SB, since: Date | null): Promise<HangmanRow[]> {
-  let q = supabase
-    .from('hangman_sessions')
-    .select('user_id, won, score')
-    .limit(2000)
-  if (since) q = q.gte('created_at', since.toISOString())
-  const { data } = await q
-
-  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
-  const map: Record<string, HangmanRow> = {}
-  ;(data || []).forEach(r => {
-    if (!r.user_id) return
-    const p = profMap[r.user_id]
-    if (!map[r.user_id]) map[r.user_id] = {
-      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
-      total: 0, wins: 0, winRate: 0, bestScore: 0, totalScore: 0,
-    }
-    map[r.user_id].total++
-    if (r.won) map[r.user_id].wins++
-    map[r.user_id].totalScore += r.score ?? 0
-    map[r.user_id].bestScore = Math.max(map[r.user_id].bestScore, r.score ?? 0)
-  })
-  Object.values(map).forEach(r => { r.winRate = r.total > 0 ? Math.round((r.wins / r.total) * 100) : 0 })
-  return Object.values(map)
-    .sort((a, b) => b.wins - a.wins || b.totalScore - a.totalScore)
-    .slice(0, 200)
-}
-
-// ── BOOK KVIZ ────────────────────────────────────────────────────────────
-async function loadBook(supabase: SB, since: Date | null): Promise<BookRow[]> {
-  let q = supabase
-    .from('book_sessions')
-    .select('user_id, score, questions_reached, accuracy, top_genre, top_genre_pct')
-    .order('score', { ascending: false })
-    .limit(500)
-  if (since) q = q.gte('created_at', since.toISOString())
-  const { data } = await q
-  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
-  const seen = new Set<string>()
-  const rows: BookRow[] = []
-  for (const r of (data || [])) {
-    if (!r.user_id || seen.has(r.user_id)) continue
-    seen.add(r.user_id)
-    const p = profMap[r.user_id]
-    rows.push({
-      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
-      score: r.score, questionsReached: r.questions_reached, accuracy: Number(r.accuracy),
-      topGenre: r.top_genre, topGenrePct: r.top_genre_pct != null ? Number(r.top_genre_pct) : null,
-    })
-    if (rows.length >= 200) break
-  }
-  return rows
-}
-
-// ── BRZI KVIZ ────────────────────────────────────────────────────────────
-async function loadQuick(supabase: SB, since: Date | null): Promise<QuickRow[]> {
-  let q = supabase
-    .from('quick_sessions')
-    .select('user_id, score, correct_count, wrong_count, accuracy, total_answered')
-    .order('score', { ascending: false })
-    .limit(500)
-  if (since) q = q.gte('created_at', since.toISOString())
-  const { data } = await q
-
-  const profMap = await loadProfileMap(supabase, (data || []).map(r => r.user_id))
-  const seen = new Set<string>()
-  const rows: QuickRow[] = []
-  for (const r of (data || [])) {
-    if (!r.user_id || seen.has(r.user_id)) continue
-    seen.add(r.user_id)
-    const p = profMap[r.user_id]
-    rows.push({
-      userId: r.user_id, name: p?.name || 'Igrač', avatar: p?.avatar || null,
-      score: r.score, correct: r.correct_count, wrong: r.wrong_count,
-      accuracy: Number(r.accuracy), totalAnswered: r.total_answered,
-    })
-    if (rows.length >= 200) break
-  }
-  return rows
-}
-
-export type AllPeriods<T> = { today: T[]; week: T[]; month: T[]; all: T[] }
-
-async function loadAllPeriods<T>(loader: (sb: SB, since: Date | null) => Promise<T[]>, sb: SB): Promise<AllPeriods<T>> {
-  const [today, week, month, all] = await Promise.all([
-    loader(sb, startOf('today')),
-    loader(sb, startOf('week')),
-    loader(sb, startOf('month')),
-    loader(sb, null),
-  ])
-  return { today, week, month, all }
-}
-
-export default async function LeaderboardPage() {
+export default async function RangLista({ searchParams }: { searchParams: Promise<{ igra?: string; period?: string }> }) {
+  const p = await searchParams
+  // Nepoznata vrednost iz adrese pada na podrazumevanu, da upit ne ode sa proizvoljnim tekstom.
+  const igra = IGRE.find(([k]) => k === p.igra)?.[0] ?? 'osvajanje'
+  const period = PERIODI.find(([k]) => k === p.period)?.[0] ?? 'nedelja'
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const [survivor, duel, hangman, quick, book] = await Promise.all([
-    loadAllPeriods(loadSurvivor, supabase),
-    loadAllPeriods(loadDuel, supabase),
-    loadAllPeriods(loadHangman, supabase),
-    loadAllPeriods(loadQuick, supabase),
-    loadAllPeriods(loadBook, supabase),
-  ])
+  const { data, error } = await supabase.rpc('rang_lista_igre', { p_igra: igra, p_period: period, p_broj: BROJ_MESTA })
+  const redovi = (data ?? []) as Red[]
+  const veza = (i: string, per: string) => `/ranglista?igra=${i}&period=${per}`
 
   return (
-    <div className="min-h-screen">
-      {user && <Header />}
-      {!user && (
-        <nav className="sticky top-0 z-40 backdrop-blur-xl"
-          style={{ background: 'rgba(252,252,252,0.78)', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Logo height={36} />
-            <Link href="/auth/prijava" className="btn btn-primary btn-sm">Prijava</Link>
-          </div>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-10">
+        <p className="chip" style={{ color: '#12907E' }}><span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#2FD27A' }} />Uživo, ista lista kao u aplikaciji</p>
+        <h1 className="mt-3" style={{ fontSize: 'clamp(40px, 7vw, 72px)' }}>Rang lista</h1>
+
+        <nav className="mt-6 flex gap-5 overflow-x-auto whitespace-nowrap pb-1" aria-label="Igra">
+          {IGRE.map(([k, n]) => (
+            <Link key={k} href={veza(k, period)} aria-current={k === igra ? 'page' : undefined}
+              className="text-[16px] font-bold py-2" style={{ color: k === igra ? '#151515' : '#8F8A80', borderBottom: `3px solid ${k === igra ? '#151515' : 'transparent'}` }}>
+              {n}
+            </Link>
+          ))}
         </nav>
-      )}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-        <div className="text-center mb-10">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#12907E' }}>
-            Najbolji igrači
-          </p>
-          <h1 className="leading-[0.95]" style={{ color: '#151515', fontSize: 'clamp(40px, 8vw, 72px)', fontWeight: 500 }}>
-            Rang lista
-          </h1>
-          {/* Autori pitanja se mere doprinosom bazi, ne rezultatom u igri,
-              pa imaju svoju listu umesto još jednog taba ovde. */}
-          <Link href="/autori-pitanja"
-            className="inline-block mt-4 text-[14px] font-bold underline underline-offset-4"
-            style={{ color: '#151515' }}>
-            Rang lista autora pitanja
-          </Link>
-        </div>
-        <LeaderboardTabs survivor={survivor} duel={duel} hangman={hangman} quick={quick} book={book} user={!!user} />
+        <nav className="mt-3 flex gap-5" aria-label="Period">
+          {PERIODI.map(([k, n]) => (
+            <Link key={k} href={veza(igra, k)} aria-current={k === period ? 'page' : undefined}
+              className="text-[14px] font-semibold py-1" style={{ color: k === period ? '#12907E' : '#8F8A80', borderBottom: `2px solid ${k === period ? '#12907E' : 'transparent'}` }}>
+              {n}
+            </Link>
+          ))}
+        </nav>
+
+        {error ? (
+          <div className="card-soft p-8 mt-6"><p className="text-[16px]" style={{ color: '#E5385C' }}>Rang lista se trenutno ne učitava. Osveži stranu za minut.</p></div>
+        ) : redovi.length === 0 ? (
+          <div className="card-soft p-8 mt-6"><p className="text-[16px]" style={{ color: '#6F6C66' }}>Još nema partija u ovom periodu. Prvi rezultat iz aplikacije otvara listu.</p></div>
+        ) : (
+          <ol className="card-soft divide-y divide-[#E7E1D0] mt-6">
+            {redovi.map(r => (
+              <li key={r.user_id} className="flex items-center gap-4 px-5 py-3.5">
+                <span className="w-10 h-10 grid place-items-center rounded-xl font-bold tabular-nums"
+                  style={{ background: r.mesto <= 3 ? '#FFD84D' : '#F3F0E6', border: r.mesto <= 3 ? '2px solid #151515' : 'none', color: '#151515' }}>
+                  {r.mesto}
+                </span>
+                <span className="flex-1 font-semibold truncate">{r.nadimak || 'Igrač'}</span>
+                <span className="text-[13px] hidden sm:inline" style={{ color: '#6F6C66' }}>{r.partija} partija</span>
+                <span className="naslov text-[22px] tabular-nums">{r.poeni.toLocaleString('sr-RS')}</span>
+              </li>
+            ))}
+          </ol>
+        )}
       </main>
       <Footer />
     </div>

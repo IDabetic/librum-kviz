@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { jeAvatarSajta } from '../igre-nazivi'
 
 type Row = {
   id: string
@@ -143,7 +144,7 @@ export default function KorisniciList({ rows, myId }: Props) {
                 <Link href={`/majmun/korisnici/${u.id}`}
                   className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0 bg-[#E7E1D0]">
-                    {u.avatar
+                    {jeAvatarSajta(u.avatar)
                       ? <Image src={`/avatars/${u.avatar}`} alt={name} width={40} height={40} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-[13px] font-bold text-white" style={{ background: '#12907E' }}>{name[0]}</div>}
                   </div>

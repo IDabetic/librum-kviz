@@ -31,7 +31,20 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.runtime.Composable
+import android.os.Build
+import android.view.ViewGroup
+import android.view.WindowManager
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -153,13 +166,13 @@ fun sviAvatari(kontekst: android.content.Context): List<String> =
 
 /** Donji list u stilu kita (umesto sistemskog). */
 @Composable
-fun DonjiList(zatvori: () -> Unit, sadrzaj: @Composable () -> Unit) {
+fun DonjiList(zatvori: () -> Unit, sadrzaj: @Composable () -> Unit) = PrekrivacEkrana(zatvori) {
     Box(Modifier.fillMaxSize().background(Boje.senka.copy(alpha = 0.55f)).clickable(MutableInteractionSource(), null, onClick = zatvori), contentAlignment = Alignment.BottomCenter) {
         Column(
             Modifier.fillMaxWidth().background(Boje.krem, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .border(2.5.dp, Boje.mastilo, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .clickable(MutableInteractionSource(), null) {}
-                .verticalScroll(rememberScrollState()).navigationBarsPadding().padding(20.dp),
+                .verticalScroll(rememberScrollState()).padding(bottom = LocalDnoProzora.current).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(Modifier.align(Alignment.CenterHorizontally).width(44.dp).height(5.dp).background(Boje.kremTamnija, RoundedCornerShape(3.dp)))
@@ -167,6 +180,34 @@ fun DonjiList(zatvori: () -> Unit, sadrzaj: @Composable () -> Unit) {
         }
     }
 }
+
+/**
+ * Crta sadržaj preko celog ekrana u sopstvenom prozoru (bez sistemskog zatamnjenja, izgled ostaje naš).
+ * Zašto: pozvan iz stavke LazyColumn-a dobija neograničenu visinu, pa verticalScroll u njemu ruši app
+ * (pad 1.0.1 na Play testu, meni „Više” na objavi). Sistemsko „nazad” zatvara.
+ */
+@Composable
+fun PrekrivacEkrana(zatvori: () -> Unit, sadrzaj: @Composable () -> Unit) {
+    // U prozoru dijaloga Compose ne dobija razmake sistemskih traka, pa donji razmak uzimamo iz glavnog prozora.
+    val dno = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    Dialog(onDismissRequest = zatvori, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        val prozor = (LocalView.current.parent as? DialogWindowProvider)?.window
+        SideEffect {
+            prozor?.setDimAmount(0f)
+            // Dijalog po difoltu „staje” između sistemskih traka, a sadržaj je visok koliko ekran: dno bi se odseklo.
+            prozor?.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+            prozor?.attributes = prozor?.attributes?.apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) fitInsetsTypes = 0
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+            prozor?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        }
+        CompositionLocalProvider(LocalDnoProzora provides dno) { sadrzaj() }
+    }
+}
+
+/** Visina donje sistemske trake za sadržaj u PrekrivacEkrana (navigationBarsPadding tamo vraća 0). */
+val LocalDnoProzora = staticCompositionLocalOf { 0.dp }
 
 /** Podvučen izbor sa vrednostima bilo kog tipa. */
 @Composable

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Dnevni podsetnik u 19:30 (lokalno obaveštenje, kao iOS); traži se tek kad igrač uključi podsetnik. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="false"
@@ -27,5 +29,6 @@
                 <data android:scheme="librumkviz" />
             </intent-filter>
         </activity>
+        <receiver android:name=".servisi.PodsetnikPrijemnik" android:exported="false" />
     </application>
 </manifest>

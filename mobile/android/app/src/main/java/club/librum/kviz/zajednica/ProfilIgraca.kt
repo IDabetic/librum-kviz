@@ -59,13 +59,20 @@ import kotlinx.serialization.Serializable
 
 /** Odgovor RPC profil_igraca (scripts/2026-11-03_profil-kao-ig.sql), isti za moj i tuđi profil. */
 @Serializable data class ProfilIgraca(
-    val nadimak: String, val avatar: String? = null, val ime: String? = null, val grad: String? = null, val bio: String? = null,
+    val id: String? = null, val nadimak: String, val avatar: String? = null, val ime: String? = null, val grad: String? = null, val bio: String? = null,
     val pratilaca: Int = 0, val prati: Int = 0, val ja_pratim: Boolean = false,
     val poslao_pitanja: Int = 0, val u_igri_pitanja: Int = 0, val partija: Int = 0,
     val igre: List<Igra> = emptyList(), val pitanja: Pitanja? = null,
+    // Isto kao iOS ProfilIgracaView.Profil: veb statistike, skorašnja aktivnost, upotreba pomoći, način igranja Osvajanja.
+    val veb: Veb? = null, val skoro: List<Skoro>? = null, val pomoci: Map<String, Int>? = null, val osvajanje_nacin: NacinOsvajanja? = null,
 ) {
-    @Serializable data class Igra(val igra: String, val partija: Int, val najbolje: Int, val tacnost: Int? = null)
-    @Serializable data class Pitanja(val odgovora: Int, val jedinstvenih: Int, val ponovljenih: Int, val tacnost: Int? = null)
+    @Serializable data class Igra(val igra: String, val partija: Int, val najbolje: Int, val tacnost: Int? = null, val prosek_ms: Int? = null, val sa_pomoci: Int? = null)
+    @Serializable data class Pitanja(val odgovora: Int, val jedinstvenih: Int, val ponovljenih: Int, val tacnost: Int? = null, val prosek_ms: Int? = null)
+    @Serializable data class VebIgra(val partija: Int? = null, val rekord: Int? = null, val max_pitanja: Int? = null, val niz: Int? = null, val zanr: String? = null,
+                                     val pobeda: Int? = null, val bodovi: Int? = null, val tacnih: Int? = null, val tacnost: Int? = null, val poraza: Int? = null, val nereseno: Int? = null)
+    @Serializable data class Veb(val pro: VebIgra? = null, val book: VebIgra? = null, val vesanje: VebIgra? = null, val brzi: VebIgra? = null, val duel: VebIgra? = null)
+    @Serializable data class Skoro(val igra: String, val poeni: Int? = null, val kad: String)
+    @Serializable data class NacinOsvajanja(val sam: Int = 0, val savez: Int = 0, val zajedno: Int = 0, val izdaje: Int? = null, val verno: Int? = null)
 }
 
 @Serializable data class NadjenIgrac(val id: String, val nadimak: String, val avatar: String? = null, val pratim: Boolean = false)
@@ -146,11 +153,15 @@ fun ProfilStatistike(p: ProfilIgraca) {
 @Composable
 fun ProfilIgracaEkran(sesija: Sesija, id: String, idi: (String) -> Unit, nazad: () -> Unit) {
     val nalog by sesija.nalog.collectAsState()
-    var p by remember { mutableStateOf<ProfilIgraca?>(null) }
+    // Već viđen profil odmah iz keša (bez kruga za učitavanje), sveži stiže tiho.
+    var p by remember { mutableStateOf(club.librum.kviz.servisi.Kes.ucitaj<ProfilIgraca>("profil-$id")) }
     var greska by remember { mutableStateOf<String?>(null) }
     var blokada by remember { mutableStateOf(false) }
     val opseg = rememberCoroutineScope()
-    suspend fun ucitaj() { runCatching { Drustvo.profil(sesija, id) }.onSuccess { p = it; greska = null }.onFailure { greska = it.message } }
+    suspend fun ucitaj() {
+        runCatching { Drustvo.profil(sesija, id) }
+            .onSuccess { p = it; greska = null; club.librum.kviz.servisi.Kes.sacuvaj("profil-$id", it) }.onFailure { greska = it.message }
+    }
     LaunchedEffect(id) { ucitaj() }
 
     Box(Modifier.fillMaxSize()) {
@@ -173,12 +184,13 @@ fun ProfilIgracaEkran(sesija: Sesija, id: String, idi: (String) -> Unit, nazad: 
                             Dugme(if (pr.ja_pratim) "Pratiš" else "Prati", Modifier.weight(1f), if (pr.ja_pratim) VrstaDugmeta.SEKUNDARNO else VrstaDugmeta.PRIMARNO) {
                                 opseg.launch { if (Drustvo.prati(sesija, id, !pr.ja_pratim)) ucitaj() }
                             }
-                            Dugme("Izazovi", Modifier.weight(1f), VrstaDugmeta.ZUTO) { idi("duel/izazov/$id") }
+                            Dugme("Izazovi", Modifier.weight(1f), VrstaDugmeta.ZUTO) { idi("takmicenje/izazov/$id/${android.net.Uri.encode(pr.nadimak)}") }
                             KockaIkonica(Icons.AutoMirrored.Rounded.Send, "Pošalji poruku") { idi("razgovor/$id/${pr.nadimak}") }
                             KockaIkonica(Icons.Rounded.Block, "Blokiraj") { blokada = true }
                         }
                     }
-                    ProfilStatistike(pr)
+                    ProfilFokus(pr, id, id == nalog?.id, idi)
+                    ProfilOstalo(pr)
                 }
             }
             Spacer(Modifier.height(40.dp))

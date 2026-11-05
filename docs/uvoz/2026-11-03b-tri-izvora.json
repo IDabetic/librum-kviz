@@ -1,0 +1,63 @@
+{
+  "srpski": {
+    "ulaz": 175081,
+    "za_uvoz": 125142,
+    "odbaceno": {
+      "otvoreno pitanje (nema 3 netačna)": 48298,
+      "duplikat": 915,
+      "prevod": 312,
+      "skoro duplikat": 274,
+      "dužina": 86,
+      "odgovori se ponavljaju": 38,
+      "napomena": 16
+    },
+    "po_izvoru": {
+      "TriviaQA": 56451,
+      "OpenTriviaQA": 42175,
+      "Librum": 10611,
+      "021.rs": 6611,
+      "HKS": 5028,
+      "OpenTDB": 4250,
+      "Sabor": 16
+    }
+  },
+  "koncept": {
+    "ulaz": 10977,
+    "za_uvoz": 10932,
+    "odbaceno": {
+      "duplikat": 42,
+      "prevod": 2,
+      "odgovori se ponavljaju": 1
+    },
+    "po_izvoru": {
+      "Jeopardy": 8491,
+      "QBReader": 1352,
+      "ChGK": 1089
+    }
+  },
+  "kontinenti": {
+    "ulaz": 4892,
+    "za_uvoz": 4891,
+    "odbaceno": {
+      "prevod": 1
+    },
+    "po_izvoru": {
+      "Librum kontinenti": 4891
+    }
+  },
+  "baza": {
+    "oznaka": "uvoz-2026-11-03b",
+    "upisano_posle_duplikata_iz_baze": 76371,
+    "po_izvoru": {
+      "TriviaQA": 56337,
+      "Jeopardy": 8409,
+      "Librum kontinenti": 4743,
+      "HKS": 3579,
+      "QBReader": 1350,
+      "ChGK": 1067,
+      "Librum": 870,
+      "Sabor": 16
+    },
+    "aktivnih_ukupno_posle": 152073
+  }
+}

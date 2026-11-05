@@ -4,7 +4,7 @@ import Script from 'next/script'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { createClient } from '@/lib/supabase/server'
-import { Telefon } from '@/components/Telefon'
+import { OsvajanjeVideo } from '@/components/OsvajanjeVideo'
 import { Prodavnice } from '@/components/Prodavnice'
 
 const faqSchema = {
@@ -20,224 +20,135 @@ const faqSchema = {
   ],
 }
 
-type LeaderRow = {
-  user_id: string
-  score: number
-  questions_reached: number
-  // Resolved client-side from public_profiles (we don't embed profiles
-  // anymore — that table is locked down for anon).
-  profile?: { first_name: string | null; nickname: string | null; avatar: string | null } | null
-}
+type RedRanga = { mesto: number; user_id: string; nadimak: string | null; avatar: string | null; poeni: number; partija: number }
+type BrojeviPitanja = { kviz: number; knjige: number; kafana: number }
 
-// Round a question count down to its nearest thousand and add "k+".
-// 7534 → "7k+", 9056 → "9k+", 1200 → "1k+", anything below 1000 falls
-// back to the raw number with a "+" so the badge still reads natural.
-function formatQuestionCount(n: number): string {
-  if (n >= 1000) return `${Math.floor(n / 1000)}k+`
-  if (n > 0) return `${n}+`
-  return '—'
-}
+/** Ista rang lista kao u aplikaciji (RPC rang_lista_igre): Osvajanje sveta ove nedelje. */
+const MESTA_NA_LISTI = 10
+
+const IGRE = [
+  { ime: 'PRO kviz', opis: 'Deset života, kombo nizovi, Risk i nedeljna rang lista.', boja: '#6D4BC9', tekst: '#FFFFFF', slika: 'pro' },
+  { ime: 'Book kviz', opis: 'Pisci, dela i likovi; 168 klasika sa svojim pitanjima.', boja: '#F4A33C', tekst: '#151515', slika: 'book' },
+  { ime: 'Duel', opis: 'Jedan na jedan uživo ili izazov prijatelju sa profila.', boja: '#151515', tekst: '#FFFFFF', slika: 'duel' },
+  { ime: 'Slikari', opis: 'Ko je naslikao ovo delo? 1.167 dela, od Leonarda do Pikasa.', boja: '#FF5FA2', tekst: '#151515', slika: 'slikari' },
+  { ime: 'Brzi kviz', opis: 'Tačno ili netačno, 60 sekundi, niz množi poene.', boja: '#FFD84D', tekst: '#151515', slika: 'brzi' },
+  { ime: 'Vešanje', opis: 'Pogodi reč slovo po slovo, sa našom azbukom.', boja: '#6EC3F2', tekst: '#151515', slika: 'vesanje' },
+]
+
+const MOGUCNOSTI = [
+  ['171 država', 'Prava mapa sveta sa 17 regiona; preko mora idu morski putevi.'],
+  ['Šest vojski', 'Legija, Garda, Graditelji, Izvidnica, Konjica i Mudraci, svaka sa svojom moći u bitki: siguran udar, štit, zaustavljen sat, pola-pola, juriš ili tačan odgovor.'],
+  ['Ratne karte', 'Špijun vidi odgovor, Pojačanje, Zamrzni granicu, Drugi pokušaj, Sabotaža.'],
+  ['Savezi i izdaje', 'Brze poruke, savez do kraja kruga, ultimatum slabijem susedu.'],
+  ['Teren i čuda', 'Planine brane, pustinja kažnjava; Piramide, Kineski zid, Akropolj…'],
+  ['Do 12 igrača', 'Protiv računara, prijatelja ili mešano; timovi po dvoje.'],
+]
 
 export default async function Home() {
   const supabase = await createClient()
-
-  // ⚠ 14.09.2026: ovi pozivi su ranije išla JEDAN ZA DRUGIM, iako nijedan
-  // ne zavisi od druga dva. Uz funkciju koja je do danas radila u `iad1`, a
-  // bazu u Frankfurtu, svaki je prelazio Atlantik i vraćao se, pa je naslovna
-  // umela da traje 16 s i probije Kulin prag od 20 s. Funkcija je premeštena u
-  // `fra1` (vercel.json), a ovde se ono što je nezavisno traži odjednom.
-  const [
-    { data: brojPitanja },
-    { data: topSedamDana },
-  ] = await Promise.all([
-    supabase.rpc('broj_pitanja'),
-    (async () => {
-      // Server komponenta se izvršava jednom po zahtevu, pa je Date.now() ovde
-      // bezbedan; pravilo čistoće se pali odbrambeno.
-      // eslint-disable-next-line react-hooks/purity
-      const odSedamDana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      return supabase
-        .from('survivor_sessions')
-        .select('user_id, score, questions_reached')
-        .gte('created_at', odSedamDana)
-        .order('score', { ascending: false })
-        .limit(20)
-    })(),
+  // Nezavisni pozivi idu odjednom (funkcija je u fra1, baza u Frankfurtu; vidi vercel.json).
+  const [{ data: brojevi }, { data: rang }] = await Promise.all([
+    supabase.rpc('pitanja_u_igri'),
+    supabase.rpc('rang_lista_igre', { p_igra: 'osvajanje', p_period: 'nedelja', p_broj: MESTA_NA_LISTI }),
   ])
-
-  // Live count of multiple-choice questions across the three pools that
-  // power PRO, Brzi, Trivia duel and Book kviz. We deliberately
-  // skip hangman_words — those are guess-a-word entries, not "pitanja".
-  //
-  // Ide kroz RPC `broj_pitanja()` a ne kroz tri odvojena brojanja: RLS na
-  // `kafana_questions` dozvoljava čitanje samo prijavljenima, pa je
-  // neprijavljen posetilac video 7k+ umesto 9k+.
-  const totalQuestions = Number(brojPitanja) || 0
-  const questionsBadge = formatQuestionCount(totalQuestions)
-
-  // Top 5 PRO scores in the last 7 days — gives anonymous visitors a
-  // taste of what's waiting after registration. Falls back to all-time
-  // top 5 if nobody played this week. Server component runs once per
-  // request, so Date.now() here is safe — purity rule fires defensively.
-  let top = topSedamDana
-  if (!top || top.length === 0) {
-    const fallback = await supabase
-      .from('survivor_sessions')
-      .select('user_id, score, questions_reached')
-      .order('score', { ascending: false })
-      .limit(20)
-    top = fallback.data ?? []
-  }
-  // Dedupe by user (each player's best entry only) and take top 5.
-  const seenUsers = new Set<string>()
-  const dedup: LeaderRow[] = []
-  for (const r of (top ?? []) as LeaderRow[]) {
-    if (!r.user_id || seenUsers.has(r.user_id)) continue
-    seenUsers.add(r.user_id)
-    dedup.push(r)
-    if (dedup.length >= 5) break
-  }
-  // Resolve display info from public_profiles (safe view — no email,
-  // no role). Anon visitors hit this code path too.
-  const topIds = dedup.map(r => r.user_id)
-  const { data: profs } = topIds.length
-    ? await supabase
-        .from('public_profiles')
-        .select('id, first_name, nickname, avatar')
-        .in('id', topIds)
-    : { data: [] as { id: string; first_name: string | null; nickname: string | null; avatar: string | null }[] }
-  const profMap = new Map((profs ?? []).map(p => [p.id, p]))
-  const leaderboard: LeaderRow[] = dedup.map(r => ({
-    ...r,
-    profile: profMap.get(r.user_id)
-      ? { first_name: profMap.get(r.user_id)!.first_name, nickname: profMap.get(r.user_id)!.nickname, avatar: profMap.get(r.user_id)!.avatar }
-      : null,
-  }))
-
-  const IGRE_U_APLIKACIJI = [
-    { ime: 'PRO kviz', opis: 'Deset života, kombo nizovi i rang lista.', boja: '#6D4BC9', tekst: '#FFFFFF', maskota: 'Lumi' },
-    { ime: 'Book kviz', opis: 'Pisci, dela i žanrovi.', boja: '#F4A33C', tekst: '#151515', maskota: 'Zig' },
-    { ime: 'Trivia duel', opis: 'Ista pitanja, jedan na jedan.', boja: '#151515', tekst: '#FFFFFF', maskota: 'Bloop' },
-    { ime: 'Slikari', opis: 'Ko je naslikao ovo delo? 1.439 dela, od Leonarda do Pikasa.', boja: '#FF5FA2', tekst: '#151515', maskota: 'Mimi' },
-    { ime: 'Vešanje', opis: 'Pogodi reč, slovo po slovo.', boja: '#6EC3F2', tekst: '#151515', maskota: 'Lumi' },
-    { ime: 'Brzi kviz', opis: 'Tačno ili netačno, 60 sekundi.', boja: '#FFD84D', tekst: '#151515', maskota: 'Zig' },
-  ]
-  const KORACI = [
-    ['Preuzmi aplikaciju', 'Za iPhone i Android, besplatno. Bez reklama u toku igre.'],
-    ['Napravi nalog', 'Isti nalog važi i ovde na sajtu, za rang listu i profil.'],
-    ['Osvoji svet', 'Svako pitanje je bitka. Rezultati stižu na rang listu.'],
-  ]
+  const b = (brojevi ?? null) as BrojeviPitanja | null
+  const pitanja = b ? b.kviz + b.knjige + b.kafana : 0
+  const lista = (rang ?? []) as RedRanga[]
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1">
-        {/* Uvod: aplikacija sa snimcima ekrana */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
-          <div>
-            <p className="chip mb-4" style={{ color: '#12907E' }}>
-              <span className="w-2 h-2 rounded-full" style={{ background: '#2FD27A' }} />
-              Aplikacija za iPhone i Android{totalQuestions > 0 ? ` · ${questionsBadge} pitanja` : ''}
-            </p>
-            <h1 style={{ fontSize: 'clamp(46px, 8.5vw, 92px)' }}>Osvoji svet<br />znanjem.</h1>
-            <p className="mt-5 text-[18px] leading-relaxed max-w-lg" style={{ color: '#3B3832' }}>
-              Librum kviz je aplikacija u kojoj svaka država sveta pada pitanjem. Osvajanje sveta i još šest igara
-              znanja na srpskom, protiv rivala, prijatelja i cele rang liste.
-            </p>
-            <div className="mt-8"><Prodavnice /></div>
-            <p className="mt-4 text-[14px]" style={{ color: '#6F6C66' }}>
-              Već igraš? <Link href="/ranglista" className="font-bold underline underline-offset-4" style={{ color: '#151515' }}>Pogledaj rang listu</Link>
-            </p>
-          </div>
-          {/* Visina prati telefone (odnos ekrana 1206×2622), da ne upadnu u sledeću sekciju. */}
-          <div className="relative mx-auto w-full max-w-[440px] aspect-[5/6]">
-            <div className="absolute left-0 top-[9%] w-[45%]"><Telefon src="/aplikacija/pocetna.jpg" alt="Početni ekran aplikacije sa igrama" nagib={-6} prioritet /></div>
-            <div className="absolute right-0 top-0 w-[50%] z-[1]"><Telefon src="/aplikacija/mapa.jpg" alt="Mapa sveta u igri Osvajanje sveta" nagib={4} prioritet /></div>
-            <Image src="/maskote/Bloop.png" alt="" width={90} height={90} aria-hidden className="absolute -left-3 -top-6 z-10 maskota-lebdi" />
+        {/* Osvajanje sveta: snimak prave partije preko celog ekrana, natpis i zvuk */}
+        <section id="osvajanje" style={{ background: 'radial-gradient(120% 90% at 70% 0%, #1B5E54 0%, #0E3B34 45%, #12110F 100%)', color: '#F3F0E6' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-16">
+            <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-end">
+              <div>
+                <p className="chip mb-5" style={{ color: '#FFD84D', background: 'rgba(255,255,255,.08)' }}>
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#2FD27A' }} />
+                  {pitanja > 0 ? `${pitanja.toLocaleString('sr-RS')} pitanja u igri` : 'Aplikacija za iPhone i Android'}
+                </p>
+                <h1 style={{ fontSize: 'clamp(46px, 8vw, 96px)', color: '#F3F0E6' }}>Osvoji svet <span style={{ color: '#FFD84D' }}>znanjem.</span></h1>
+              </div>
+              <div>
+                <p className="text-[17px] leading-relaxed opacity-90">
+                  Strategija u kojoj svaka bitka pada na pitanju. Vojske, ratne karte, savezi i izdaje na pravoj mapi sveta,
+                  protiv računara ili prijatelja, do 12 igrača.
+                </p>
+                <div className="mt-6"><Prodavnice tamno /></div>
+              </div>
+            </div>
+            <div className="mt-10"><OsvajanjeVideo /></div>
+            <dl className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                [pitanja > 0 ? pitanja.toLocaleString('sr-RS') : '150.000+', 'pitanja u bazi'],
+                ['171', 'država na mapi'],
+                ['7', 'igara znanja'],
+                ['2–12', 'igrača u partiji'],
+              ].map(([v, n]) => (
+                <div key={n} className="rounded-2xl px-5 py-4" style={{ background: 'rgba(255,255,255,.06)', border: '1.5px solid rgba(255,255,255,.14)' }}>
+                  <dt className="sr-only">{n}</dt>
+                  <dd className="naslov text-[28px] tabular-nums" style={{ color: '#FFD84D' }}>{v}</dd>
+                  <dd className="text-[13px] font-semibold opacity-80">{n}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </section>
 
-        {/* Glavna igra */}
-        <section className="px-4 sm:px-6">
-          <div className="max-w-6xl mx-auto card-pop overflow-hidden grid md:grid-cols-[1.1fr_0.9fr]" style={{ background: '#12907E', color: '#FFFFFF' }}>
-            <div className="p-7 sm:p-10">
-              <p className="chip" style={{ color: '#FFD84D' }}>Glavna igra</p>
-              <h2 className="mt-3" style={{ fontSize: 'clamp(36px, 6vw, 60px)' }}>Osvajanje sveta</h2>
-              <ul className="mt-6 space-y-4 text-[16px]">
-                {[
-                  ['171 država', 'Prava mapa sveta. Napadaš samo susede, a preko mora idu morski putevi: iz Brazila u Afriku, iz Španije u Maroko.'],
-                  ['Vojske i regioni', 'Ceo region donosi bonus vojske svakog poteza, kao kontinenti u Risku.'],
-                  ['Bitka je pitanje', 'Tačan odgovor ruši branioca. Kad oboje znate, pobeđuje brži.'],
-                  ['Cepaj dalje', 'Posle osvajanja napadaš iz nove države; svako treće osvajanje u nizu donosi +2 vojske.'],
-                ].map(([n, t]) => (
-                  <li key={n} className="flex gap-3">
-                    <span className="mt-1 w-2.5 h-2.5 shrink-0 rounded-full" style={{ background: '#FFD84D', outline: '2px solid #151515' }} />
-                    <span><strong>{n}.</strong> <span className="opacity-90">{t}</span></span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="relative min-h-[360px] bg-[#0E6F61]">
-              <div className="absolute left-1/2 top-8 w-[62%] max-w-[260px] -translate-x-1/2"><Telefon src="/aplikacija/pitanje.jpg" alt="Pitanje u bici za državu" /></div>
-            </div>
-          </div>
-        </section>
-
-        {/* Sve igre u aplikaciji */}
+        {/* Šta sve može Osvajanje */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
+          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Šta sve ima u Osvajanju</h2>
+          <ul className="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {MOGUCNOSTI.map(([n, t]) => (
+              <li key={n} className="card-soft p-6">
+                <h3 className="text-[22px]">{n}</h3>
+                <p className="mt-2 text-[15px]" style={{ color: '#6F6C66' }}>{t}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Ostale igre */}
+        <section id="igre" className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 scroll-mt-28">
           <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>I još šest igara</h2>
+          <p className="mt-2 text-[16px]" style={{ color: '#6F6C66' }}>Svaka se igra sama ili sa drugima: do 8 igrača ili timovi, protiv računara ili prijatelja.</p>
           <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {IGRE_U_APLIKACIJI.map(g => (
-              <div key={g.ime} className="card-pop relative overflow-hidden min-h-[150px] p-5 flex flex-col justify-end" style={{ background: g.boja, color: g.tekst }}>
-                <Image src={`/maskote/${g.maskota}.png`} alt="" width={96} height={96} aria-hidden className="absolute -right-2 -top-2" />
+            {IGRE.map(g => (
+              <div key={g.ime} className="card-pop relative overflow-hidden min-h-[170px] p-5 flex flex-col justify-end" style={{ background: g.boja, color: g.tekst }}>
+                <Image src={`/ilustracije/${g.slika}.png`} alt="" width={92} height={92} aria-hidden className="absolute right-3 top-3" />
                 <h3 className="text-[26px] relative">{g.ime}</h3>
-                <p className="relative mt-1 text-[14px] font-semibold opacity-85 max-w-[80%]">{g.opis}</p>
+                <p className="relative mt-1 text-[14px] font-semibold opacity-85 max-w-[85%]">{g.opis}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Kako počinješ */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
-          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Kako počinješ</h2>
-          <ol className="mt-7 grid md:grid-cols-3 gap-4 sm:gap-5">
-            {KORACI.map(([n, t], i) => (
-              <li key={n} className="card-soft p-6">
-                <span className="w-10 h-10 grid place-items-center rounded-xl text-[17px] font-bold" style={{ background: '#FFD84D', border: '2px solid #151515' }}>{i + 1}</span>
-                <h3 className="mt-4 text-[22px]">{n}</h3>
-                <p className="mt-2 text-[15px]" style={{ color: '#6F6C66' }}>{t}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/* Rang lista ove nedelje */}
+        {/* Rang lista: ista kao u aplikaciji */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
           <div className="flex items-baseline justify-between mb-4 gap-4">
-            <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Najbolji ove nedelje</h2>
+            <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Osvajači ove nedelje</h2>
             <Link href="/ranglista" className="text-[15px] font-bold underline underline-offset-4 shrink-0">Cela rang lista</Link>
           </div>
-          {leaderboard.length > 0 ? (
+          {lista.length > 0 ? (
             <ol className="card-soft divide-y divide-[#E7E1D0]">
-              {leaderboard.map((r, i) => {
-                const name = r.profile?.nickname || r.profile?.first_name || 'Igrač'
-                return (
-                  <li key={r.user_id} className="flex items-center gap-4 px-5 py-3.5">
-                    <span className="w-9 h-9 grid place-items-center rounded-xl font-bold tabular-nums"
-                      style={{ background: i === 0 ? '#FFD84D' : '#F3F0E6', border: i === 0 ? '2px solid #151515' : 'none' }}>
-                      {i + 1}
-                    </span>
-                    <span className="flex-1 font-semibold truncate">{name}</span>
-                    <span className="naslov text-[20px] tabular-nums">{r.score}</span>
-                  </li>
-                )
-              })}
+              {lista.map(r => (
+                <li key={r.user_id} className="flex items-center gap-4 px-5 py-3.5">
+                  <span className="w-9 h-9 grid place-items-center rounded-xl font-bold tabular-nums"
+                    style={{ background: r.mesto === 1 ? '#FFD84D' : '#F3F0E6', border: r.mesto === 1 ? '2px solid #151515' : 'none', color: '#151515' }}>
+                    {r.mesto}
+                  </span>
+                  <span className="flex-1 font-semibold truncate">{r.nadimak || 'Igrač'}</span>
+                  <span className="text-[13px] hidden sm:inline" style={{ color: '#6F6C66' }}>{r.partija} partija</span>
+                  <span className="naslov text-[20px] tabular-nums">{r.poeni.toLocaleString('sr-RS')}</span>
+                </li>
+              ))}
             </ol>
           ) : (
             <div className="card-soft p-8 flex items-center gap-5">
               <Image src="/maskote/Lumi.png" alt="" width={80} height={80} aria-hidden />
-              <p className="text-[16px]" style={{ color: '#6F6C66' }}>Rang lista se puni čim prve partije stignu iz aplikacije.</p>
+              <p className="text-[16px]" style={{ color: '#6F6C66' }}>Rang lista se puni čim prve partije ove nedelje stignu iz aplikacije.</p>
             </div>
           )}
         </section>
@@ -247,7 +158,7 @@ export default async function Home() {
           <div className="max-w-6xl mx-auto card-pop p-8 sm:p-12 relative overflow-hidden" style={{ background: '#151515', color: '#F3F0E6' }}>
             <Image src="/maskote/Zig.png" alt="" width={150} height={150} aria-hidden className="absolute right-4 bottom-0 hidden sm:block" />
             <h2 style={{ fontSize: 'clamp(32px, 5vw, 52px)' }}>Preuzmi i kreni u osvajanje.</h2>
-            <p className="mt-3 text-[16px] opacity-80 max-w-xl">Imaš dobro pitanje? <Link href="/dodaj-pitanja" className="underline font-bold">Pošalji ga</Link> i uđi u kviz kao autor.</p>
+            <p className="mt-3 text-[16px] opacity-80 max-w-xl">Besplatno, bez reklama u toku igre. Jedan nalog za sve igre i rang listu.</p>
             <div className="mt-7"><Prodavnice tamno /></div>
           </div>
         </section>

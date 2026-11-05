@@ -22,6 +22,10 @@ class BrziKviz {
         const val SEKUNDI_PO_IZJAVI = 10
         const val POENA_TACNO = 10
         const val POENA_NETACNO = 5
+        /** Vlasnik 03.11: niz tačnih množi poene (×2 od 3 zaredom, ×3 od 6), poslednjih 10 s runde vredi duplo (kao iOS). */
+        const val NIZ_ZA_DUPLO = 3
+        const val NIZ_ZA_TROSTRUKO = 6
+        const val SEKUNDI_ZAVRSNICE = 10
     }
 
     data class Izjava(val pitanje: String, val prikazano: String, val jeTacno: Boolean, val tacanOdgovor: String) {
@@ -40,11 +44,16 @@ class BrziKviz {
     var poeni by mutableIntStateOf(0); private set
     var tacnih by mutableIntStateOf(0); private set
     var netacnih by mutableIntStateOf(0); private set
+    var niz by mutableIntStateOf(0); private set
 
-    /** `stit`: pomoć Štit, promašaj se ne računa (ni poeni ni broj netačnih). */
-    fun odgovor(izjava: Izjava, kaze: Boolean?, stit: Boolean = false): Boolean {
+    /** Množilac za sledeći tačan odgovor (prema nizu pre njega). */
+    val mnozilac: Int get() = if (niz >= NIZ_ZA_TROSTRUKO) 3 else if (niz >= NIZ_ZA_DUPLO) 2 else 1
+
+    /** `zavrsnica` = poslednjih 10 s runde; `stit`: pomoć Štit, promašaj se ne računa (ni poeni, ni netačni, ni prekid niza). */
+    fun odgovor(izjava: Izjava, kaze: Boolean?, zavrsnica: Boolean = false, stit: Boolean = false): Boolean {
         val pogodio = kaze == izjava.jeTacno
-        if (pogodio) { poeni += POENA_TACNO; tacnih++ } else if (!stit) { poeni = max(0, poeni - POENA_NETACNO); netacnih++ }
+        if (pogodio) { poeni += POENA_TACNO * mnozilac * (if (zavrsnica) 2 else 1); tacnih++; niz++ }
+        else if (!stit) { poeni = max(0, poeni - POENA_NETACNO); netacnih++; niz = 0 }
         return pogodio
     }
 

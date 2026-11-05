@@ -7,9 +7,15 @@ struct PocetnaView: View {
     @Environment(Napredak.self) private var napredak
     @Environment(Mreza.self) private var mreza
 
-    @State private var vrh: Ucitano<[RangListaView.Red]> = .ucitava
+    @State private var vrh: Ucitano<[RangListaView.Red]> = Kes.ucitano("vrh-pocetna")
     @State private var pravila: KvizStavka?
     @State private var objasnjenje: Objasnjenje?
+    /// Sačuvana partija Osvajanja (na ovom telefonu): „Nastavi partiju” iznad kartice.
+    @State private var sacuvana: OsvajanjeModel.Nastavak?
+    @State private var nastavak: OsvajanjeModel.Nastavak?
+    /// Aktivna pitanja na serveru (kviz + knjige + kafana); nil dok ne stigne prvi odgovor.
+    @State private var pitanjaUIgri: Int?
+    private static let osvezavanjePitanja: Double = 30
 
     /// Vlasnik 03.11: Osvajanje sveta je jedna velika kartica, ispod šest igara u dva reda po tri.
     private let osvajanje = KvizKatalog.stavka("osvajanje")
@@ -17,16 +23,35 @@ struct PocetnaView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 zaglavlje
                 if !mreza.povezan { OfflineTraka() }
-                Text("Igre").font(.naslov(24))
+                if let n = sacuvana {
+                    Button { nastavak = n } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "play.fill").font(.system(size: 16, weight: .bold)).frame(width: 40, height: 40)
+                                .background(Color.zuta, in: RoundedRectangle(cornerRadius: 12))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Nastavi partiju").font(.tekst(16, .bold))
+                                Text("Osvajanje sveta · krug \(min(n.stanje.krug, n.stanje.ukupnoKrugova)) od \(n.stanje.ukupnoKrugova)")
+                                    .font(.tekst(13)).foregroundStyle(Color.sivaTekst)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundStyle(Color.sivaTekst)
+                        }
+                        .foregroundStyle(Color.mastilo).padding(12).mirna()
+                    }
+                    .buttonStyle(.plain)
+                }
                 if let s = osvajanje {
                     NavigationLink { KvizOdrediste(stavka: s) } label: {
                         KarticaIgre(naslov: s.naslov, opis: s.opis, boja: Color(hex: s.boja), tekst: s.tekstBoja, maskota: s.maskota, velika: true, ilustracija: s.ilustracija)
                     }
                     .overlay(alignment: .topLeading) { infoDugme(s).padding(12) }
                 }
+                // Druga glavna igra (docs/KARIJERA-PRAVILA.md): od Korporacije do svog nebodera.
+                NavigationLink { KarijeraView() } label: { KarijeraKartica() }
+                .buttonStyle(.plain)
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                     ForEach(igre) { s in
                         NavigationLink { KvizOdrediste(stavka: s) } label: { MalaIgra(stavka: s) }
@@ -34,6 +59,22 @@ struct PocetnaView: View {
                             .contextMenu { Button("Kako se igra") { withAnimation { pravila = s } } }
                     }
                 }
+                // Vlasnik 03.11: svih pet igara za 2–8 igrača ili timove, protiv računara ili pravih igrača.
+                NavigationLink { TakmicenjeView() } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.3.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(Color.tinta)
+                            .frame(width: 48, height: 48).background(Color.zuta, in: RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.mastilo, lineWidth: 2))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Igraj sa drugima").font(.tekst(16, .bold))
+                            Text("2–8 igrača, timovi, računar").font(.tekst(13)).foregroundStyle(Color.sivaTekst).lineLimit(1)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundStyle(Color.sivaTekst)
+                    }
+                    .foregroundStyle(Color.mastilo).padding(12).pop(radijus: 20)
+                }
+                .buttonStyle(.plain)
                 HStack {
                     Text("Teme").font(.naslov(24))
                     Spacer()
@@ -56,8 +97,20 @@ struct PocetnaView: View {
         .overlay { if let pravila { PravilaList(stavka: pravila) { self.pravila = nil } } }
         .overlay { if let objasnjenje { ObjasnjenjeList(vrsta: objasnjenje) { self.objasnjenje = nil } } }
         .task { await ucitajVrh() }
+        .onAppear { sacuvana = OsvajanjeModel.sacuvana() }
+        .fullScreenCover(item: $nastavak, onDismiss: { sacuvana = OsvajanjeModel.sacuvana() }) { OsvajanjeIgraView(model: OsvajanjeModel(nastavak: $0)) }
         .refreshable { await ucitajVrh() }
-        .task {
+        .task { await pratiPitanjaUIgri() }
+    }
+
+    /// Vlasnik 03.11: na ulazu piše koliko je pitanja u igri, uživo. `.task` se gasi kad početna nestane.
+    private func pratiPitanjaUIgri() async {
+        struct Brojevi: Decodable { let kviz, knjige, kafana: Int }
+        while !Task.isCancelled {
+            if let b: Brojevi = try? await Supabase.deljeni.rpc("pitanja_u_igri", [:]) {
+                withAnimation { pitanjaUIgri = b.kviz + b.knjige + b.kafana }
+            }
+            try? await Task.sleep(for: .seconds(PocetnaView.osvezavanjePitanja))
         }
     }
 
@@ -79,15 +132,20 @@ struct PocetnaView: View {
                 .accessibilityLabel("Danas još \(napredak.pomociOstalo()) od \(napredak.fondPomoci) pomoći, objašnjenje")
             }
             .buttonStyle(.plain)
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    if let ime = sesija.nadimak { Oznaka(tekst: "Zdravo, \(ime)", boja: .teal) }
-                    Text("Izaberi kviz\ni igraj").font(.naslov(38)).tracking(-0.5)
+            // Vlasnik 03.11: kratak naslov u jednom redu, igre odmah ispod (bez posebnog naslova „Igre”).
+            Text(sesija.nadimak.map { "Zdravo, \($0)!" } ?? "Izaberi i igraj").font(.naslov(26)).tracking(-0.5).lineLimit(1).minimumScaleFactor(0.7)
+            if let pitanjaUIgri {
+                HStack(spacing: 6) {
+                    Circle().fill(Color.teal).frame(width: 7, height: 7)
+                    Text("\(pitanjaUIgri.formatted(.number.locale(.srpski))) pitanja u igri")
+                        .font(.tekst(13, .bold)).monospacedDigit().contentTransition(.numericText())
                 }
-                Spacer()
+                .foregroundStyle(Color.sivaTekst)
+                .accessibilityElement(children: .combine)
+                .padding(.top, -6)
             }
         }
-        .padding(.top, 6)
+        .padding(.top, 2)
     }
 
     private func infoDugme(_ s: KvizStavka) -> some View {
@@ -133,7 +191,7 @@ struct PocetnaView: View {
                             .foregroundStyle(Color.tinta)
                         Text(r.nadimak).font(.tekst(15, .semibold)).lineLimit(1)
                         Spacer()
-                        Text(r.poeni.formatted()).font(.naslov(18)).monospacedDigit()
+                        Text(r.poeni.formatted(.number.locale(.srpski))).font(.naslov(18)).monospacedDigit()
                     }
                     .padding(.horizontal, 14).padding(.vertical, 10)
                     if i < min(redovi.count, 3) - 1 { Divider().overlay(Color.kremTamnija) }
@@ -145,7 +203,11 @@ struct PocetnaView: View {
 
     private func ucitajVrh() async {
         if case .gotovo = vrh {} else { vrh = .ucitava }
-        do { vrh = .gotovo(try await RangListaView.ucitajVrh()) } catch { vrh = .greska(error.localizedDescription) }
+        do {
+            let v = try await RangListaView.ucitajVrh()
+            vrh = .gotovo(v)
+            Kes.sacuvaj(v, "vrh-pocetna")
+        } catch { if case .gotovo = vrh {} else { vrh = .greska(error.localizedDescription) } }
     }
 }
 
@@ -165,7 +227,7 @@ struct KarticaIgre: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .offset(x: velika ? 40 : 36, y: velika ? -30 : -34)
             Group {
-                if let ilustracija { Image(ilustracija).resizable().scaledToFit().frame(width: velika ? 150 : 76, height: velika ? 150 : 76).rotationEffect(.degrees(8)).padding(.top, 10).padding(.trailing, 6) }
+                if let ilustracija { Image(ilustracija).resizable().scaledToFit().frame(width: velika ? 128 : 76, height: velika ? 128 : 76).rotationEffect(.degrees(8)).padding(.top, 12).padding(.trailing, 12) }
                 else { MaskotaSlika(maskota: maskota, velicina: velika ? 160 : 84) }
             }
             .accessibilityHidden(true)
@@ -273,16 +335,27 @@ struct PravilaList: View {
     var body: some View {
         DonjiList(zatvori: zatvori) {
             VStack(alignment: .leading, spacing: 12) {
-                Naslov(tekst: "Kako se igra \(stavka.naslov)", velicina: 26)
-                ForEach(Array(stavka.pravila.enumerated()), id: \.offset) { i, t in
-                    HStack(alignment: .top, spacing: 10) {
-                        Text("\(i + 1)").font(.tekst(13, .bold)).foregroundStyle(Color.tinta).frame(width: 26, height: 26)
-                            .background(Color(hex: stavka.boja), in: Circle()).overlay(Circle().stroke(Color.mastilo, lineWidth: 1.5))
-                        Text(t).font(.tekst(15)).foregroundStyle(Color.mastilo).fixedSize(horizontal: false, vertical: true)
-                    }
+                // Osvajanje ima 20+ pravila: kad ne staju, skroluju se, a „Važi” ostaje vidljivo ispod.
+                ViewThatFits(in: .vertical) {
+                    spisak
+                    ScrollView { spisak }.scrollIndicators(.visible)
                 }
                 Button("Važi", action: zatvori).buttonStyle(.primarno).padding(.top, 6)
             }
         }
+    }
+
+    private var spisak: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Naslov(tekst: "Kako se igra \(stavka.naslov)", velicina: 26)
+            ForEach(Array(stavka.pravila.enumerated()), id: \.offset) { i, t in
+                HStack(alignment: .top, spacing: 10) {
+                    Text("\(i + 1)").font(.tekst(13, .bold)).foregroundStyle(Color.tinta).frame(width: 26, height: 26)
+                        .background(Color(hex: stavka.boja), in: Circle()).overlay(Circle().stroke(Color.mastilo, lineWidth: 1.5))
+                    Text(t).font(.tekst(15)).foregroundStyle(Color.mastilo).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

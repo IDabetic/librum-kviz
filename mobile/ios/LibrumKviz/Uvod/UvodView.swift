@@ -12,6 +12,7 @@ struct UvodView: View {
     @State private var maskota: Maskota = .mimi
     @State private var cilj = 3
     @State private var podsetnik = true
+    static let najvecaSirina: CGFloat = 560
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +40,9 @@ struct UvodView: View {
             }
             .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
         }
+        // Na iPadu uvod ostaje širine telefona, na sredini (inače se kartice razvuku preko celog ekrana).
+        .frame(maxWidth: Self.najvecaSirina)
+        .frame(maxWidth: .infinity)
         .background(Papir())
     }
 
@@ -71,7 +75,7 @@ private struct UvodSlajdovi: View {
     @State private var strana = 0
 
     private let slajdovi: [(String, String, String, Color, Maskota)] = [
-        ("Kviz o svemu,\nkad god!", "Opšte znanje, knjige, geografija i svet. Nova pitanja stižu svaki dan.", "6.700+\npitanja", .narandzasta, .bloop),
+        ("Kviz o svemu,\nkad god!", "Opšte znanje, knjige, geografija i svet. Nova pitanja stižu svaki dan.", "160.000+\npitanja", .narandzasta, .bloop),
         ("Izazovi društvo\nuživo!", "Duel jedan na jedan u realnom vremenu. Vidi ko stvarno zna.", "Duel sa\ndrugarima", .ljubicasta, .zig),
         ("Sakupljaj bedževe,\npenji se!", "Čuvaj niz, otključaj bedževe i popni se na nedeljnu rang listu.", "Popni se\nna vrh", .zuta, .lumi),
     ]

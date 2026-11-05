@@ -79,6 +79,14 @@ actor PaketPitanja {
         throw Supabase.Greska(poruka: "Pitanja nisu stigla. Proveri internet i pokušaj ponovo.")
     }
 
+    /// Osvajanje: neviđena pitanja o jednom kontinentu (oznaka kontinent:<ime>, scripts/2026-11-03_pitanja-po-kontinentu.sql).
+    /// Bez mreže prazno, pa bitka ide iz opšteg špila.
+    func kontinent(_ ime: String, broj: Int = 20) async -> [Pitanje] {
+        let token = try? await Sesija.trenutna?.vazeciToken()
+        let p: [Pitanje]? = try? await Supabase.deljeni.rpc("aplikacija_pitanja_kontinent", ["p_kontinent": ime, "p_broj": broj], token: token)
+        return (p ?? []).filter { $0.options.count == 4 && (0..<4).contains($0.correct_answer) }.shuffled()
+    }
+
     /// Kviz po temi (RPC aplikacija_kviz): 10 pitanja iz fonda, žanra ili samo teških.
     /// Bez mreže bira iz keša/rezerve istog fonda.
     func kviz(_ fond: Fond, zanr: String? = nil, tesko: Bool = false, broj: Int = 10) async throws -> [Pitanje] {
@@ -92,7 +100,11 @@ actor PaketPitanja {
         var parametri: [String: Any] = ["p_fond": fond.rawValue, "p_broj": broj]
         if let zanr { parametri["p_zanr"] = zanr }
         if tesko { parametri["p_tezina"] = "tesko" }
-        if let svez: [Pitanje] = try? await Supabase.deljeni.rpc("aplikacija_kviz", parametri, token: try? await Sesija.trenutna?.vazeciToken()) {
+        // Prvi poziv posle paljenja aplikacije ume da padne (osvežavanje tokena, hladan server): još jedan pokušaj pre poruke o grešci.
+        let token = try? await Sesija.trenutna?.vazeciToken()
+        var svez: [Pitanje]? = try? await Supabase.deljeni.rpc("aplikacija_kviz", parametri, token: token)
+        if svez == nil { svez = try? await Supabase.deljeni.rpc("aplikacija_kviz", parametri, token: nil) }
+        if let svez {
             let ispravna = svez.filter { $0.options.count == 4 && (0..<4).contains($0.correct_answer) }
             if ispravna.count >= min(broj, 5) { return ispravna }
         }
@@ -104,9 +116,11 @@ actor PaketPitanja {
     /// Slikari iz ugrađenog paketa (src/lib/igre/slikari.json, alati/slikari-u-json.py): pet lakih/srednjih
     /// i ostatak bilo kog nivoa, da prvi kviz ne bude samo nepoznata dela; „teško” uzima samo teška.
     static func slikari(broj: Int, tesko: Bool) throws -> [Pitanje] {
-        struct Delo: Decodable { let id, naziv, slika: String; let ponude: [String]; let godina, pravac, muzej, tezina: String }
+        struct Delo: Decodable { let id, naziv, slika: String; let ponude: [String]; let godina, pravac, muzej, tezina: String; let pitanje: String? }
         guard let url = Bundle.main.url(forResource: "slikari", withExtension: "json", subdirectory: "igre"),
-              let d = try? Data(contentsOf: url), let dela = try? JSONDecoder().decode([Delo].self, from: d), !dela.isEmpty else {
+              // Pitanje bez slike ne ide u Slikare (vlasnik 03.11); paket ih već nema (alati/slikari-provera.py).
+              let d = try? Data(contentsOf: url), case let dela = ((try? JSONDecoder().decode([Delo].self, from: d)) ?? []).filter({ !$0.slika.isEmpty }),
+              !dela.isEmpty else {
             throw Supabase.Greska(poruka: "Paket slika nije pronađen u aplikaciji.")
         }
         let izbor: [Delo]
@@ -121,7 +135,9 @@ actor PaketPitanja {
             // Delo bez slike je tekstualno pitanje: godina pomaže da naziv ne bude jedini trag.
             let imaSliku = !d.slika.isEmpty
             let godina = d.godina.isEmpty ? "" : " (\(d.godina))"
-            return Pitanje(id: d.id, question_text: imaSliku ? "Ko je naslikao delo „\(d.naziv)”?" : "Ko je naslikao delo „\(d.naziv)”\(godina)?",
+            // Naziv koji odaje autora („Rubens i Izabela Brant…”) ne ide u pitanje (alati/slikari-iz-baze.py).
+            let tekst = !(d.pitanje ?? "").isEmpty ? d.pitanje! : imaSliku ? "Ko je naslikao delo „\(d.naziv)”?" : "Ko je naslikao delo „\(d.naziv)”\(godina)?"
+            return Pitanje(id: d.id, question_text: tekst,
                            options: d.ponude, correct_answer: 0, genre: d.pravac, slika: imaSliku ? d.slika : nil,
                            opis: ([d.naziv, d.godina, d.muzej] + (imaSliku ? ["Slika: Wikimedia Commons"] : [])).filter { !$0.isEmpty }.joined(separator: " · "))
         }
@@ -153,11 +169,37 @@ struct Rec: Codable, Equatable {
 struct Spil {
     private var pitanja: [Pitanje]
     private var indeks = 0
-    init(_ pitanja: [Pitanje]) { self.pitanja = pitanja }
+    /// Svi ikad dodati (i oni izbačeni po temi), da dopuna ne vrati već viđeno pitanje.
+    private var poznata: Set<String>
+    init(_ pitanja: [Pitanje]) { self.pitanja = pitanja; poznata = Set(pitanja.map(\.id)) }
     var prazan: Bool { pitanja.isEmpty }
+    /// Koliko još neiskorišćenih pitanja ima pre nego što špil krene ispočetka.
+    var ostalo: Int { max(0, pitanja.count - indeks) }
+
+    /// Dopuna novim paketom (duga partija troši stotine pitanja); vraća koliko je novih stiglo.
+    @discardableResult
+    mutating func dodaj(_ nova: [Pitanje]) -> Int {
+        let sveza = nova.filter { poznata.insert($0.id).inserted }
+        pitanja += sveza
+        return sveza.count
+    }
     mutating func sledece() -> Prikaz {
         let p = pitanja[indeks % pitanja.count]
         indeks += 1
+        return Prikaz(p)
+    }
+
+    /// Teme (žanrovi) koje u ostatku špila imaju bar `najmanje` pitanja, najbrojnije prve.
+    func teme(najmanje: Int) -> [String] {
+        let ostatak = pitanja.count > indeks ? Array(pitanja[indeks...]) : pitanja
+        let broj = Dictionary(grouping: ostatak.compactMap { $0.genre.flatMap { $0 == "Razno" ? nil : $0 } }, by: { $0 }).mapValues(\.count)
+        return broj.filter { $0.value >= najmanje }.sorted { ($0.value, $0.key) > ($1.value, $1.key) }.map(\.key)
+    }
+
+    /// Sledeće pitanje iz teme (izbačeno iz reda, da se ne ponovi); nil kad ga nema.
+    mutating func sledece(tema: String) -> Prikaz? {
+        guard let i = pitanja.indices.dropFirst(min(indeks, pitanja.count)).first(where: { pitanja[$0].genre == tema }) else { return nil }
+        let p = pitanja.remove(at: i)
         return Prikaz(p)
     }
 }

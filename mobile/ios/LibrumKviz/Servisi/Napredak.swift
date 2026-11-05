@@ -55,8 +55,6 @@ final class Napredak {
         var poruke: [Poruka] = []
         var cilj = 3
         var podsetnik = true
-        /// Prihvaćena pravila zajednice (pre prve objave, komentara ili poruke; Apple 1.2).
-        var pravilaZajednice = false
         var maskota = "Mimi"
         /// Avatar (oznaka „s3:2:4”); kod prijavljenog ide i u profiles.avatar.
         var avatar: String?
@@ -120,14 +118,21 @@ final class Napredak {
 
     /// Upisuje odigranu igru; vraća zarađeno i nove bedževe.
     @discardableResult
-    func zabeleziIgru(kviz: String, tacnih: Int, netacnih: Int, kategorija: String? = nil, brzih: Int = 0, pobeda: Bool = false, prosekMs: Int? = nil, danas: Date = .now) -> Ishod {
+    func zabeleziIgru(kviz: String, tacnih: Int, netacnih: Int, kategorija: String? = nil, brzih: Int = 0, pobeda: Bool = false, prosekMs: Int? = nil, dodatniXp: Int = 0, danas: Date = .now) -> Ishod {
         let dan = Self.dan(danas)
+        let nivoPre = nivo, nizPre = s.nizDana
+        defer {
+            // Posle zvuka kraja igre: nov nivo ili produžen niz dana.
+            let zvuk: Zvuk.Vrsta? = nivo > nivoPre ? .nivoGore : s.nizDana > nizPre && s.nizDana > 1 ? .niz : nil
+            if let zvuk { DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { Zvuk.pusti(zvuk, jacina: 0.5) } }
+        }
         if s.poslednjiDanIgre != dan {
             s.nizDana = s.poslednjiDanIgre == Self.dan(danas.addingTimeInterval(-86_400)) ? s.nizDana + 1 : 1
             s.najduziNiz = max(s.najduziNiz, s.nizDana)
             s.poslednjiDanIgre = dan
         }
-        let xp = Self.xpZaPartiju(tacnih: tacnih, pobeda: pobeda, niz: s.nizDana)
+        // dodatniXp: nagrada po mestu u Osvajanju (1. +150, 2. +80, 3. +40, ostali +20).
+        let xp = Self.xpZaPartiju(tacnih: tacnih, pobeda: pobeda, niz: s.nizDana) + dodatniXp
         s.xp += xp
         s.igara += 1
         s.tacnih += tacnih

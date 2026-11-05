@@ -198,10 +198,23 @@ struct DonjiList<Sadrzaj: View>: View {
             .frame(maxWidth: .infinity)
             .background(Color.krem, in: UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous))
             .overlay(UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous).stroke(Color.mastilo, lineWidth: 2.5))
+            // Vlasnik 04.11: list se zatvara i X-om gore desno, ne samo dodirom van njega.
+            .overlay(alignment: .topTrailing) {
+                Button(action: zatvori) {
+                    Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).foregroundStyle(Color.mastilo)
+                        .frame(width: 32, height: 32).background(Color.kartica, in: Circle())
+                        .overlay(Circle().stroke(Color.mastilo, lineWidth: 1.5))
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).padding(.top, 8).padding(.trailing, 10)
+                .accessibilityLabel("Zatvori")
+            }
             .transition(.move(edge: .bottom))
             .accessibilityAddTraits(.isModal)
         }
         .ignoresSafeArea(edges: .bottom)
+        // Plutajuća traka kartica (iOS 26) je iznad sadržaja i pokrivala je dugme lista: dok je list otvoren, nje nema.
+        .toolbar(.hidden, for: .tabBar)
     }
 }
 
@@ -388,5 +401,33 @@ struct PomociTraka: View {
 
     private func dugme(_ vrsta: String, _ ikonica: String, _ naziv: String, _ radnja: (() -> Void)?) -> some View {
         PomocDugme(vrsta: vrsta, ikonica: ikonica, naziv: naziv, iskoriscenaUPartiji: $iskoriscena, dostupno: radnja != nil, tamno: tamno) { radnja?() }
+    }
+}
+
+/// Učitavanje u stilu aplikacije (umesto sistemskog kružića): maskota poskakuje, ispod tri tačke.
+struct UcitavanjeMaskota: View {
+    var maskota: Maskota = .mimi
+    var tekst = "Učitavam…"
+    var velicina: CGFloat = 96
+    @Environment(\.accessibilityReduceMotion) private var manjeKretanja
+
+    var body: some View {
+        TimelineView(.animation(paused: manjeKretanja)) { t in
+            let v = t.date.timeIntervalSinceReferenceDate
+            VStack(spacing: 10) {
+                MaskotaSlika(maskota: maskota, velicina: velicina)
+                    .offset(y: manjeKretanja ? 0 : -abs(sin(v * 3.2)) * 14)
+                    .scaleEffect(x: 1 + (manjeKretanja ? 0 : max(0, cos(v * 6.4)) * 0.04), y: 1)
+                HStack(spacing: 6) {
+                    ForEach(0..<3, id: \.self) { i in
+                        Circle().fill(Color.mastilo).frame(width: 8, height: 8)
+                            .opacity(manjeKretanja ? 0.6 : 0.3 + 0.7 * max(0, sin(v * 4 - Double(i) * 0.7)))
+                    }
+                }
+                Text(tekst).font(.tekst(14, .semibold)).foregroundStyle(Color.sivaTekst)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(tekst)
     }
 }

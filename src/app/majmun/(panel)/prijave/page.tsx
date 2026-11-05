@@ -8,8 +8,10 @@ const SOURCE_TO_EDIT_PATH: Record<string, string | null> = {
   book_questions: '/majmun/book-kviz',
   kafana_questions: '/majmun/kafana',
   hangman_words: '/majmun/vesanje',
+  karijera_pitanja: '/majmun/karijera/pitanja',
 }
 const SOURCE_LABEL: Record<string, string> = {
+  karijera_pitanja: 'Karijera (struka)',
   questions: 'PRO/Brzi/Duel',
   book_questions: 'Book kviz',
   kafana_questions: 'Kafanski kviz',

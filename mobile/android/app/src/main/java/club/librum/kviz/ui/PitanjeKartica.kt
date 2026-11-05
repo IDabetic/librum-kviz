@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -56,6 +57,12 @@ fun PitanjeKartica(
     sekundi: Int = 15,
     dodatak: String? = null,
     eliminisani: Set<Int> = emptySet(),
+    /** Pomoć „Vreme stoji”: sat se zaustavlja, pitanje ne ističe. */
+    stoji: Boolean = false,
+    /** Boja kartice: žuta u kvizovima, plava (KarijeraBoje.plava) u Karijeri. */
+    boja: Color = Boje.zuta,
+    /** Javlja čim je odgovor izabran (pre otkrivanja tačnog), npr. da Karijera skloni ometanje. */
+    izabrano: (() -> Unit)? = null,
     gotovo: (izabran: Int?, ms: Int) -> Unit,
 ) {
     val pocetak = remember(prikaz) { System.currentTimeMillis() }
@@ -69,14 +76,15 @@ fun PitanjeKartica(
         if (otkriveno) return
         izabran = i
         otkriveno = true
+        izabrano?.invoke()
         trajalo = (System.currentTimeMillis() - pocetak).toInt()
         haptika.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
-    LaunchedEffect(prikaz, otkriveno, sekundi) {
+    LaunchedEffect(prikaz, otkriveno, sekundi, stoji) {
         while (!otkriveno) {
-            sada = System.currentTimeMillis()
-            if (sada - pocetak >= sekundi * 1000L) izaberi(null)
+            if (!stoji) sada = System.currentTimeMillis()
+            if (!stoji && sada - pocetak >= sekundi * 1000L) izaberi(null)
             delay(100)
         }
         delay(TRAJANJE_OTKRIVANJA_MS)
@@ -85,13 +93,14 @@ fun PitanjeKartica(
 
     val ostalo = (sekundi - (sada - pocetak) / 1000.0).coerceAtLeast(0.0)
     Column(
-        Modifier.fillMaxWidth().pop(Boje.zuta).padding(20.dp),
+        Modifier.fillMaxWidth().pop(boja).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Oznaka(oznaka, Boje.tinta)
             Spacer(Modifier.weight(1f))
-            Text("${kotlin.math.ceil(ostalo).toInt()}", style = naslov(22.sp, Boje.tinta), modifier = Modifier.semantics { contentDescription = "${ostalo.toInt()} sekundi" })
+            if (stoji) androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.PauseCircle, "Sat stoji", tint = Boje.teal)
+            else Text("${kotlin.math.ceil(ostalo).toInt()}", style = naslov(22.sp, Boje.tinta), modifier = Modifier.semantics { contentDescription = "${ostalo.toInt()} sekundi" })
         }
         Box(Modifier.fillMaxWidth().height(8.dp).background(Color.White.copy(alpha = 0.6f), RoundedCornerShape(4.dp))) {
             Box(
@@ -148,7 +157,7 @@ fun OdgovorDugme(slovo: String, natpis: String, stanje: StanjeOdgovora, omogucen
 
 /** Potvrda u stilu kita (umesto sistemskog dijaloga). */
 @Composable
-fun Dijalog(naslovTekst: String, opis: String, potvrda: String, odustani: String, potvrdi: () -> Unit, zatvori: () -> Unit) {
+fun Dijalog(naslovTekst: String, opis: String, potvrda: String, odustani: String, potvrdi: () -> Unit, zatvori: () -> Unit) = PrekrivacEkrana(zatvori) {
     Box(
         Modifier.fillMaxSize().background(Boje.senka.copy(alpha = 0.55f)).clickable(onClick = zatvori),
         contentAlignment = Alignment.Center,

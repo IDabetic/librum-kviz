@@ -92,11 +92,13 @@ suspend fun PaketPitanja.temaKviz(fond: Fond, zanr: String? = null, tesko: Boole
 }
 
 @kotlinx.serialization.Serializable
-private data class Delo(val id: String, val naziv: String, val slika: String, val ponude: List<String>, val godina: String, val pravac: String, val muzej: String, val tezina: String)
+private data class Delo(val id: String, val naziv: String, val slika: String, val ponude: List<String>, val godina: String, val pravac: String, val muzej: String, val tezina: String,
+                        val pitanje: String = "")
 
-/** Slikari iz paketa u aplikaciji (assets slikari.json, 1.439 dela): pola lakših pola ostalih, ili samo teška. */
+/** Slikari iz paketa u aplikaciji (assets slikari.json, 1.167 dela): pola lakših pola ostalih, ili samo teška. */
 fun slikariKviz(context: Context, broj: Int = 10, tesko: Boolean = false): List<Pitanje> {
     val dela = Supabase.json.decodeFromString<List<Delo>>(context.assets.open("slikari.json").bufferedReader().use { it.readText() })
+        .filter { it.slika.isNotEmpty() } // pitanje bez slike ne ide u Slikare (vlasnik 03.11)
     val izbor = if (tesko) dela.filter { it.tezina == "teško" }.shuffled().take(broj) else {
         val lakse = dela.filter { it.tezina != "teško" }.shuffled().take(broj / 2)
         (lakse + dela.filter { d -> lakse.none { it.id == d.id } }.shuffled().take(broj - lakse.size)).shuffled()
@@ -105,7 +107,9 @@ fun slikariKviz(context: Context, broj: Int = 10, tesko: Boolean = false): List<
         // Delo bez slike je tekstualno pitanje: godina pomaže da naziv ne bude jedini trag.
         val imaSliku = d.slika.isNotEmpty()
         val godina = if (d.godina.isEmpty()) "" else " (${d.godina})"
-        Pitanje(d.id, if (imaSliku) "Ko je naslikao delo „${d.naziv}”?" else "Ko je naslikao delo „${d.naziv}”$godina?", d.ponude, 0, d.pravac,
+        // Naziv koji odaje autora („Rubens i Izabela Brant…”) ne ide u pitanje (alati/slikari-iz-baze.py).
+        val tekst = d.pitanje.ifEmpty { if (imaSliku) "Ko je naslikao delo „${d.naziv}”?" else "Ko je naslikao delo „${d.naziv}”$godina?" }
+        Pitanje(d.id, tekst, d.ponude, 0, d.pravac,
             d.slika.ifEmpty { null }, (listOf(d.naziv, d.godina, d.muzej) + if (imaSliku) listOf("Slika: Wikimedia Commons") else emptyList()).filter { it.isNotEmpty() }.joinToString(" · "))
     }
 }
@@ -117,7 +121,44 @@ suspend fun dnevniIzazov(): List<Pitanje> {
     return p
 }
 
-class Spil(private val pitanja: List<Pitanje>) {
+/** Špil koji se vrti u krug kad se pitanja potroše (isto kao iOS Spil). */
+class Spil(pocetna: List<Pitanje>) {
+    private val pitanja = pocetna.toMutableList()
     private var indeks = 0
+    /** Svi ikad dodati (i oni izbačeni po temi), da dopuna ne vrati već viđeno pitanje. */
+    private val poznata = pocetna.map { it.id }.toMutableSet()
+    val prazan: Boolean get() = pitanja.isEmpty()
+    /** Koliko još neiskorišćenih pitanja ima pre nego što špil krene ispočetka. */
+    val ostalo: Int get() = maxOf(0, pitanja.size - indeks)
+
+    /** Dopuna novim paketom (duga partija troši stotine pitanja); vraća koliko je novih stiglo. */
+    fun dodaj(nova: List<Pitanje>): Int {
+        val sveza = nova.filter { poznata.add(it.id) }
+        pitanja += sveza
+        return sveza.size
+    }
+
     fun sledece(): Prikaz = Prikaz.od(pitanja[indeks++ % pitanja.size])
+
+    /** Teme (žanrovi) koje u ostatku špila imaju bar `najmanje` pitanja, najbrojnije prve. */
+    fun teme(najmanje: Int): List<String> {
+        val ostatak = if (pitanja.size > indeks) pitanja.subList(indeks, pitanja.size) else pitanja
+        return ostatak.mapNotNull { it.genre?.takeIf { g -> g != "Razno" } }.groupingBy { it }.eachCount()
+            .filter { it.value >= najmanje }.entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenByDescending { it.key }).map { it.key }
+    }
+
+    /** Sledeće pitanje iz teme (izbačeno iz reda, da se ne ponovi); null kad ga nema. */
+    fun sledece(tema: String): Prikaz? {
+        val i = (minOf(indeks, pitanja.size) until pitanja.size).firstOrNull { pitanja[it].genre == tema } ?: return null
+        return Prikaz.od(pitanja.removeAt(i))
+    }
+}
+
+/** Osvajanje: neviđena pitanja o jednom kontinentu (oznaka kontinent:<ime>); bez mreže prazno. */
+suspend fun PaketPitanja.kontinent(ime: String, broj: Int = 20): List<Pitanje> = withContext(Dispatchers.IO) {
+    runCatching {
+        Supabase.json.decodeFromString<List<Pitanje>>(Supabase.rpc("aplikacija_pitanja_kontinent", mapOf("p_kontinent" to ime, "p_broj" to broj),
+            runCatching { Supabase.tokenIgraca?.invoke() }.getOrNull()))
+            .filter { it.options.size == 4 && it.correct_answer in 0..3 }.shuffled()
+    }.getOrDefault(emptyList())
 }

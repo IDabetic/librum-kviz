@@ -18,11 +18,15 @@ struct DuelView: View {
         ZStack {
             Papir()
             if !sesija.prijavljen {
-                StanjeEkrana(maskota: .zig, naslov: "Duel traži nalog", tekst: "Rival mora da zna protiv koga igra. Prijava traje pola minuta.",
-                             dugme: "Prijavi se") { prijava = true }
-                    .padding(20).pop().padding(20)
-                    .overlay(alignment: .topLeading) { KrugDugme(ikonica: "chevron.left", opis: "Nazad") { zatvori() }.padding(16) }
-                    .frame(maxHeight: .infinity, alignment: .top)
+                // Nazad iznad kartice, ne preko njene ivice.
+                VStack(alignment: .leading, spacing: 12) {
+                    KrugDugme(ikonica: "chevron.left", opis: "Nazad") { zatvori() }
+                    StanjeEkrana(maskota: .zig, naslov: "Duel traži nalog", tekst: "Rival mora da zna protiv koga igra. Prijava traje pola minuta.",
+                                 dugme: "Prijavi se") { prijava = true }
+                        .padding(20).pop()
+                }
+                .padding(20)
+                .frame(maxHeight: .infinity, alignment: .top)
             } else if let model {
                 sadrzaj(model)
             }
@@ -56,10 +60,14 @@ struct DuelView: View {
         switch m.faza {
         case .lobi: DuelArena(model: m, zatvori: { zatvori() })
         case .trazenje: DuelTrazenje(model: m)
+        // Vlasnik 03.11: izlaz na svakom koraku Duela, i dok se pojavljuje rival.
         case .pronadjen: DuelVS(model: m, ime: sesija.nadimak ?? "Ti", nivo: napredak.nivo)
+            .overlay(alignment: .topLeading) { KrugDugme(ikonica: "xmark", opis: "Izađi iz meča") { potvrdaIzlaska = true }.padding(16) }
         case .cekanje: DuelSoba(model: m, zatvori: { zatvori() })
-        case .igra: DuelIgra(model: m, ime: sesija.nadimak ?? "Ti") { potvrdaIzlaska = true }
-        case .kraj: DuelKraj(model: m, novi: { model = DuelModel(sesija: sesija) }, zatvori: { zatvori() })
+        case .igra: DuelIgra(model: m, ime: sesija.nadimak ?? "Ti") { potvrdaIzlaska = true }.bezSvajpaNazad()
+        case .kraj: DuelKraj(model: m, novi: { model = DuelModel(sesija: sesija) }, revans: m.rivalId.map { id in
+            { let ime = m.rivalIme; let nov = DuelModel(sesija: sesija); model = nov; Task { await nov.izazovi(id, ime: ime) } }
+        }, zatvori: { zatvori() })
         }
     }
 }
@@ -353,7 +361,7 @@ private struct DuelIgra: View {
         ScrollView {
             VStack(spacing: 12) {
                 HStack {
-                    KrugDugme(ikonica: "flag", opis: "Predaj meč", radnja: predaj)
+                    KrugDugme(ikonica: "xmark", opis: "Izađi iz meča", radnja: predaj)
                     Spacer()
                 }
                 TimelineView(.periodic(from: .now, by: 1)) { _ in tabla }
@@ -501,6 +509,8 @@ private struct DuelPitanje: View {
 private struct DuelKraj: View {
     let model: DuelModel
     let novi: () -> Void
+    /// Vlasnik 03.11: revanš istom rivalu jednim dodirom (izazov, rival igra kad stigne).
+    var revans: (() -> Void)? = nil
     let zatvori: () -> Void
 
     private var pobeda: Bool { model.mojiPoeni > model.njegoviPoeni && !model.cekaRivala }
@@ -556,6 +566,9 @@ private struct DuelKraj: View {
                 statistika("+\(model.moji.count + 5)", "XP")
             }
             Spacer()
+            if let revans, !model.rivalOtisao {
+                Button(action: revans) { Label("Revanš: \(model.rivalIme)", systemImage: "arrow.triangle.2.circlepath") }.buttonStyle(.zuto)
+            }
             Button("Novi meč", action: novi).buttonStyle(.sekundarno)
             Button("Nazad", action: zatvori).buttonStyle(.primarno)
         }

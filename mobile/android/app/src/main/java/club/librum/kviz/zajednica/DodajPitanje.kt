@@ -42,22 +42,27 @@ import club.librum.kviz.ui.tekst
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
-private val VRSTE = listOf("pro" to "Opšte znanje", "book" to "Književnost", "vesanje" to "Reč za vešanje")
+// Vlasnik 04.11 (isto kao iOS): samo pitanje ili reč; sva pitanja idu u jedan (opšti) fond, bez izbora igre.
+private val VRSTE = listOf("pro" to "Pitanje", "vesanje" to "Reč za vešanje")
 private val KATEGORIJE_VESANJA = listOf("Sport", "Geografija", "Istorija", "Kultura", "Priroda", "Predmeti")
 
 @Serializable private data class OdgovorPredloga(val ok: Boolean, val greska: String? = null)
 
 /**
  * Predlog pitanja ili reči sa mog profila (RPC posalji_predlog, iste provere kao veb: duplikati, različiti odgovori, dnevni limit).
- * shortcut: nacrt se ne čuva na telefonu kao na iOS-u; dodati ako korisnici budu gubili započet unos.
+ * Nacrt ostaje na telefonu dok se ne pošalje (isto kao iOS).
  */
 @Composable
 fun DodajPitanjeEkran(sesija: Sesija, pocetna: String, nazad: () -> Unit) {
-    var vrsta by remember { mutableStateOf(pocetna) }
-    var pitanje by remember { mutableStateOf("") }
-    var tacan by remember { mutableStateOf("") }
-    var netacni by remember { mutableStateOf(listOf("", "", "")) }
-    var zanr by remember { mutableStateOf("") }
+    val prefs = androidx.compose.ui.platform.LocalContext.current.getSharedPreferences("nacrt_predloga", android.content.Context.MODE_PRIVATE)
+    var vrsta by remember { mutableStateOf(prefs.getString("vrsta", null) ?: if (pocetna == "vesanje") "vesanje" else "pro") }
+    var pitanje by remember { mutableStateOf(prefs.getString("pitanje", "").orEmpty()) }
+    var tacan by remember { mutableStateOf(prefs.getString("tacan", "").orEmpty()) }
+    var netacni by remember { mutableStateOf((prefs.getString("netacni", null)?.split("\u0001") ?: listOf("", "", "")).let { if (it.size == 3) it else listOf("", "", "") }) }
+    var zanr by remember { mutableStateOf(prefs.getString("zanr", "").orEmpty()) }
+    fun sacuvajNacrt() = prefs.edit().putString("vrsta", vrsta).putString("pitanje", pitanje).putString("tacan", tacan)
+        .putString("netacni", netacni.joinToString("\u0001")).putString("zanr", zanr).apply()
+    fun obrisiNacrt() = prefs.edit().clear().apply()
     var poruka by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
     var salje by remember { mutableStateOf(false) }
     val opseg = rememberCoroutineScope()
@@ -106,11 +111,14 @@ fun DodajPitanjeEkran(sesija: Sesija, pocetna: String, nazad: () -> Unit) {
                             "p_zanr" to if (vrsta == "pro") null else zanr.ifBlank { "Razno" },
                         ), t))
                     }.onSuccess { r ->
-                        if (r.ok) { poruka = true to "Poslato. Hvala! Predlog čeka urednika."; pitanje = ""; tacan = ""; netacni = listOf("", "", "") }
+                        if (r.ok) { poruka = true to "Poslato. Hvala! Predlog čeka urednika."; pitanje = ""; tacan = ""; netacni = listOf("", "", ""); obrisiNacrt() }
                         else poruka = false to (r.greska ?: "Predlog nije prihvaćen.")
                     }.onFailure { poruka = false to (it.message ?: "Slanje nije uspelo.") }
                     salje = false
                 }
+            }
+            Dugme("Sačuvaj nacrt", vrsta = club.librum.kviz.ui.VrstaDugmeta.SEKUNDARNO, omoguceno = pitanje.isNotBlank() || tacan.isNotBlank() || netacni.any { it.isNotBlank() }) {
+                sacuvajNacrt(); poruka = true to "Nacrt je sačuvan na telefonu."
             }
             Spacer(Modifier.height(40.dp))
         }

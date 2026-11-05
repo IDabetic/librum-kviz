@@ -9,6 +9,10 @@ struct BrziKviz: Equatable {
     static let sekundiPoIzjavi = 10
     static let poenaTacno = 10
     static let poenaNetacno = 5
+    /// Vlasnik 03.11: niz tačnih množi poene (×2 od 3 zaredom, ×3 od 6), a poslednjih 10 sekundi runde vredi duplo.
+    static let nizZaDuplo = 3
+    static let nizZaTrostruko = 6
+    static let sekundiZavrsnice = 10
 
     struct Izjava: Equatable {
         let pitanje: String
@@ -34,11 +38,20 @@ struct BrziKviz: Equatable {
     var poeni = 0
     var tacnih = 0
     var netacnih = 0
+    var niz = 0
 
-    /// `kaze` je igračev odgovor („tačno” = true); vraća da li je pogodio.
-    mutating func odgovor(_ izjava: Izjava, kaze: Bool?) -> Bool {
+    /// Množilac za sledeći tačan odgovor (prema nizu pre njega).
+    var mnozilac: Int { niz >= Self.nizZaTrostruko ? 3 : niz >= Self.nizZaDuplo ? 2 : 1 }
+
+    /// `kaze` je igračev odgovor („tačno” = true); `zavrsnica` = poslednjih 10 s runde. Vraća da li je pogodio.
+    mutating func odgovor(_ izjava: Izjava, kaze: Bool?, zavrsnica: Bool = false) -> Bool {
         let pogodio = kaze == izjava.jeTacno
-        if pogodio { poeni += Self.poenaTacno; tacnih += 1 } else { poeni = max(0, poeni - Self.poenaNetacno); netacnih += 1 }
+        if pogodio {
+            poeni += Self.poenaTacno * mnozilac * (zavrsnica ? 2 : 1)
+            tacnih += 1; niz += 1
+        } else {
+            poeni = max(0, poeni - Self.poenaNetacno); netacnih += 1; niz = 0
+        }
         return pogodio
     }
 

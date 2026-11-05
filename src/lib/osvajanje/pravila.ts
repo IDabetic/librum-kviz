@@ -161,7 +161,7 @@ export function napraviPartiju(opcije: {
   const igraci: Igrac[] = []
   const spisak = opcije.igraci ?? IGRACI_PODRAZUMEVANO
   for (const p of spisak) {
-    const tim = ('tim' in p && p.tim) || p.id
+    const tim: string = ('tim' in p && typeof p.tim === 'string' && p.tim) || p.id
     const kontinent = opcije.pocetak?.[tim]
     const slobodna = (o: Oblast) => susedi(o.id).length >= 3 && oblasti[o.id].vlasnik === null
     // Prestonica: na izabranom kontinentu, inače u regionu koji niko drugi nema; država sa

@@ -15,10 +15,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +38,9 @@ import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.GpsFixed
+import androidx.compose.material.icons.rounded.PauseCircle
+import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -99,13 +104,18 @@ private val MASKOTE = listOf(Maskota.BLOOP, Maskota.MIMI, Maskota.ZIG, Maskota.L
 
 /** Uvod: ceo svet (server sam spaja igrače) ili jedan kontinent (računar odmah ili 1 na 1). */
 @Composable
-fun OsvajanjeUvod(ime: String?, pokreni: (OsvajanjePostavka) -> Unit) {
+fun OsvajanjeUvod(ime: String?, pozovi: (OsvajanjePostavka) -> Unit = {}, kodom: (String) -> Unit = {}, pokreni: (OsvajanjePostavka) -> Unit) {
     var teren by remember { mutableStateOf<String?>(null) }
     var protivRacunara by remember { mutableStateOf(true) }
     var nacin by remember { mutableStateOf(OsvajanjePostavka.Nacin.SVAKO_ZA_SEBE) }
     var igraca by remember { mutableIntStateOf(3) }
     var krugova by remember { mutableIntStateOf(12) }
     var tezina by remember { mutableStateOf(Tezina.NORMALNO) }
+    val ctx = LocalContext.current
+    val podesavanja = remember { ctx.getSharedPreferences("osvajanje", android.content.Context.MODE_PRIVATE) }
+    var vojska by remember { mutableStateOf(VrstaVojske.entries.firstOrNull { it.name == podesavanja.getString("vojska", null) } ?: VrstaVojske.LEGIJA) }
+    // Vlasnik 03.11: sa šestoro 12 krugova nije dovoljno za misiju; dužina prati broj igrača, a može se promeniti.
+    LaunchedEffect(igraca) { krugova = if (igraca >= 5) 30 else if (igraca == 4) 20 else 12 }
     Box(Modifier.fillMaxSize()) {
         Papir()
         Column(
@@ -146,19 +156,81 @@ fun OsvajanjeUvod(ime: String?, pokreni: (OsvajanjePostavka) -> Unit) {
                     Izbor(nacin.brojevi.map { "$it" }, nacin.brojevi.indexOf(igraca)) { igraca = nacin.brojevi[it] }
                 }
             }
+            Text("Tvoja vojska", style = tekst(15.sp, FontWeight.Bold))
+            Text("Svaka vojska igra drugačije. Rivali biraju svoju prema naravi.", style = tekst(13.sp, FontWeight.Normal, Boje.sivaTekst))
+            VrstaVojske.entries.chunked(2).forEach { red ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    red.forEach { v ->
+                        KarticaVojske(v, v == vojska, Modifier.weight(1f)) { vojska = v; podesavanja.edit().putString("vojska", v.name).apply() }
+                    }
+                }
+            }
             Text("Dužina", style = tekst(15.sp, FontWeight.Bold))
-            Izbor(listOf("8 krugova", "12 krugova"), if (krugova == 8) 0 else 1) { krugova = if (it == 0) 8 else 12 }
+            val duzine = listOf(12, 20, 30)
+            Izbor(duzine.map { "$it krugova" }, duzine.indexOf(krugova).coerceAtLeast(0)) { krugova = duzine[it] }
+            Text(if (krugova >= 30) "Duga partija: ima vremena za misiju i sa šestoro." else if (krugova >= 20) "Srednja partija." else "Kratka partija: misije su teško dostižne sa više od troje.",
+                style = tekst(13.sp, FontWeight.Normal, Boje.sivaTekst))
             Text(if (izabran != null && protivRacunara) "Jačina računara" else "Jačina botova na praznim mestima", style = tekst(15.sp, FontWeight.Bold))
             Izbor(Tezina.entries.map { it.ime }, Tezina.entries.indexOf(tezina)) { tezina = Tezina.entries[it] }
             Dugme("Igraj") {
                 val n = if (izabran == null) nacin else OsvajanjePostavka.Nacin.JEDAN_NA_JEDAN
                 val broj = if (izabran == null) igraca else 2
-                pokreni(OsvajanjePostavka(n, broj, krugova, tezina, OsvajanjePostavka.mesta(n, broj, ime ?: "Ti"),
+                pokreni(OsvajanjePostavka(n, broj, krugova, tezina, OsvajanjePostavka.mesta(n, broj, ime ?: "Ti", vojska),
                     teren = izabran, traziIgrace = !(izabran != null && protivRacunara)))
+            }
+            // Partija na poziv (kao iOS): privatna soba sa kodom za prijatelje, ili ulazak kodom.
+            Dugme("Pozovi prijatelje", vrsta = VrstaDugmeta.SEKUNDARNO) {
+                val n = if (izabran == null) nacin else OsvajanjePostavka.Nacin.JEDAN_NA_JEDAN
+                val broj = if (izabran == null) igraca else 2
+                pozovi(OsvajanjePostavka(n, broj, krugova, tezina, OsvajanjePostavka.mesta(n, broj, ime ?: "Ti", vojska), teren = izabran))
+            }
+            var kod by remember { mutableStateOf("") }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                androidx.compose.foundation.text.BasicTextField(kod, { kod = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(6) },
+                    Modifier.weight(1f).background(Boje.kartica, RoundedCornerShape(14.dp)).border(1.5.dp, Boje.mastilo, RoundedCornerShape(14.dp)).padding(14.dp)
+                        .semantics { contentDescription = "Kod sobe" },
+                    textStyle = tekst(16.sp, FontWeight.Bold), singleLine = true,
+                    decorationBox = { polje -> if (kod.isEmpty()) Text("Imam kod", style = tekst(16.sp, FontWeight.Normal, Boje.sivaTekst)); polje() })
+                Dugme("Uđi", Modifier.weight(0.5f), omoguceno = kod.length == 6) { kodom(kod) }
             }
             Spacer(Modifier.height(60.dp))
         }
     }
+}
+
+/** Lik vojske (drawable heroj_*, isti likovi kao iOS Heroj_*). */
+@Composable
+fun HerojSlika(v: VrstaVojske, modifier: Modifier = Modifier) {
+    val ctx = LocalContext.current
+    val id = remember(v) { ctx.resources.getIdentifier(v.heroj, "drawable", ctx.packageName) }
+    if (id != 0) androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(id), null, modifier, contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+}
+
+@Composable
+private fun KarticaVojske(v: VrstaVojske, izabrana: Boolean, modifier: Modifier, radnja: () -> Unit) {
+    Column(
+        modifier.heightIn(min = 112.dp).clip(RoundedCornerShape(16.dp)).background(Boje.kartica)
+            .border(if (izabrana) 2.5.dp else 1.5.dp, if (izabrana) Boje.mastilo else Boje.kremTamnija, RoundedCornerShape(16.dp))
+            .clickable(onClick = radnja).padding(10.dp).semantics { contentDescription = v.naziv + if (izabrana) ", izabrano" else "" },
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(Modifier.size(46.dp, 58.dp).background(if (izabrana) Boje.zuta else Boje.udubljeno, RoundedCornerShape(10.dp)).padding(3.dp)) { HerojSlika(v, Modifier.fillMaxSize()) }
+            Text(v.naziv, style = tekst(15.sp, FontWeight.Bold))
+        }
+        Text(v.strategija, style = tekst(12.sp, FontWeight.Normal, Boje.sivaTekst))
+        Text("Moć: ${v.moc.naziv}", style = tekst(12.sp, FontWeight.Bold, Boje.teal), modifier = Modifier.semantics { contentDescription = "Moć u bitki: ${v.moc.naziv}. ${v.moc.opis}" })
+    }
+}
+
+/** Okruglo dugme sa ikonicom (radnje su ikonice, natpis je u pristupačnosti). */
+@Composable
+private fun IkonicaDugme(ikonica: ImageVector, opis: String, aktivno: Boolean, radnja: () -> Unit) {
+    Box(
+        Modifier.size(44.dp).background(if (aktivno) Boje.zuta else Boje.kartica, CircleShape).border(1.5.dp, Boje.mastilo, CircleShape)
+            .clickable(onClick = radnja).semantics { contentDescription = opis },
+        contentAlignment = Alignment.Center,
+    ) { Icon(ikonica, null, tint = if (aktivno) Boje.tinta else Boje.mastilo) }
 }
 
 @Composable
@@ -182,14 +254,14 @@ private fun RedIzbora(ikonica: ImageVector, naslovReda: String, opis: String, iz
 
 /** Tok posle uvoda: spajanje igrača (server), izbor kontinenata za ceo svet, pa partija. */
 @Composable
-fun OsvajanjeTokEkran(sesija: Sesija, izadji: () -> Unit) {
+fun OsvajanjeTokEkran(sesija: Sesija, izadji: () -> Unit, pocetak: () -> Unit = izadji) {
     var postavka by remember { mutableStateOf(OsvajanjeTok.postavka) }
     var korak by remember { mutableStateOf(if (postavka?.traziIgrace == true) 0 else if (postavka?.teren == null) 1 else 2) }
     val p = postavka ?: run { izadji(); return }
     when (korak) {
         0 -> Cekaonica(sesija, p, odustani = izadji) { nova -> postavka = nova; korak = if (nova.teren == null && nova.soba == null) 1 else 2 }
         1 -> IzborKontinenata(p, izadji) { nova -> postavka = nova; korak = 2 }
-        else -> OsvajanjeIgra(p, sesija, izadji)
+        else -> OsvajanjeIgra(p, sesija, izadji, pocetak)
     }
 }
 
@@ -320,10 +392,10 @@ private fun KrugIzlaz(radnja: () -> Unit) {
 
 /** Partija: igrači gore, mapa u sredini, uputstvo i radnje dole, bitka preko svega. */
 @Composable
-fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: () -> Unit) {
+fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: () -> Unit, pocetak: () -> Unit = izadji, nastavak: OsvajanjeModel.Nastavak? = null) {
     val kontekst = LocalContext.current.applicationContext
-    val model: OsvajanjeModel = viewModel(key = "osvajanje-${postavka.hashCode()}") {
-        OsvajanjeModel(postavka.krugova, postavka.tezina, null, PaketPitanja(kontekst), postavka, sesija)
+    val model: OsvajanjeModel = viewModel(key = "osvajanje-${postavka.hashCode()}-${nastavak != null}") {
+        OsvajanjeModel(postavka.krugova, postavka.tezina, null, PaketPitanja(kontekst), postavka, sesija, kontekst, nastavak)
     }
     var potvrdaIzlaska by remember { mutableStateOf(false) }
     var misija by remember { mutableStateOf(false) }
@@ -336,6 +408,7 @@ fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: (
     LaunchedEffect(model.spremno, model.cekaPocetak) {
         if (!model.spremno || model.cekaPocetak || videoMisiju) return@LaunchedEffect
         videoMisiju = true
+        if (model.nastavljena) { model.javi("Nastavljamo partiju"); return@LaunchedEffect }
         // Na jednom kontinentu nema tajne misije: cilj je ceo kontinent, partija kreće odmah.
         if (postavka.teren == null) misija = true else { model.pocniPostavljanje(); model.javi("Cilj: osvoji ceo kontinent") }
     }
@@ -374,8 +447,25 @@ fun OsvajanjeIgra(postavka: OsvajanjePostavka, sesija: Sesija? = null, izadji: (
         AnimatedVisibility(model.bitka != null, enter = fadeIn(), exit = fadeOut()) {
             model.bitka?.let { BitkaEkran(model, it) }
         }
+        model.izdajaZa?.let { id ->
+            Dijalog("Izdaješ saveznika?", "Napad na ${Mapa.oblast(id).ime} prekida savez. Gubiš sve karte, a svi vide da si izdao.", "Izdaj", "Odustani",
+                potvrdi = model::potvrdiIzdaju, zatvori = model::odustaniOdIzdaje)
+        }
         if (misija) MisijaList(model) { misija = false; model.pocniPostavljanje() }
-        if (model.stanje.faza == Faza.KRAJ) Kraj(model, izadji)
+        // Traka „Krug N od M” pri promeni kruga (kao iOS banerKruga).
+        var banerKrug by remember { mutableIntStateOf(0) }
+        val krugSada = model.stanje.krug
+        LaunchedEffect(krugSada) {
+            if (krugSada <= 1 || model.stanje.faza == Faza.KRAJ) return@LaunchedEffect
+            banerKrug = krugSada; delay(1600); banerKrug = 0
+        }
+        AnimatedVisibility(banerKrug > 0, Modifier.align(Alignment.Center), enter = fadeIn(), exit = fadeOut()) {
+            Column(Modifier.fillMaxWidth().background(Boje.zuta).border(3.dp, Boje.tinta).padding(vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Krug $banerKrug", style = naslov(40.sp, Boje.tinta))
+                Text("od ${model.stanje.ukupnoKrugova}", style = tekst(14.sp, FontWeight.Bold, Boje.tinta))
+            }
+        }
+        if (model.stanje.faza == Faza.KRAJ) Kraj(model, pocetak)
         if (potvrdaIzlaska) Dijalog("Napuštaš partiju?", "Partija se ne čuva.", "Izađi", "Ostani", potvrdi = izadji, zatvori = { potvrdaIzlaska = false })
     }
 }
@@ -394,11 +484,12 @@ private fun Igra(model: OsvajanjeModel, otvoriMisiju: () -> Unit, izlaz: () -> U
                 }
             }
         }
-        Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            s.igraci.take(4).forEachIndexed { i, p ->
+        var porukaZa by remember { mutableStateOf<Igrac?>(null) }
+        Row(Modifier.padding(horizontal = 16.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            s.igraci.forEachIndexed { i, p ->
                 val naPotezu = p.id == s.trenutni.id && s.faza != Faza.KRAJ
                 Row(
-                    Modifier.weight(1f).alpha(if (p.ispao) 0.4f else 1f)
+                    Modifier.alpha(if (p.ispao) 0.4f else 1f).clickable(enabled = !p.covek && s.faza != Faza.KRAJ) { porukaZa = p }
                         .background(Boje.kartica, RoundedCornerShape(14.dp))
                         .border(if (naPotezu) 2.5.dp else 1.5.dp, if (naPotezu) Boje.mastilo else Boje.kremTamnija, RoundedCornerShape(14.dp))
                         .padding(6.dp)
@@ -409,9 +500,24 @@ private fun Igra(model: OsvajanjeModel, otvoriMisiju: () -> Unit, izlaz: () -> U
                         MaskotaSlika(MASKOTE[i % MASKOTE.size], 30.dp)
                     }
                     Column {
-                        Text(p.ime, style = tekst(12.sp, FontWeight.Bold), maxLines = 1)
+                        val savez = model.mojTim?.let { s.uSavezu(it, p.tim) } == true
+                        Text(p.ime + (if (savez) " · savez" else "") + (if (s.jeIzdajnik(p.tim)) " · izdajnik" else ""), style = tekst(12.sp, FontWeight.Bold), maxLines = 1)
                         Text("${s.poeni(p.id)}", style = naslov(16.sp))
+                        s.svezaPoruka(p.id)?.let { Text("„$it”", style = tekst(11.sp, FontWeight.Bold, Boje.teal), maxLines = 1) }
                     }
+                }
+            }
+        }
+        porukaZa?.let { za ->
+            DonjiList({ porukaZa = null }) {
+                Text(za.ime, style = naslov(26.sp))
+                Text("Brza poruka; „Savez?” je i predlog saveza do kraja sledećeg kruga.", style = tekst(13.sp, FontWeight.Normal, Boje.sivaTekst))
+                BrzaPoruka.ponuda.forEach { tekstPoruke ->
+                    RedIzbora(Icons.Rounded.People, tekstPoruke, "", false) { model.posaljiPoruku(tekstPoruke, za); porukaZa = null }
+                }
+                val mojT = model.mojTim
+                if (mojT != null && s.uSavezu(mojT, za.tim)) model.mojeKarte.distinct().forEach { k ->
+                    RedIzbora(Icons.Rounded.Shield, "Razmeni: ${k.naziv}", "Saveznik vraća kartu koju nemaš.", false) { model.razmeniKartu(k, za); porukaZa = null }
                 }
             }
         }
@@ -422,7 +528,7 @@ private fun Igra(model: OsvajanjeModel, otvoriMisiju: () -> Unit, izlaz: () -> U
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Icon(Icons.Rounded.Flag, contentDescription = "Tajna misija", tint = Boje.tinta)
-                Text(Misije.tekst(s.misije[t]), style = tekst(13.sp, FontWeight.SemiBold, Boje.tinta), maxLines = 1, modifier = Modifier.weight(1f))
+                Text(s.tekstMisije(s.misije[t]), style = tekst(13.sp, FontWeight.SemiBold, Boje.tinta), maxLines = 1, modifier = Modifier.weight(1f))
                 Text("${(s.napredakMisije(t) * 100).toInt()}%", style = tekst(13.sp, FontWeight.Bold, Boje.tinta))
             }
         }
@@ -443,8 +549,11 @@ private fun Igra(model: OsvajanjeModel, otvoriMisiju: () -> Unit, izlaz: () -> U
                 }
             }
         }
-        MapaPrikaz(s, model.izabrana, model.mete, model.izabrana ?: s.igraci.firstOrNull { it.covek }?.prestonica,
-            model::dodir, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp), meta = model.meta, izvori = model.izvori)
+        // Kamera prati bitke i poteze botova, ali ne igračev dodir (inače mapa skače pri maršu) — kao iOS.
+        val pocetni = remember { s.igraci.firstOrNull { it.covek }?.prestonica }
+        MapaPrikaz(s, model.izabrana, model.mete, (if (model.covekNaPotezu) null else model.izabrana) ?: pocetni,
+            model::dodir, Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp), meta = model.meta, izvori = model.izvori, magla = model.magla,
+            udar = model.udar, iskoci = model.iskoci, zatvoreni = model.zatvoreni)
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp).fillMaxWidth().mirna().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             run {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -469,8 +578,17 @@ private fun Igra(model: OsvajanjeModel, otvoriMisiju: () -> Unit, izlaz: () -> U
                 if (model.covekNaPotezu && s.faza == Faza.RASPORED) Dugme("Rasporedi sam", vrsta = VrstaDugmeta.SEKUNDARNO, radnja = model::rasporediSam)
                 if (model.covekNaPotezu && s.faza == Faza.NAPAD) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        if (!s.utvrdjeno) Dugme(if (model.utvrdjivanje) "Odustani" else "Utvrdi", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO, radnja = model::prekidacUtvrdjivanja)
+                        if (!s.utvrdjeno) Dugme(if (model.utvrdjivanje) "Odustani" else "Marš", Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO, radnja = model::prekidacUtvrdjivanja)
                         Dugme("Kraj poteza", Modifier.weight(1f), radnja = model::krajPoteza)
+                    }
+                    // Pohod i ratne karte sa mape: samo ikonice (natpis je u pristupačnosti).
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (model.mojPohod == null) IkonicaDugme(Icons.Rounded.Flag, if (model.biraPohod) "Odustani od pohoda" else "Najavi pohod", model.biraPohod, model::prekidacPohoda)
+                        else Text("Pohod: ${Mapa.regioni.firstOrNull { it.id == model.mojPohod }?.ime.orEmpty()}", style = tekst(12.sp, FontWeight.Bold, Boje.teal))
+                        model.mojeKarte.filter { it.naMapi }.distinct().forEach { k ->
+                            IkonicaDugme(if (k == Karta.POJACANJE) Icons.Rounded.Groups else Icons.Rounded.Shield, "${k.naziv}: ${k.opis}", false) { model.igrajKartuNaMapi(k) }
+                        }
+                        if (model.mojeKarte.isNotEmpty()) Text("Karte: ${model.mojeKarte.size}", style = tekst(12.sp, FontWeight.Bold, Boje.sivaTekst))
                     }
                 }
             }
@@ -503,6 +621,15 @@ private fun PanelNapada(model: OsvajanjeModel, izvor: String, meta: String) {
     RedDrzave("Napadaš iz", Mapa.oblast(izvor).ime, vojski(s.oblasti[izvor]?.vojske ?: 0), Color(s.trenutni.boja))
     RedDrzave("Brani", vlasnik?.ime ?: "Niko (prazno polje)", vojski(cilj?.vojske ?: 0), vlasnik?.let { Color(it.boja) } ?: Boje.kremTamnija)
     s.odbranaMete(meta)?.let { Text("Odbrana: ${it.naziv}", style = tekst(13.sp, FontWeight.Bold, Boje.crvena)) }
+    Teren.opis(izvor, meta)?.let { Text(it, style = tekst(13.sp, FontWeight.SemiBold, Boje.sivaTekst)) }
+    if (vlasnik != null) {
+        val pomak = s.pomakBitke(izvor, meta)
+        if (pomak != 0) Text(if (pomak > 0) "Prednost: +$pomak tačna za tebe" else "Prednost braniocu: ${-pomak}", style = tekst(13.sp, FontWeight.Bold, if (pomak > 0) Boje.teal else Boje.crvena))
+        Text("Ulog", style = tekst(14.sp, FontWeight.Bold))
+        Izbor(listOf("Bez uloga", "+1", "+2"), model.ulog) { model.ulog = it }
+        Text("Ulog duplira dobitak i gubitak vojske.", style = tekst(12.sp, FontWeight.Normal, Boje.sivaTekst))
+        if (s.snaga(vlasnik.tim) < s.snaga(s.trenutni.tim)) Dugme("Ultimatum: predaj ${Mapa.oblast(meta).ime}", vrsta = VrstaDugmeta.SEKUNDARNO) { model.ultimatum(meta) }
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(if (vlasnik == null) Icons.Rounded.Flag else Icons.Rounded.Warning, null, tint = if (vlasnik == null) Boje.sivaTekst else Boje.crvena)
         Text(
@@ -540,12 +667,31 @@ private fun BitkaEkran(model: OsvajanjeModel, b: OsvajanjeModel.Bitka) {
         ) {
             when (b.korak) {
                 OsvajanjeModel.Bitka.Korak.UVOD -> {
-                    var odbrojavanje by remember(b.id) { mutableIntStateOf(4) }
+                    // Kad napadač bira temu, uvod traje duže (vreme za izbor), inače kratko odbrojavanje.
+                    val trajanje = if (b.teme.isNotEmpty()) 10 else 4
+                    var odbrojavanje by remember(b.id) { mutableIntStateOf(trajanje) }
                     LaunchedEffect(b.id) {
                         Zvuk.pusti(Zvuk.Vrsta.ODBROJAVANJE, 0.4f)
-                        for (i in 3 downTo 0) { delay(1000); odbrojavanje = i }
+                        for (i in trajanje - 1 downTo 0) { delay(1000); odbrojavanje = i }
                         delay(400)
                         model.pocniPitanja()
+                    }
+                    // VS: moja vojska protiv branioca (prazno polje = zamak), kao iOS.
+                    val s = model.stanje
+                    val ja = model.mojaVojska
+                    val rivalTim = if (b.napadam) s.oblasti[b.kuda]?.vlasnik else s.trenutni.tim
+                    val rivalVojska = rivalTim?.let { s.vojskaTima(it) }
+                    Row(Modifier.fillMaxWidth().pop(Boje.kartica, 26.dp).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (ja != null) HerojSlika(ja, Modifier.size(70.dp, 92.dp))
+                            Text("Ti", style = tekst(13.sp, FontWeight.Bold))
+                        }
+                        Text("VS", style = naslov(34.sp, Boje.roze))
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (rivalVojska != null) HerojSlika(rivalVojska, Modifier.size(70.dp, 92.dp))
+                            else androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(club.librum.kviz.R.drawable.osvajanje_zamak), null, Modifier.size(80.dp))
+                            Text(b.rivalIme, style = tekst(13.sp, FontWeight.Bold), maxLines = 1)
+                        }
                     }
                     Column(Modifier.fillMaxWidth().pop(Boje.kartica, 26.dp).padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Oznaka(if (b.napadam) "Napadaš" else "Braniš")
@@ -556,6 +702,18 @@ private fun BitkaEkran(model: OsvajanjeModel, b: OsvajanjeModel.Bitka) {
                         model.stanje.odbranaMete(b.kuda)?.let { Text("Odbrana: ${it.naziv}. ${it.opis}", style = tekst(14.sp, FontWeight.Bold, Boje.crvena)) }
                         Text(if (b.uslov.pitanja > 1) "${b.uslov.pitanja} pitanja po ${b.uslov.sekundi} s. Više tačnih osvaja; kad je isto, brži."
                             else "Jedno pitanje od ${b.uslov.sekundi} s. Tačno osvaja neutralnu državu.", style = tekst(14.sp, boja = Boje.sivaTekst))
+                        Teren.opis(b.odakle, b.kuda)?.let { Text(it, style = tekst(13.sp, FontWeight.SemiBold, Boje.sivaTekst)) }
+                        if (b.pomak != 0) Text(if ((b.pomak > 0) == b.napadam) "Prednost: +${kotlin.math.abs(b.pomak)} tačna za tebe" else "Prednost protivniku: ${kotlin.math.abs(b.pomak)}",
+                            style = tekst(13.sp, FontWeight.Bold, if ((b.pomak > 0) == b.napadam) Boje.teal else Boje.crvena))
+                        if (b.teme.isNotEmpty()) {
+                            Text("Izaberi temu pitanja", style = tekst(14.sp, FontWeight.Bold))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                b.teme.forEach { t ->
+                                    Dugme(t, Modifier.weight(1f), if (b.tema == t) VrstaDugmeta.PRIMARNO else VrstaDugmeta.SEKUNDARNO) { model.izaberiTemu(t) }
+                                }
+                            }
+                        }
+                        KarteUBitci(model, b)
                         Box(Modifier.align(Alignment.CenterHorizontally).size(120.dp).background(Boje.zuta, CircleShape).border(3.dp, Boje.mastilo, CircleShape)
                             .semantics { contentDescription = "Počinje za $odbrojavanje" }, contentAlignment = Alignment.Center) {
                             Text(if (odbrojavanje > 0) "$odbrojavanje" else "Kreni!", style = naslov(if (odbrojavanje > 0) 54.sp else 26.sp, Boje.tinta))
@@ -571,32 +729,47 @@ private fun BitkaEkran(model: OsvajanjeModel, b: OsvajanjeModel.Bitka) {
                         Text("Tačno ${b.tacnih} od ${b.redni}", style = tekst(14.sp, FontWeight.Bold, Color.White))
                     }
                     key(b.id, b.redni, b.zamena) {
-                        PitanjeKartica(if (b.prikazi.size > 1) "Pitanje ${b.redni + 1} od ${b.prikazi.size}" else "Bitka", p, b.uslov.sekundi + dodatno, eliminisani = eliminisani) { izabran, ms ->
+                        PitanjeKartica(if (b.prikazi.size > 1) "Pitanje ${b.redni + 1} od ${b.prikazi.size}" else "Bitka", p, b.uslov.sekundi + dodatno, eliminisani = eliminisani, stoji = b.satStoji) { izabran, ms ->
                             model.odgovorUBitci(izabran, ms)
                         }
+                    }
+                    // Vlasnik 03.11: Špijun služi da vidiš odgovor na prvo pitanje bitke.
+                    if (b.spijun && b.redni == 0 && p.tacan in p.opcije.indices) {
+                        Text("Špijun: tačan odgovor je „${p.opcije[p.tacan]}”", style = tekst(14.sp, FontWeight.Bold, Color.White))
                     }
                     if (b.uslov.bezPomoci) {
                         Text("Odbrana „Bez pomoći”: ovde ne možeš da koristiš pomoć.", style = tekst(13.sp, FontWeight.SemiBold, Color.White))
                     } else {
-                        val iskoriscena = model.pomocIskoriscena
-                        fun netacni() = (0..3).filter { it != p.tacan && it !in eliminisani }
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                            PomocDugme(IkonicaPolaPola, "50/50", "polaPola", iskoriscena, eliminisani.isEmpty(), Modifier.weight(1f)) {
-                                model.pomocIskoriscena = true; eliminisani = netacni().shuffled().take(2).toSet()
-                            }
-                            PomocDugme(Icons.Rounded.Lightbulb, "Nagoveštaj", "nagovestaj", iskoriscena, modifier = Modifier.weight(1f)) {
-                                model.pomocIskoriscena = true; netacni().randomOrNull()?.let { eliminisani = eliminisani + it }
-                            }
-                            PomocDugme(Icons.Rounded.Timer, "Dodatno vreme", "vreme", iskoriscena, modifier = Modifier.weight(1f)) {
-                                model.pomocIskoriscena = true; dodatno += 10
-                            }
-                            PomocDugme(Icons.Rounded.SkipNext, "Preskok", "preskok", iskoriscena, modifier = Modifier.weight(1f)) {
-                                model.pomocIskoriscena = true; model.zameniPitanje()
+                        // Pomoći vojske: svoja moć vojske i dve iste za sve, svaka jednom po krugu (umesto dnevnih pomoći).
+                        val vojska = model.mojaVojska
+                        val t = model.mojTim
+                        fun netacni() = p.opcije.indices.filter { it != p.tacan && it !in eliminisani }
+                        if (vojska != null && t != null) Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                            vojska.pomoci.forEach { pv ->
+                                val iskoriscena = model.stanje.iskoriscenaPomoc(t, pv)
+                                val ikonica = when (pv.dejstvo) {
+                                    Dejstvo.PolaPola -> IkonicaPolaPola; Dejstvo.TacanOdgovor -> Icons.Rounded.Verified; is Dejstvo.Vreme -> Icons.Rounded.Timer
+                                    Dejstvo.SatStoji -> Icons.Rounded.PauseCircle; Dejstvo.Siguran -> Icons.Rounded.GpsFixed
+                                    Dejstvo.Zamena -> Icons.Rounded.SkipNext; Dejstvo.Dvostruko -> Icons.Rounded.Flag; Dejstvo.Stit -> Icons.Rounded.Shield
+                                }
+                                val aktivnaMoc = when (pv.dejstvo) { Dejstvo.Stit -> b.stit; Dejstvo.Dvostruko -> b.dvostruko; Dejstvo.Siguran -> b.siguran; Dejstvo.SatStoji -> b.satStoji; else -> false }
+                                val moze = !iskoriscena && (pv.dejstvo != Dejstvo.Dvostruko || (b.napadam && b.prikazi.size > 1))
+                                PomocVojskeDugme(ikonica, pv, moze, aktivnaMoc, Modifier.weight(1f)) {
+                                    when (val d = model.iskoristiPomocVojske(pv)) {
+                                        Dejstvo.PolaPola -> eliminisani = eliminisani + netacni().shuffled().take(2)
+                                        Dejstvo.TacanOdgovor -> eliminisani = eliminisani + netacni()
+                                        is Dejstvo.Vreme -> dodatno += d.sekundi
+                                        else -> Unit
+                                    }
+                                }
                             }
                         }
-                        Text(if (iskoriscena) "Pomoć je iskorišćena u ovoj partiji." else "Jedna pomoć po partiji, iz dnevnog fonda.",
-                            style = tekst(12.sp, FontWeight.SemiBold, Color.White))
+                        val aktivna = vojska?.moc?.takeIf { when (it.dejstvo) { Dejstvo.Stit -> b.stit; Dejstvo.Dvostruko -> b.dvostruko; Dejstvo.Siguran -> b.siguran; Dejstvo.SatStoji -> b.satStoji; else -> false } }
+                        Text(aktivna?.let { "${it.naziv} je aktivan: ${it.opis.replaceFirstChar(Char::lowercase)}" }
+                            ?: "${vojska?.moc?.naziv.orEmpty()} je moć vojske ${vojska?.naziv.orEmpty()}; svaka pomoć jednom po krugu.", style = tekst(12.sp, FontWeight.SemiBold, Color.White))
                     }
+                    KarteUBitci(model, b)
+                    if (model.mozePovlacenje) Dugme("Povuci se (vojska ostaje, potez je gotov)", vrsta = VrstaDugmeta.SEKUNDARNO, radnja = model::povuciSe)
                 }
                 OsvajanjeModel.Bitka.Korak.REZULTAT -> {
                     val ishod = b.ishod
@@ -607,14 +780,14 @@ private fun BitkaEkran(model: OsvajanjeModel, b: OsvajanjeModel.Bitka) {
                         }
                     } else {
                         val pobedio = if (b.napadam) ishod.osvojeno else !ishod.osvojeno
-                        LaunchedEffect(b.id) { Zvuk.pusti(if (pobedio) Zvuk.Vrsta.OSVOJENO else Zvuk.Vrsta.NETACNO, 0.45f) }
+                        LaunchedEffect(b.id) { Zvuk.pusti(if (ishod.plen) Zvuk.Vrsta.PRESTONICA_PALA else if (pobedio) Zvuk.Vrsta.OSVOJENO else Zvuk.Vrsta.NETACNO, 0.45f) }
                         val bojaTeksta = if (pobedio) Color.White else Boje.tinta
                         Column(
                             Modifier.fillMaxWidth().pop(if (pobedio) Boje.teal else Boje.narandzasta, 26.dp).padding(22.dp),
                             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            val naslovRezultata = if (b.napadam) { if (ishod.osvojeno) "Osvojio si ${drzava.ime}!" else "${drzava.ime} se odbranila" }
-                                else { if (ishod.osvojeno) "${b.rivalIme} je osvojio ${drzava.ime}" else "Odbranio si ${drzava.ime}!" }
+                            val naslovRezultata = if (b.napadam) { if (ishod.osvojeno) "Osvojeno: ${drzava.ime}!" else "${drzava.ime}: odbrana je izdržala" }
+                                else { if (ishod.osvojeno) "${drzava.ime} pada: ${b.rivalIme} osvaja" else "Odbranjeno: ${drzava.ime}!" }
                             Text(naslovRezultata, style = naslov(30.sp, bojaTeksta), textAlign = TextAlign.Center)
                             b.rival?.let { r ->
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -624,6 +797,8 @@ private fun BitkaEkran(model: OsvajanjeModel, b: OsvajanjeModel.Bitka) {
                             }
                             if (ishod.izgubljenaDrzava) Text(if (b.napadam) "${b.rivalIme} uzima ${Mapa.oblast(b.odakle).ime}" else "Uzimaš ${Mapa.oblast(b.odakle).ime}",
                                 style = tekst(15.sp, FontWeight.Bold, bojaTeksta))
+                            if (b.rival != null && b.pomak != 0) Text("${if (b.napadam == (b.pomak > 0)) "Ti" else b.rivalIme}: +${kotlin.math.abs(b.pomak)} prednost (vojska, teren, karte)",
+                                style = tekst(14.sp, FontWeight.Bold, bojaTeksta))
                             if (ishod.plen) Text("Prestonica pala: +${Pravila.PLEN_PRESTONICE} vojski", style = tekst(14.sp, FontWeight.Bold, bojaTeksta))
                             if (ishod.proboj) Text("Proboj: +${Pravila.PROBOJ_BONUS} vojske", style = tekst(14.sp, FontWeight.Bold, bojaTeksta))
                             Dugme("Nastavi", vrsta = VrstaDugmeta.SEKUNDARNO, radnja = model::zatvoriBitku)
@@ -632,6 +807,24 @@ private fun BitkaEkran(model: OsvajanjeModel, b: OsvajanjeModel.Bitka) {
                 }
             }
         }
+    }
+}
+
+/** Ratne karte u bitki: Špijun (uvod i pitanja), Sabotaža (napad na igrača), Drugi pokušaj (tokom pitanja). */
+@Composable
+private fun KarteUBitci(model: OsvajanjeModel, b: OsvajanjeModel.Bitka) {
+    val karte = model.mojeKarte.filter { !it.naMapi }.distinct().filter { k ->
+        when (k) {
+            Karta.SPIJUN -> !b.spijun
+            Karta.SABOTAZA -> b.napadam && !b.sabotaza && model.stanje.oblasti[b.kuda]?.vlasnik != null
+            Karta.DRUGI_POKUSAJ -> b.korak == OsvajanjeModel.Bitka.Korak.PITANJA
+            else -> false
+        }
+    }
+    if (karte.isEmpty()) return
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Karte:", style = tekst(13.sp, FontWeight.Bold, Boje.sivaTekst))
+        karte.forEach { k -> Dugme(k.naziv, Modifier.weight(1f), VrstaDugmeta.SEKUNDARNO) { model.igrajKartuUBitci(k) } }
     }
 }
 
@@ -661,7 +854,7 @@ private fun MisijaList(model: OsvajanjeModel, zatvori: () -> Unit) {
 }
 
 @Composable
-private fun Kraj(model: OsvajanjeModel, izadji: () -> Unit) {
+private fun Kraj(model: OsvajanjeModel, pocetak: () -> Unit) {
     val poredak = model.stanje.poredak
     val pobednik = poredak.first().first
     Box(Modifier.fillMaxSize().background(Boje.senka.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
@@ -669,7 +862,11 @@ private fun Kraj(model: OsvajanjeModel, izadji: () -> Unit) {
             Modifier.padding(20.dp).pop(if (pobednik.covek) Boje.teal else Boje.kartica).padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            MaskotaSlika(if (pobednik.covek) Maskota.BLOOP else Maskota.MIMI, 120.dp)
+            // Heroj pobedničke vojske ispred zamka (kao iOS).
+            Box(contentAlignment = Alignment.BottomCenter) {
+                androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(club.librum.kviz.R.drawable.osvajanje_zamak), null, Modifier.size(130.dp).alpha(0.9f))
+                pobednik.vojska?.let { HerojSlika(it, Modifier.size(80.dp, 104.dp)) } ?: MaskotaSlika(Maskota.BLOOP, 90.dp)
+            }
             Text(if (pobednik.covek) "Svet je tvoj!" else "Pobeđuje ${pobednik.ime}", style = naslov(34.sp, if (pobednik.covek) Color.White else Boje.mastilo))
             poredak.forEachIndexed { i, (igrac, poeni) ->
                 Row(Modifier.fillMaxWidth().pop(Boje.kartica, 16.dp).padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -680,7 +877,34 @@ private fun Kraj(model: OsvajanjeModel, izadji: () -> Unit) {
                 }
             }
             Dugme("Nova partija", vrsta = VrstaDugmeta.ZUTO, radnja = model::novaPartija)
-            Dugme("Nazad", vrsta = VrstaDugmeta.SEKUNDARNO, radnja = izadji)
+            // Vlasnik 03.11: na kraju „Početak” vraća na početnu, ne nazad na podešavanje partije.
+            Dugme("Početak", vrsta = VrstaDugmeta.SEKUNDARNO, radnja = pocetak)
         }
     }
+}
+
+/** „Nastavi partiju” sa početne: sačuvana partija na ovom telefonu, bez misije i postavljanja. */
+@Composable
+fun OsvajanjeNastavak(sesija: Sesija, izadji: () -> Unit, pocetak: () -> Unit) {
+    val kontekst = LocalContext.current
+    val n = remember { OsvajanjeModel.sacuvana(kontekst) } ?: run { izadji(); return }
+    val p = remember(n) {
+        OsvajanjePostavka(OsvajanjePostavka.Nacin.entries.firstOrNull { it.kljuc == n.nacin } ?: OsvajanjePostavka.Nacin.SVAKO_ZA_SEBE,
+            n.stanje.igraci.size, n.stanje.ukupnoKrugova, Tezina.entries.firstOrNull { it.tacnost == n.stanje.tacnostBota } ?: Tezina.NORMALNO,
+            n.stanje.igraci.map { NoviIgrac(it.id, it.ime, it.boja, it.covek, it.tim, it.kapiten, it.vojska) }, teren = n.teren)
+    }
+    OsvajanjeIgra(p, sesija, izadji, pocetak, n)
+}
+
+/** Pomoć vojske u bitki: svoja moć je žuta, aktivna zelena; jednom po krugu, ne troši dnevni fond pomoći ostalih igara. */
+@Composable
+private fun PomocVojskeDugme(ikonica: ImageVector, pomoc: PomocVojske, moze: Boolean, aktivna: Boolean, modifier: Modifier, radnja: () -> Unit) {
+    Box(
+        modifier.height(54.dp).alpha(if (moze || aktivna) 1f else 0.35f)
+            .background(if (aktivna) Boje.teal else if (pomoc.svoja) Boje.zuta else Boje.kartica, RoundedCornerShape(16.dp))
+            .border(if (pomoc.svoja) 3.dp else 2.dp, Boje.mastilo, RoundedCornerShape(16.dp))
+            .clickable(enabled = moze, onClick = radnja)
+            .semantics { contentDescription = "${pomoc.naziv}: ${pomoc.opis}" + if (!moze && !aktivna) " Iskorišćeno u ovom krugu." else "" },
+        contentAlignment = Alignment.Center,
+    ) { Icon(ikonica, contentDescription = null, tint = if (aktivna) Color.White else Boje.mastilo) }
 }

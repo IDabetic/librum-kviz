@@ -25,6 +25,8 @@ extension Color {
     static let sivaTekst = Color(svetlo: 0x151515, tamno: 0xFFFFFF, alfaSvetlo: 0.6, alfaTamno: 0.6)
     static let teal = Color(hex: 0x12907E)
     static let tealSvetla = Color(svetlo: 0xDFF3EE, tamno: 0x173A34)
+    /// Ista svetla nijansa i u tamnom režimu: za pločice koje uvek crtaju tamni tekst (SvetlaTema).
+    static let tealSvetlaUvek = Color(hex: 0xDFF3EE)
     static let roze = Color(hex: 0xFF5FA2)
     static let narandzasta = Color(hex: 0xF4A33C)
     static let nebo = Color(hex: 0x6EC3F2)
@@ -110,6 +112,8 @@ private struct DugmeTelo: View {
     let konfiguracija: ButtonStyleConfiguration
     let vrsta: DugmeStil.Vrsta
     @Environment(\.isEnabled) private var omoguceno
+    /// `.controlSize(.small)`: niže dugme sa tanjim okvirom (ekran partije Osvajanja).
+    @Environment(\.controlSize) private var velicina
 
     private var boje: (Color, Color) {
         guard omoguceno else { return (.skelet, .sivaTekst) }
@@ -124,14 +128,16 @@ private struct DugmeTelo: View {
     var body: some View {
         let (pozadina, tekst) = boje
         let pritisnuto = konfiguracija.isPressed
+        let malo = velicina == .small || velicina == .mini
+        let (visina, radijus, okvir, senka): (CGFloat, CGFloat, CGFloat, CGFloat) = malo ? (44, 13, 1.2, 2) : (54, 16, 2, 4)
         return konfiguracija.label
-            .font(.tekst(16, .bold))
+            .font(.tekst(malo ? 15 : 16, .bold))
             .foregroundStyle(tekst)
-            .frame(maxWidth: .infinity, minHeight: 54)
-            .background(pozadina, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(omoguceno ? Color.mastilo : Color.kremTamnija, lineWidth: 2))
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(omoguceno ? Color.senka : .clear).offset(y: pritisnuto ? 1 : 4))
-            .offset(y: pritisnuto ? 3 : 0)
+            .frame(maxWidth: .infinity, minHeight: visina)
+            .background(pozadina, in: RoundedRectangle(cornerRadius: radijus, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radijus, style: .continuous).stroke(omoguceno ? Color.mastilo : Color.kremTamnija, lineWidth: okvir))
+            .background(RoundedRectangle(cornerRadius: radijus, style: .continuous).fill(omoguceno ? Color.senka : .clear).offset(y: pritisnuto ? 1 : senka))
+            .offset(y: pritisnuto ? senka - 1 : 0)
             .animation(.spring(duration: 0.15), value: pritisnuto)
             .sensoryFeedback(.impact(weight: .light), trigger: pritisnuto) { _, novo in novo }
     }

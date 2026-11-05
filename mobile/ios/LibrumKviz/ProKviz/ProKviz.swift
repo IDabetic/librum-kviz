@@ -3,7 +3,7 @@ import Foundation
 /// Pravila PRO kviza, ista kao src/app/pro-kviz/start/page.tsx, da rezultat
 /// iz aplikacije stoji ravnopravno na istoj rang listi.
 struct ProKviz: Equatable {
-    static let sekundi = 15
+    static let sekundi = 20
     static let pocetniZivoti = 10
     static let poenaTacno = 10
     static let poenaNetacno = 5

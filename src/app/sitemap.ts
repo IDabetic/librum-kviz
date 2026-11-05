@@ -19,6 +19,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/autori-pitanja',         priority: 0.5, changeFrequency: 'weekly'  },
     { path: '/politika-privatnosti',   priority: 0.3, changeFrequency: 'monthly' },
     { path: '/uslovi-koriscenja',      priority: 0.3, changeFrequency: 'monthly' },
+    { path: '/licence-i-izvori',       priority: 0.2, changeFrequency: 'monthly' },
+    { path: '/brisanje-naloga',        priority: 0.3, changeFrequency: 'monthly' },
   ]
   return pages.map(p => ({
     url: `${BASE}${p.path}`,

@@ -1,0 +1,16 @@
+<!-- Supabase Auth → Emails → Confirm signup. Ažurirano 03.11.2026 v2: kod za aplikaciju + dugme za sajt. Naslov: „Tvoj kod za Librum kviz: {{ .Token }}” -->
+<div style="background:#F3F0E6;padding:32px 16px;">
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;background:#FFFFFF;border:2px solid #151515;border-radius:16px;padding:32px 28px;color:#151515;">
+  <div style="font-size:24px;font-weight:900;letter-spacing:-1px;margin:0 0 24px;">Librum<span style="color:#12907E;">.</span> kviz</div>
+  <h1 style="font-size:24px;font-weight:900;letter-spacing:-0.5px;margin:0 0 12px;">Potvrdi svoj nalog</h1>
+  <p style="font-size:15px;color:#6F6C66;line-height:1.55;margin:0 0 20px;">Upiši ovaj kod u aplikaciju Librum kviz:</p>
+  <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:36px;font-weight:800;letter-spacing:10px;text-align:center;background:#FFD84D;border:2px solid #151515;border-radius:12px;padding:16px 8px;margin:0 0 20px;">{{ .Token }}</div>
+  <p style="font-size:14px;color:#6F6C66;line-height:1.55;margin:0 0 24px;">Kod važi 1 sat. Registruješ se na sajtu kviz.librum.club? Potvrdi dugmetom:</p>
+  <p style="text-align:center;margin:0 0 24px;">
+    <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#12907E;color:#FFFFFF;font-weight:700;font-size:15px;padding:14px 28px;border-radius:12px;text-decoration:none;">Potvrdi nalog</a>
+  </p>
+  <p style="font-size:13px;color:#6F6C66;line-height:1.5;margin:0;">Nisi ti otvorio nalog? Samo ignoriši ovaj mejl.</p>
+  <hr style="border:none;border-top:1px solid #E7E1D0;margin:28px 0 14px;" />
+  <p style="font-size:11px;color:#6F6C66;margin:0;">Librum kviz · kviz.librum.club · info@librum.club</p>
+</div>
+</div>

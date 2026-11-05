@@ -26,16 +26,30 @@ struct KvizStavka: Identifiable, Hashable {
         switch vrsta {
         case .igra(.osvajanje): return [
             "Igra se na pravoj mapi: ceo svet (171 država, 17 regiona) ili jedan kontinent; protiv računara, jednog rivala ili do 12 igrača.",
+            "Partija na poziv: „Pozovi prijatelje” pravi sobu sa kodom (timovi po dvoje ili svako za sebe, do 12 igrača). Prijatelji ulaze kodom, linkom ili porukom iz aplikacije, a partija kreće kad domaćin pritisne „Počni”; prazna mesta preuzimaju botovi.",
+            "Pre partije biraš vojsku: Legija (+1 tačan u napadu), Garda (+1 tačan u odbrani), Graditelji (+1 vojska po celom regionu), Izvidnica (više karata), Konjica (2 napada više) ili Mudraci (+5 s po pitanju).",
+            "Svaka vojska ima jednu svoju moć u pitanjima bitke i dve iste za sve (Promena pitanja, +10 sekundi), svaku jednom po krugu: Legija Siguran udar (svaki odgovor je tačan, pogodak vredi dva), Garda Štit (greška se briše uz novo pitanje), Graditelji Vreme stoji, Izvidnica Pola-pola, Konjica Juriš (sledeći tačan vredi dva), Mudraci Tačan odgovor.",
             "Pre prvog kruga sam biraš 6 država na svom kontinentu (prva je prestonica) i raspoređuješ 15 vojski; svaka država ima bar jednu.",
-            "Na početku poteza stižu pojačanja: polovina tvojih država (najmanje 3) plus bonus za svaki ceo region; idu na granice.",
+            "Na početku poteza stižu pojačanja: polovina tvojih država (najmanje 3) plus bonus za svaki ceo region. Sam ih raspoređuješ dodirom po svojim državama (ili „Rasporedi sam”); kad istekne vreme, ostatak ide na granice.",
             "Napadaš samo susede (preko mora idu isprekidani morski putevi), iz države sa bar 2 vojske, do 5 napada po potezu.",
-            "Prazna država je jedno pitanje: tačno je osvajaš. Država igrača je 5 pitanja: više tačnih pobeđuje, kod istog broja brži.",
-            "Izgubljena bitka protiv igrača odnosi i državu iz koje si napao. Svako treće osvajanje zaredom daje +2 vojske, pala prestonica +5.",
+            "Prazna država je jedno pitanje: tačno je osvajaš, a sa 3 ili više vojske u napadu greška ne košta vojsku. Država igrača je 5 pitanja po 20 sekundi: više tačnih pobeđuje, kod istog broja brži.",
+            "Vojska vredi: svaka vojska više od protivnika daje +1 tačan, najviše +2. Kad napadaš sa 4 vojske na 1, protivniku trebaju 3 tačna više.",
+            "Ratne karte umesto dnevnih pomoći: Špijun, Pojačanje, Zamrzni granicu, Drugi pokušaj i Sabotaža. Dobijaš ih za pobedu nad igračem, ceo region i proboj; u ruci najviše 5.",
+            "Dodirni igrača za brzu poruku ili savez. Savez traje do kraja sledećeg kruga i saveznici se ne napadaju. Botovi se bore sa svima, i međusobno.",
+            "Svaka 4 kruga jedan kontinent dobija događaj na 2 kruga: Zima u Evropi, Zlatno doba Afrike, Monsun u Aziji, Zlatna groznica, Karneval ili Cunami.",
+            "Teren: planine (Alpi, Himalaji, Andi, Kavkaz) daju braniocu +1 tačan, napad preko mora traži tačan više, a poraz u pustinji košta vojsku više.",
+            "Linije snabdevanja: država odsečena od prestonice ne dobija pojačanja i gubi jednu vojsku po krugu.",
+            "Čuda sveta, jedno po kontinentu: Piramide (+2 vojske), Kineski zid (odbrana u Aziji +1), Akropolj (karta svakog kruga), Maču Pikču (bez magle), Kip slobode (napad više), Sidnejska opera (+5 s po pitanju).",
+            "Magla rata: kod dalekih država vidiš samo procenu vojske (≤2, 3–5, 6+). Svoje, saveznikove i susedne vidiš tačno.",
+            "U napadu biraš temu pitanja od tri ponuđene. U bitki od 5 pitanja posle drugog odgovora možeš da se povučeš: vojska ostaje, potez je gotov. Ulog (+1 ili +2) duplira dobitak i gubitak.",
+            "Marš: jednom po potezu vojska ide do svoje države udaljene do 3 koraka. Pohod: tajno najaviš region; ako ga držiš na početku sledećeg poteza, +3 vojske i karta.",
+            "Diplomatija: izdaja saveznika odnosi sve karte i oznaku izdajnika, sa saveznikom menjaš karte, a slabijem susedu šalješ ultimatum (preda državu ili ga napadaš sa +1 tačnim).",
+            "Izgubljena bitka protiv igrača odnosi i državu iz koje si napao. Svako treće osvajanje zaredom daje +2 vojske i kartu, pala prestonica +5.",
             "Na potezu imaš 30 sekundi, svaki dodir ih vraća na početak. Tri poteza zaredom bez napada znače ispadanje.",
-            "Ceo svet: pobeđuje ko prvi ispuni tajnu misiju, inače ko ima najviše poena posle 8 ili 12 krugova. Kontinent: ko ga ceo osvoji.",
-            pomoc + " Ovde je pomoć 50/50 na jednom pitanju."]
+            "Ceo svet: pobeđuje ko prvi ispuni tajnu misiju (30 različitih, iste ne dolaze ponovo iste nedelje), inače ko ima najviše poena posle 12, 20 ili 30 krugova (više igrača, duža partija). Sa više igrača misije traže srazmerno manje država i regiona. Kontinent: ko ga ceo osvoji.",
+            "Na kraju je tabela i XP po mestu (1. +150, 2. +80, 3. +40, ostali +20, pobeda još +50). Partija protiv računara se čuva: nastavljaš je sa početne."]
         case .igra(.pro): return [
-            "Na svako pitanje imaš četiri ponuđena odgovora i 15 sekundi.",
+            "Na svako pitanje imaš četiri ponuđena odgovora i 20 sekundi.",
             "Tačan odgovor +10, netačan −5 i jedan život. Imaš 10 života.",
             "Više tačnih zaredom donosi kombo bonuse: 5 zaredom +10, 10 +25, 20 +60, 50 +150, 100 +400.",
             "Na svakih 50 pitanja dobijaš 5 života i dodatnu pomoć. Risk jednom u 10 pitanja: duplo dobijaš, duplo gubiš.",
@@ -62,16 +76,17 @@ struct KvizStavka: Identifiable, Hashable {
         ]
         case .tema(fond: "slikari", _, _): return [
             "Na svakoj slici je jedno delo. Biraš ko ga je naslikao, od četiri ponuđena slikara.",
-            "Deset slika, 15 sekundi po slici; sat ne teče dok se slika ne učita.",
+            "Deset slika, 20 sekundi po slici; sat ne teče dok se slika ne učita.",
             "Tačno 100 poena, plus 2 za svaku preostalu sekundu i 20 od trećeg tačnog zaredom.",
             "Slike su sa Wikimedia Commons, uz naziv dela, godinu i muzej posle odgovora.", pomoc]
         default: return [
-            "Deset pitanja, 15 sekundi po pitanju, četiri ponuđena odgovora.",
+            "Deset pitanja, 20 sekundi po pitanju, četiri ponuđena odgovora.",
             "Tačno 100 poena, plus 2 za svaku preostalu sekundu i 20 od trećeg tačnog zaredom.",
             "Na kraju vidiš pregled svih odgovora i tačna rešenja.", pomoc]
         }
     }
-    var sekundi: Int { 15 }
+    /// Vreme po pitanju u kvizovima sa ponuđenim odgovorima (vlasnik 03.11: 20 s podrazumevano).
+    var sekundi: Int { 20 }
     /// Ilustracija iz Assets (Igra_osvajanje…); teme po žanru je nemaju.
     var ilustracija: String? {
         let kljuc: String? = switch vrsta {
@@ -136,9 +151,9 @@ enum KvizKatalog {
         var l: [KvizStavka] = [
             KvizStavka(id: "dnevni", naslov: "Dnevni izazov", opis: "Istih 10 pitanja za sve danas. Jedan pokušaj, rang lista dana.", kategorija: "Opšte znanje",
                        boja: 0xFFD84D, maskota: .lumi, vrsta: .tema(fond: "dnevni", zanr: nil, tesko: false), tezina: "Dnevno", ikonica: "calendar"),
-            KvizStavka(id: "osvajanje", naslov: "Osvajanje sveta", opis: "171 država, vojske i bitke znanja protiv dva rivala.", kategorija: "Geografija",
+            KvizStavka(id: "osvajanje", naslov: "Osvajanje sveta", opis: "171 država, vojske i bitke znanja protiv rivala.", kategorija: "Geografija",
                        boja: 0x12907E, maskota: .mimi, vrsta: .igra(.osvajanje), tezina: "Strategija", ikonica: "globe.europe.africa"),
-            KvizStavka(id: "opste", naslov: "Opšte znanje", opis: "Deset pitanja iz svega pomalo, 15 sekundi po pitanju.", kategorija: "Opšte znanje",
+            KvizStavka(id: "opste", naslov: "Opšte znanje", opis: "Deset pitanja iz svega pomalo, 20 sekundi po pitanju.", kategorija: "Opšte znanje",
                        boja: 0xF4A33C, maskota: .bloop, vrsta: .tema(fond: "opste", zanr: nil, tesko: false), ikonica: "lightbulb", quizId: opsteZnanje),
             KvizStavka(id: "duel", naslov: "Duel", opis: "Jedan na jedan, uživo, ili izazovi drugara.", kategorija: "Igre",
                        boja: 0x151515, maskota: .zig, vrsta: .igra(.duel), tezina: "Uživo", ikonica: "person.2"),
@@ -152,7 +167,7 @@ enum KvizKatalog {
                        boja: 0xFFD84D, maskota: .zig, vrsta: .igra(.brzi), tezina: "Brzina", ikonica: "bolt"),
             KvizStavka(id: "vesanje", naslov: "Vešanje", opis: "Pogodi reč slovo po slovo.", kategorija: "Igre",
                        boja: 0x6EC3F2, maskota: .lumi, vrsta: .igra(.vesanje), tezina: "Reči", ikonica: "textformat.abc"),
-            KvizStavka(id: "slikari", naslov: "Slikari", opis: "Ko je naslikao ovo delo? 1.439 dela, od Leonarda do Pikasa.", kategorija: "Umetnost",
+            KvizStavka(id: "slikari", naslov: "Slikari", opis: "Ko je naslikao ovo delo? 1.167 dela, od Leonarda do Pikasa.", kategorija: "Umetnost",
                        boja: 0xFF5FA2, maskota: .lumi, vrsta: .tema(fond: "slikari", zanr: nil, tesko: false), tezina: "Mešovito",
                        ikonica: "paintpalette", quizId: kulturaUmetnost),
             KvizStavka(id: "slikari-tesko", naslov: "Slikari: majstori", opis: "Samo manje poznata dela. Za one koji idu po muzejima.", kategorija: "Umetnost",
@@ -186,11 +201,11 @@ struct KvizOdrediste: View {
     var body: some View {
         switch stavka.vrsta {
         case .igra(.osvajanje): OsvajanjeUvodView()
-        case .igra(.pro): ProKvizView(vrsta: .pro)
-        case .igra(.book): ProKvizView(vrsta: .book)
+        case .igra(.pro): ProKvizView(vrsta: .pro).bezSvajpaNazad()
+        case .igra(.book): ProKvizView(vrsta: .book).bezSvajpaNazad()
         case .igra(.duel): DuelView()
         case .igra(.vesanje): VesanjeView()
-        case .igra(.brzi): BrziKvizView()
+        case .igra(.brzi): BrziKvizView().bezSvajpaNazad()
         case .tema: KvizDetaljiView(stavka: stavka)
         }
     }

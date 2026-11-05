@@ -2,3 +2,5 @@
 // „//” u xcconfig počinje komentar, zato se šema dodaje u kodu.
 SUPABASE_URL = htnfatughrtmbgtekxfs.supabase.co
 SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0bmZhdHVnaHJ0bWJndGVreGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTg2NTEsImV4cCI6MjA5MzU3NDY1MX0.4P9ROqqzwjGpZVaqH6pC8-9xfd91QkAV0rJ_r_Bx5EI
+// Google Cloud „Librum kviz” → Clients → iOS (club.librum.kviz); javni identifikator.
+GOOGLE_IOS_CLIENT_ID = 570800222406-98381q4ish3in1qrfsp2magt35k8tnup.apps.googleusercontent.com

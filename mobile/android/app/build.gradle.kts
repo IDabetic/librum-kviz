@@ -12,21 +12,46 @@ val supabase = Properties().apply { rootProject.file("supabase.properties").inpu
 
 android {
     namespace = "club.librum.kviz"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "club.librum.kviz"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        targetSdk = 36
+        // Play traži rastući broj za svako otpremanje: minuti od 2026-01-01, ili KVIZ_GRADNJA.
+        versionCode = System.getenv("KVIZ_GRADNJA")?.toInt() ?: ((System.currentTimeMillis() / 60_000 - 29_454_720).toInt())
+        versionName = "1.0.2"
         buildConfigField("String", "SUPABASE_URL", "\"${supabase["SUPABASE_URL"]}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabase["SUPABASE_ANON_KEY"]}\"")
+        // Google Cloud „librum-kviz” → Web client (javni ID); Android klijenti (upload i debug SHA-1) se ne navode u kodu.
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"570800222406-qp0jcrhsi2ivjqe5cbigse0hj9q89g48.apps.googleusercontent.com\"")
+    }
+
+    // ⚠⚠ Ključ za objavu NIJE u gitu i ne sme da se izgubi: Play vezuje aplikaciju za njega.
+    // Original `~/kljucevi/kviz-upload.jks`, lozinke u `~/kljucevi/kviz-upload.properties`.
+    val tajne = Properties().apply {
+        val f = file(System.getProperty("user.home") + "/kljucevi/kviz-upload.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+    signingConfigs {
+        if (tajne.getProperty("KVIZ_KEYSTORE") != null) create("izdanje") {
+            storeFile = file(tajne.getProperty("KVIZ_KEYSTORE"))
+            storePassword = tajne.getProperty("KVIZ_KEYSTORE_LOZINKA")
+            keyAlias = tajne.getProperty("KVIZ_KEY_ALIAS")
+            keyPassword = tajne.getProperty("KVIZ_KEY_LOZINKA")
+        }
     }
 
     buildTypes {
+        // `./gradlew assembleDebug -Pproba`: debug pored Play verzije na istom emulatoru (drugi ID), za vizuelnu proveru.
+        debug { if (project.hasProperty("proba")) applicationIdSuffix = ".proba" }
         release {
-            isMinifyEnabled = false
+            // R8: kod sa 45 MB na nekoliko (sve Material ikonice), AAB staje u Play otpremanje iz pregledača.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Bez ključa izdanje ostaje nepotpisano (Play ga odbija), nikad debug potpis.
+            signingConfigs.findByName("izdanje")?.let { signingConfig = it }
         }
     }
 
@@ -71,6 +96,10 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    // Google prijava (Credential Manager): id_token ide u Supabase, kao na iOS-u.
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     testImplementation(libs.junit)
 }
