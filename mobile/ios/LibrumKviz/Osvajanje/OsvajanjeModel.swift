@@ -430,10 +430,31 @@ final class OsvajanjeModel {
         ostaloRoka = nil
     }
 
-    /// Bot čeka dok je partija pauzirana.
+    /// Bot čeka dok je partija pauzirana ili dok igrač ne pročita obaveštenje o misiji.
     private func sacekajPauzu() async {
-        while pauza && !napusteno && !Task.isCancelled { try? await Task.sleep(for: .milliseconds(300)) }
+        while (pauza || obavestenjeMisije != nil) && !napusteno && !Task.isCancelled { try? await Task.sleep(for: .milliseconds(300)) }
     }
+
+    // MARK: Obaveštenje o misiji (vlasnik 05.11: „sve se brzo dešava, ne vidim poruke”)
+
+    struct ObavestenjeMisije: Equatable { let moja: Bool; let ime: String; let tekst: String }
+    /// Veliko obaveštenje na sredini ekrana; botovi stoje dok ga igrač ne zatvori.
+    private(set) var obavestenjeMisije: ObavestenjeMisije?
+    private var najavljeneMisije: Set<String> = []
+
+    /// Čim neki tim ispuni misiju (i usred tuđeg poteza), igrač to vidi jasno, a ne tek posle poteza.
+    func najaviMisijuAkoTreba() {
+        guard veza == nil, mojTim != nil, stanje.faza != .kraj, obavestenjeMisije == nil else { return }
+        let ispunjene = Set(stanje.misije.keys.filter { stanje.napredakMisije($0) >= 1 })
+        najavljeneMisije.formIntersection(ispunjene)
+        guard let t = ispunjene.subtracting(najavljeneMisije).sorted().first else { return }
+        najavljeneMisije.insert(t)
+        let ime = stanje.igraci.first { $0.tim == t && $0.kapiten }?.ime ?? "Rival"
+        obavestenjeMisije = .init(moja: t == mojTim, ime: ime, tekst: stanje.tekstMisije(stanje.misije[t]))
+        Zvuk.pusti(.obavestenje, jacina: 0.6)
+    }
+
+    func zatvoriObavestenjeMisije() { obavestenjeMisije = nil }
 
     // MARK: Tuđi odgovori (partija sa pravim igračima)
 
@@ -636,6 +657,10 @@ final class OsvajanjeModel {
             for k in Set(stanje.oblasti.keys.map { Kontinenti.od($0).ime }) { dopuniKontinent(k) }
             spremno = !cekaPocetak
             #if DEBUG
+            // `-misijaProba`: izgled obaveštenja o ispunjenoj misiji bez igranja do misije.
+            if ProcessInfo.processInfo.arguments.contains("-misijaProba") {
+                obavestenjeMisije = .init(moja: true, ime: "Ti", tekst: stanje.tekstMisije(stanje.misije.values.first))
+            }
             // Snimak za sajt: niko ne čita misiju, botovi kreću odmah.
             if LibrumKvizApp.demo { zapocni(); return }
             #endif
@@ -1141,6 +1166,7 @@ final class OsvajanjeModel {
         zatvaranje?.resume()
         zatvaranje = nil
         sacuvaj()
+        najaviMisijuAkoTreba()
     }
 
     private var zatvaranje: CheckedContinuation<Void, Never>?
@@ -1347,6 +1373,7 @@ final class OsvajanjeModel {
         guard !napusteno else { return }
         stanje = novo
         sacuvaj()
+        najaviMisijuAkoTreba()
         guard novo.faza == .snabdevanje else { return }
         zapocetPotez = (novo.krug, novo.naPotezu)
         // Pravi igrač sa drugog telefona igra sam; bota vodi samo domaćin.
@@ -1453,6 +1480,7 @@ final class OsvajanjeModel {
                 udari(napad.odakle, napad.kuda, ishod.osvojeno)
             }
             if stanje.faza == .kraj { break }
+            najaviMisijuAkoTreba()
             // Napad koji pravila odbiju ne menja ništa: bot bi ga birao zauvek i partija bi stala („Zig je na potezu”, vlasnik 05.11).
             if stanje.bitaka == pre.0 && stanje.oblasti == pre.1 { break }
             try? await Task.sleep(for: pauzaBota)
@@ -1481,7 +1509,7 @@ final class OsvajanjeModel {
                 try? await Task.sleep(for: .seconds(10))
                 guard let self, !self.napusteno, self.stanje.faza != .kraj, !self.stanje.trenutni.covek, self.veza == nil else { return }
                 let otisak = "\(self.stanje.krug)-\(self.stanje.naPotezu)-\(self.stanje.bitaka)-\(self.stanje.faza)"
-                isto = (otisak == poslednji && !self.pauza && self.bitka == nil) ? isto + 1 : 0
+                isto = (otisak == poslednji && !self.pauza && self.bitka == nil && self.obavestenjeMisije == nil) ? isto + 1 : 0
                 poslednji = otisak
                 guard isto >= 3 else { continue }
                 print("Osvajač: potez bota zaglavljen (\(otisak)), završava se")
@@ -1499,7 +1527,7 @@ final class OsvajanjeModel {
     func javi(_ tekst: String) {
         poruka = tekst
         Task {
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(7))
             if poruka == tekst { poruka = nil }
         }
     }
