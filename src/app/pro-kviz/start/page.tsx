@@ -165,32 +165,15 @@ export default function SurvivorGame() {
       if (!user) { router.push('/auth/prijava'); return }
       setMyId(user.id)
 
-      // 72h dedupe — questions the user already encountered in PRO/Brzi/
-      // Duel. Falls back to the full pool if nothing new is left, so a
-      // marathon session never dead-ends.
-      const cutoff = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
-      const { data: seen } = await supabase
-        .from('question_answer_log')
-        .select('question_id')
-        .eq('user_id', user.id)
-        .gte('created_at', cutoff)
-      const seenSet = new Set((seen || []).map(s => s.question_id))
-
-      // Pull a random batch large enough that no real session will exhaust
-      // it. Capped to keep payload light on mobile (~70% smaller than
-      // pulling the full 3.5k pool every game start).
-      const { data } = await supabase
-        .from('questions')
-        .select('id, question_text, options, correct_answer, difficulty, info')
-        .eq('is_active', true)
-        .limit(1200)
+      // Server bira 300 pitanja (retke težine + srednja), prvo ona koja igrač nije video
+      // u 72 h; ranije je ovde išlo 1.200 pitanja i ceo spisak viđenih (Supabase egress 402).
+      const { data } = await supabase.rpc('pro_pitanja', { p_broj: 300 })
 
       if (!data || data.length === 0) { setLoading(false); return }
 
       // Prefer fresh questions; fall back to the whole pool only if very
       // few unseen are left (heavy player who exhausted the rotation).
-      let all = (data as Question[]).filter(q => !seenSet.has(q.id))
-      if (all.length < 100) all = data as Question[]
+      let all = data as Question[]
       // Shuffle once at session start (Fisher–Yates, uniform).
       all = shuffle(all)
 
@@ -225,6 +208,27 @@ export default function SurvivorGame() {
     }
     load()
   }, [router])
+
+  // ── Dopuna pitanja ────────────────────────────────────────────────────────
+  // Server šalje 300 po pozivu; maratonci (i 600+ pitanja) dobijaju još 300 kad ostane manje od 40.
+  const dopunjava = useRef(false)
+  useEffect(() => {
+    if (loading || gameOver || dopunjava.current || pool.length === 0) return
+    if (pool.length - usedIds.size >= 40) return
+    dopunjava.current = true
+    createClient().rpc('pro_pitanja', { p_broj: 300 }).then(({ data }) => {
+      const nova = ((data ?? []) as Question[]).filter(q => !pool.some(p => p.id === q.id))
+      if (nova.length) {
+        setPool(prev => [...prev, ...nova])
+        setPoolByDiff(prev => {
+          const sledeci: Record<string, Question[]> = { ...prev }
+          nova.forEach(q => { const k = sledeci[q.difficulty] ? q.difficulty : 'medium'; sledeci[k] = [...(sledeci[k] ?? []), q] })
+          return sledeci
+        })
+      }
+      dopunjava.current = false
+    })
+  }, [usedIds, pool, loading, gameOver])
 
   // ── Pick next question ────────────────────────────────────────────────────
   const nextQuestion = useCallback((reachedNow: number, used: Set<string>) => {
