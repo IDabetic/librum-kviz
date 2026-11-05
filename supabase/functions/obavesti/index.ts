@@ -1,9 +1,10 @@
 // Obaveštenja za aplikaciju Librum kviz: izazov na duel i novi pratilac.
-// Poziva je Supabase Database Webhook na INSERT u `izazovi` i `pracenja` (telo: { type, table, record }).
+// Poziva je okidač obavesti_okidac (pg_net) na INSERT u `izazovi` i `pracenja` (telo: { type, table, record }),
+// vidi scripts/2026-11-05_push-obavestenja.sql. Objavljuje se sa verify_jwt=false: proverava deljenu tajnu sama.
 // iOS ide direktno na APNs (ključ AuthKey p8), Android preko Firebase Cloud Messaging HTTP v1
 // (servisni nalog projekta librum-ebook-c0f24, u kome je registrovan club.librum.kviz).
 //
-// Tajne (Supabase → Edge Functions → Secrets), nikad u kodu:
+// Tajne nikad u kodu: Edge Functions → Secrets ako postoje, inače Supabase Vault preko push_tajne() (05.11, bez CLI pristupa):
 //   APNS_KEY (sadržaj .p8), APNS_KEY_ID, APNS_TEAM_ID, APNS_PRODUKCIJA ("1" za App Store, inače sandbox)
 //   FIREBASE_SA (ceo JSON servisnog naloga)
 //   OBAVESTI_TAJNA (deljena tajna koju webhook šalje u zaglavlju x-obavesti-tajna)
@@ -14,8 +15,21 @@ const baza = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_
 
 type Poruka = { naslov: string; tekst: string; podaci: Record<string, string> }
 
+let izVaulta: Record<string, string> | null = null
+async function tajna(ime: string): Promise<string> {
+  const izOkruzenja = Deno.env.get(ime)
+  if (izOkruzenja) return izOkruzenja
+  if (!izVaulta) {
+    const { data, error } = await baza.rpc('push_tajne')
+    if (error) throw new Error(`push_tajne: ${error.message}`)
+    izVaulta = data as Record<string, string>
+  }
+  return izVaulta[ime] ?? ''
+}
+
 Deno.serve(async (zahtev) => {
-  if (zahtev.headers.get('x-obavesti-tajna') !== Deno.env.get('OBAVESTI_TAJNA')) return new Response('zabranjeno', { status: 401 })
+  const ocekivana = await tajna('OBAVESTI_TAJNA')
+  if (!ocekivana || zahtev.headers.get('x-obavesti-tajna') !== ocekivana) return new Response('zabranjeno', { status: 401 })
   const { table, record } = await zahtev.json()
   let primalac: string | null = null
   let poruka: Poruka | null = null
@@ -47,7 +61,7 @@ async function ime(id: string): Promise<string> {
 let apnsJwt: { token: string; do: number } | null = null
 
 async function apns(token: string, p: Poruka): Promise<'ok' | 'nevazeci' | 'greska'> {
-  const host = Deno.env.get('APNS_PRODUKCIJA') === '1' ? 'api.push.apple.com' : 'api.sandbox.push.apple.com'
+  const host = (await tajna('APNS_PRODUKCIJA')) === '1' ? 'api.push.apple.com' : 'api.sandbox.push.apple.com'
   const odgovor = await fetch(`https://${host}/3/device/${token}`, {
     method: 'POST',
     headers: { authorization: `bearer ${await apnsToken()}`, 'apns-topic': BUNDLE, 'apns-push-type': 'alert', 'content-type': 'application/json' },
@@ -60,8 +74,8 @@ async function apns(token: string, p: Poruka): Promise<'ok' | 'nevazeci' | 'gres
 // APNs token važi sat vremena; obnavlja se posle 50 minuta.
 async function apnsToken(): Promise<string> {
   if (apnsJwt && apnsJwt.do > Date.now()) return apnsJwt.token
-  const kljuc = await crypto.subtle.importKey('pkcs8', pemUBajtove(Deno.env.get('APNS_KEY')!), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])
-  const token = await jwt({ alg: 'ES256', kid: Deno.env.get('APNS_KEY_ID')! }, { iss: Deno.env.get('APNS_TEAM_ID')!, iat: sekunde() }, kljuc, { name: 'ECDSA', hash: 'SHA-256' })
+  const kljuc = await crypto.subtle.importKey('pkcs8', pemUBajtove(await tajna('APNS_KEY')), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])
+  const token = await jwt({ alg: 'ES256', kid: await tajna('APNS_KEY_ID') }, { iss: await tajna('APNS_TEAM_ID'), iat: sekunde() }, kljuc, { name: 'ECDSA', hash: 'SHA-256' })
   apnsJwt = { token, do: Date.now() + 50 * 60_000 }
   return token
 }
@@ -71,7 +85,7 @@ async function apnsToken(): Promise<string> {
 let fcmPristup: { token: string; do: number } | null = null
 
 async function fcm(token: string, p: Poruka): Promise<'ok' | 'nevazeci' | 'greska'> {
-  const sa = JSON.parse(Deno.env.get('FIREBASE_SA')!)
+  const sa = JSON.parse(await tajna('FIREBASE_SA'))
   const odgovor = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
     method: 'POST',
     headers: { authorization: `Bearer ${await fcmToken(sa)}`, 'content-type': 'application/json' },

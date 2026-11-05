@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    // Push (FCM) iz app/google-services.json, Firebase projekat librum-ebook-c0f24.
+    alias(libs.plugins.google.services)
 }
 
 // Javni URL i anon ključ (isti kao veb); nisu tajna, RLS štiti bazu.
@@ -20,7 +22,7 @@ android {
         targetSdk = 36
         // Play traži rastući broj za svako otpremanje: minuti od 2026-01-01, ili KVIZ_GRADNJA.
         versionCode = System.getenv("KVIZ_GRADNJA")?.toInt() ?: ((System.currentTimeMillis() / 60_000 - 29_454_720).toInt())
-        versionName = "1.0.2"
+        versionName = "1.0.3"
         buildConfigField("String", "SUPABASE_URL", "\"${supabase["SUPABASE_URL"]}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabase["SUPABASE_ANON_KEY"]}\"")
         // Google Cloud „librum-kviz” → Web client (javni ID); Android klijenti (upload i debug SHA-1) se ne navode u kodu.
@@ -100,6 +102,9 @@ dependencies {
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
     testImplementation(libs.junit)
 }

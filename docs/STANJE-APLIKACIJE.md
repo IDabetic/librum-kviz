@@ -1,6 +1,6 @@
 # Librum kviz aplikacija: šta postoji i šta fali
 
-Ažurirano: 05.11.2026. · verzija 9 (nadzor varanja: /majmun/sumnjivo, Nadzor na profilu igrača, Karijera meri pravo trajanje runde, IP 90 dana; admin /majmun: Aktivnost svih igara, Karijera, pitanja struka, Osvajanje, Padovi; Android 1.0.2 ispravka pada u meniju objave; Android usklađen sa iOS-om: Karijera, Podešavanja, uređivanje profila, blokirani, tema, podsetnik, bedževi, statistika, fokus profila; Karijera: šef po firmi, ometanja, mirni režim, pitanja u firmi; Karijera na iOS-u; ranije: iOS i Android izjednačeni; 75.702 pitanja; bot, sat poteza, pitanja bez ponavljanja) · grana `redizajn-quizpop`
+Ažurirano: 05.11.2026. · verzija 10 (push radi: funkcija `obavesti` objavljena, ključevi u Supabase Vault-u, okidači na izazovi/pracenja, Android 1.0.3 sa Firebase Messaging; iOS 1.0 u App Store-u; nadzor varanja: /majmun/sumnjivo, Nadzor na profilu igrača, Karijera meri pravo trajanje runde, IP 90 dana; admin /majmun: Aktivnost svih igara, Karijera, pitanja struka, Osvajanje, Padovi; Android 1.0.2 ispravka pada u meniju objave; Android usklađen sa iOS-om: Karijera, Podešavanja, uređivanje profila, blokirani, tema, podsetnik, bedževi, statistika, fokus profila; Karijera: šef po firmi, ometanja, mirni režim, pitanja u firmi; Karijera na iOS-u; ranije: iOS i Android izjednačeni; 75.702 pitanja; bot, sat poteza, pitanja bez ponavljanja) · grana `redizajn-quizpop`
 
 Pregled svakog toka u iOS aplikaciji (Android prati isti spisak), poređen sa QuizPop kitom
 i sa vebom kviz.librum.club. Kolona „Gradi se” je redosled rada.
@@ -36,12 +36,12 @@ PRO, Book, Slikari, Brzi kviz, Vešanje, Duel, teme. Prodavnicu i novčiće smo 
 | Pozivnice | — | **link** kviz.librum.club/duel/KOD i /igrac/ID otvara aplikaciju (deljenje izazova van aplikacije) |
 | Podešavanja | zvuk, podsetnik, tema, nalog, pravno | vibracija uključi/isključi; „Pošalji pitanje” vodi na veb umesto na ekran u aplikaciji |
 | Admin /majmun | pitanja, reči, predlozi | **prijave objava i komentara** (moderacija), opcije aplikacije (verzija, poruka svima) |
-| Obaveštenja (push) | kod za APNs/FCM napisan | Firebase/APNs ključevi i objava funkcije `obavesti` |
+| Obaveštenja (push) | radi 05.11: izazov na duel i novi pratilac (APNs + FCM; okidač pg_net → funkcija `obavesti`, ključevi u Vault-u, `scripts/2026-11-05_push-obavestenja.sql`); proba na Android emulatoru prošla | poruke u razgovoru i poziv u sobu kao push (sada samo dok je app otvorena) |
 | Android | Osvajanje v3; Igrači (objave, komentari u granama, poruke, pravila, blokada, prijava), profil igrača i pretraga, moj profil kao IG + Dodaj pitanje/reč, Vešanje (vešala, tastatura telefona), 4 pomoći u Vešanju/Brzom/Duelu/Dnevnom, Dnevni izazov | Slikari, kvizovi po temi, duel bez čekanja, rang „Koje pratim”, Sanduče sa servera, linkovi `librumkviz://`, Osvajanje preko servera |
 
 ## 2a. Urađeno 03.11 (druga polovina dana)
 
-- **Android 05.11 (usklađen):** Karijera ceo tok (šef, ometanja, slobodni dani, pitanja struke), Podešavanja (nalog, zvuk, dnevni podsetnik 19:30 lokalno, izgled Auto/Svetla/Tamna, Karijera, podrška, odjava, brisanje naloga), Uredi profil (avatar, drugar, nadimak, ime, grad, O meni), Blokirani, bedževi i statistika, fokus profila (Osvajač + Karijera + krugovi), rang tabovi, Dodaj pitanje sa nacrtom. Ostaje: push sa servera (FCM traži Firebase), Osvajanje radi druga sesija.
+- **Android 05.11 (usklađen):** Karijera ceo tok (šef, ometanja, slobodni dani, pitanja struke), Podešavanja (nalog, zvuk, dnevni podsetnik 19:30 lokalno, izgled Auto/Svetla/Tamna, Karijera, podrška, odjava, brisanje naloga), Uredi profil (avatar, drugar, nadimak, ime, grad, O meni), Blokirani, bedževi i statistika, fokus profila (Osvajač + Karijera + krugovi), rang tabovi, Dodaj pitanje sa nacrtom. Push sa servera ugrađen u 1.0.3 (Firebase Messaging, projekat librum-ebook-c0f24). Osvajanje radi druga sesija.
 - **Android sustigao iOS:** rang lista (sve igre, „Koje pratim”), Sanduče i brojači, duel bez čekanja, Slikari i kvizovi po temi, linkovi `librumkviz://`, Osvajanje preko servera (isti JSON kao iOS, test formata).
 - **Osvajanje (obe platforme):**
   - Pojačanja = max(3, države/2) + bonus kontinenta.

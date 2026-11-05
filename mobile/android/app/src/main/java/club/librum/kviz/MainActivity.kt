@@ -100,12 +100,19 @@ class MainActivity : ComponentActivity() {
             club.librum.kviz.ui.Boje.tamno = when (club.librum.kviz.ui.Boje.tema) { "tamna" -> true; "svetla" -> false; else -> sistemTamno }
             if (karijeraProba) club.librum.kviz.karijera.KarijeraProba() else Aplikacija()
         }
-        intent?.data?.let { Pozivnica.primi(it) }
+        club.librum.kviz.servisi.Push.napraviKanal(applicationContext)
+        intent?.let { otvoriIz(it) }
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
-        intent.data?.let { Pozivnica.primi(it) }
+        otvoriIz(intent)
+    }
+
+    /** Pozivnica (librumkviz://...) ili dodir na push (dodaci vrsta/id iz funkcije obavesti). */
+    private fun otvoriIz(namera: android.content.Intent) {
+        namera.data?.let { Pozivnica.primi(it); return }
+        club.librum.kviz.servisi.Push.ruta(namera.getStringExtra("vrsta"), namera.getStringExtra("id"))?.let { Pozivnica.ruta.value = it }
     }
 }
 
@@ -142,6 +149,15 @@ private fun Aplikacija() {
     val trenutna by nav.currentBackStackEntryAsState()
     val ruta = trenutna?.destination?.route
     LaunchedEffect(nalog?.id) { sesija.ucitajNadimak() }
+    // Push posle prijave: dozvola se traži jednom (Android 13+), pa token ide na server; odbijena dozvola = bez pusha.
+    val dozvolaPusha = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { data ->
+        if (data) club.librum.kviz.servisi.Push.prijavi(sesija)
+    }
+    LaunchedEffect(nalog?.id) {
+        if (nalog == null) return@LaunchedEffect
+        if (club.librum.kviz.servisi.Push.imaDozvolu(kontekst)) club.librum.kviz.servisi.Push.prijavi(sesija)
+        else if (android.os.Build.VERSION.SDK_INT >= 33) dozvolaPusha.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
     val trebaDopuna by sesija.trebaDopuna.collectAsState()
     if (nalog != null && trebaDopuna) { club.librum.kviz.ui.DopunaProfila(sesija); return }
     val pozivnica by Pozivnica.ruta.collectAsState()
