@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { IconCheck, IconLock } from '@/components/icons'
 import { sendCustomPasswordResetEmail } from '@/lib/password-reset'
+import { promeniLozinku } from './akcije'
 
 const TOTAL_AVATARS = 50
 const AVATAR_LIST = Array.from({ length: TOTAL_AVATARS }, (_, i) =>
@@ -39,6 +40,7 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
   const [profileError, setProfileError] = useState('')
 
   // Password change
+  const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [newPw2, setNewPw2] = useState('')
   const [savingPw, setSavingPw] = useState(false)
@@ -69,16 +71,15 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
 
   async function changePassword() {
     setPwError('')
-    if (newPw.length < 6) { setPwError('Lozinka mora imati najmanje 6 karaktera.'); return }
+    if (newPw.length < 10) { setPwError('Lozinka mora imati najmanje 10 znakova.'); return }
     if (newPw !== newPw2) { setPwError('Lozinke se ne poklapaju.'); return }
 
     setSavingPw(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({ password: newPw })
+    const ishod = await promeniLozinku(currentPw, newPw)
     setSavingPw(false)
-    if (error) { setPwError(error.message); return }
+    if (!ishod.ok) { setPwError(ishod.greska); return }
     setPwSaved(true)
-    setNewPw(''); setNewPw2('')
+    setCurrentPw(''); setNewPw(''); setNewPw2('')
     setTimeout(() => setPwSaved(false), 3000)
   }
 
@@ -149,14 +150,16 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
           Promena lozinke
         </h2>
         <p className="text-[12px] mb-5" style={{ color: '#6F6C66' }}>
-          Postavi novu lozinku za prijavu. Najmanje 6 karaktera.
+          Upiši trenutnu lozinku, pa novu. Najmanje 10 znakova.
         </p>
 
         <div className="space-y-3 mb-4">
+          <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+            className="input" placeholder="Trenutna lozinka" aria-label="Trenutna lozinka" autoComplete="current-password" />
           <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
-            className="input" placeholder="Nova lozinka" />
+            className="input" placeholder="Nova lozinka" aria-label="Nova lozinka" autoComplete="new-password" />
           <input type="password" value={newPw2} onChange={e => setNewPw2(e.target.value)}
-            className="input" placeholder="Ponovi novu lozinku" />
+            className="input" placeholder="Ponovi novu lozinku" aria-label="Ponovi novu lozinku" autoComplete="new-password" />
         </div>
 
         {pwError && (
@@ -169,7 +172,7 @@ export default function SettingsForm({ profile, email }: { profile: Profile; ema
           </div>
         )}
 
-        <button onClick={changePassword} disabled={savingPw || !newPw || !newPw2}
+        <button onClick={changePassword} disabled={savingPw || !currentPw || !newPw || !newPw2}
           className="btn btn-md w-full mb-4"
           style={pwSaved
             ? { background: '#12907E', color: 'white' }

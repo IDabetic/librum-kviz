@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { segment, jePojam, VESANJE_KATEGORIJE } from '@/lib/segmenti'
+import { jeDvostrukoPotvrdjen } from '@/lib/admin-pristup'
 
 // Odluka urednika o korisničkom predlogu: prihvatanje (uz upis u fond
 // pitanja), odbijanje sa razlogom ili vraćanje na čekanje.
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ ok: false, error: 'unauth' }, { status: 401 })
+  // Admin radnja traži i drugi korak prijave (kod iz aplikacije), ne samo ulogu.
+  if (!(await jeDvostrukoPotvrdjen(supabase))) return NextResponse.json({ ok: false, error: 'potreban drugi korak prijave' }, { status: 403 })
 
   const { data: profil } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()

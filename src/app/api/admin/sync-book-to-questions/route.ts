@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { jeDvostrukoPotvrdjen } from '@/lib/admin-pristup'
 
 // One-click "mirror book_questions into questions" for the admin panel.
 // Same logic as scripts/sync-book-to-questions.mjs but executed from the
@@ -29,6 +30,8 @@ export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ ok: false, error: 'unauth' }, { status: 401 })
+  // Admin radnja traži i drugi korak prijave (kod iz aplikacije), ne samo ulogu.
+  if (!(await jeDvostrukoPotvrdjen(supabase))) return NextResponse.json({ ok: false, error: 'potreban drugi korak prijave' }, { status: 403 })
 
   const { data: profile } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()

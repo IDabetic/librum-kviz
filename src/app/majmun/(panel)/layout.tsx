@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminShell from './AdminShell'
+import { ADMIN_ULOGE, jeDvostrukoPotvrdjen } from '@/lib/admin-pristup'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,9 +22,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['urednik', 'moderator', 'super_admin'].includes(profile.role)) {
+  if (!profile || !(ADMIN_ULOGE as readonly string[]).includes(profile.role)) {
     redirect('/')
   }
+  // Bez koda iz aplikacije za autentifikaciju nema panela (uvođenje ili unos koda je na /majmun/zastita).
+  if (!(await jeDvostrukoPotvrdjen(supabase))) redirect('/majmun/zastita')
 
   return <AdminShell profile={profile}>{children}</AdminShell>
 }
