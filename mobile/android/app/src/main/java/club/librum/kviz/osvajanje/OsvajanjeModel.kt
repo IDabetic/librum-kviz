@@ -963,15 +963,22 @@ class OsvajanjeModel(
         } else potezBota = viewModelScope.launch { igrajBota() }
     }
 
+    /** Najviše napada jednog bota u potezu (osigurač; pravi potez ih ima nekoliko). */
+    private val NAJVISE_NAPADA_BOTA = 40
+
     private suspend fun igrajBota() {
         if (botRadi) return
         botRadi = true
+        pokreniCuvara()
+        var napada = 0
         try {
             stanje = stanje.snabdevanje(slucajno.sledeci() < stanje.tacnostBota).botRasporedi().botOdbrana().botIgraKarte().botTraziSavez()
                 .botIzdaja().botNajaviPohod().botUltimatum()
             delay(pauzaBota)
-            while (true) {
+            while (napada < NAJVISE_NAPADA_BOTA) {
                 val (odakle, kuda) = stanje.botSledeciNapad() ?: break
+                napada++
+                val preBitaka = stanje.bitaka; val preOblasti = stanje.oblasti
                 izabrana = odakle
                 Zvuk.pusti(Zvuk.Vrsta.BOT_NAPADA, 0.45f)
                 delay(pauzaBota)
@@ -1032,6 +1039,8 @@ class OsvajanjeModel(
                     udari(odakle, kuda, ishod.osvojeno)
                 }
                 if (stanje.faza == Faza.KRAJ) break
+                // Napad koji pravila odbiju ne menja ništa: bot bi ga birao zauvek i partija bi stala (vlasnik 05.11).
+                if (stanje.bitaka == preBitaka && stanje.oblasti == preOblasti) break
                 delay(pauzaBota)
             }
             izabrana = null
@@ -1041,6 +1050,32 @@ class OsvajanjeModel(
         val novo = stanje.zavrsiPotez()
         objavi(novo)
         pocniPotez(novo)
+    }
+
+    private var cuvar: kotlinx.coroutines.Job? = null
+
+    /** Čuvar poteza bota: ako se potez ne pomeri 30 s (bez pauze i otvorene bitke), potez se završava, da partija ne stane. */
+    private fun pokreniCuvara() {
+        cuvar?.cancel()
+        cuvar = viewModelScope.launch {
+            var poslednji = ""; var isto = 0
+            while (true) {
+                delay(10_000)
+                if (stanje.faza == Faza.KRAJ || stanje.trenutni.covek || veza != null) return@launch
+                val otisak = "${stanje.krug}-${stanje.naPotezu}-${stanje.bitaka}-${stanje.faza}"
+                isto = if (otisak == poslednji && bitka == null) isto + 1 else 0
+                poslednji = otisak
+                if (isto < 3) continue
+                android.util.Log.w("Osvajac", "potez bota zaglavljen ($otisak), završava se")
+                potezBota?.cancel()
+                botRadi = false
+                izabrana = null
+                val novo = stanje.zavrsiPotez()
+                objavi(novo)
+                pocniPotez(novo)
+                return@launch
+            }
+        }
     }
 
     fun javi(tekst: String) {

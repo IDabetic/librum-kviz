@@ -22,7 +22,7 @@ android {
         targetSdk = 36
         // Play traži rastući broj za svako otpremanje: minuti od 2026-01-01, ili KVIZ_GRADNJA.
         versionCode = System.getenv("KVIZ_GRADNJA")?.toInt() ?: ((System.currentTimeMillis() / 60_000 - 29_454_720).toInt())
-        versionName = "1.0.5"
+        versionName = "1.0.6"
         buildConfigField("String", "SUPABASE_URL", "\"${supabase["SUPABASE_URL"]}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabase["SUPABASE_ANON_KEY"]}\"")
         // Google Cloud „librum-kviz” → Web client (javni ID); Android klijenti (upload i debug SHA-1) se ne navode u kodu.
