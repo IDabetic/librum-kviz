@@ -1,0 +1,33 @@
+# Librum kviz
+
+> Librum kviz je besplatna aplikacija sa igrama znanja na srpskom jeziku, za iPhone i Android, sa istim nalogom i rang listom na sajtu kviz.librum.club. Deo je Librum zajednice (librum.club, librum.rs, librum.house).
+
+Ažurirano: 2026-11-05
+
+## Igre (u aplikaciji)
+Sve igre se igraju u aplikaciji; opis je na [naslovnoj strani](https://kviz.librum.club/).
+- [Osvajač](https://kviz.librum.club/#osvajanje): strateški kviz na mapi sveta sa 171 državom i 17 regiona; svaka bitka je jedno pitanje, do 12 igrača, protiv računara ili prijatelja.
+- [Karijerista](https://kviz.librum.club/#karijerista): od probnog rada u Korporaciji do sopstvene firme, sve na pitanjima iz izabrane struke.
+- PRO kviz: survival kviz sa 10 života, kombo nizovima i nedeljnom rang listom.
+- Book kviz: pisci, dela i likovi; 168 klasika sa svojim pitanjima.
+- Duel: jedan na jedan uživo ili izazov prijatelju sa profila.
+- Slikari: ko je naslikao delo; 1.167 dela, od Leonarda do Pikasa.
+- Brzi kviz: tačno ili netačno, 60 sekundi.
+- Vešanje: pogađanje reči slovo po slovo, sa našom azbukom.
+
+## Aplikacija
+- [App Store (iPhone)](https://apps.apple.com/rs/app/librum-kviz/id6830091653)
+- [Google Play (Android)](https://play.google.com/store/apps/details?id=club.librum.kviz)
+
+## Zajednica
+- [Rang lista](https://kviz.librum.club/ranglista)
+- [Dodaj pitanja](https://kviz.librum.club/dodaj-pitanja): igrači predlažu pitanja, urednici ih proveravaju.
+- [Autori pitanja](https://kviz.librum.club/autori-pitanja)
+
+## Pravno
+- [Politika privatnosti](https://kviz.librum.club/politika-privatnosti)
+- [Uslovi korišćenja](https://kviz.librum.club/uslovi-koriscenja)
+- [Licence i izvori](https://kviz.librum.club/licence-i-izvori)
+- [Brisanje naloga](https://kviz.librum.club/brisanje-naloga)
+
+Kontakt: info@librum.club

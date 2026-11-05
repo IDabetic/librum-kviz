@@ -169,7 +169,7 @@ function ZivaNapomena({ nalaz }: { nalaz: Nalaz | null }) {
   if (!nalaz || !ZIVA_PORUKA[nalaz.status]) return null
   return (
     <div className="rounded-2xl px-4 py-2.5 mt-2 text-[12px] leading-relaxed"
-      style={{ background: '#FFF3C4', color: '#8A6A12' }}>
+      style={{ background: '#FFF5E0', color: '#8A6A12' }}>
       {ZIVA_PORUKA[nalaz.status]}
       {nalaz.match && <div className="mt-0.5 font-semibold">„{nalaz.match}”</div>}
     </div>
@@ -192,29 +192,29 @@ export default function DodajPitanjaPage() {
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-        <Link href="/igre"
+        <Link href="/#igre"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-          style={{ color: '#12907E' }}>
+          style={{ color: '#23845C' }}>
           <IconBack size={16} strokeWidth={2.2} />
           Igre
         </Link>
 
         <div className="text-center mb-10">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
-            style={{ background: '#FFF3C4' }}>
+            style={{ background: '#FFF5E0' }}>
             <IconHint size={26} className="text-[#8A6A12]" strokeWidth={2.2} />
           </div>
           <h1 className="font-black tracking-tight mb-2 leading-[1.1]"
-            style={{ color: '#151515', fontSize: 'clamp(36px, 7vw, 56px)', fontWeight: 500 }}>
+            style={{ color: '#1A1B3A', fontSize: 'clamp(36px, 7vw, 56px)', fontWeight: 500 }}>
             Dodaj pitanja
           </h1>
-          <p className="text-[14px] sm:text-[15px]" style={{ color: '#6F6C66' }}>
+          <p className="text-[14px] sm:text-[15px]" style={{ color: '#4F5170' }}>
             Pošalji svoja pitanja ili pojmove za vešanje, jedno po jedno ili ceo fajl odjednom.
           </p>
         </div>
 
         {auth === 'proverava' && (
-          <div className="card-soft p-10 text-center text-[14px]" style={{ color: '#6F6C66' }}>
+          <div className="card-soft p-10 text-center text-[14px]" style={{ color: '#4F5170' }}>
             Učitavanje…
           </div>
         )}
@@ -241,11 +241,11 @@ export default function DodajPitanjaPage() {
                   <Uputstvo seg={seg} />
                 </>}
 
-            <p className="text-[11px] text-center leading-relaxed" style={{ color: '#6F6C66' }}>
+            <p className="text-[11px] text-center leading-relaxed" style={{ color: '#4F5170' }}>
               Sva poslata pitanja prolaze kroz uredničku proveru pre nego što se pojave u kvizu.
               Poslata pitanja se broje u „Doprinos kvizu”.
               <br />
-              <Link href="/moja-pitanja" className="font-semibold underline" style={{ color: '#12907E' }}>
+              <Link href="/moja-pitanja" className="font-semibold underline" style={{ color: '#23845C' }}>
                 Vidi svoja poslata pitanja i njihov status
               </Link>
             </p>
@@ -261,13 +261,13 @@ function Kapija() {
   return (
     <div className="card-soft p-10 text-center">
       <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
-        style={{ background: 'rgba(21,21,21,0.06)' }}>
-        <IconLock size={26} style={{ color: '#151515' }} strokeWidth={2.2} />
+        style={{ background: 'rgba(26,27,58,0.06)' }}>
+        <IconLock size={26} style={{ color: '#1A1B3A' }} strokeWidth={2.2} />
       </div>
-      <h2 className="font-black tracking-tight mb-2" style={{ color: '#151515', fontSize: '22px' }}>
+      <h2 className="font-black tracking-tight mb-2" style={{ color: '#1A1B3A', fontSize: '22px' }}>
         Samo za prijavljene
       </h2>
-      <p className="text-[14px] mb-7 max-w-md mx-auto leading-relaxed" style={{ color: '#6F6C66' }}>
+      <p className="text-[14px] mb-7 max-w-md mx-auto leading-relaxed" style={{ color: '#4F5170' }}>
         Pitanja u kvizu se vode uz ime autora, pa slanje ide preko naloga.
         Prijavi se ili napravi nalog, traje pola minuta.
       </p>
@@ -286,10 +286,10 @@ function Kapija() {
 function IzborSegmenta({ seg, onChange }: { seg: SegmentKey; onChange: (k: SegmentKey) => void }) {
   return (
     <section className="card-soft p-6 sm:p-7">
-      <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6F6C66' }}>
+      <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#4F5170' }}>
         Korak 1
       </p>
-      <h2 className="font-bold text-[16px] mb-4 tracking-tight" style={{ color: '#151515' }}>
+      <h2 className="font-bold text-[16px] mb-4 tracking-tight" style={{ color: '#1A1B3A' }}>
         Za koji segment kviza šalješ pitanja?
       </h2>
 
@@ -301,19 +301,19 @@ function IzborSegmenta({ seg, onChange }: { seg: SegmentKey; onChange: (k: Segme
               className="text-left rounded-2xl p-4 transition-all border-2"
               style={{
                 borderColor: aktivan ? s.accent : 'transparent',
-                background: aktivan ? s.tint : '#E7E1D0',
+                background: aktivan ? s.tint : '#EDE5D5',
               }}>
               <div className="text-[20px] leading-none mb-2">{s.emoji}</div>
-              <p className="font-bold text-[14px] mb-0.5" style={{ color: aktivan ? s.accent : '#151515' }}>
+              <p className="font-bold text-[14px] mb-0.5" style={{ color: aktivan ? s.accent : '#1A1B3A' }}>
                 {s.label}
               </p>
-              <p className="text-[11px] leading-snug" style={{ color: '#6F6C66' }}>{s.kratko}</p>
+              <p className="text-[11px] leading-snug" style={{ color: '#4F5170' }}>{s.kratko}</p>
             </button>
           )
         })}
       </div>
 
-      <p className="text-[12px] mt-4 leading-relaxed" style={{ color: '#6F6C66' }}>
+      <p className="text-[12px] mt-4 leading-relaxed" style={{ color: '#4F5170' }}>
         {segment(seg).desc}
       </p>
     </section>
@@ -328,7 +328,7 @@ function TabDugme({ aktivan, onClick, accent, children }: {
       className="flex-1 py-3 rounded-2xl text-[13px] font-bold transition-all"
       style={aktivan
         ? { background: accent, color: 'white' }
-        : { background: 'transparent', color: '#6F6C66' }}>
+        : { background: 'transparent', color: '#4F5170' }}>
       {children}
     </button>
   )
@@ -406,16 +406,16 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
 
   return (
     <section className="card-soft p-6 sm:p-8">
-      <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6F6C66' }}>
+      <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#4F5170' }}>
         Korak 2
       </p>
-      <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#151515' }}>
+      <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#1A1B3A' }}>
         {pojam ? 'Pojam za' : 'Pitanje za'}: <span style={{ color: s.accent }}>{s.label}</span>
       </h2>
 
       <form onSubmit={posalji} className="flex flex-col gap-5">
         <div>
-          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
+          <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>
             {pojam ? 'Pojam koji se pogađa' : 'Pitanje'}
           </label>
           {pojam ? (
@@ -428,7 +428,7 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
           )}
           <ZivaNapomena nalaz={nalaz} />
           {pojam && (
-            <p className="text-[11px] mt-2" style={{ color: '#6F6C66' }}>
+            <p className="text-[11px] mt-2" style={{ color: '#4F5170' }}>
               Od 4 do 18 slova. Može biti i više reči.
             </p>
           )}
@@ -436,7 +436,7 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
 
         <div>
           <label className="block text-[13px] font-bold mb-2 tracking-tight"
-            style={{ color: pojam ? '#151515' : '#0E6F61' }}>
+            style={{ color: pojam ? '#1A1B3A' : '#0A4C35' }}>
             {pojam ? 'Opis (pomoć igraču)' : 'Tačan odgovor'}
           </label>
           {pojam ? (
@@ -448,7 +448,7 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
               placeholder="Tačan odgovor" maxLength={500} required className="input" />
           )}
           {pojam && (
-            <p className="text-[11px] mt-2" style={{ color: '#6F6C66' }}>
+            <p className="text-[11px] mt-2" style={{ color: '#4F5170' }}>
               Opis ne sme da sadrži sam pojam, inače pogađanje nema smisla.
             </p>
           )}
@@ -465,7 +465,7 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
                   placeholder={`Netačan odgovor ${i + 1}`} maxLength={500} required className="input" />
               ))}
             </div>
-            <p className="text-[11px] mt-2" style={{ color: '#6F6C66' }}>
+            <p className="text-[11px] mt-2" style={{ color: '#4F5170' }}>
               Sva četiri odgovora moraju biti različita. Igra ih meša, pa redosled nije bitan.
             </p>
           </div>
@@ -473,7 +473,7 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
 
         {pojam && (
           <div>
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>
               Kategorija
             </label>
             <select value={zanr} onChange={e => setZanr(e.target.value)} className="input" required>
@@ -484,8 +484,8 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
 
         {!pojam && s.zanr && (
           <div>
-            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
-              Žanr <span className="font-normal" style={{ color: '#6F6C66' }}>(opciono)</span>
+            <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>
+              Žanr <span className="font-normal" style={{ color: '#4F5170' }}>(opciono)</span>
             </label>
             <input value={zanr} onChange={e => setZanr(e.target.value)}
               placeholder="npr. Roman, Poezija, Drama…" maxLength={100} className="input" />
@@ -501,8 +501,8 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
 
         {primljeno && (
           <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2"
-            style={{ background: '#DFF3EE', color: '#0E6F61' }}>
-            <IconCheck size={16} className="text-[#0E6F61]" />
+            style={{ background: '#E8F6EF', color: '#0A4C35' }}>
+            <IconCheck size={16} className="text-[#0A4C35]" />
             {(rez?.autoAccepted ?? 0) > 0
               ? `${pojam ? 'Pojam je' : 'Pitanje je'} odmah objavljeno u kvizu. Hvala!`
               : `${pojam ? 'Pojam je primljen' : 'Pitanje je primljeno'} i čeka uredničku proveru. Hvala!`}
@@ -511,7 +511,7 @@ function JednoPitanje({ seg }: { seg: SegmentKey }) {
 
         {!primljeno && razlogOdbijanja && (
           <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-start gap-2"
-            style={{ background: '#FFF3C4', color: '#8A6A12' }}>
+            style={{ background: '#FFF5E0', color: '#8A6A12' }}>
             <IconWrong size={16} className="mt-0.5 flex-shrink-0" />
             <span>Nije primljeno: {razlogOdbijanja}.</span>
           </div>
@@ -637,13 +637,13 @@ function UvozFajla({ seg }: { seg: SegmentKey }) {
 
   return (
     <section className="card-soft p-6 sm:p-8">
-      <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#6F6C66' }}>
+      <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: '#4F5170' }}>
         Korak 2
       </p>
-      <h2 className="font-bold text-[16px] mb-2 tracking-tight" style={{ color: '#151515' }}>
+      <h2 className="font-bold text-[16px] mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>
         Grupni uvoz za: <span style={{ color: s.accent }}>{s.label}</span>
       </h2>
-      <p className="text-[13px] mb-5 leading-relaxed" style={{ color: '#6F6C66' }}>
+      <p className="text-[13px] mb-5 leading-relaxed" style={{ color: '#4F5170' }}>
         Preuzmi šablon, popuni ga i vrati ovde. Excel šablon je lakši ako radiš u
         tabeli, XML ako radiš u uređivaču teksta. Šablon je različit za svaki segment.
       </p>
@@ -660,7 +660,7 @@ function UvozFajla({ seg }: { seg: SegmentKey }) {
       </div>
 
       <div className="rounded-2xl p-4 mb-3 text-[12px] leading-relaxed"
-        style={{ background: '#E7E1D0', color: '#151515' }}>
+        style={{ background: '#EDE5D5', color: '#1A1B3A' }}>
         <p className="font-bold mb-1.5">Kolone u Excel/CSV šablonu</p>
         <p className="font-mono text-[11px]">
           {pojam
@@ -670,11 +670,11 @@ function UvozFajla({ seg }: { seg: SegmentKey }) {
       </div>
 
       <details className="mb-5">
-        <summary className="text-[12px] font-semibold" style={{ color: '#12907E' }}>
+        <summary className="text-[12px] font-semibold" style={{ color: '#23845C' }}>
           Kako izgleda XML
         </summary>
         <div className="rounded-2xl p-4 mt-2 text-[12px] font-mono leading-relaxed overflow-x-auto"
-          style={{ background: '#E7E1D0', color: '#151515' }}>
+          style={{ background: '#EDE5D5', color: '#1A1B3A' }}>
           <pre className="whitespace-pre">{pojam
             ? `<pojmovi segment="vesanje">
   <pojam>
@@ -695,7 +695,7 @@ function UvozFajla({ seg }: { seg: SegmentKey }) {
         </div>
       </details>
 
-      <ul className="text-[12px] space-y-1 mb-6 leading-relaxed list-disc pl-5" style={{ color: '#6F6C66' }}>
+      <ul className="text-[12px] space-y-1 mb-6 leading-relaxed list-disc pl-5" style={{ color: '#4F5170' }}>
         {pojam ? (
           <>
             <li>Pojam od 4 do 18 slova, opis do 200 znakova i ne sme sadržati sam pojam.</li>
@@ -723,8 +723,8 @@ function UvozFajla({ seg }: { seg: SegmentKey }) {
         </button>
       </div>
 
-      <div className="mt-5 pt-5 border-t border-[#E7E1D0]">
-        <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#151515' }}>
+      <div className="mt-5 pt-5 border-t border-[#EDE5D5]">
+        <label className="block text-[13px] font-bold mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>
           …ili nalepi link ka Google tabeli
         </label>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -736,7 +736,7 @@ function UvozFajla({ seg }: { seg: SegmentKey }) {
             {salje ? 'Čitam…' : 'Uvezi iz tabele'}
           </button>
         </div>
-        <p className="text-[11px] mt-2 leading-relaxed" style={{ color: '#6F6C66' }}>
+        <p className="text-[11px] mt-2 leading-relaxed" style={{ color: '#4F5170' }}>
           Tabela mora biti javna za čitanje: <em>Deli → Svako sa linkom → Pregledač</em>.
           Kolone su iste kao u šablonu, ništa se ne preuzima ni ne vraća.
         </p>
@@ -751,7 +751,7 @@ function UvozFajla({ seg }: { seg: SegmentKey }) {
 
       {!parseGreska && spremno && !rez && (
         <div className="mt-4 rounded-2xl px-4 py-3 text-[13px]"
-          style={{ background: '#E7E1D0', color: '#151515' }}>
+          style={{ background: '#EDE5D5', color: '#1A1B3A' }}>
           {vrsta === 'xml'
             ? <>Pročitano <strong>{stavke.length}</strong> {rec(stavke.length, pojam)} iz fajla <strong>{ime}</strong>.</>
             : <>Izabran fajl <strong>{ime}</strong>. Broj redova se prebrojava na serveru.</>}
@@ -793,11 +793,11 @@ function Uputstvo({ seg }: { seg: SegmentKey }) {
 
   return (
     <details className="card-soft p-6 sm:p-7">
-      <summary className="font-bold text-[15px] tracking-tight" style={{ color: '#151515' }}>
+      <summary className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>
         Kako se popunjava Excel šablon
       </summary>
 
-      <ol className="mt-5 space-y-4 text-[13px] leading-relaxed" style={{ color: '#151515' }}>
+      <ol className="mt-5 space-y-4 text-[13px] leading-relaxed" style={{ color: '#1A1B3A' }}>
         <li className="flex gap-3">
           <Korak broj={1} accent={s.accent} />
           <span>
@@ -826,11 +826,11 @@ function Uputstvo({ seg }: { seg: SegmentKey }) {
         <svg viewBox={`0 0 ${ukupno + 44} 118`} className="min-w-[560px] w-full" role="img"
           aria-label={`Prikaz tabele sa kolonama ${kolone.join(', ')}`}>
           {/* Traka sa brojevima redova, kao u Excelu */}
-          <rect x="0" y="0" width={ukupno + 44} height="118" rx="10" fill="#E7E1D0" />
+          <rect x="0" y="0" width={ukupno + 44} height="118" rx="10" fill="#EDE5D5" />
           <rect x="8" y="10" width="26" height="98" rx="6" fill="#E6E6E6" />
-          <text x="21" y="34" textAnchor="middle" fontSize="11" fill="#6F6C66">1</text>
-          <text x="21" y="66" textAnchor="middle" fontSize="11" fill="#6F6C66">2</text>
-          <text x="21" y="98" textAnchor="middle" fontSize="11" fill="#6F6C66">3</text>
+          <text x="21" y="34" textAnchor="middle" fontSize="11" fill="#4F5170">1</text>
+          <text x="21" y="66" textAnchor="middle" fontSize="11" fill="#4F5170">2</text>
+          <text x="21" y="98" textAnchor="middle" fontSize="11" fill="#4F5170">3</text>
 
           {kolone.map((k, i) => (
             <g key={k}>
@@ -840,7 +840,7 @@ function Uputstvo({ seg }: { seg: SegmentKey }) {
 
               {/* Red 2: primer koji korisnik prekucava */}
               <rect x={40 + x[i]} y={42} width={sirine[i] - 4} height={28} rx="6" fill="#FFFFFF" />
-              <text x={40 + x[i] + 10} y={61} fontSize="11.5" fill="#151515">
+              <text x={40 + x[i] + 10} y={61} fontSize="11.5" fill="#1A1B3A">
                 {red[i].length > sirine[i] / 6.6 ? red[i].slice(0, Math.floor(sirine[i] / 6.6)) + '…' : red[i]}
               </text>
 
@@ -852,7 +852,7 @@ function Uputstvo({ seg }: { seg: SegmentKey }) {
         </svg>
       </div>
 
-      <p className="text-[12px] mt-3 leading-relaxed" style={{ color: '#6F6C66' }}>
+      <p className="text-[12px] mt-3 leading-relaxed" style={{ color: '#4F5170' }}>
         Isti fajl radi i kao <strong>.xlsx</strong>: ako ti je lakše, sačuvaj ga kao
         Excel radnu svesku, prihvataju se oba oblika.
         {pojam
@@ -888,28 +888,28 @@ function IzvestajPanel({ rez }: { rez: Rezultat }) {
     + (s.dupe_rejected ?? 0) + (s.similar ?? 0)
 
   return (
-    <div className="mt-5 rounded-2xl p-5" style={{ background: s.inserted > 0 ? '#DFF3EE' : '#FFF3C4' }}>
-      <p className="font-bold text-[15px] mb-3" style={{ color: s.inserted > 0 ? '#0E6F61' : '#8A6A12' }}>
+    <div className="mt-5 rounded-2xl p-5" style={{ background: s.inserted > 0 ? '#E8F6EF' : '#FFF5E0' }}>
+      <p className="font-bold text-[15px] mb-3" style={{ color: s.inserted > 0 ? '#0A4C35' : '#8A6A12' }}>
         {s.inserted > 0
           ? `✓ Primljeno ${s.inserted} ${rec(s.inserted, pojam)}`
           : pojam ? 'Nijedan pojam nije primljen' : 'Nijedno pitanje nije primljeno'}
       </p>
 
-      <div className="space-y-1.5 text-[13px]" style={{ color: '#151515' }}>
+      <div className="space-y-1.5 text-[13px]" style={{ color: '#1A1B3A' }}>
         <Red naziv={pojam ? 'Pojmova u fajlu' : 'Pitanja u fajlu'} broj={s.total} />
         <Red naziv="Ispravno popunjeno" broj={s.valid} />
         {s.invalid > 0 && <Red naziv="Neispravno (preskočeno)" broj={s.invalid} boja="#C42B4F" />}
-        <div className="h-px my-2" style={{ background: 'rgba(21,21,21,0.10)' }} />
+        <div className="h-px my-2" style={{ background: 'rgba(26,27,58,0.10)' }} />
         <Red naziv="Duplikata ukupno" broj={ukupnoDupli} boja={ukupnoDupli > 0 ? '#8A6A12' : undefined} />
         <Red naziv="— duplikat unutar samog fajla" broj={s.dupe_in_file} />
         <Red naziv={pojam ? '— već se nalazi među pojmovima' : '— već se nalazi u bazi pitanja'} broj={s.dupe_in_db} />
         <Red naziv="— već poslato, čeka proveru" broj={s.dupe_pending} />
         <Red naziv="— već poslato ranije i odbijeno" broj={s.dupe_rejected ?? 0} />
         {!pojam && <Red naziv="— vrlo slično postojećem pitanju" broj={s.similar ?? 0} />}
-        <div className="h-px my-2" style={{ background: 'rgba(21,21,21,0.10)' }} />
-        <Red naziv="Primljeno u bazu predloga" broj={s.inserted} boja="#0E6F61" podebljano />
+        <div className="h-px my-2" style={{ background: 'rgba(26,27,58,0.10)' }} />
+        <Red naziv="Primljeno u bazu predloga" broj={s.inserted} boja="#0A4C35" podebljano />
         {(rez.autoAccepted ?? 0) > 0 && (
-          <Red naziv="— odmah objavljeno u kvizu" broj={rez.autoAccepted!} boja="#0E6F61" />
+          <Red naziv="— odmah objavljeno u kvizu" broj={rez.autoAccepted!} boja="#0A4C35" />
         )}
       </div>
 
@@ -919,11 +919,11 @@ function IzvestajPanel({ rez }: { rez: Rezultat }) {
             Zašto {pojam ? 'neki pojmovi nisu primljeni' : 'su neka pitanja odbijena'} ({rez.invalidRows!.length}
             {s.invalid > rez.invalidRows!.length ? ` od ${s.invalid}` : ''})
           </summary>
-          <ul className="mt-2 space-y-1 pl-1" style={{ color: '#151515' }}>
+          <ul className="mt-2 space-y-1 pl-1" style={{ color: '#1A1B3A' }}>
             {rez.invalidRows!.map(r => (
               <li key={r.row}>
                 <strong>{pojam ? 'pojam' : 'pitanje'} #{r.row}</strong> — {r.reason}
-                {r.question && <span style={{ color: '#6F6C66' }}> · „{r.question}”</span>}
+                {r.question && <span style={{ color: '#4F5170' }}> · „{r.question}”</span>}
               </li>
             ))}
           </ul>
@@ -936,13 +936,13 @@ function IzvestajPanel({ rez }: { rez: Rezultat }) {
             {pojam ? 'Koji pojmovi su duplikati' : 'Koja pitanja su duplikati'} ({rez.duplicateRows!.length}
             {ukupnoDupli > rez.duplicateRows!.length ? ` od ${ukupnoDupli}` : ''})
           </summary>
-          <ul className="mt-2 space-y-1 pl-1" style={{ color: '#151515' }}>
+          <ul className="mt-2 space-y-1 pl-1" style={{ color: '#1A1B3A' }}>
             {rez.duplicateRows!.map(r => (
               <li key={r.row}>
                 <strong>{pojam ? 'pojam' : 'pitanje'} #{r.row}</strong> — {DUPL_NAZIV[r.verdict]}
-                {r.question && <span style={{ color: '#6F6C66' }}> · „{r.question}”</span>}
+                {r.question && <span style={{ color: '#4F5170' }}> · „{r.question}”</span>}
                 {r.match && (
-                  <div className="pl-4 mt-0.5" style={{ color: '#6F6C66' }}>
+                  <div className="pl-4 mt-0.5" style={{ color: '#4F5170' }}>
                     postojeće: „{r.match}”
                   </div>
                 )}
@@ -960,8 +960,8 @@ function Red({ naziv, broj, boja, podebljano }: {
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span style={{ color: boja ?? '#6F6C66' }} className={podebljano ? 'font-bold' : ''}>{naziv}</span>
-      <span className="font-bold tabular-nums" style={{ color: boja ?? '#151515' }}>{broj}</span>
+      <span style={{ color: boja ?? '#4F5170' }} className={podebljano ? 'font-bold' : ''}>{naziv}</span>
+      <span className="font-bold tabular-nums" style={{ color: boja ?? '#1A1B3A' }}>{broj}</span>
     </div>
   )
 }

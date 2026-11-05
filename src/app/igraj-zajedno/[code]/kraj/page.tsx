@@ -248,8 +248,8 @@ export default function DuelEndPage() {
   const opAccuracy = r.totalAnswered > 0 ? Math.round((r.opCorrect / r.totalAnswered) * 100) : 0
   const diff = Math.abs(r.myScore - r.opScore)
 
-  const heroBg = r.isDraw ? '#FFF3C4' : r.iWon ? '#DFF3EE' : '#FFE3EA'
-  const heroFg = r.isDraw ? '#8A6A12' : r.iWon ? '#0E6F61' : '#C42B4F'
+  const heroBg = r.isDraw ? '#FFF5E0' : r.iWon ? '#E8F6EF' : '#FFE3EA'
+  const heroFg = r.isDraw ? '#8A6A12' : r.iWon ? '#0A4C35' : '#C42B4F'
   const headline = r.isDraw ? 'Nerešeno!' : r.iWon ? 'Pobedio/la si!' : 'Izgubio/la si!'
 
   // Pick the rematch button label based on the joint state.
@@ -271,7 +271,7 @@ export default function DuelEndPage() {
   }
 
   return (
-    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#F3F0E6' }}>
+    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#F6F1E7' }}>
       <div className="max-w-xl mx-auto">
 
         {/* Hero */}
@@ -299,8 +299,8 @@ export default function DuelEndPage() {
           {/* Score battle */}
           <div className="p-7 sm:p-8">
             <div className="grid grid-cols-2 gap-3 mb-7">
-              <PlayerCol userId={r.myId} name={r.myName} avatar={r.myAvatar} score={r.myScore} accent="#12907E" you winner={r.iWon && !r.isDraw} />
-              <PlayerCol userId={r.opId} name={r.opName} avatar={r.opAvatar} score={r.opScore} accent="#FFD84D" winner={!r.iWon && !r.isDraw} />
+              <PlayerCol userId={r.myId} name={r.myName} avatar={r.myAvatar} score={r.myScore} accent="#23845C" you winner={r.iWon && !r.isDraw} />
+              <PlayerCol userId={r.opId} name={r.opName} avatar={r.opAvatar} score={r.opScore} accent="#FDC361" winner={!r.iWon && !r.isDraw} />
             </div>
 
             {/* Stats grid */}
@@ -308,9 +308,9 @@ export default function DuelEndPage() {
               <StatRow label="Tačnih"   me={r.myCorrect} op={r.opCorrect} />
               <StatRow label="Pogr."    me={r.myWrong}   op={r.opWrong} />
               <StatRow label="Tačnost"  me={`${myAccuracy}%`} op={`${opAccuracy}%`} />
-              <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: '#E7E1D0' }}>
-                <span className="text-[12px] font-medium" style={{ color: '#6F6C66' }}>Vreme duela</span>
-                <span className="font-bold text-[13px]" style={{ color: '#151515' }}>{fmtTime(r.totalTime)}</span>
+              <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: '#EDE5D5' }}>
+                <span className="text-[12px] font-medium" style={{ color: '#4F5170' }}>Vreme duela</span>
+                <span className="font-bold text-[13px]" style={{ color: '#1A1B3A' }}>{fmtTime(r.totalTime)}</span>
               </div>
             </div>
           </div>
@@ -350,7 +350,7 @@ export default function DuelEndPage() {
         />
 
         <Link href="/igraj-zajedno" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"
-          style={{ color: '#6F6C66' }}>
+          style={{ color: '#4F5170' }}>
           ← Izazovi drugog
         </Link>
       </div>
@@ -368,16 +368,16 @@ function PlayerCol({ userId, name, avatar, score, accent, you, winner }: {
           ? <Image src={`/avatars/${avatar}`} alt={name} width={56} height={56} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center text-[18px] font-bold" style={{ background: accent, color: 'white' }}>{name[0]}</div>}
       </div>
-      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6F6C66' }}>{you ? 'Ti' : name.split(' ')[0]}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#4F5170' }}>{you ? 'Ti' : name.split(' ')[0]}</div>
       <div className="font-black tracking-tight" style={{ color: accent, fontSize: 'clamp(28px, 5vw, 36px)' }}>{score}</div>
-      <div className="text-[10px] font-medium mt-0.5" style={{ color: '#6F6C66' }}>bodova</div>
+      <div className="text-[10px] font-medium mt-0.5" style={{ color: '#4F5170' }}>bodova</div>
       {winner && <div className="mt-2 text-[18px]">🏆</div>}
     </>
   )
   const cls = "rounded-2xl p-5 text-center transition-all hover:scale-[1.02]"
   const style = {
-    background: winner ? '#FFF3C4' : '#E7E1D0',
-    border: winner ? '2px solid #FFD84D' : '2px solid transparent',
+    background: winner ? '#FFF5E0' : '#EDE5D5',
+    border: winner ? '2px solid #FDC361' : '2px solid transparent',
   }
   return userId
     ? <Link href={you ? '/profil' : `/profil/${userId}`} className={cls} style={style}>{inner}</Link>
@@ -386,10 +386,10 @@ function PlayerCol({ userId, name, avatar, score, accent, you, winner }: {
 
 function StatRow({ label, me, op }: { label: string; me: number | string; op: number | string }) {
   return (
-    <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: '#E7E1D0' }}>
-      <span className="font-bold text-[13px]" style={{ color: '#12907E' }}>{me}</span>
-      <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6F6C66' }}>{label}</span>
-      <span className="font-bold text-[13px]" style={{ color: '#FFD84D' }}>{op}</span>
+    <div className="rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: '#EDE5D5' }}>
+      <span className="font-bold text-[13px]" style={{ color: '#23845C' }}>{me}</span>
+      <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#4F5170' }}>{label}</span>
+      <span className="font-bold text-[13px]" style={{ color: '#FDC361' }}>{op}</span>
     </div>
   )
 }

@@ -7,8 +7,8 @@ import Image from 'next/image'
  */
 export function Telefon({ src, alt, nagib = 0, className = '', prioritet = false }: { src: string; alt: string; nagib?: number; className?: string; prioritet?: boolean }) {
   return (
-    <div className={`relative aspect-[1206/2622] w-full rounded-[34px] bg-[#151515] p-[7px] ${className}`}
-      style={{ boxShadow: '0 8px 0 #151515', transform: nagib ? `rotate(${nagib}deg)` : undefined }}>
+    <div className={`relative aspect-[1206/2622] w-full rounded-[34px] bg-[#1A1B3A] p-[7px] ${className}`}
+      style={{ boxShadow: 'var(--senka)', transform: nagib ? `rotate(${nagib}deg)` : undefined }}>
       <Image src={src} alt={alt} width={414} height={900} priority={prioritet} className="h-full w-full rounded-[28px] object-cover" />
     </div>
   )

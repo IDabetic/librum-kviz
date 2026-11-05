@@ -35,21 +35,21 @@ export function RangTraka() {
 
   if (redovi && redovi.length === 0) return null
   return (
-    <div style={{ background: '#151515', color: '#F3F0E6' }}>
+    <div style={{ background: '#1A1B3A', color: '#F6F1E7' }}>
       <Link href="/ranglista" className="max-w-6xl mx-auto px-4 sm:px-6 h-9 flex items-center gap-4 overflow-x-auto whitespace-nowrap text-[13px]"
         aria-label="Rang lista Osvajača ove nedelje, otvori celu listu">
-        <span className="flex items-center gap-2 font-bold shrink-0" style={{ color: '#FFD84D' }}>
-          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#2FD27A' }} aria-hidden />
+        <span className="flex items-center gap-2 font-bold shrink-0" style={{ color: '#FDC361' }}>
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#5DBF94' }} aria-hidden />
           Rang uživo · Osvajač
         </span>
         {(redovi ?? []).map(r => (
           <span key={r.user_id} className="flex items-center gap-1.5 shrink-0">
-            <span className="font-bold" style={{ color: r.mesto === 1 ? '#FFD84D' : '#A9A49A' }}>{r.mesto}.</span>
+            <span className="font-bold" style={{ color: r.mesto === 1 ? '#FDC361' : '#8A8AA0' }}>{r.mesto}.</span>
             <span className="font-semibold">{r.nadimak || 'Igrač'}</span>
-            <span className="tabular-nums" style={{ color: '#A9A49A' }}>{r.poeni.toLocaleString('sr-RS')}</span>
+            <span className="tabular-nums" style={{ color: '#8A8AA0' }}>{r.poeni.toLocaleString('sr-RS')}</span>
           </span>
         ))}
-        {!redovi && <span style={{ color: '#A9A49A' }}>Učitavam…</span>}
+        {!redovi && <span style={{ color: '#8A8AA0' }}>Učitavam…</span>}
         <span className="ml-auto font-bold underline underline-offset-4 shrink-0">Cela lista</span>
       </Link>
     </div>

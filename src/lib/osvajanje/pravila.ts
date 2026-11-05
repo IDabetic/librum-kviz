@@ -126,9 +126,9 @@ export function napraviSlucajno(seme: number): () => number {
 }
 
 const IGRACI_PODRAZUMEVANO = [
-  { id: 'ti', ime: 'Ti', boja: '#12907E', covek: true },
-  { id: 'mimi', ime: 'Mimi', boja: '#FF5FA2', covek: false },
-  { id: 'zig', ime: 'Zig', boja: '#6D4BC9', covek: false },
+  { id: 'ti', ime: 'Ti', boja: '#23845C', covek: true },
+  { id: 'mimi', ime: 'Mimi', boja: '#F8C7D6', covek: false },
+  { id: 'zig', ime: 'Zig', boja: '#2C2D81', covek: false },
 ]
 
 /**

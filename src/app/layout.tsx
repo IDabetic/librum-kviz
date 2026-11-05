@@ -1,18 +1,22 @@
-import type { Metadata } from 'next'
-import { Archivo_Black, Space_Grotesk } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Rubik } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-const display = Archivo_Black({
+// Rubik za naslove, kao na librum.club i librum.rs.
+// Imena promenljivih ostaju (--font-archivo/--font-grotesk) da strane ne traže prepravku.
+const display = Rubik({
   subsets: ['latin', 'latin-ext'],
-  weight: '400',
+  weight: ['500', '600', '700'],
+  style: ['normal', 'italic'],
   variable: '--font-archivo',
   display: 'swap',
 })
 
-const sans = Space_Grotesk({
+// Slalom (tekst na librum.club) je licenciran, a ovaj repo je javan, pa tekst ide Rubikom.
+const sans = Rubik({
   subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '700'],
   variable: '--font-grotesk',
   display: 'swap',
 })
@@ -87,17 +91,37 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  icons: {
-    icon: '/icon',
-    // Seobility flagged the missing Apple touch icon. Reuse the
-    // square logo asset — iOS scales it for the home-screen shortcut.
-    apple: '/og-logo.png',
-  },
+  // Pravilo: sajt se nikad ne prevodi u pregledaču.
+  other: { google: 'notranslate' },
   appleWebApp: {
     capable: true,
     title: 'Librum kviz',
     statusBarStyle: 'default',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#F6F1E7',
+}
+
+const APP_STORE = 'https://apps.apple.com/rs/app/librum-kviz/id6830091653'
+const GOOGLE_PLAY = 'https://play.google.com/store/apps/details?id=club.librum.kviz'
+
+// GEO/AEO: pretraživači i AI odgovori dobijaju aplikaciju kao entitet sa prodavnicama.
+const appSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'MobileApplication',
+  name: SITE_NAME,
+  url: SITE_URL,
+  description: DEFAULT_DESC,
+  inLanguage: 'sr',
+  operatingSystem: 'iOS, Android',
+  applicationCategory: 'GameApplication',
+  genre: 'Trivia',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'RSD' },
+  installUrl: [APP_STORE, GOOGLE_PLAY],
+  sameAs: [APP_STORE, GOOGLE_PLAY],
+  publisher: { '@type': 'Organization', name: 'Librum', url: 'https://www.librum.club' },
 }
 
 const websiteSchema = {
@@ -119,19 +143,21 @@ const organizationSchema = {
   '@type': 'Organization',
   name: 'Librum',
   url: 'https://www.librum.club',
-  logo: `${SITE_URL}/icon`,
+  logo: `${SITE_URL}/apple-icon.png`,
   email: 'info@librum.club',
-  sameAs: ['https://www.librum.club'],
+  sameAs: ['https://www.librum.club', 'https://librum.rs', 'https://librum.house', APP_STORE, GOOGLE_PLAY],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sr" className={`${display.variable} ${sans.variable} h-full`}>
+    <html lang="sr" translate="no" className={`${display.variable} ${sans.variable} h-full`}>
       <body className="min-h-full antialiased font-sans">
         {children}
-        <Script id="ld-website" type="application/ld+json"
+        <script id="ld-website" type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
-        <Script id="ld-organization" type="application/ld+json"
+        <script id="ld-app" type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }} />
+        <script id="ld-organization" type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-LS594VEPZ3"

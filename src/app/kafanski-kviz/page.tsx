@@ -51,10 +51,10 @@ export default async function KafanskiKvizLanding() {
             Muzika · narodnjaci · klasici
           </p>
           <h1 className="leading-[0.9] mb-3"
-            style={{ color: '#151515', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
+            style={{ color: '#1A1B3A', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
             Kafanski kviz.
           </h1>
-          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#6F6C66' }}>
+          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#4F5170' }}>
             Pitanja o muzici i hitovima.<br />15 sekundi po pitanju, bez pomoći.
           </p>
         </div>
@@ -65,20 +65,20 @@ export default async function KafanskiKvizLanding() {
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFE3EA' }}>
                 <IconTrophy size={20} className="text-[#C42B4F]" strokeWidth={2.2} />
               </div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#151515' }}>Tvoj najbolji rezultat</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Tvoj najbolji rezultat</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#E7E1D0' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#151515' }}>{best.score}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>Bodovi</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.score}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Bodovi</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#E7E1D0' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#151515' }}>{best.questions_reached}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>Pitanja</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.questions_reached}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Pitanja</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#E7E1D0' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#151515' }}>{Math.round(best.accuracy)}%</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>Tačnost</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{Math.round(best.accuracy)}%</div>
+                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Tačnost</div>
               </div>
             </div>
           </div>
@@ -118,12 +118,12 @@ export default async function KafanskiKvizLanding() {
 function Rule({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#E7E1D0' }}>
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#EDE5D5' }}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-[14px]" style={{ color: '#151515' }}>{title}</p>
-        <p className="text-[12px]" style={{ color: '#6F6C66' }}>{sub}</p>
+        <p className="font-semibold text-[14px]" style={{ color: '#1A1B3A' }}>{title}</p>
+        <p className="text-[12px]" style={{ color: '#4F5170' }}>{sub}</p>
       </div>
     </div>
   )

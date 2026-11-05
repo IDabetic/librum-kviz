@@ -215,7 +215,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
       <div className="min-h-screen grid place-items-center p-6">
         <div className="card-soft p-8 max-w-sm text-center">
           <h2 className="text-[28px] mb-2">Pitanja nisu stigla</h2>
-          <p className="text-[14px] mb-5" style={{ color: '#6F6C66' }}>Baza trenutno ne odgovara. Pokušaj ponovo za koji minut.</p>
+          <p className="text-[14px] mb-5" style={{ color: '#4F5170' }}>Baza trenutno ne odgovara. Pokušaj ponovo za koji minut.</p>
           <button onClick={() => location.reload()} className="btn btn-primary btn-md">Pokušaj ponovo</button>
         </div>
       </div>
@@ -237,13 +237,13 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden">
       <header className="px-4 sm:px-6 pt-4 pb-2 max-w-7xl w-full mx-auto flex items-center gap-3">
-        <Link href="/osvajanje" aria-label="Izađi" className="w-11 h-11 grid place-items-center rounded-full bg-white shrink-0" style={{ border: '1.5px solid #E7E1D0' }}>
+        <Link href="/osvajanje" aria-label="Izađi" className="w-11 h-11 grid place-items-center rounded-full bg-white shrink-0" style={{ border: '1.5px solid #EDE5D5' }}>
           <IconClose size={20} />
         </Link>
         <div className="flex-1 min-w-0">
-          <p className="chip" style={{ color: '#6F6C66' }}>Krug {Math.min(s.krug, s.ukupnoKrugova)} od {s.ukupnoKrugova}</p>
-          <div className="h-2.5 rounded-full mt-1.5 overflow-hidden bg-white" style={{ border: '1.5px solid #151515' }}>
-            <div className="h-full" style={{ width: `${(Math.min(s.krug, s.ukupnoKrugova) / s.ukupnoKrugova) * 100}%`, background: '#12907E' }} />
+          <p className="chip" style={{ color: '#4F5170' }}>Krug {Math.min(s.krug, s.ukupnoKrugova)} od {s.ukupnoKrugova}</p>
+          <div className="h-2.5 rounded-full mt-1.5 overflow-hidden bg-white" style={{ border: '1.5px solid #1A1B3A' }}>
+            <div className="h-full" style={{ width: `${(Math.min(s.krug, s.ukupnoKrugova) / s.ukupnoKrugova) * 100}%`, background: '#23845C' }} />
           </div>
         </div>
       </header>
@@ -251,7 +251,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
       <div className="px-4 sm:px-6 max-w-7xl w-full mx-auto grid grid-cols-3 gap-2 sm:gap-3">
         {s.igraci.map(p => (
           <div key={p.id} className="flex items-center gap-2 rounded-2xl px-2.5 py-2"
-            style={{ background: '#FFFFFF', border: p.id === naPotezu.id && s.faza !== 'kraj' ? '2.5px solid #151515' : '1.5px solid #E7E1D0', opacity: p.ispao ? 0.4 : 1 }}>
+            style={{ background: '#FFFFFF', border: p.id === naPotezu.id && s.faza !== 'kraj' ? '2.5px solid #1A1B3A' : '1.5px solid #EDE5D5', opacity: p.ispao ? 0.4 : 1 }}>
             <span className="w-9 h-9 rounded-xl grid place-items-center shrink-0 overflow-hidden" style={{ background: p.boja }}>
               <Image src={`/maskote/${MASKOTA[p.id]}.png`} alt="" width={34} height={34} />
             </span>
@@ -288,14 +288,14 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
 
       {poruka && (
         <div className="fixed inset-x-0 top-20 z-40 flex justify-center pointer-events-none px-4">
-          <div className="card-pop px-5 py-3 font-bold text-[15px] animate-pop-in" style={{ background: '#FFD84D' }} role="status">{poruka}</div>
+          <div className="card-pop px-5 py-3 font-bold text-[15px] animate-pop-in" style={{ background: '#FDC361' }} role="status">{poruka}</div>
         </div>
       )}
 
       {otvoreno && (
-        <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'rgba(21,21,21,0.6)' }}>
+        <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'rgba(26,27,58,0.6)' }}>
           <div className="w-full max-w-lg animate-pop-in" role="dialog" aria-modal="true" aria-label="Pitanje">
-            <div className="card-pop p-5 sm:p-6" style={{ background: '#FFD84D' }}>
+            <div className="card-pop p-5 sm:p-6" style={{ background: '#FDC361' }}>
               <div className="flex items-center justify-between gap-3 mb-3">
                 <p className="chip">
                   {otvoreno.vrsta === 'snabdevanje' ? 'Snabdevanje'
@@ -305,7 +305,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
                 <span className="naslov text-[22px] tabular-nums" aria-label={`${preostalo} sekundi`}>{preostalo}</span>
               </div>
               <div className="h-2 rounded-full bg-white/60 mb-4 overflow-hidden">
-                <div className="h-full transition-[width] duration-200" style={{ width: `${(preostalo / P.SEKUNDI_PO_PITANJU) * 100}%`, background: preostalo <= 5 ? '#E5385C' : '#151515' }} />
+                <div className="h-full transition-[width] duration-200" style={{ width: `${(preostalo / P.SEKUNDI_PO_PITANJU) * 100}%`, background: preostalo <= 5 ? '#E5385C' : '#1A1B3A' }} />
               </div>
               <h2 className="text-[22px] sm:text-[26px] leading-snug mb-5">{otvoreno.pitanje.tekst}</h2>
               <div className="space-y-2.5">
@@ -330,13 +330,13 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
       )}
 
       {s.faza === 'kraj' && (
-        <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'rgba(21,21,21,0.6)' }}>
-          <div className="card-pop w-full max-w-md p-6 text-center animate-pop-in" style={{ background: poredak[0].igrac.covek ? '#12907E' : '#FFFFFF', color: poredak[0].igrac.covek ? '#FFFFFF' : '#151515' }}>
+        <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'rgba(26,27,58,0.6)' }}>
+          <div className="card-pop w-full max-w-md p-6 text-center animate-pop-in" style={{ background: poredak[0].igrac.covek ? '#23845C' : '#FFFFFF', color: poredak[0].igrac.covek ? '#FFFFFF' : '#1A1B3A' }}>
             <Image src={`/maskote/${MASKOTA[poredak[0].igrac.id]}.png`} alt="" width={120} height={120} className="mx-auto maskota-lebdi" />
             <h2 className="text-[44px] mt-2">{poredak[0].igrac.covek ? 'Svet je tvoj!' : `Pobeđuje ${poredak[0].igrac.ime}`}</h2>
             <ol className="mt-5 space-y-2 text-left">
               {poredak.map((r, i) => (
-                <li key={r.igrac.id} className="flex items-center gap-3 rounded-2xl px-4 py-3 bg-white" style={{ color: '#151515', border: '2px solid #151515' }}>
+                <li key={r.igrac.id} className="flex items-center gap-3 rounded-2xl px-4 py-3 bg-white" style={{ color: '#1A1B3A', border: '2px solid #1A1B3A' }}>
                   <span className="font-bold w-5">{i + 1}.</span>
                   <span className="w-4 h-4 rounded" style={{ background: r.igrac.boja }} />
                   <span className="flex-1 font-semibold">{r.igrac.ime}</span>

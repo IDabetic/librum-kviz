@@ -9,7 +9,7 @@ import { Prodavnice } from './Prodavnice'
 export default function Footer() {
   const godina = new Date().getFullYear()
   return (
-    <footer className="mt-16" style={{ background: '#12110F', color: '#F3F0E6' }}>
+    <footer className="mt-16" style={{ background: '#1A1B3A', color: '#F6F1E7' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 grid md:grid-cols-[1.4fr_1fr] gap-10 items-start">
         <div>
           <p className="naslov text-[30px]">Librum kviz</p>

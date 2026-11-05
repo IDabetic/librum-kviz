@@ -81,12 +81,12 @@ function Timer({ left, total }: { left: number; total: number }) {
   const circ = 2 * Math.PI * r
   const progress = left / total
   const offset = circ * (1 - progress)
-  const color = progress > 0.4 ? '#12907E' : progress > 0.2 ? '#FFD84D' : '#E5385C'
+  const color = progress > 0.4 ? '#23845C' : progress > 0.2 ? '#FDC361' : '#E5385C'
   const pulse = left <= 5 ? 'animate-pulse' : ''
   return (
     <div className={`relative flex items-center justify-center ${pulse}`} style={{ width: 56, height: 56 }}>
       <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(21,21,21,0.10)" strokeWidth="3.5" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(26,27,58,0.10)" strokeWidth="3.5" />
         <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="3.5"
           strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset 0.95s linear, stroke 0.3s' }} />
@@ -530,31 +530,31 @@ export default function SurvivorGame() {
   // ── Render ─────────────────────────────────────────────────────────────────
   if (loading || !current) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F3F0E6' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#12907E', borderTopColor: 'transparent' }} />
+          style={{ borderColor: '#23845C', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F3F0E6' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
 
       {/* ── Top HUD ────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
+        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,27,58,0.06)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={() => setShowExitConfirm(true)}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#E7E1D0] flex-shrink-0"
-            style={{ color: '#6F6C66' }} aria-label="Izađi">
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#EDE5D5] flex-shrink-0"
+            style={{ color: '#4F5170' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
           </button>
 
           <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-center">
-            <Stat label="Životi"  value={lives} color={lives <= 3 ? '#E5385C' : '#151515'} bg={lives <= 3 ? '#FFE3EA' : '#E7E1D0'} />
-            <Stat label="Bodovi"  value={score} color="#151515" bg="#FFF3C4" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
-            <Stat label="Pitanje" value={reached} color="#0E6F61" bg="#DFF3EE" />
-            <Stat label="Niz"     value={combo} color="#0E6F61" bg="#DFF3EE" />
+            <Stat label="Životi"  value={lives} color={lives <= 3 ? '#E5385C' : '#1A1B3A'} bg={lives <= 3 ? '#FFE3EA' : '#EDE5D5'} />
+            <Stat label="Bodovi"  value={score} color="#1A1B3A" bg="#FFF5E0" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
+            <Stat label="Pitanje" value={reached} color="#0A4C35" bg="#E8F6EF" />
+            <Stat label="Niz"     value={combo} color="#0A4C35" bg="#E8F6EF" />
           </div>
 
           <Timer left={timeLeft} total={TIME_PER_QUESTION + (lifelines.extraTime < 1 && timeLeft > TIME_PER_QUESTION ? 15 : 0)} />
@@ -563,7 +563,7 @@ export default function SurvivorGame() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2.5 flex gap-1">
           {Array.from({ length: 10 }).map((_, i) => {
             const idx = (reached % 10)
-            const bg = i < idx ? '#12907E' : i === idx ? '#FFD84D' : 'rgba(21,21,21,0.10)'
+            const bg = i < idx ? '#23845C' : i === idx ? '#FDC361' : 'rgba(26,27,58,0.10)'
             return <div key={i} className="flex-1 h-1.5 rounded-full transition-all" style={{ background: bg }} />
           })}
         </div>
@@ -576,21 +576,21 @@ export default function SurvivorGame() {
           {/* Risk banner */}
           {riskActive && (
             <div className="rounded-2xl px-4 py-3 mb-4 text-center text-[13px] font-bold animate-fade-in"
-              style={{ background: '#FFD84D', color: '#151515' }}>
+              style={{ background: '#FDC361', color: '#1A1B3A' }}>
               ⚡ Risk aktiviran — duplo dobit, duplo gubitak
             </div>
           )}
 
           {/* Question card */}
-          <div className="card-pop p-6 sm:p-8 mb-5" style={{ background: '#FFD84D' }}>
+          <div className="card-pop p-6 sm:p-8 mb-5" style={{ background: '#FDC361' }}>
             <div className="flex items-center justify-between mb-3 gap-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#6F6C66' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#4F5170' }}>
                 Pitanje {reached + 1}
               </p>
               <ReportQuestionButton source="questions" questionId={current.id} questionText={current.question_text} />
             </div>
             <h2 className="leading-snug mb-7"
-              style={{ color: '#151515', fontSize: 'clamp(18px, 3vw, 22px)' }}>
+              style={{ color: '#1A1B3A', fontSize: 'clamp(18px, 3vw, 22px)' }}>
               {current.question_text}
             </h2>
 
@@ -600,17 +600,17 @@ export default function SurvivorGame() {
                 const isSelected = i === selected
                 const isEliminated = eliminatedOptions.has(i)
                 let bg = '#FFFFFF'
-                let border = '#151515'
-                let fg = '#151515'
-                let labelBg = '#DFF3EE'
-                let labelFg = '#12907E'
+                let border = '#1A1B3A'
+                let fg = '#1A1B3A'
+                let labelBg = '#E8F6EF'
+                let labelFg = '#23845C'
                 if (revealed) {
                   if (isCorrect) {
-                    bg = '#DFF3EE'; border = '#12907E'; fg = '#0E6F61'; labelBg = '#12907E'; labelFg = 'white'
+                    bg = '#E8F6EF'; border = '#23845C'; fg = '#0A4C35'; labelBg = '#23845C'; labelFg = 'white'
                   } else if (isSelected) {
                     bg = '#FFE3EA'; border = '#E5385C'; fg = '#C42B4F'; labelBg = '#E5385C'; labelFg = 'white'
                   } else {
-                    bg = 'rgba(255,255,255,0.45)'; border = 'transparent'; fg = '#6F6C66'
+                    bg = 'rgba(255,255,255,0.45)'; border = 'transparent'; fg = '#4F5170'
                   }
                 } else if (isEliminated) {
                   bg = 'rgba(255,255,255,0.45)'; border = 'transparent'; fg = '#d1d1d1'; labelBg = '#e5e5e5'; labelFg = '#d1d1d1'
@@ -634,7 +634,7 @@ export default function SurvivorGame() {
 
             {/* Info after reveal */}
             {revealed && current.info && (
-              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#E8F6EF', color: '#0A4C35' }}>
                 {current.info}
               </div>
             )}
@@ -648,7 +648,7 @@ export default function SurvivorGame() {
               <LifelineBtn label="+15s" remaining={lifelines.extraTime} onClick={useExtraTime} />
               <button onClick={activateRisk} disabled={!riskAvailable}
                 className="rounded-2xl py-3 text-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: riskAvailable ? '#FFD84D' : '#E7E1D0', color: riskAvailable ? '#151515' : '#6F6C66' }}>
+                style={{ background: riskAvailable ? '#FDC361' : '#EDE5D5', color: riskAvailable ? '#1A1B3A' : '#4F5170' }}>
                 <div className="font-black text-[12px] tracking-tight">Risk</div>
                 <div className="text-[10px] font-medium opacity-70">×2</div>
               </button>
@@ -662,7 +662,7 @@ export default function SurvivorGame() {
       {milestone && (
         <div className="fixed inset-x-0 top-24 z-40 px-4 flex justify-center pointer-events-none">
           <div className="rounded-2xl px-5 py-3 text-center font-bold text-[14px] animate-pop-in shadow-2xl max-w-sm"
-            style={{ background: '#151515', color: '#FFFFFF' }}>
+            style={{ background: '#1A1B3A', color: '#FFFFFF' }}>
             🎉 {milestone}
           </div>
         </div>
@@ -670,7 +670,7 @@ export default function SurvivorGame() {
       {comboFlash && !milestone && (
         <div className="fixed inset-x-0 top-24 z-40 px-4 flex justify-center pointer-events-none">
           <div className="rounded-2xl px-5 py-3 text-center font-bold text-[14px] animate-pop-in shadow-2xl"
-            style={{ background: '#12907E', color: 'white' }}>
+            style={{ background: '#23845C', color: 'white' }}>
             {comboFlash}
           </div>
         </div>
@@ -679,11 +679,11 @@ export default function SurvivorGame() {
       {/* Game over overlay */}
       {gameOver && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
-          style={{ background: 'rgba(21,21,21,0.40)' }}>
+          style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
             <div className="text-5xl mb-4">💀</div>
-            <h3 className="font-black text-[24px] tracking-tight mb-2" style={{ color: '#151515' }}>Kraj igre</h3>
-            <p className="text-[13px]" style={{ color: '#6F6C66' }}>Računamo rezultat…</p>
+            <h3 className="font-black text-[24px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Kraj igre</h3>
+            <p className="text-[13px]" style={{ color: '#4F5170' }}>Računamo rezultat…</p>
           </div>
         </div>
       )}
@@ -691,10 +691,10 @@ export default function SurvivorGame() {
       {/* Exit confirm */}
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
-          style={{ background: 'rgba(21,21,21,0.40)' }}>
+          style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
-            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#151515' }}>Izađi iz igre?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#6F6C66' }}>Trenutni rezultat se upisuje na rang listu.</p>
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Izađi iz igre?</h3>
+            <p className="text-[13px] mb-6" style={{ color: '#4F5170' }}>Trenutni rezultat se upisuje na rang listu.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi
@@ -708,7 +708,7 @@ export default function SurvivorGame() {
         </div>
       )}
 
-      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: '#6F6C66' }}>
+      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: '#4F5170' }}>
         ukupno: {fmtTime(totalElapsed)} · najbolji niz: {bestCombo} · tačno: {correct} · pogr: {wrong}
       </div>
     </div>
@@ -724,7 +724,7 @@ function Stat({ label, value, color, bg, highlight, highlightKey }: {
       <div className="font-black text-[22px] sm:text-[26px] tracking-tight leading-none mt-0.5" style={{ color }}>{value}</div>
       {highlight !== undefined && (
         <span key={highlightKey} className="absolute -top-2 left-1/2 -translate-x-1/2 font-black text-[13px] whitespace-nowrap"
-          style={{ color: highlight > 0 ? '#12907E' : '#E5385C', animation: 'floatUp 0.9s ease-out forwards' }}>
+          style={{ color: highlight > 0 ? '#23845C' : '#E5385C', animation: 'floatUp 0.9s ease-out forwards' }}>
           {highlight > 0 ? `+${highlight}` : highlight}
         </span>
       )}
@@ -743,7 +743,7 @@ function LifelineBtn({ label, remaining, onClick }: { label: string; remaining: 
   return (
     <button onClick={onClick} disabled={!enabled}
       className="rounded-2xl py-3 text-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-      style={{ background: enabled ? '#DFF3EE' : '#E7E1D0', color: enabled ? '#0E6F61' : '#6F6C66' }}>
+      style={{ background: enabled ? '#E8F6EF' : '#EDE5D5', color: enabled ? '#0A4C35' : '#4F5170' }}>
       <div className="font-black text-[12px] tracking-tight">{label}</div>
       <div className="text-[10px] font-medium opacity-70">{remaining}×</div>
     </button>

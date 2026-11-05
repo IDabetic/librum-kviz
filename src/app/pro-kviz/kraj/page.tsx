@@ -44,41 +44,41 @@ export default function KrajIgrePage() {
   const { score, questionsReached, correct, wrong, skipped, accuracy, bestCombo, totalTime } = result
   const tone = questionsReached >= 100 ? 'epic' : questionsReached >= 50 ? 'great' : questionsReached >= 25 ? 'good' : 'try'
   const headline = tone === 'epic' ? 'Maraton znanja.' : tone === 'great' ? 'Sjajno odigrano.' : tone === 'good' ? 'Solidno!' : 'Probaj ponovo.'
-  const accent = tone === 'epic' ? '#FFD84D' : tone === 'great' ? '#12907E' : tone === 'good' ? '#12907E' : '#6F6C66'
+  const accent = tone === 'epic' ? '#FDC361' : tone === 'great' ? '#23845C' : tone === 'good' ? '#23845C' : '#4F5170'
 
   return (
-    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#F3F0E6' }}>
+    <div className="min-h-screen py-10 sm:py-14 px-4 sm:px-6" style={{ background: '#F6F1E7' }}>
       <div className="max-w-xl mx-auto">
 
         {/* Hero */}
         <div className="card-soft overflow-hidden mb-4">
-          <div className="px-7 py-10 sm:py-14 text-center" style={{ background: 'linear-gradient(135deg, #DFF3EE 0%, #FFF3C4 100%)' }}>
-            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#151515', opacity: 0.6 }}>
+          <div className="px-7 py-10 sm:py-14 text-center" style={{ background: 'linear-gradient(135deg, #E8F6EF 0%, #FFF5E0 100%)' }}>
+            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#1A1B3A', opacity: 0.6 }}>
               Kraj igre
             </p>
             <h1 className="font-black tracking-tight mb-2 leading-[1.05]"
-              style={{ color: '#151515', fontSize: 'clamp(36px, 7vw, 56px)' }}>
+              style={{ color: '#1A1B3A', fontSize: 'clamp(36px, 7vw, 56px)' }}>
               {headline}
             </h1>
-            <p className="text-[13px]" style={{ color: '#151515', opacity: 0.55 }}>
+            <p className="text-[13px]" style={{ color: '#1A1B3A', opacity: 0.55 }}>
               Stigao/la si do <strong>{questionsReached}</strong> pitanja
             </p>
           </div>
 
           <div className="p-7 sm:p-8 text-center">
-            <div className="font-black tracking-tight" style={{ color: '#151515', fontSize: 'clamp(56px, 12vw, 96px)', lineHeight: 1 }}>
+            <div className="font-black tracking-tight" style={{ color: '#1A1B3A', fontSize: 'clamp(56px, 12vw, 96px)', lineHeight: 1 }}>
               {score}
             </div>
             <div className="text-[14px] font-semibold mt-1" style={{ color: accent }}>bodova</div>
 
             {/* Stats grid */}
             <div className="grid grid-cols-3 gap-3 mt-7">
-              <Stat label="Tačnih" value={correct} accent="#12907E" />
+              <Stat label="Tačnih" value={correct} accent="#23845C" />
               <Stat label="Pogr." value={wrong} accent="#E5385C" />
-              <Stat label="Niz" value={bestCombo} accent="#12907E" />
-              <Stat label="Tačnost" value={`${Math.round(accuracy)}%`} accent="#151515" />
-              <Stat label="Vreme"  value={fmtTime(totalTime)} accent="#151515" />
-              <Stat label="Pres."  value={skipped} accent="#6F6C66" />
+              <Stat label="Niz" value={bestCombo} accent="#23845C" />
+              <Stat label="Tačnost" value={`${Math.round(accuracy)}%`} accent="#1A1B3A" />
+              <Stat label="Vreme"  value={fmtTime(totalTime)} accent="#1A1B3A" />
+              <Stat label="Pres."  value={skipped} accent="#4F5170" />
             </div>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function KrajIgrePage() {
 
         {/* Back to home */}
         <Link href="/pro-kviz" className="block text-center mt-6 text-[13px] font-medium transition-opacity hover:opacity-70"
-          style={{ color: '#6F6C66' }}>
+          style={{ color: '#4F5170' }}>
           ← Glavna stranica
         </Link>
       </div>
@@ -108,9 +108,9 @@ export default function KrajIgrePage() {
 
 function Stat({ label, value, accent }: { label: string; value: number | string; accent: string }) {
   return (
-    <div className="rounded-2xl p-3" style={{ background: '#E7E1D0' }}>
+    <div className="rounded-2xl p-3" style={{ background: '#EDE5D5' }}>
       <div className="font-black text-[18px] tracking-tight" style={{ color: accent }}>{value}</div>
-      <div className="text-[11px] font-medium mt-0.5" style={{ color: '#6F6C66' }}>{label}</div>
+      <div className="text-[11px] font-medium mt-0.5" style={{ color: '#4F5170' }}>{label}</div>
     </div>
   )
 }

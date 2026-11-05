@@ -307,7 +307,7 @@ export default function KafanskiKvizStart() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F3F0E6' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
           style={{ borderColor: '#C42B4F', borderTopColor: 'transparent' }} />
       </div>
@@ -316,9 +316,9 @@ export default function KafanskiKvizStart() {
 
   if (!current && !gameOver) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F3F0E6' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F6F1E7' }}>
         <div className="card-soft p-8 text-center max-w-md">
-          <p className="font-bold text-[16px] mb-2" style={{ color: '#151515' }}>Nema pitanja</p>
+          <p className="font-bold text-[16px] mb-2" style={{ color: '#1A1B3A' }}>Nema pitanja</p>
           <button onClick={() => router.push('/kafanski-kviz')} className="btn btn-primary btn-md">Nazad</button>
         </div>
       </div>
@@ -326,29 +326,29 @@ export default function KafanskiKvizStart() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F3F0E6' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
 
       {/* Top HUD */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
+        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,27,58,0.06)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={exitGame}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#E7E1D0] flex-shrink-0"
-            style={{ color: '#6F6C66' }} aria-label="Izađi">
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#EDE5D5] flex-shrink-0"
+            style={{ color: '#4F5170' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
           </button>
 
           <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-center">
-            <Stat label="Životi"  value={lives} color={lives <= 3 ? '#E5385C' : '#151515'} bg={lives <= 3 ? '#FFE3EA' : '#E7E1D0'} />
-            <Stat label="Bodovi"  value={score} color="#151515" bg="#FFF3C4" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
-            <Stat label="Pitanje" value={reached} color="#0E6F61" bg="#DFF3EE" />
-            <Stat label="Niz"     value={combo} color="#0E6F61" bg="#DFF3EE" />
+            <Stat label="Životi"  value={lives} color={lives <= 3 ? '#E5385C' : '#1A1B3A'} bg={lives <= 3 ? '#FFE3EA' : '#EDE5D5'} />
+            <Stat label="Bodovi"  value={score} color="#1A1B3A" bg="#FFF5E0" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
+            <Stat label="Pitanje" value={reached} color="#0A4C35" bg="#E8F6EF" />
+            <Stat label="Niz"     value={combo} color="#0A4C35" bg="#E8F6EF" />
           </div>
 
           <Timer left={timeLeft} total={TIME_PER_QUESTION} />
         </div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2 flex justify-center">
-          <span className="text-[11px] tabular-nums" style={{ color: '#6F6C66' }}>{fmtTime(totalElapsed)}</span>
+          <span className="text-[11px] tabular-nums" style={{ color: '#4F5170' }}>{fmtTime(totalElapsed)}</span>
         </div>
       </header>
 
@@ -357,8 +357,8 @@ export default function KafanskiKvizStart() {
           <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-center" style={{ color: '#C42B4F' }}>
             Pitanje #{reached + 1}
           </p>
-          <div className="card-pop p-6 sm:p-7 mb-5" style={{ background: '#FFD84D' }}>
-            <p className="naslov text-[21px] sm:text-[25px] leading-snug" style={{ color: '#151515' }}>
+          <div className="card-pop p-6 sm:p-7 mb-5" style={{ background: '#FDC361' }}>
+            <p className="naslov text-[21px] sm:text-[25px] leading-snug" style={{ color: '#1A1B3A' }}>
               {current.question_text}
             </p>
             <div className="mt-3 flex justify-end">
@@ -370,9 +370,9 @@ export default function KafanskiKvizStart() {
             {current.shuffled.map((opt, i) => {
               const isCorrect = i === current.correctIdx
               const isPicked = i === selected
-              let bg = '#FFFFFF', fg = '#151515', border = '2px solid #151515'
+              let bg = '#FFFFFF', fg = '#1A1B3A', border = '2px solid #1A1B3A'
               if (revealed) {
-                if (isCorrect) { bg = '#DFF3EE'; fg = '#0E6F61'; border = '2px solid #0E6F61' }
+                if (isCorrect) { bg = '#E8F6EF'; fg = '#0A4C35'; border = '2px solid #0A4C35' }
                 else if (isPicked) { bg = '#FFE3EA'; fg = '#C42B4F'; border = '2px solid #C42B4F' }
               }
               return (
@@ -390,14 +390,14 @@ export default function KafanskiKvizStart() {
 
       {scoreFlash && (
         <div key={scoreFlash.key} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50 font-black text-[48px] animate-pulse"
-          style={{ color: scoreFlash.delta > 0 ? '#0E6F61' : '#C42B4F' }}>
+          style={{ color: scoreFlash.delta > 0 ? '#0A4C35' : '#C42B4F' }}>
           {scoreFlash.delta > 0 ? '+' : ''}{scoreFlash.delta}
         </div>
       )}
 
       {comboFlash && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full font-bold text-[14px] z-50"
-          style={{ background: '#FFD84D', color: '#151515' }}>
+          style={{ background: '#FDC361', color: '#1A1B3A' }}>
           {comboFlash}
         </div>
       )}
@@ -405,18 +405,18 @@ export default function KafanskiKvizStart() {
       {gameOver && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
           <div className="card-soft p-8 text-center" style={{ background: '#FFFFFF' }}>
-            <p className="font-black text-[24px] mb-2" style={{ color: '#151515' }}>Kraj!</p>
-            <p className="text-[14px]" style={{ color: '#6F6C66' }}>Računam rezultat…</p>
+            <p className="font-black text-[24px] mb-2" style={{ color: '#1A1B3A' }}>Kraj!</p>
+            <p className="text-[14px]" style={{ color: '#4F5170' }}>Računam rezultat…</p>
           </div>
         </div>
       )}
 
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
-          style={{ background: 'rgba(21,21,21,0.40)' }}>
+          style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
-            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#151515' }}>Izađi iz kviza?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#6F6C66' }}>Trenutni rezultat se upisuje na rang listu.</p>
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Izađi iz kviza?</h3>
+            <p className="text-[13px] mb-6" style={{ color: '#4F5170' }}>Trenutni rezultat se upisuje na rang listu.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">Nastavi</button>
               <button onClick={confirmExit} className="btn btn-md flex-1" style={{ background: '#E5385C', color: 'white' }}>Izađi</button>
@@ -433,12 +433,12 @@ function Timer({ left, total }: { left: number; total: number }) {
   const circ = 2 * Math.PI * r
   const progress = left / total
   const offset = circ * (1 - progress)
-  const color = progress > 0.4 ? '#12907E' : progress > 0.2 ? '#FFD84D' : '#E5385C'
+  const color = progress > 0.4 ? '#23845C' : progress > 0.2 ? '#FDC361' : '#E5385C'
   const pulse = left <= 5 ? 'animate-pulse' : ''
   return (
     <div className={`relative flex items-center justify-center ${pulse}`} style={{ width: 56, height: 56 }}>
       <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(21,21,21,0.10)" strokeWidth="3.5" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(26,27,58,0.10)" strokeWidth="3.5" />
         <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="3.5"
           strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset 0.95s linear, stroke 0.3s' }} />
@@ -457,7 +457,7 @@ function Stat({ label, value, color, bg, highlight, highlightKey }: {
       <div className="font-black text-[22px] sm:text-[26px] tracking-tight leading-none mt-0.5" style={{ color }}>{value}</div>
       {highlight !== undefined && (
         <span key={highlightKey} className="absolute -top-2 left-1/2 -translate-x-1/2 font-black text-[13px] whitespace-nowrap"
-          style={{ color: highlight > 0 ? '#12907E' : '#E5385C', animation: 'floatUp 0.9s ease-out forwards' }}>
+          style={{ color: highlight > 0 ? '#23845C' : '#E5385C', animation: 'floatUp 0.9s ease-out forwards' }}>
           {highlight > 0 ? `+${highlight}` : highlight}
         </span>
       )}

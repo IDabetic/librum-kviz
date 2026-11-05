@@ -56,10 +56,10 @@ export default async function BookKvizLanding() {
             Književnost
           </p>
           <h1 className="leading-[0.9] mb-3"
-            style={{ color: '#151515', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
+            style={{ color: '#1A1B3A', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
             Book kviz.
           </h1>
-          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#6F6C66' }}>
+          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#4F5170' }}>
             Pitanja samo iz književnosti.<br />Na kraju saznaš u kom žanru si najjači.
           </p>
         </div>
@@ -68,32 +68,32 @@ export default async function BookKvizLanding() {
         {best && best.score > 0 ? (
           <div className="card-soft p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF3C4' }}>
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF5E0' }}>
                 <IconTrophy size={20} className="text-[#8A6A12]" strokeWidth={2.2} />
               </div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#151515' }}>Tvoj najbolji rezultat</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Tvoj najbolji rezultat</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#E7E1D0' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#151515' }}>{best.score}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>Bodovi</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.score}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Bodovi</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#E7E1D0' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#151515' }}>{best.questions_reached}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>Pitanja</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.questions_reached}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Pitanja</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#E7E1D0' }}>
-                <div className="font-black text-[12px] tracking-tight" style={{ color: '#151515' }}>{best.top_genre || '—'}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>Najjači žanr</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
+                <div className="font-black text-[12px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.top_genre || '—'}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Najjači žanr</div>
               </div>
             </div>
           </div>
         ) : (
           <div className="card-soft p-5 mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF3C4' }}>
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF5E0' }}>
               <IconStar size={20} className="text-[#8A6A12]" strokeWidth={2.2} />
             </div>
-            <p className="text-[14px]" style={{ color: '#151515' }}>
+            <p className="text-[14px]" style={{ color: '#1A1B3A' }}>
               Još nemaš rezultat. <strong>Vreme je za prvi pokušaj.</strong>
             </p>
           </div>
@@ -101,26 +101,26 @@ export default async function BookKvizLanding() {
 
         {/* Rules */}
         <div className="card-soft p-7 sm:p-8 mb-5">
-          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#151515' }}>
+          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#1A1B3A' }}>
             Pravila igre
           </h2>
           <div className="space-y-3.5">
-            <Rule color="#FFF3C4" fg="#8A6A12" Icon={IconStar}>
+            <Rule color="#FFF5E0" fg="#8A6A12" Icon={IconStar}>
               <strong>Počinješ sa 10 života.</strong> Tačan odgovor donosi <strong>+10 bodova</strong>, a pogrešan odgovor skida <strong>1 život i 5 bodova</strong>.
             </Rule>
-            <Rule color="#DFF3EE" fg="#0E6F61" Icon={IconTime}>
+            <Rule color="#E8F6EF" fg="#0A4C35" Icon={IconTime}>
               <strong>15 sekundi po pitanju.</strong> Ako vreme istekne, odgovor se računa kao pogrešan.
             </Rule>
-            <Rule color="#DFF3EE" fg="#0E6F61" Icon={IconDiscover}>
+            <Rule color="#E8F6EF" fg="#0A4C35" Icon={IconDiscover}>
               <strong>Pitanja iz 8 žanrova:</strong> Drama, Fantastika, Ljubavni, Istorijski, Krimi, Triler, Domaći, Horor.
             </Rule>
-            <Rule color="#E7E1D0" fg="#151515" Icon={IconTrophy}>
+            <Rule color="#EDE5D5" fg="#1A1B3A" Icon={IconTrophy}>
               <strong>Igra traje dok imaš živote.</strong> Na kraju saznaš u kom žanru si najjači.
             </Rule>
           </div>
 
-          <div className="mt-6 pt-6 border-t" style={{ borderColor: '#E7E1D0' }}>
-            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: '#151515' }}>
+          <div className="mt-6 pt-6 border-t" style={{ borderColor: '#EDE5D5' }}>
+            <p className="text-[13px] mb-3 font-bold tracking-tight" style={{ color: '#1A1B3A' }}>
               Pomoći (1×)
             </p>
             <div className="grid grid-cols-3 gap-2 mb-3">
@@ -129,9 +129,9 @@ export default async function BookKvizLanding() {
                 { label: 'Preskoči',     desc: 'Bez gubitka života' },
                 { label: '+15 sekundi',  desc: 'Dodaj vreme' },
               ].map(({ label, desc }) => (
-                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: '#E7E1D0' }}>
-                  <div className="font-bold text-[12px] tracking-tight" style={{ color: '#151515' }}>{label}</div>
-                  <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>{desc}</div>
+                <div key={label} className="rounded-2xl p-3 text-center" style={{ background: '#EDE5D5' }}>
+                  <div className="font-bold text-[12px] tracking-tight" style={{ color: '#1A1B3A' }}>{label}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>{desc}</div>
                 </div>
               ))}
             </div>
@@ -148,7 +148,7 @@ export default async function BookKvizLanding() {
           </Link>
         )}
 
-        <p className="text-center text-[11px] mt-5" style={{ color: '#6F6C66' }}>
+        <p className="text-center text-[11px] mt-5" style={{ color: '#4F5170' }}>
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
@@ -168,7 +168,7 @@ function Rule({ color, fg, Icon, children }: {
       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color }}>
         <Icon size={16} className={`text-[${fg}]`} strokeWidth={2.2} />
       </div>
-      <p className="text-[14px] leading-relaxed pt-1" style={{ color: '#151515' }}>
+      <p className="text-[14px] leading-relaxed pt-1" style={{ color: '#1A1B3A' }}>
         {children}
       </p>
     </div>
