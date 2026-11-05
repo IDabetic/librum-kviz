@@ -38,7 +38,6 @@ struct LibrumKvizApp: App {
                 }
                 else if !napredak.s.uvodZavrsen { UvodView() }
                 else if !sesija.prijavljen && !Self.bezPrijave { PrijavaTok(obavezna: true) }
-                else if sesija.trebaDopuna && !Self.bezPrijave { DopunaProfila() }
                 else { Koren() }
             }
             .environment(sesija)
