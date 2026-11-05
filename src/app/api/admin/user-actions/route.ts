@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { jeDvostrukoPotvrdjen } from '@/lib/admin-pristup'
 
 // Single admin endpoint for moderation actions on a target user.
 // Authenticates the caller via the regular session cookie + checks
@@ -53,6 +54,8 @@ export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user: caller } } = await supabase.auth.getUser()
   if (!caller) return NextResponse.json({ ok: false, error: 'unauth' }, { status: 401 })
+  // Admin radnja traži i drugi korak prijave (kod iz aplikacije), ne samo ulogu.
+  if (!(await jeDvostrukoPotvrdjen(supabase))) return NextResponse.json({ ok: false, error: 'potreban drugi korak prijave' }, { status: 403 })
 
   const { data: callerProfile } = await supabase
     .from('profiles').select('role').eq('id', caller.id).single()

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import SettingsForm from './SettingsForm'
 import PredloziPodesavanja, { type Vrednosti } from './PredloziPodesavanja'
 import MesanjeOdgovora from './MesanjeOdgovora'
+import BezbednostNaloga, { type Uredjaj } from './BezbednostNaloga'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,10 @@ export default async function AdminSettingsPage() {
     ? await supabase.from('admin_settings').select('key, value')
     : { data: [] as { key: string; value: string }[] }
   const pocetne: Vrednosti = Object.fromEntries((podesavanja ?? []).map(r => [r.key, r.value]))
+  const { data: faktori } = await supabase.auth.mfa.listFactors()
+  const uredjaji: Uredjaj[] = (faktori?.totp ?? [])
+    .filter(f => f.status === 'verified')
+    .map(f => ({ id: f.id, naziv: f.friendly_name || 'Aplikacija za autentifikaciju', dodat: f.created_at }))
   const { data: mesanje } = await supabase.rpc('admin_poslednje_mesanje')
   const poslednjeMesanje = (mesanje as { kad: string; pitanja: number }[] | null)?.[0] ?? null
 
@@ -32,11 +37,13 @@ export default async function AdminSettingsPage() {
           Podešavanja administratora
         </h1>
         <p className="text-[13px] mt-1" style={{ color: '#6F6C66' }}>
-          Tvoj profil i lozinka.
+          Tvoj profil, mejl, lozinka i dvostruka verifikacija.
         </p>
       </div>
 
       <SettingsForm profile={profile!} email={user!.email || ''} />
+
+      <BezbednostNaloga mejl={user!.email || ''} uredjaji={uredjaji} />
 
       <MesanjeOdgovora poslednje={poslednjeMesanje} />
 
