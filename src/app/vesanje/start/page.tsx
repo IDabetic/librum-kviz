@@ -43,7 +43,7 @@ function isAllRevealed(word: string, guessed: Set<string>): boolean {
 
 // ── Hangman drawing ───────────────────────────────────────────────────────
 function HangmanDrawing({ wrongs }: { wrongs: number }) {
-  const stroke = '#151515'
+  const stroke = '#1A1B3A'
   const sw = 3.5
   return (
     <svg width="120" height="140" viewBox="0 0 120 140" fill="none">
@@ -314,18 +314,18 @@ function GameInner() {
   // ── Render ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F3F0E6' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#12907E', borderTopColor: 'transparent' }} />
+          style={{ borderColor: '#23845C', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   if (error || !wordRow) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F3F0E6' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F6F1E7' }}>
         <div className="card-soft p-8 max-w-sm text-center">
-          <p className="font-bold text-[16px] mb-3" style={{ color: '#151515' }}>{error || 'Greška'}</p>
+          <p className="font-bold text-[16px] mb-3" style={{ color: '#1A1B3A' }}>{error || 'Greška'}</p>
           <Link href="/vesanje" className="btn btn-primary btn-md">Nazad</Link>
         </div>
       </div>
@@ -335,22 +335,22 @@ function GameInner() {
   const display = buildDisplay(wordRow.word, guessed)
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F3F0E6' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
 
       {/* HUD */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
-        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(21,21,21,0.06)' }}>
+        style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,27,58,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={handleExit}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#E7E1D0] flex-shrink-0"
-            style={{ color: '#6F6C66' }} aria-label="Izađi">
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#EDE5D5] flex-shrink-0"
+            style={{ color: '#4F5170' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
           </button>
 
           <div className="flex items-center gap-2 flex-1 justify-center">
-            <Stat label="Životi" value={`${lives}/${STARTING_LIVES}`} bg={lives <= 2 ? '#FFE3EA' : '#E7E1D0'} fg={lives <= 2 ? '#E5385C' : '#151515'} />
-            <Stat label="Bodovi" value={score} bg="#FFF3C4" fg="#151515" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
-            <Stat label="Greške" value={wrongs.size} bg="#DFF3EE" fg="#0E6F61" />
+            <Stat label="Životi" value={`${lives}/${STARTING_LIVES}`} bg={lives <= 2 ? '#FFE3EA' : '#EDE5D5'} fg={lives <= 2 ? '#E5385C' : '#1A1B3A'} />
+            <Stat label="Bodovi" value={score} bg="#FFF5E0" fg="#1A1B3A" highlight={scoreFlash?.delta} highlightKey={scoreFlash?.key} />
+            <Stat label="Greške" value={wrongs.size} bg="#E8F6EF" fg="#0A4C35" />
           </div>
 
           <div className="w-10 flex-shrink-0" />
@@ -359,7 +359,7 @@ function GameInner() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-2.5 flex gap-1">
           {Array.from({ length: STARTING_LIVES }).map((_, i) => (
             <div key={i} className="flex-1 h-1.5 rounded-full transition-all"
-              style={{ background: i < lives ? '#12907E' : 'rgba(21,21,21,0.10)' }} />
+              style={{ background: i < lives ? '#23845C' : 'rgba(26,27,58,0.10)' }} />
           ))}
         </div>
       </header>
@@ -371,7 +371,7 @@ function GameInner() {
           {/* Category + hint */}
           <div className="card-soft p-5 mb-4">
             <div className="flex items-start gap-3 mb-3">
-              <div className="chip flex-shrink-0" style={{ background: '#DFF3EE', color: '#0E6F61' }}>
+              <div className="chip flex-shrink-0" style={{ background: '#E8F6EF', color: '#0A4C35' }}>
                 {wordRow.category}
               </div>
               {wrongs.size > 0 && (
@@ -381,8 +381,8 @@ function GameInner() {
               )}
             </div>
             <div className="flex items-start gap-3">
-              <IconHint size={18} className="text-[#FFD84D] flex-shrink-0 mt-0.5" strokeWidth={2.2} />
-              <p className="text-[14px] sm:text-[15px] leading-relaxed font-medium" style={{ color: '#151515' }}>
+              <IconHint size={18} className="text-[#FDC361] flex-shrink-0 mt-0.5" strokeWidth={2.2} />
+              <p className="text-[14px] sm:text-[15px] leading-relaxed font-medium" style={{ color: '#1A1B3A' }}>
                 {wordRow.hint}
               </p>
             </div>
@@ -407,14 +407,14 @@ function GameInner() {
                         <span className="font-black tracking-tight"
                           style={{
                             fontSize: 'clamp(22px, 4.5vw, 32px)',
-                            color: ch === '_' ? '#6F6C66' : '#151515',
+                            color: ch === '_' ? '#4F5170' : '#1A1B3A',
                             opacity: ch === '_' ? 0.5 : 1,
                             minHeight: 36,
                             lineHeight: 1,
                           }}>
                           {ch === '_' ? ' ' : ch}
                         </span>
-                        <span style={{ width: 24, height: 2, background: isPunct ? 'transparent' : '#151515', display: 'block', marginTop: 4, borderRadius: 1 }} />
+                        <span style={{ width: 24, height: 2, background: isPunct ? 'transparent' : '#1A1B3A', display: 'block', marginTop: 4, borderRadius: 1 }} />
                       </>
                     )}
                   </div>
@@ -427,13 +427,13 @@ function GameInner() {
           {!showWordGuess && status === 'playing' && (
             <button onClick={() => setShowWordGuess(true)}
               className="w-full mb-4 py-3 rounded-2xl text-[13px] font-bold transition-all"
-              style={{ background: '#FFF3C4', color: '#8A6A12' }}>
+              style={{ background: '#FFF5E0', color: '#8A6A12' }}>
               ⚡ Pogodi celu reč (-2 života ako pogrešiš)
             </button>
           )}
           {showWordGuess && status === 'playing' && (
             <div className="card-soft p-5 mb-4">
-              <p className="text-[12px] font-bold mb-3" style={{ color: '#151515' }}>
+              <p className="text-[12px] font-bold mb-3" style={{ color: '#1A1B3A' }}>
                 Pokušaj celu reč:
               </p>
               <input value={wordGuess} onChange={e => setWordGuess(e.target.value)}
@@ -465,10 +465,10 @@ function GameInner() {
                     className="aspect-square rounded-xl font-bold text-[15px] sm:text-[16px] transition-all disabled:cursor-not-allowed"
                     style={
                       isCorrect
-                        ? { background: '#12907E', color: 'white' }
+                        ? { background: '#23845C', color: 'white' }
                         : isWrong
                           ? { background: '#FFE3EA', color: '#E5385C', textDecoration: 'line-through' }
-                          : { background: '#E7E1D0', color: '#151515' }
+                          : { background: '#EDE5D5', color: '#1A1B3A' }
                     }>
                     {L}
                   </button>
@@ -509,34 +509,34 @@ function EndCard({ status, wordRow, wrongs, score, isCustom, onPlayAgainSameCat 
 }) {
   const isWon = status === 'won'
   return (
-    <div className="card-soft p-7 mt-4 text-center" style={{ background: isWon ? '#DFF3EE' : '#FFE3EA' }}>
+    <div className="card-soft p-7 mt-4 text-center" style={{ background: isWon ? '#E8F6EF' : '#FFE3EA' }}>
       <div className="flex items-center justify-center mb-3">
         <div className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: isWon ? '#12907E' : '#E5385C' }}>
+          style={{ background: isWon ? '#23845C' : '#E5385C' }}>
           {isWon ? <IconCheck size={28} className="text-white" /> : <IconWrong size={28} className="text-white" />}
         </div>
       </div>
-      <h2 className="font-black text-[22px] mb-1 tracking-tight" style={{ color: isWon ? '#0E6F61' : '#C42B4F' }}>
+      <h2 className="font-black text-[22px] mb-1 tracking-tight" style={{ color: isWon ? '#0A4C35' : '#C42B4F' }}>
         {isWon ? 'Bravo!' : 'Kraj igre'}
       </h2>
-      <p className="text-[13px] mb-2" style={{ color: isWon ? '#0E6F61' : '#C42B4F' }}>
+      <p className="text-[13px] mb-2" style={{ color: isWon ? '#0A4C35' : '#C42B4F' }}>
         {isWon ? 'Pogodio/la si reč:' : 'Tačna reč je bila:'}
       </p>
-      <p className="font-black tracking-widest mb-4 uppercase" style={{ color: '#151515', fontSize: 'clamp(22px, 4vw, 32px)' }}>
+      <p className="font-black tracking-widest mb-4 uppercase" style={{ color: '#1A1B3A', fontSize: 'clamp(22px, 4vw, 32px)' }}>
         {wordRow.word}
       </p>
       <div className="grid grid-cols-3 gap-2 mb-5">
         <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.6)' }}>
-          <div className="font-black text-[16px]" style={{ color: '#151515' }}>{score}</div>
-          <div className="text-[10px]" style={{ color: '#6F6C66' }}>Bodovi</div>
+          <div className="font-black text-[16px]" style={{ color: '#1A1B3A' }}>{score}</div>
+          <div className="text-[10px]" style={{ color: '#4F5170' }}>Bodovi</div>
         </div>
         <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.6)' }}>
-          <div className="font-black text-[16px]" style={{ color: '#151515' }}>{wrongs}</div>
-          <div className="text-[10px]" style={{ color: '#6F6C66' }}>Grešaka</div>
+          <div className="font-black text-[16px]" style={{ color: '#1A1B3A' }}>{wrongs}</div>
+          <div className="text-[10px]" style={{ color: '#4F5170' }}>Grešaka</div>
         </div>
         <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.6)' }}>
-          <div className="font-black text-[14px]" style={{ color: '#151515' }}>{wordRow.category}</div>
-          <div className="text-[10px]" style={{ color: '#6F6C66' }}>Kategorija</div>
+          <div className="font-black text-[14px]" style={{ color: '#1A1B3A' }}>{wordRow.category}</div>
+          <div className="text-[10px]" style={{ color: '#4F5170' }}>Kategorija</div>
         </div>
       </div>
       <div className="flex gap-2 mb-2">
@@ -570,7 +570,7 @@ function Stat({ label, value, bg, fg, highlight, highlightKey }: {
       <div className="font-black text-[20px] sm:text-[24px] tracking-tight leading-none mt-0.5" style={{ color: fg }}>{value}</div>
       {highlight !== undefined && (
         <span key={highlightKey} className="absolute -top-2 left-1/2 -translate-x-1/2 font-black text-[13px] whitespace-nowrap"
-          style={{ color: highlight > 0 ? '#12907E' : '#E5385C', animation: 'floatUp 0.9s ease-out forwards' }}>
+          style={{ color: highlight > 0 ? '#23845C' : '#E5385C', animation: 'floatUp 0.9s ease-out forwards' }}>
           {highlight > 0 ? `+${highlight}` : highlight}
         </span>
       )}

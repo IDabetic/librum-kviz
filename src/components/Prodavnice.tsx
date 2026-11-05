@@ -24,8 +24,8 @@ export function Prodavnice({ tamno = false }: { tamno?: boolean }) {
             </span>
           </>
         )
-        const stil = { border: `2px solid ${tamno ? '#F3F0E6' : '#151515'}`, boxShadow: `0 4px 0 ${tamno ? '#F3F0E6' : '#151515'}` }
-        const klase = `inline-flex items-center gap-3 rounded-2xl px-5 py-3 ${tamno ? 'bg-[#F3F0E6] text-[#151515]' : 'bg-[#151515] text-white'}`
+        const stil = { border: `2px solid ${tamno ? '#F6F1E7' : '#1A1B3A'}`, boxShadow: `0 4px 0 ${tamno ? '#F6F1E7' : '#1A1B3A'}` }
+        const klase = `inline-flex items-center gap-3 rounded-2xl px-5 py-3 ${tamno ? 'bg-[#F6F1E7] text-[#1A1B3A]' : 'bg-[#1A1B3A] text-white'}`
         return s.href
           ? <a key={s.ime} href={s.href} className={klase} style={stil}>{sadrzaj}</a>
           : <span key={s.ime} className={`${klase} opacity-90`} style={stil} aria-label={`${s.ime}, uskoro`}>{sadrzaj}</span>
@@ -49,7 +49,7 @@ export function ProdavniceIkonice() {
       {stavke.map(s => {
         const ikonica = <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="currentColor"><path d={s.put} /></svg>
         const klase = 'w-10 h-10 grid place-items-center rounded-xl'
-        const stil = { background: '#151515', color: '#FFFFFF' }
+        const stil = { background: '#1A1B3A', color: '#FFFFFF' }
         return s.href
           ? <a key={s.ime} href={s.href} className={klase} style={stil} aria-label={`Preuzmi na ${s.ime}`}>{ikonica}</a>
           : <span key={s.ime} className={klase} style={stil} aria-label={`${s.ime}, uskoro`} title={`${s.ime}, uskoro`}>{ikonica}</span>

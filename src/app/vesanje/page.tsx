@@ -28,12 +28,12 @@ export const metadata: Metadata = {
 }
 
 const CATEGORIES = [
-  { id: 'Sport',      label: 'Sport',      bg: '#DFF3EE', fg: '#0E6F61', emoji: '⚽' },
-  { id: 'Geografija', label: 'Geografija', bg: '#DFF3EE', fg: '#0E6F61', emoji: '🌍' },
-  { id: 'Istorija',   label: 'Istorija',   bg: '#FFF3C4', fg: '#8A6A12', emoji: '📜' },
+  { id: 'Sport',      label: 'Sport',      bg: '#E8F6EF', fg: '#0A4C35', emoji: '⚽' },
+  { id: 'Geografija', label: 'Geografija', bg: '#E8F6EF', fg: '#0A4C35', emoji: '🌍' },
+  { id: 'Istorija',   label: 'Istorija',   bg: '#FFF5E0', fg: '#8A6A12', emoji: '📜' },
   { id: 'Kultura',    label: 'Kultura',    bg: '#FFE3EA', fg: '#C42B4F', emoji: '🎭' },
-  { id: 'Priroda',    label: 'Priroda',    bg: '#DFF3EE', fg: '#0E6F61', emoji: '🌿' },
-  { id: 'Predmeti',   label: 'Predmeti',   bg: '#E7E1D0', fg: '#151515', emoji: '⚙️' },
+  { id: 'Priroda',    label: 'Priroda',    bg: '#E8F6EF', fg: '#0A4C35', emoji: '🌿' },
+  { id: 'Predmeti',   label: 'Predmeti',   bg: '#EDE5D5', fg: '#1A1B3A', emoji: '⚙️' },
 ]
 
 export default async function VesanjeLanding() {
@@ -64,14 +64,14 @@ export default async function VesanjeLanding() {
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
         <div className="text-center mb-8">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#12907E' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#23845C' }}>
             Igra Vešanja
           </p>
           <h1 className="leading-[0.9] mb-3"
-            style={{ color: '#151515', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
+            style={{ color: '#1A1B3A', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
             Pogodi reč.
           </h1>
-          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#6F6C66' }}>
+          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#4F5170' }}>
             Imaš <strong>6 života</strong>. Pročitaj hint i pogađaj slovo po slovo —<br />ili se usudi da pogodiš celu reč.
           </p>
         </div>
@@ -80,10 +80,10 @@ export default async function VesanjeLanding() {
         {total > 0 ? (
           <div className="card-soft p-5 mb-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF3C4' }}>
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF5E0' }}>
                 <IconTrophy size={20} className="text-[#8A6A12]" strokeWidth={2.2} />
               </div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#151515' }}>Tvoja statistika</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Tvoja statistika</p>
             </div>
             <div className="grid grid-cols-4 gap-2">
               {[
@@ -92,19 +92,19 @@ export default async function VesanjeLanding() {
                 { label: 'Bodovi',  value: totalScore },
                 { label: 'Uspeh',   value: `${winRate}%` },
               ].map(({ label, value }) => (
-                <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: '#E7E1D0' }}>
-                  <div className="font-black text-[15px] tracking-tight" style={{ color: '#151515' }}>{value}</div>
-                  <div className="text-[10px] mt-0.5" style={{ color: '#6F6C66' }}>{label}</div>
+                <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
+                  <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{value}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>{label}</div>
                 </div>
               ))}
             </div>
           </div>
         ) : (
           <div className="card-soft p-5 mb-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#DFF3EE' }}>
-              <IconStar size={20} className="text-[#0E6F61]" strokeWidth={2.2} />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#E8F6EF' }}>
+              <IconStar size={20} className="text-[#0A4C35]" strokeWidth={2.2} />
             </div>
-            <p className="text-[14px]" style={{ color: '#151515' }}>
+            <p className="text-[14px]" style={{ color: '#1A1B3A' }}>
               Još nisi igrao. <strong>Vreme za prvi pokušaj.</strong>
             </p>
           </div>
@@ -112,7 +112,7 @@ export default async function VesanjeLanding() {
 
         {/* Categories */}
         <div className="card-soft p-6 sm:p-8 mb-4">
-          <h2 className="font-bold text-[16px] mb-4 tracking-tight" style={{ color: '#151515' }}>
+          <h2 className="font-bold text-[16px] mb-4 tracking-tight" style={{ color: '#1A1B3A' }}>
             Izaberi kategoriju
           </h2>
           <div className="grid grid-cols-2 gap-3 mb-5">
@@ -134,34 +134,34 @@ export default async function VesanjeLanding() {
         {/* 2-player mode */}
         <div className="card-soft p-6 mb-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFD84D' }}>
-              <IconUsers size={20} className="text-[#151515]" strokeWidth={2.2} />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FDC361' }}>
+              <IconUsers size={20} className="text-[#1A1B3A]" strokeWidth={2.2} />
             </div>
             <div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#151515' }}>Igra za dvoje</p>
-              <p className="text-[12px]" style={{ color: '#6F6C66' }}>Jedan smišlja reč i hint, drugi pogađa</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Igra za dvoje</p>
+              <p className="text-[12px]" style={{ color: '#4F5170' }}>Jedan smišlja reč i hint, drugi pogađa</p>
             </div>
           </div>
           <Link href="/vesanje/dvoje" className="btn btn-md w-full"
-            style={{ background: '#FFD84D', color: '#151515' }}>
+            style={{ background: '#FDC361', color: '#1A1B3A' }}>
             Dodaj reč
           </Link>
         </div>
 
         {/* Rules — collapsed-ish */}
         <div className="card-soft p-6 sm:p-7">
-          <h2 className="font-bold text-[15px] mb-4 tracking-tight" style={{ color: '#151515' }}>
+          <h2 className="font-bold text-[15px] mb-4 tracking-tight" style={{ color: '#1A1B3A' }}>
             Pravila
           </h2>
-          <div className="space-y-3 text-[13px] leading-relaxed" style={{ color: '#151515' }}>
-            <div className="flex gap-2"><span style={{ color: '#12907E' }}>•</span> <span>Imaš <strong>6 života</strong>. Pogrešno slovo = -1 život, -2 boda. Tačno slovo = +5 bodova.</span></div>
-            <div className="flex gap-2"><span style={{ color: '#12907E' }}>•</span> <span>Možeš da rizikuješ i pogodiš celu reč. Tačno = pobeda + bonus. Pogrešno = -2 života.</span></div>
-            <div className="flex gap-2"><span style={{ color: '#12907E' }}>•</span> <span>Bonus za pobedu bez greške: <strong>+30</strong>. Sa 1-2 greške: <strong>+15</strong>.</span></div>
-            <div className="flex gap-2"><span style={{ color: '#12907E' }}>•</span> <span>Razmaci, crtice i interpunkcija se prikazuju odmah.</span></div>
+          <div className="space-y-3 text-[13px] leading-relaxed" style={{ color: '#1A1B3A' }}>
+            <div className="flex gap-2"><span style={{ color: '#23845C' }}>•</span> <span>Imaš <strong>6 života</strong>. Pogrešno slovo = -1 život, -2 boda. Tačno slovo = +5 bodova.</span></div>
+            <div className="flex gap-2"><span style={{ color: '#23845C' }}>•</span> <span>Možeš da rizikuješ i pogodiš celu reč. Tačno = pobeda + bonus. Pogrešno = -2 života.</span></div>
+            <div className="flex gap-2"><span style={{ color: '#23845C' }}>•</span> <span>Bonus za pobedu bez greške: <strong>+30</strong>. Sa 1-2 greške: <strong>+15</strong>.</span></div>
+            <div className="flex gap-2"><span style={{ color: '#23845C' }}>•</span> <span>Razmaci, crtice i interpunkcija se prikazuju odmah.</span></div>
           </div>
         </div>
 
-        <p className="text-center text-[11px] mt-5" style={{ color: '#6F6C66' }}>
+        <p className="text-center text-[11px] mt-5" style={{ color: '#4F5170' }}>
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>

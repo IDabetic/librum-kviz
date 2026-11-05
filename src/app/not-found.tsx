@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 // the default black Next.js error screen.
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F3F0E6' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
       <Header />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-14 sm:py-20">
@@ -26,27 +26,27 @@ export default function NotFound() {
           {/* Soft ambient blobs — matches the landing-page aesthetic. */}
           <div className="absolute inset-0 -z-10 pointer-events-none">
             <div className="absolute top-0 -right-32 w-[360px] h-[360px] rounded-full opacity-40"
-              style={{ background: 'radial-gradient(circle, #DFF3EE 0%, transparent 70%)' }} />
+              style={{ background: 'radial-gradient(circle, #E8F6EF 0%, transparent 70%)' }} />
             <div className="absolute -bottom-20 -left-24 w-[320px] h-[320px] rounded-full opacity-40"
-              style={{ background: 'radial-gradient(circle, #FFF3C4 0%, transparent 70%)' }} />
+              style={{ background: 'radial-gradient(circle, #FFF5E0 0%, transparent 70%)' }} />
           </div>
 
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-3" style={{ color: '#12907E' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-3" style={{ color: '#23845C' }}>
             404
           </p>
           <h1 className="font-black tracking-tight leading-[1.05] mb-5"
-            style={{ color: '#151515', fontSize: 'clamp(40px, 8vw, 80px)' }}>
+            style={{ color: '#1A1B3A', fontSize: 'clamp(40px, 8vw, 80px)' }}>
             Stranica ne postoji
           </h1>
           <p className="text-[15px] sm:text-[17px] max-w-md mx-auto mb-8 leading-relaxed"
-            style={{ color: '#151515', opacity: 0.65 }}>
-            Možda si link kucao ručno, ili je sadržaj premešten. Probaj sa jednom od igara ispod —
-            ili se vrati na hub stranicu.
+            style={{ color: '#1A1B3A', opacity: 0.65 }}>
+            Možda si link kucao ručno, ili je sadržaj premešten. Igre su u aplikaciji,
+            a rang lista i pitanja ostaju ovde.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Link href="/igre" className="btn btn-primary btn-lg w-full sm:w-auto sm:min-w-[200px]">
-              ← Nazad na Igre
+            <Link href="/#igre" className="btn btn-primary btn-lg w-full sm:w-auto sm:min-w-[200px]">
+              ← Sve igre
             </Link>
             <Link href="/" className="btn btn-secondary btn-lg w-full sm:w-auto sm:min-w-[200px]">
               Početna
@@ -56,16 +56,16 @@ export default function NotFound() {
 
         {/* ── Quick game shortcuts ─────────────────────────────── */}
         <section>
-          <p className="text-[12px] font-bold uppercase tracking-widest text-center mb-4" style={{ color: '#6F6C66' }}>
-            Ili odmah skoči u kviz
+          <p className="text-[12px] font-bold uppercase tracking-widest text-center mb-4" style={{ color: '#4F5170' }}>
+            Ili idi pravo na
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
-              { href: '/pro-kviz',          label: 'PRO kviz',      Icon: IconHome,   bg: '#DFF3EE', fg: '#0E6F61' },
-              { href: '/book-kviz',      label: 'Book kviz',     Icon: IconStar,   bg: '#FFF3C4', fg: '#8A6A12' },
-              { href: '/igraj-zajedno',  label: 'Trivia duel',   Icon: IconSwords, bg: '#FFF3C4', fg: '#8A6A12' },
-              { href: '/vesanje',        label: 'Vešanje',       Icon: IconHint,   bg: '#DFF3EE', fg: '#0E6F61' },
-              { href: '/brzi-kviz',      label: 'Brzi kviz',     Icon: IconTime,   bg: '#FFE3EA', fg: '#C42B4F' },
+              { href: '/#osvajanje',     label: 'Osvajač',       Icon: IconSwords, bg: '#E8F6EF', fg: '#0A4C35' },
+              { href: '/#karijerista',   label: 'Karijerista',   Icon: IconStar,   bg: '#F0F0FA', fg: '#2C2D81' },
+              { href: '/ranglista',      label: 'Rang lista',    Icon: IconTime,   bg: '#FFF5E0', fg: '#8A6A12' },
+              { href: '/dodaj-pitanja',  label: 'Dodaj pitanja', Icon: IconHint,   bg: '#EBF1FA', fg: '#3766B0' },
+              { href: '/nagrade',        label: 'Nagrade',       Icon: IconHome,   bg: '#FDF0F4', fg: '#C42B4F' },
             ].map(g => (
               <Link
                 key={g.href}

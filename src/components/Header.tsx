@@ -21,9 +21,9 @@ const VEZE = [
 export default function Header() {
   const putanja = usePathname()
   return (
-    <header className="sticky top-0 z-50" style={{ background: '#F3F0E6', color: '#12110F' }}>
+    <header className="sticky top-0 z-50" style={{ background: '#F6F1E7', color: '#1A1B3A' }}>
       <RangTraka />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[72px] flex items-center gap-6" style={{ borderBottom: '1.5px solid #E7E1D0' }}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-[72px] flex items-center gap-6" style={{ borderBottom: '1.5px solid #EDE5D5' }}>
         {/* Originalni Librum club logo, netaknut (vlasnik 03.11: logotip se ne dira). */}
         <Logo height={32} priority />
         <nav className="hidden md:flex items-center gap-6 flex-1" aria-label="Glavna navigacija">
@@ -31,7 +31,7 @@ export default function Header() {
             const aktivna = v.href === '/ranglista' && putanja.startsWith('/ranglista')
             return (
               <Link key={v.href} href={v.href} className="text-[14px] font-semibold py-1"
-                style={{ color: '#12110F', borderBottom: aktivna ? '2px solid #151515' : '2px solid transparent' }}>
+                style={{ color: '#1A1B3A', borderBottom: aktivna ? '2px solid #1A1B3A' : '2px solid transparent' }}>
                 {v.label}
               </Link>
             )

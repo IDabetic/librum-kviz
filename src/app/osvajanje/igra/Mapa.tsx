@@ -9,7 +9,7 @@ type Velicina = { w: number; h: number }
 const NAJMANJI_W = 110 // najjači zum: Luksemburg i Liban postanu dovoljno veliki za prst
 // Neutralne države su svetle (susedi uvek različiti, kao na infografici), da osvojene
 // u punoj boji igrača odmah iskoče.
-const NEUTRALNE = ['#CFEDE6', '#FFD9E6', '#FFF0BF', '#DED5F7', '#D3ECFA']
+const NEUTRALNE = ['#D3EEE0', '#FDF0F4', '#FFF5E0', '#E1E1F3', '#EBF1FA']
 const OKEAN = '#E3EDF2'
 const MORSKI_PUT = '#4F7486'
 
@@ -144,7 +144,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
   return (
     <div className="relative h-full w-full select-none">
       <div ref={okvir} className="h-full w-full overflow-hidden rounded-[24px] touch-none"
-        style={{ background: OKEAN, border: '2.5px solid #151515', boxShadow: '0 5px 0 #151515' }}
+        style={{ background: OKEAN, border: '1.5px solid #1A1B3A', boxShadow: 'var(--senka)' }}
         onPointerDown={naDole} onPointerMove={naPomeranje} onPointerUp={naGore} onPointerCancel={naGore} onPointerLeave={naGore}
         onDoubleClick={e => { const { ox, oy } = tacka(e); zumiraj(1 / 2, ox, oy) }}
         onWheel={e => { const { ox, oy } = tacka(e); zumiraj(e.deltaY > 0 ? 1.15 : 1 / 1.15, ox, oy) }}>
@@ -160,7 +160,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
           {/* Morski putevi: isprekidane linije preko mora, kao u Risku. */}
           {MORE.map(([a, b, x1, y1, x2, y2]) => {
             const jak = aktivniPut(a, b)
-            const stil = { stroke: jak ? '#151515' : MORSKI_PUT, strokeWidth: jak ? 3 : 1.8, strokeDasharray: jak ? '7 5' : '5 6', opacity: jak ? 1 : 0.75 }
+            const stil = { stroke: jak ? '#1A1B3A' : MORSKI_PUT, strokeWidth: jak ? 3 : 1.8, strokeDasharray: jak ? '7 5' : '5 6', opacity: jak ? 1 : 0.75 }
             if (Math.abs(x1 - x2) > SIRINA_MAPE / 2) {
               // Put preko ivice karte (Aljaska–Čukotka): dva kraka ka ivicama.
               const [levo, desno] = x1 < x2 ? [[x1, y1], [x2, y2]] : [[x2, y2], [x1, y1]]
@@ -202,7 +202,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
             return (
               <text key={`n-${o.id}`} x={o.x} y={o.y + 22 * jedinica} textAnchor="middle" pointerEvents="none"
                 fontSize={Math.min(13, Math.max(8, Math.sqrt(naEkranu) / 14)) * jedinica} fontWeight={700} letterSpacing={0.6 * jedinica}
-                fill={st.vlasnik ? '#FFFFFF' : '#151515'} opacity={st.vlasnik ? 0.9 : 0.55}>
+                fill={st.vlasnik ? '#FFFFFF' : '#1A1B3A'} opacity={st.vlasnik ? 0.9 : 0.55}>
                 {o.ime.toUpperCase()}
               </text>
             )
@@ -210,13 +210,13 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
 
           {/* Mete i izabrana preko ostalih, da se ivica ne izgubi ispod suseda. */}
           {mete.map(id => (
-            <path key={`m-${id}`} d={oblast(id).d} fill="#151515" fillOpacity={0.08} stroke="#151515" strokeWidth={2.5}
+            <path key={`m-${id}`} d={oblast(id).d} fill="#1A1B3A" fillOpacity={0.08} stroke="#1A1B3A" strokeWidth={2.5}
               strokeDasharray="6 5" vectorEffect="non-scaling-stroke" onClick={() => klik(id)} className="cursor-pointer">
               <animate attributeName="stroke-dashoffset" from="0" to="22" dur="0.9s" repeatCount="indefinite" />
             </path>
           ))}
           {izabranaO && (
-            <path d={izabranaO.d} fill="none" stroke="#FFD84D" strokeWidth={5} vectorEffect="non-scaling-stroke"
+            <path d={izabranaO.d} fill="none" stroke="#FDC361" strokeWidth={5} vectorEffect="non-scaling-stroke"
               strokeLinejoin="round" pointerEvents="none" />
           )}
 
@@ -227,20 +227,20 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
             if (!vidljiva) return null
             return (
               <g key={`z-${o.id}`} onClick={() => klik(o.id)} className="cursor-pointer">
-                <circle cx={o.x} cy={o.y + r * 0.18} r={r} fill="#151515" />
-                <circle cx={o.x} cy={o.y} r={r} fill={vlasnik?.boja ?? '#FFFFFF'} stroke="#151515" strokeWidth={r * 0.16} />
+                <circle cx={o.x} cy={o.y + r * 0.18} r={r} fill="#1A1B3A" />
+                <circle cx={o.x} cy={o.y} r={r} fill={vlasnik?.boja ?? '#FFFFFF'} stroke="#1A1B3A" strokeWidth={r * 0.16} />
                 <text x={o.x} y={o.y + r * 0.36} textAnchor="middle" fontSize={r * 1.05} fontStyle="italic"
-                  fontFamily="var(--font-archivo), 'Archivo Black', sans-serif" fill={vlasnik ? '#FFFFFF' : '#151515'}
+                  fontFamily="var(--font-archivo), 'Archivo Black', sans-serif" fill={vlasnik ? '#FFFFFF' : '#1A1B3A'}
                   pointerEvents="none">
                   {st.vojske}
                 </text>
                 {prestonice.has(o.id) && (
                   <path transform={`translate(${o.x - r * 0.7} ${o.y - r * 2.05}) scale(${r / 10})`}
-                    d="M0 9V2l3.5 3L7 0l3.5 5L14 2v7z" fill="#FFD84D" stroke="#151515" strokeWidth={1.4} strokeLinejoin="round" />
+                    d="M0 9V2l3.5 3L7 0l3.5 5L14 2v7z" fill="#FDC361" stroke="#1A1B3A" strokeWidth={1.4} strokeLinejoin="round" />
                 )}
                 {(krupno || mete.includes(o.id) || o.id === izabrana) && (o.povrsina / (jedinica * jedinica) > 2200 || mete.includes(o.id) || o.id === izabrana) && (
-                  <text x={o.x} y={o.y + r * 2.15} textAnchor="middle" fontSize={r * 0.95} fontWeight={700} fill="#151515"
-                    stroke="#F3F0E6" strokeWidth={r * 0.28} paintOrder="stroke" pointerEvents="none">
+                  <text x={o.x} y={o.y + r * 2.15} textAnchor="middle" fontSize={r * 0.95} fontWeight={700} fill="#1A1B3A"
+                    stroke="#F6F1E7" strokeWidth={r * 0.28} paintOrder="stroke" pointerEvents="none">
                     {o.ime}
                   </text>
                 )}
@@ -258,14 +258,14 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
         ].map(d => (
           <button key={d.natpis} onClick={d.radnja} aria-label={d.natpis} title={d.natpis}
             className="w-11 h-11 grid place-items-center rounded-full bg-white text-[20px] font-bold"
-            style={{ border: '2px solid #151515', boxShadow: '0 3px 0 #151515' }}>
+            style={{ border: '2px solid #1A1B3A', boxShadow: 'var(--senka)' }}>
             {d.znak}
           </button>
         ))}
       </div>
 
       <p className="absolute left-3 bottom-3 rounded-xl bg-white/90 px-3 py-2 text-[12px] font-semibold leading-tight"
-        style={{ border: '1.5px solid #E7E1D0' }}>
+        style={{ border: '1.5px solid #EDE5D5' }}>
         <svg width="26" height="8" className="inline mr-1.5 align-middle" aria-hidden><line x1="1" y1="4" x2="25" y2="4" stroke={MORSKI_PUT} strokeWidth="2" strokeDasharray="5 4" /></svg>
         morski put · napadaš samo susede
       </p>

@@ -119,42 +119,42 @@ export default function PodesavanjaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ background: '#F3F0E6' }}>
+      <div className="min-h-screen" style={{ background: '#F6F1E7' }}>
         <Header />
         <div className="flex items-center justify-center py-32">
           <div className="w-8 h-8 rounded-full border-2 animate-spin"
-            style={{ borderColor: '#12907E', borderTopColor: 'transparent' }} />
+            style={{ borderColor: '#23845C', borderTopColor: 'transparent' }} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#F3F0E6' }}>
+    <div className="min-h-screen" style={{ background: '#F6F1E7' }}>
       <Header />
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
         <Link href="/profil"
           className="inline-flex items-center gap-1.5 text-[13px] font-medium mb-6 transition-opacity hover:opacity-70"
-          style={{ color: '#12907E' }}>
+          style={{ color: '#23845C' }}>
           <IconBack size={16} strokeWidth={2.2} />
           Profil
         </Link>
 
-        <h1 className="font-black tracking-tight mb-8 leading-[1.1]" style={{ color: '#151515', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+        <h1 className="font-black tracking-tight mb-8 leading-[1.1]" style={{ color: '#1A1B3A', fontSize: 'clamp(28px, 5vw, 40px)' }}>
           Podešavanja
         </h1>
 
         {/* ─ Avatar picker ───────────────────────────────────────── */}
         <section className="card-soft p-6 sm:p-7 mb-4">
-          <h2 className="font-bold text-[16px] mb-4 tracking-tight" style={{ color: '#151515' }}>Avatar</h2>
+          <h2 className="font-bold text-[16px] mb-4 tracking-tight" style={{ color: '#1A1B3A' }}>Avatar</h2>
           <div className="flex items-center gap-4 mb-5">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 ring-4" style={{ ['--tw-ring-color' as string]: '#12907E' }}>
+            <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 ring-4" style={{ ['--tw-ring-color' as string]: '#23845C' }}>
               <Image src={`/avatars/${avatar}`} alt="Trenutni avatar" width={64} height={64} className="w-full h-full object-cover" />
             </div>
             <div>
-              <p className="font-semibold text-[14px]" style={{ color: '#151515' }}>Tvoj trenutni avatar</p>
-              <p className="text-[12px]" style={{ color: '#6F6C66' }}>Odaberi novi iz liste ispod</p>
+              <p className="font-semibold text-[14px]" style={{ color: '#1A1B3A' }}>Tvoj trenutni avatar</p>
+              <p className="text-[12px]" style={{ color: '#4F5170' }}>Odaberi novi iz liste ispod</p>
             </div>
           </div>
           <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 mb-5">
@@ -162,7 +162,7 @@ export default function PodesavanjaPage() {
               <button key={av} onClick={() => setAvatar(av)}
                 className="relative rounded-2xl overflow-hidden aspect-square transition-all hover:scale-110"
                 style={{
-                  outline: avatar === av ? '3px solid #12907E' : '2px solid transparent',
+                  outline: avatar === av ? '3px solid #23845C' : '2px solid transparent',
                   outlineOffset: 2,
                 }}>
                 <Image src={`/avatars/${av}`} alt={av} width={56} height={56} className="w-full h-full object-cover" />
@@ -177,8 +177,8 @@ export default function PodesavanjaPage() {
           <button onClick={handleSaveAvatar} disabled={savingAvatar}
             className="btn btn-md w-full"
             style={avatarSaved
-              ? { background: '#12907E', color: 'white', boxShadow: '0 4px 14px rgba(76,175,80,0.35)' }
-              : { background: '#12907E', color: 'white', boxShadow: '0 4px 14px rgba(18,144,126,0.30)' }
+              ? { background: '#23845C', color: 'white', boxShadow: '0 4px 14px rgba(76,175,80,0.35)' }
+              : { background: '#23845C', color: 'white', boxShadow: '0 4px 14px rgba(18,144,126,0.30)' }
             }>
             {avatarSaved ? '✓ Avatar sačuvan' : savingAvatar ? 'Čuvanje…' : 'Sačuvaj avatar'}
           </button>
@@ -186,7 +186,7 @@ export default function PodesavanjaPage() {
 
         {/* ─ Personal info ───────────────────────────────────────── */}
         <section className="card-soft p-6 sm:p-7 mb-4">
-          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#151515' }}>Lični podaci</h2>
+          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#1A1B3A' }}>Lični podaci</h2>
           <form onSubmit={handleSave} className="space-y-3.5">
             <div className="grid grid-cols-2 gap-3">
               <input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))}
@@ -197,7 +197,7 @@ export default function PodesavanjaPage() {
             <div>
               <input value={form.nickname} onChange={e => setForm(f => ({ ...f, nickname: e.target.value }))}
                 className="input" placeholder="Nadimak (na rang listi)" />
-              <p className="text-[11px] mt-1.5 ml-1" style={{ color: '#6F6C66' }}>Prikazuje se umesto imena na rang listi</p>
+              <p className="text-[11px] mt-1.5 ml-1" style={{ color: '#4F5170' }}>Prikazuje se umesto imena na rang listi</p>
             </div>
             <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
               className="input" placeholder="Grad" />
@@ -211,8 +211,8 @@ export default function PodesavanjaPage() {
             <button type="submit" disabled={saving}
               className="btn btn-md w-full"
               style={saved
-                ? { background: '#12907E', color: 'white', boxShadow: '0 4px 14px rgba(76,175,80,0.35)' }
-                : { background: '#12907E', color: 'white', boxShadow: '0 4px 14px rgba(18,144,126,0.30)' }
+                ? { background: '#23845C', color: 'white', boxShadow: '0 4px 14px rgba(76,175,80,0.35)' }
+                : { background: '#23845C', color: 'white', boxShadow: '0 4px 14px rgba(18,144,126,0.30)' }
               }>
               {saved ? '✓ Sačuvano' : saving ? 'Čuvanje…' : 'Sačuvaj izmene'}
             </button>
@@ -221,12 +221,12 @@ export default function PodesavanjaPage() {
 
         {/* ─ Reset password ──────────────────────────────────────── */}
         <section className="card-soft p-6 sm:p-7 mb-4">
-          <h2 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#151515' }}>Lozinka</h2>
-          <p className="text-[13px] mb-5" style={{ color: '#6F6C66' }}>Poslaćemo ti link za novu lozinku na email.</p>
+          <h2 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#1A1B3A' }}>Lozinka</h2>
+          <p className="text-[13px] mb-5" style={{ color: '#4F5170' }}>Poslaćemo ti link za novu lozinku na email.</p>
           {emailSent ? (
             <div className="rounded-2xl px-4 py-3 text-[13px] font-medium flex items-center gap-2"
-              style={{ background: '#DFF3EE', color: '#0E6F61' }}>
-              <IconCheck size={16} className="text-[#0E6F61]" />
+              style={{ background: '#E8F6EF', color: '#0A4C35' }}>
+              <IconCheck size={16} className="text-[#0A4C35]" />
               Email je poslat — proveri inbox (i spam).
             </div>
           ) : (
@@ -241,7 +241,7 @@ export default function PodesavanjaPage() {
         {/* ─ Delete account ──────────────────────────────────────── */}
         <section className="card-flat p-6 sm:p-7" style={{ borderColor: 'rgba(229,83,83,0.15)' }}>
           <h2 className="font-bold text-[16px] mb-1 tracking-tight" style={{ color: '#E5385C' }}>Brisanje naloga</h2>
-          <p className="text-[13px] mb-5" style={{ color: '#6F6C66' }}>
+          <p className="text-[13px] mb-5" style={{ color: '#4F5170' }}>
             Ova akcija je nepovratna. Svi tvoji podaci i rezultati biće trajno obrisani.
           </p>
           {!showDeleteConfirm ? (
@@ -252,7 +252,7 @@ export default function PodesavanjaPage() {
             </button>
           ) : (
             <div className="space-y-3">
-              <p className="text-[13px] font-medium" style={{ color: '#151515' }}>
+              <p className="text-[13px] font-medium" style={{ color: '#1A1B3A' }}>
                 Ukucaj <span className="font-black" style={{ color: '#E5385C' }}>OBRISI</span> da potvrdiš:
               </p>
               <input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)}
