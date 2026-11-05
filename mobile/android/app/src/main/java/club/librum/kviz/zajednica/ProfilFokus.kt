@@ -283,21 +283,21 @@ fun PomocUpotreba(poVrsti: Map<String, Int>) {
 data class Krug(val id: String, val naziv: String, val boja: Color, val procenat: Int?, val redovi: List<Pair<String, String>>)
 
 private val BOJE_KRUGA get() = mapOf("pro" to Boje.ljubicasta, "book" to Boje.narandzasta, "vesanje" to Boje.nebo, "brzi" to Boje.zuta, "duel" to Boje.roze,
-    "slikari" to Boje.roze, "tema" to Boje.teal, "dnevni" to Boje.zuta)
+    "slikari" to Boje.roze, "tema" to Boje.teal, "dnevni" to Boje.zuta, "kafana" to Boje.narandzasta)
 private val NAZIVI_KRUGA = mapOf("pro" to "PRO kviz", "book" to "Book kviz", "vesanje" to "Vešanje", "brzi" to "Brzi kviz", "duel" to "Duel", "slikari" to "Slikari",
-    "tema" to "Teme", "dnevni" to "Dnevni izazov")
+    "tema" to "Teme", "dnevni" to "Dnevni izazov", "kafana" to "Kafanski kviz")
 
 /** Isto kao iOS IgreKrugovi.krugovi: najbolji procenat prvi. */
 fun krugovi(p: ProfilIgraca): List<Krug> {
     val veb = p.veb
     val ids = p.igre.map { it.igra }.toMutableSet().apply { removeAll(setOf("osvajanje", "karijera")) }
-    listOf("pro" to veb?.pro, "book" to veb?.book, "vesanje" to veb?.vesanje, "brzi" to veb?.brzi).forEach { (id, g) -> if ((g?.partija ?: 0) > 0) ids += id }
+    listOf("pro" to veb?.pro, "book" to veb?.book, "vesanje" to veb?.vesanje, "brzi" to veb?.brzi, "kafana" to veb?.kafana, "tema" to veb?.teme).forEach { (id, g) -> if ((g?.partija ?: 0) > 0) ids += id }
     veb?.duel?.let { if ((it.pobeda ?: 0) + (it.poraza ?: 0) + (it.nereseno ?: 0) > 0) ids += "duel" }
     val l = mutableListOf<Krug>()
-    for (id in listOf("pro", "book", "slikari", "brzi", "vesanje", "duel", "dnevni", "tema")) {
+    for (id in listOf("pro", "book", "slikari", "brzi", "vesanje", "duel", "kafana", "dnevni", "tema")) {
         if (id !in ids) continue
         val a = p.igre.firstOrNull { it.igra == id }
-        val w = when (id) { "pro" -> veb?.pro; "book" -> veb?.book; "vesanje" -> veb?.vesanje; "brzi" -> veb?.brzi; "duel" -> veb?.duel; else -> null }
+        val w = when (id) { "pro" -> veb?.pro; "book" -> veb?.book; "vesanje" -> veb?.vesanje; "brzi" -> veb?.brzi; "duel" -> veb?.duel; "kafana" -> veb?.kafana; "tema" -> veb?.teme; else -> null }
         val redovi = mutableListOf<Pair<String, String>>()
         val partija = (a?.partija ?: 0) + (w?.partija ?: 0)
         if (partija > 0) redovi += "Partija" to broj(partija)

@@ -43,17 +43,30 @@ enum Zajednica {
     static func nazivVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.1 ?? "Objava" }
     static func ikonicaVrste(_ v: String) -> String { vrste.first { $0.0 == v }?.2 ?? "text.bubble" }
     static let nazivIgre = ["dnevni": "Dnevni izazov", "osvajanje": "Osvajač", "pro": "PRO kviz", "book": "Book kviz", "duel": "Duel", "slikari": "Slikari",
-                            "brzi": "Brzi kviz", "vesanje": "Vešanje", "tema": "Kviz po temi", "karijera": "Karijerista"]
+                            "brzi": "Brzi kviz", "vesanje": "Vešanje", "tema": "Kviz po temi", "karijera": "Karijerista", "kafana": "Kafanski kviz"]
 
     private static func token(_ s: Sesija) async -> String? { try? await s.vazeciToken() }
 
     static func tok(_ s: Sesija, vrsta: String, pre: Int? = nil) async throws -> [Objava] {
         try await Supabase.deljeni.rpc("tok_objava", ["p_vrsta": vrsta, "p_pre": pre as Any? ?? NSNull(), "p_broj": 20], token: await token(s))
     }
+    struct NaMrezi: Decodable, Identifiable, Equatable { let ko: String; let nadimak: String; let avatar: String?; let igra: String?; let od: String; let pratim: Bool; var id: String { ko } }
+    static func naMrezi(_ s: Sesija) async -> [NaMrezi]? { try? await Supabase.deljeni.rpc("na_mrezi", ["p_broj": 150], token: await token(s)) }
+    /// Otkucaj prisustva dok je aplikacija otvorena (Koren, na 30 s); greška se ne prikazuje, sledeći otkucaj pokušava ponovo.
+    static func javiPrisustvo(_ s: Sesija) async {
+        guard let t = await token(s) else { return }
+        do { _ = try await Supabase.deljeni.zahtev("rest/v1/rpc/javi_prisustvo", metod: "POST", telo: [:], token: t) } catch { print("Prisustvo nije javljeno: \(error)") }
+    }
     static func koStaIgra(_ s: Sesija) async -> [Igra] { (try? await Supabase.deljeni.rpc("ko_sta_igra", ["p_broj": 20], token: await token(s))) ?? [] }
-    static func objavi(_ s: Sesija, vrsta: String, tekst: String, igra: String?, poeni: Int?) async throws {
-        let _: Int = try await Supabase.deljeni.rpc("nova_objava", ["p_vrsta": vrsta, "p_tekst": tekst, "p_igra": igra as Any? ?? NSNull(), "p_poeni": poeni as Any? ?? NSNull()],
-                                                    token: await token(s))
+    /// Poslednja partija za „Moj rezultat”: izvor je `r:<id>` (igre) ili `k:<id>` (Karijerista), server iz njega upisuje igru i poene.
+    struct MojRezultat: Decodable, Identifiable, Equatable { let izvor: String; let igra: String; let poeni: Int; let tacnih: Int?; let kad: String; var id: String { izvor } }
+    static func mojiRezultati(_ s: Sesija) async -> [MojRezultat] {
+        (try? await Supabase.deljeni.rpc("moji_poslednji_rezultati", ["p_broj": 15], token: await token(s))) ?? []
+    }
+    /// Rezultat se objavljuje po izvoru (izbor iz poslednjih partija) ili, posle partije, po igri i poenima koje server proveri.
+    static func objavi(_ s: Sesija, vrsta: String, tekst: String, igra: String?, poeni: Int? = nil, rezultat: String? = nil) async throws {
+        let _: Int = try await Supabase.deljeni.rpc("nova_objava", ["p_vrsta": vrsta, "p_tekst": tekst, "p_igra": igra as Any? ?? NSNull(),
+                                                                    "p_poeni": poeni as Any? ?? NSNull(), "p_rezultat": rezultat as Any? ?? NSNull()], token: await token(s))
     }
     static func srceObjavi(_ s: Sesija, _ id: Int) async -> Srce? { try? await Supabase.deljeni.rpc("srce_objavi", ["p_id": id], token: await token(s)) }
     static func srceKomentaru(_ s: Sesija, _ id: Int) async -> Srce? { try? await Supabase.deljeni.rpc("srce_komentaru", ["p_id": id], token: await token(s)) }
@@ -104,6 +117,13 @@ struct IgraciTabView: View {
                 HStack(spacing: 10) {
                     Naslov(tekst: "Igrači", velicina: 34)
                     Spacer()
+                    // Na mreži levo od Sandučeta (vlasnik 05.11): svi igrači koji su sada u aplikaciji.
+                    NavigationLink { NaMreziView() } label: {
+                        krug("dot.radiowaves.left.and.right").overlay(alignment: .topTrailing) {
+                            Circle().fill(Color.teal).frame(width: 12, height: 12).overlay(Circle().stroke(Color.krem, lineWidth: 2))
+                        }
+                    }
+                    .accessibilityLabel("Igrači na mreži")
                     // Sanduče gore desno (vlasnik 03.11): izazovi, pratioci, komentari i poruke sistema.
                     NavigationLink { SanduceView() } label: {
                         krug("tray").overlay(alignment: .topTrailing) {
@@ -368,7 +388,8 @@ struct NovaObjavaView: View {
     @State private var vrsta = "poziv_duel"
     @State private var igra = "osvajanje"
     @State private var tekst = ""
-    @State private var poeni = ""
+    @State private var rezultati: Ucitano<[Zajednica.MojRezultat]> = .ucitava
+    @State private var izabran: Zajednica.MojRezultat?
     @State private var greska: String?
     @State private var salje = false
 
@@ -398,13 +419,13 @@ struct NovaObjavaView: View {
                         .accessibilityAddTraits(vrsta == v.0 ? .isSelected : [])
                     }
                 }
-                if vrsta != "tekst" {
+                if vrsta == "rezultat" { poslednjiRezultati }
+                if vrsta != "tekst" && vrsta != "rezultat" {
                     Text("Igra").font(.tekst(14, .semibold))
                     ScrollView(.horizontal, showsIndicators: false) {
                         PodvuceniIzbor(izbor: $igra, opcije: ["osvajanje", "duel", "pro", "slikari", "book", "brzi", "vesanje"].map { ($0, Zajednica.nazivIgre[$0] ?? $0) })
                     }
                 }
-                if vrsta == "rezultat" { PoljeUnosa(naziv: "Poeni", tekst: $poeni, tastatura: .numberPad) }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(vrsta == "poziv_duel" ? "Poruka uz poziv" : vrsta == "poziv_tim" ? "Koga tražiš" : "Tekst").font(.tekst(14, .semibold))
                     TextField(primer, text: $tekst, axis: .vertical)
@@ -415,11 +436,50 @@ struct NovaObjavaView: View {
                 }
                 if let greska { Text(greska).font(.tekst(14, .semibold)).foregroundStyle(Color.crvena) }
                 Button { Task { await objavi() } } label: { Text(salje ? "Objavljujem…" : "Objavi") }
-                    .buttonStyle(.primarno).disabled(salje || tekst.count > 500 || (vrsta == "tekst" && tekst.trimmingCharacters(in: .whitespaces).isEmpty))
+                    .buttonStyle(.primarno).disabled(salje || tekst.count > 500 || (vrsta == "tekst" && tekst.trimmingCharacters(in: .whitespaces).isEmpty)
+                                                     || (vrsta == "rezultat" && izabran == nil))
             }
             .padding(16)
         }
         .background(Papir())
+        .task(id: vrsta) {
+            guard vrsta == "rezultat", case .ucitava = rezultati else { return }
+            let l = await Zajednica.mojiRezultati(sesija)
+            rezultati = .gotovo(l); izabran = l.first
+        }
+    }
+
+    /// Poslednje partije (vlasnik 05.11): bira se stvarni rezultat, poeni se ne kucaju.
+    @ViewBuilder private var poslednjiRezultati: some View {
+        Text("Izaberi rezultat").font(.tekst(14, .semibold))
+        switch rezultati {
+        case .ucitava: ForEach(0..<3, id: \.self) { _ in Skelet(visina: 56) }
+        case .greska(let p): Text(p).font(.tekst(14)).foregroundStyle(Color.crvena)
+        case .gotovo(let l) where l.isEmpty:
+            Text("Još nemaš odigranih partija. Odigraj jednu, pa se vrati da je podeliš.").font(.tekst(14)).foregroundStyle(Color.sivaTekst)
+        case .gotovo(let l):
+            VStack(spacing: 0) {
+                ForEach(l) { r in
+                    Button { izabran = r } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: izabran == r ? "checkmark.circle.fill" : "circle").font(.system(size: 20)).foregroundStyle(izabran == r ? Color.teal : Color.kremTamnija)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(Zajednica.nazivIgre[r.igra] ?? r.igra).font(.tekst(15, .semibold)).foregroundStyle(Color.mastilo)
+                                Text(Zajednica.pre(r.kad) + (r.tacnih.map { " · \($0) tačnih" } ?? "")).font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+                            }
+                            Spacer()
+                            Text("\(r.poeni.srpski)").font(.naslov(20)).foregroundStyle(Color.mastilo).monospacedDigit()
+                        }
+                        .padding(.vertical, 10).padding(.horizontal, 12).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(izabran == r ? .isSelected : [])
+                    if r != l.last { Divider().padding(.leading, 44) }
+                }
+            }
+            .background(Color.kartica, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.kremTamnija, lineWidth: 1.5))
+        }
     }
 
     private var primer: String {
@@ -434,7 +494,8 @@ struct NovaObjavaView: View {
     private func objavi() async {
         salje = true; defer { salje = false }
         do {
-            try await Zajednica.objavi(sesija, vrsta: vrsta, tekst: tekst, igra: vrsta == "tekst" ? nil : igra, poeni: vrsta == "rezultat" ? Int(poeni) : nil)
+            try await Zajednica.objavi(sesija, vrsta: vrsta, tekst: tekst, igra: vrsta == "tekst" || vrsta == "rezultat" ? nil : igra,
+                                       rezultat: vrsta == "rezultat" ? izabran?.izvor : nil)
             objavljeno(); zatvori()
         } catch { greska = (error as? Supabase.Greska)?.poruka ?? error.localizedDescription }
     }
@@ -928,5 +989,84 @@ struct ServerskaObavestenja: View {
         } else {
             NavigationLink { ProfilIgracaView(id: r.ko) } label: { sadrzaj }.buttonStyle(.plain)
         }
+    }
+}
+
+
+// MARK: Na mreži
+
+/// Svi igrači koji su sada u aplikaciji (ne samo praćeni): broj gore, spisak ispod, ulasci i izlasci uživo.
+/// shortcut: osvežava se na 8 s dok je ekran otvoren; kad igrača bude mnogo više, preći na Supabase Realtime presence.
+struct NaMreziView: View {
+    @Environment(Sesija.self) private var sesija
+    @Environment(\.dismiss) private var nazad
+    @State private var lista: Ucitano<[Zajednica.NaMrezi]> = .ucitava
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    KrugDugme(ikonica: "chevron.left", opis: "Nazad") { nazad() }
+                    Naslov(tekst: "Na mreži", velicina: 30)
+                    Spacer()
+                }
+                switch lista {
+                case .ucitava: ForEach(0..<5, id: \.self) { _ in Skelet(visina: 64) }
+                case .greska(let p): StanjeEkrana(maskota: .lumi, naslov: "Spisak se nije učitao", tekst: p, dugme: "Pokušaj ponovo") { Task { await ucitaj() } }
+                case .gotovo(let l):
+                    HStack(spacing: 10) {
+                        Circle().fill(Color.teal).frame(width: 10, height: 10)
+                        Text("\(l.count)").font(.naslov(34)).monospacedDigit().contentTransition(.numericText())
+                        Text(l.count == 1 ? "igrač je sada u igri" : "igrača je sada u igri").font(.tekst(15, .semibold)).foregroundStyle(Color.sivaTekst)
+                    }
+                    .animation(.snappy, value: l.count)
+                    if l.isEmpty {
+                        StanjeEkrana(maskota: .bloop, naslov: "Trenutno nema nikog", tekst: "Kad neko otvori aplikaciju, pojaviće se ovde.")
+                    } else {
+                        VStack(spacing: 0) {
+                            ForEach(l) { i in
+                                NavigationLink { ProfilIgracaView(id: i.ko) } label: { red(i) }
+                                    .buttonStyle(.plain)
+                                    .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+                                if i != l.last { Divider().padding(.leading, 68) }
+                            }
+                        }
+                        .padding(.horizontal, 12).mirna()
+                        .animation(.spring(duration: 0.4), value: l)
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .background(Papir())
+        .toolbar(.hidden, for: .navigationBar)
+        .refreshable { await ucitaj() }
+        .task {
+            while !Task.isCancelled { await ucitaj(); try? await Task.sleep(for: .seconds(8)) }
+        }
+    }
+
+    private func red(_ i: Zajednica.NaMrezi) -> some View {
+        HStack(spacing: 12) {
+            AvatarSlika(avatar: i.avatar, velicina: 44)
+                .overlay(alignment: .bottomTrailing) { Circle().fill(Color.teal).frame(width: 12, height: 12).overlay(Circle().stroke(Color.krem, lineWidth: 2)) }
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(i.ko == sesija.korisnikId ? "\(i.nadimak) (ti)" : i.nadimak).font(.tekst(15, .bold)).foregroundStyle(Color.mastilo).lineLimit(1)
+                    if i.pratim { Image(systemName: "person.fill.checkmark").font(.system(size: 12, weight: .semibold)).foregroundStyle(Color.teal).accessibilityLabel("pratiš") }
+                }
+                Text(i.igra.map { "igra " + (Zajednica.nazivIgre[$0] ?? $0) } ?? "u aplikaciji").font(.tekst(13)).foregroundStyle(Color.sivaTekst).lineLimit(1)
+            }
+            Spacer()
+            Text(Zajednica.pre(i.od)).font(.tekst(12)).foregroundStyle(Color.sivaTekst)
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.sivaTekst)
+        }
+        .padding(.vertical, 10).contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    private func ucitaj() async {
+        guard let l = await Zajednica.naMrezi(sesija) else { if case .ucitava = lista { lista = .greska("Proveri internet vezu.") }; return }
+        withAnimation { lista = .gotovo(l) }
     }
 }
