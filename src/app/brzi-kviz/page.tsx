@@ -75,14 +75,14 @@ export default async function BrziKvizLanding() {
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
         <div className="text-center mb-8">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#23845C' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--ok)' }}>
             Brzi kviz
           </p>
           <h1 className="leading-[0.9] mb-3"
-            style={{ color: '#1A1B3A', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
+            style={{ color: 'var(--ink)', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
             60 sekundi.
           </h1>
-          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#4F5170' }}>
+          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: 'var(--ink-2)' }}>
             Tačno ili netačno? Brzo razmišljaj —<br />za jedan minut osvoji što više bodova.
           </p>
         </div>
@@ -91,10 +91,10 @@ export default async function BrziKvizLanding() {
         {best && best.score > 0 ? (
           <div className="card-soft p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFF5E0' }}>
-                <IconTrophy size={20} className="text-[#8A6A12]" strokeWidth={2.2} />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--warn-50)' }}>
+                <IconTrophy size={20} className="text-[var(--warn-t)]" strokeWidth={2.2} />
               </div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Tvoj rekord</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>Tvoj rekord</p>
             </div>
             <div className="grid grid-cols-4 gap-2">
               {[
@@ -103,19 +103,19 @@ export default async function BrziKvizLanding() {
                 { label: 'Pogr.',   value: best.wrong_count },
                 { label: 'Tačnost', value: `${Math.round(Number(best.accuracy))}%` },
               ].map(({ label, value }) => (
-                <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                  <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{value}</div>
-                  <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>{label}</div>
+                <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                  <div className="font-black text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>{value}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>{label}</div>
                 </div>
               ))}
             </div>
           </div>
         ) : (
           <div className="card-soft p-5 mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#E8F6EF' }}>
-              <IconStar size={20} className="text-[#0A4C35]" strokeWidth={2.2} />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--ok-50)' }}>
+              <IconStar size={20} className="text-[var(--ok-t)]" strokeWidth={2.2} />
             </div>
-            <p className="text-[14px]" style={{ color: '#1A1B3A' }}>
+            <p className="text-[14px]" style={{ color: 'var(--ink)' }}>
               Još nemaš rezultat. <strong>Imaš 60 sekundi.</strong>
             </p>
           </div>
@@ -123,8 +123,8 @@ export default async function BrziKvizLanding() {
 
         {/* Today top */}
         {todayBest && todayBest.score > 0 && todayBestName && (
-          <div className="card-soft p-4 mb-5 text-center" style={{ background: '#FFF5E0', borderColor: 'rgba(255,216,77,0.4)' }}>
-            <p className="text-[13px] font-medium" style={{ color: '#8A6A12' }}>
+          <div className="card-soft p-4 mb-5 text-center" style={{ background: 'var(--warn-50)', borderColor: 'rgba(255,216,77,0.4)' }}>
+            <p className="text-[13px] font-medium" style={{ color: 'var(--warn-t)' }}>
               ⚡ Danas u vrhu: <strong>{todayBestName}</strong> sa <strong>{todayBest.score} bodova</strong>. Možeš li bolje?
             </p>
           </div>
@@ -132,7 +132,7 @@ export default async function BrziKvizLanding() {
 
         {/* Rules */}
         <div className="card-soft p-7 sm:p-8 mb-5">
-          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: '#1A1B3A' }}>
+          <h2 className="font-bold text-[16px] mb-5 tracking-tight" style={{ color: 'var(--ink)' }}>
             Pravila
           </h2>
           <div className="space-y-3.5">
@@ -152,7 +152,7 @@ export default async function BrziKvizLanding() {
           Kreni — 60 sekundi
         </Link>
 
-        <p className="text-center text-[11px] mt-5" style={{ color: '#4F5170' }}>
+        <p className="text-center text-[11px] mt-5" style={{ color: 'var(--ink-2)' }}>
           {profile?.first_name ? `Spreman/na, ${profile.first_name}?` : 'Spreman/na?'}
         </p>
       </main>
@@ -172,7 +172,7 @@ function Rule({ color, fg, Icon, children }: {
       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color }}>
         <Icon size={16} className={`text-[${fg}]`} strokeWidth={2.2} />
       </div>
-      <p className="text-[14px] leading-relaxed pt-1" style={{ color: '#1A1B3A' }}>{children}</p>
+      <p className="text-[14px] leading-relaxed pt-1" style={{ color: 'var(--ink)' }}>{children}</p>
     </div>
   )
 }

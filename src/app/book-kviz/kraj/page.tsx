@@ -57,9 +57,9 @@ export default function BookKvizEnd() {
 
   if (!r) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#8A6A12', borderTopColor: 'transparent' }} />
+          style={{ borderColor: 'var(--warn-t)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
@@ -72,18 +72,18 @@ export default function BookKvizEnd() {
   const topStyle = r.topGenre ? GENRE_COLOR[r.topGenre] || { bg: '#FFF5E0', fg: '#8A6A12' } : null
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
 
         <div className="text-center mb-8">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#8A6A12' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--warn-t)' }}>
             Kraj
           </p>
           <h1 className="font-black tracking-tight leading-[1.05] mb-3"
-            style={{ color: '#1A1B3A', fontSize: 'clamp(36px, 7vw, 56px)' }}>
+            style={{ color: 'var(--ink)', fontSize: 'clamp(36px, 7vw, 56px)' }}>
             {r.score}
           </h1>
-          <p className="text-[14px]" style={{ color: '#4F5170' }}>
+          <p className="text-[14px]" style={{ color: 'var(--ink-2)' }}>
             bodova u Book kvizu
           </p>
         </div>
@@ -122,7 +122,7 @@ export default function BookKvizEnd() {
         {/* Genre breakdown */}
         {breakdownEntries.length > 0 && (
           <div className="card-soft p-5 mb-5">
-            <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: '#4F5170' }}>
+            <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--ink-2)' }}>
               Po žanrovima
             </p>
             <div className="space-y-2">
@@ -133,10 +133,10 @@ export default function BookKvizEnd() {
                     <span className="chip flex-shrink-0" style={{ background: style.bg, color: style.fg }}>
                       {b.genre}
                     </span>
-                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: '#EDE5D5' }}>
+                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--line)' }}>
                       <div className="h-full" style={{ width: `${b.pct}%`, background: style.fg, opacity: 0.7 }} />
                     </div>
-                    <span className="text-[12px] tabular-nums flex-shrink-0" style={{ color: '#4F5170' }}>
+                    <span className="text-[12px] tabular-nums flex-shrink-0" style={{ color: 'var(--ink-2)' }}>
                       {b.correct}/{b.total}
                     </span>
                   </div>
@@ -160,7 +160,7 @@ export default function BookKvizEnd() {
             accent="gold"
             className="w-full"
           />
-          <Link href="/" className="block text-center text-[13px] font-medium mt-3" style={{ color: '#4F5170' }}>
+          <Link href="/" className="block text-center text-[13px] font-medium mt-3" style={{ color: 'var(--ink-2)' }}>
             ← Početna
           </Link>
         </div>
@@ -173,7 +173,7 @@ function Stat({ label, value, accent }: { label: string; value: number | string;
   return (
     <div className="card-soft p-4 text-center">
       <p className="font-black text-[18px] tracking-tight" style={{ color: accent || '#1A1B3A' }}>{value}</p>
-      <p className="text-[10px] mt-1" style={{ color: '#4F5170' }}>{label}</p>
+      <p className="text-[10px] mt-1" style={{ color: 'var(--ink-2)' }}>{label}</p>
     </div>
   )
 }

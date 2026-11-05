@@ -441,9 +441,9 @@ export default function DuelGamePage() {
   // ── Render ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#23845C', borderTopColor: 'transparent' }} />
+          style={{ borderColor: 'var(--ok)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
@@ -452,19 +452,19 @@ export default function DuelGamePage() {
   if (room?.status === 'waiting') {
     const amGuest = myId === room.guest_id
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
         <div className="card-soft p-9 max-w-sm text-center">
           <div className="text-5xl mb-5">⏳</div>
           {amGuest ? (
             <>
-              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>Ušao/la si u sobu!</h2>
-              <p className="text-[14px] mb-2" style={{ color: '#4F5170' }}>Čekamo da domaćin počne duel…</p>
+              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: 'var(--ink)' }}>Ušao/la si u sobu!</h2>
+              <p className="text-[14px] mb-2" style={{ color: 'var(--ink-2)' }}>Čekamo da domaćin počne duel…</p>
             </>
           ) : (
             <>
-              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>Čekamo protivnika…</h2>
+              <h2 className="font-black text-[22px] mb-2 tracking-tight" style={{ color: 'var(--ink)' }}>Čekamo protivnika…</h2>
               <div className="font-black py-5 px-7 rounded-2xl my-4 inline-block"
-                style={{ background: '#E8F6EF', color: '#1A1B3A', letterSpacing: '0.25em', fontSize: 'clamp(28px, 5vw, 40px)' }}>
+                style={{ background: 'var(--ok-50)', color: 'var(--ink)', letterSpacing: '0.25em', fontSize: 'clamp(28px, 5vw, 40px)' }}>
                 {code}
               </div>
             </>
@@ -487,15 +487,15 @@ export default function DuelGamePage() {
   const opProf = opId ? profiles[opId] : null
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
 
       {/* HUD */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,27,58,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
           <button onClick={() => setShowExitConfirm(true)}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[#EDE5D5]"
-            style={{ color: '#4F5170' }} aria-label="Izađi">
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-[var(--line)]"
+            style={{ color: 'var(--ink-2)' }} aria-label="Izađi">
             <IconClose size={18} strokeWidth={2.2} />
           </button>
 
@@ -509,8 +509,8 @@ export default function DuelGamePage() {
                 </>
               ) : (
                 <>
-                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4F5170' }}>Pitanje</div>
-                  <div className="font-black text-[16px]" style={{ color: '#1A1B3A' }}>{current + 1}/{totalMain}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--ink-2)' }}>Pitanje</div>
+                  <div className="font-black text-[16px]" style={{ color: 'var(--ink)' }}>{current + 1}/{totalMain}</div>
                 </>
               )}
             </div>
@@ -527,7 +527,7 @@ export default function DuelGamePage() {
 
           {isGolden && (
             <div className="rounded-2xl px-4 py-3 mb-4 text-center font-bold text-[13px]"
-              style={{ background: '#FDC361', color: '#1A1B3A' }}>
+              style={{ background: '#FDC361', color: 'var(--ink)' }}>
               ⚡ Zlatno pitanje — odlučuje pobednika
             </div>
           )}
@@ -535,7 +535,7 @@ export default function DuelGamePage() {
           <div className="card-pop p-6 sm:p-8 mb-5" style={{ background: '#FDC361' }}>
             <div className="flex items-start justify-between gap-3 mb-3">
               <h2 className="leading-snug flex-1"
-                style={{ color: '#1A1B3A', fontSize: 'clamp(18px, 3vw, 22px)' }}>
+                style={{ color: 'var(--ink)', fontSize: 'clamp(18px, 3vw, 22px)' }}>
                 {q.question_text}
               </h2>
               <ReportQuestionButton
@@ -585,7 +585,7 @@ export default function DuelGamePage() {
                         )}
                         {opPicked && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: '#FDC361', color: '#1A1B3A' }}>
+                            style={{ background: '#FDC361', color: 'var(--ink)' }}>
                             Protivnik
                           </span>
                         )}
@@ -598,28 +598,28 @@ export default function DuelGamePage() {
 
             {/* Status / info */}
             {!revealed && myAnswered && (
-              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium text-center" style={{ background: '#EDE5D5', color: '#4F5170' }}>
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium text-center" style={{ background: 'var(--line)', color: 'var(--ink-2)' }}>
                 {opAnswered ? 'Otkrivamo odgovor…' : 'Odgovorio/la si — čekamo protivnika…'}
               </div>
             )}
             {revealed && q.info && (
-              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#E8F6EF', color: '#0A4C35' }}>
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: 'var(--ok-50)', color: 'var(--ok-t)' }}>
                 {q.info}
               </div>
             )}
             {revealed && !q.info && (
               <div className="mt-5 grid grid-cols-2 gap-2 text-[12px]">
-                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#EDE5D5' }}>
-                  <span className="font-bold" style={{ color: '#23845C' }}>Ti:</span>{' '}
-                  {myAns === null ? <span style={{ color: '#8A6A12' }}>Vreme isteklo</span>
-                    : myAns === q.correctIdx ? <span style={{ color: '#0A4C35' }}>tačno +10</span>
-                    : <span style={{ color: '#C42B4F' }}>pogrešno -5</span>}
+                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: 'var(--line)' }}>
+                  <span className="font-bold" style={{ color: 'var(--ok)' }}>Ti:</span>{' '}
+                  {myAns === null ? <span style={{ color: 'var(--warn-t)' }}>Vreme isteklo</span>
+                    : myAns === q.correctIdx ? <span style={{ color: 'var(--ok-t)' }}>tačno +10</span>
+                    : <span style={{ color: 'var(--bad-t)' }}>pogrešno -5</span>}
                 </div>
-                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: '#EDE5D5' }}>
+                <div className="rounded-2xl px-3 py-2 text-center" style={{ background: 'var(--line)' }}>
                   <span className="font-bold" style={{ color: '#FDC361' }}>Protivnik:</span>{' '}
-                  {opAns === null ? <span style={{ color: '#8A6A12' }}>Vreme isteklo</span>
-                    : opAns === q.correctIdx ? <span style={{ color: '#0A4C35' }}>tačno +10</span>
-                    : <span style={{ color: '#C42B4F' }}>pogrešno -5</span>}
+                  {opAns === null ? <span style={{ color: 'var(--warn-t)' }}>Vreme isteklo</span>
+                    : opAns === q.correctIdx ? <span style={{ color: 'var(--ok-t)' }}>tačno +10</span>
+                    : <span style={{ color: 'var(--bad-t)' }}>pogrešno -5</span>}
                 </div>
               </div>
             )}
@@ -633,8 +633,8 @@ export default function DuelGamePage() {
           style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
             <div className="text-5xl mb-4">🏁</div>
-            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Kraj duela</h3>
-            <p className="text-[13px]" style={{ color: '#4F5170' }}>Računamo rezultat…</p>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: 'var(--ink)' }}>Kraj duela</h3>
+            <p className="text-[13px]" style={{ color: 'var(--ink-2)' }}>Računamo rezultat…</p>
           </div>
         </div>
       )}
@@ -647,10 +647,10 @@ export default function DuelGamePage() {
           style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
             <div className="text-5xl mb-4">🚪</div>
-            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
               {opProf?.name?.split(' ')[0] || 'Protivnik'} je napustio kviz
             </h3>
-            <p className="text-[13px]" style={{ color: '#4F5170' }}>
+            <p className="text-[13px]" style={{ color: 'var(--ink-2)' }}>
               Tvoj rezultat se upisuje na rang listu.
             </p>
           </div>
@@ -662,8 +662,8 @@ export default function DuelGamePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
           style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
-            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Izađi iz duela?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#4F5170' }}>Trenutni rezultat se upisuje na rang listu — predaješ duel.</p>
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: 'var(--ink)' }}>Izađi iz duela?</h3>
+            <p className="text-[13px] mb-6" style={{ color: 'var(--ink-2)' }}>Trenutni rezultat se upisuje na rang listu — predaješ duel.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi
@@ -679,7 +679,7 @@ export default function DuelGamePage() {
         </div>
       )}
 
-      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: '#4F5170' }}>
+      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: 'var(--ink-2)' }}>
         ukupno: {fmtTime(Math.floor((Date.now() - startTimeRef.current) / 1000))}
       </div>
     </div>
@@ -691,13 +691,13 @@ function PlayerScore({ userId, name, avatar, score, accent, you }: {
 }) {
   const inner = (
     <>
-      <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: '#EDE5D5', border: `2px solid ${accent}` }}>
+      <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0" style={{ background: 'var(--line)', border: `2px solid ${accent}` }}>
         {avatar
           ? <Image src={`/avatars/${avatar}`} alt={name} width={36} height={36} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center text-[12px] font-bold" style={{ background: accent, color: 'white' }}>{name[0]}</div>}
       </div>
       <div className="min-w-0">
-        <div className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: '#4F5170' }}>
+        <div className="text-[10px] font-bold uppercase tracking-wider truncate" style={{ color: 'var(--ink-2)' }}>
           {you ? 'Ti' : name.split(' ')[0]}
         </div>
         <div className="font-black text-[18px] tracking-tight" style={{ color: accent }}>{score}</div>

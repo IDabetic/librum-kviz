@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Rubik } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
+import { TEMA_SKRIPTA } from '@/components/TemaPrekidac'
 
 // Rubik za naslove, kao na librum.club i librum.rs.
 // Imena promenljivih ostaju (--font-archivo/--font-grotesk) da strane ne traže prepravku.
@@ -101,7 +102,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#F6F1E7',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0D0E1C' },
+  ],
 }
 
 const APP_STORE = 'https://apps.apple.com/rs/app/librum-kviz/id6830091653'
@@ -150,7 +154,10 @@ const organizationSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sr" translate="no" className={`${display.variable} ${sans.variable} h-full`}>
+    <html lang="sr" translate="no" className={`${display.variable} ${sans.variable} h-full`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: TEMA_SKRIPTA }} />
+      </head>
       <body className="min-h-full antialiased font-sans">
         {children}
         <script id="ld-website" type="application/ld+json"

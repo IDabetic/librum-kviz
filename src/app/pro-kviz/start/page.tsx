@@ -530,23 +530,23 @@ export default function SurvivorGame() {
   // ── Render ─────────────────────────────────────────────────────────────────
   if (loading || !current) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#23845C', borderTopColor: 'transparent' }} />
+          style={{ borderColor: 'var(--ok)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
 
       {/* ── Top HUD ────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,27,58,0.06)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={() => setShowExitConfirm(true)}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#EDE5D5] flex-shrink-0"
-            style={{ color: '#4F5170' }} aria-label="Izađi">
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[var(--line)] flex-shrink-0"
+            style={{ color: 'var(--ink-2)' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
           </button>
 
@@ -576,7 +576,7 @@ export default function SurvivorGame() {
           {/* Risk banner */}
           {riskActive && (
             <div className="rounded-2xl px-4 py-3 mb-4 text-center text-[13px] font-bold animate-fade-in"
-              style={{ background: '#FDC361', color: '#1A1B3A' }}>
+              style={{ background: '#FDC361', color: 'var(--ink)' }}>
               ⚡ Risk aktiviran — duplo dobit, duplo gubitak
             </div>
           )}
@@ -584,13 +584,13 @@ export default function SurvivorGame() {
           {/* Question card */}
           <div className="card-pop p-6 sm:p-8 mb-5" style={{ background: '#FDC361' }}>
             <div className="flex items-center justify-between mb-3 gap-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#4F5170' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--ink-2)' }}>
                 Pitanje {reached + 1}
               </p>
               <ReportQuestionButton source="questions" questionId={current.id} questionText={current.question_text} />
             </div>
             <h2 className="leading-snug mb-7"
-              style={{ color: '#1A1B3A', fontSize: 'clamp(18px, 3vw, 22px)' }}>
+              style={{ color: 'var(--ink)', fontSize: 'clamp(18px, 3vw, 22px)' }}>
               {current.question_text}
             </h2>
 
@@ -634,7 +634,7 @@ export default function SurvivorGame() {
 
             {/* Info after reveal */}
             {revealed && current.info && (
-              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: '#E8F6EF', color: '#0A4C35' }}>
+              <div className="mt-5 rounded-2xl px-4 py-3 text-[13px] font-medium" style={{ background: 'var(--ok-50)', color: 'var(--ok-t)' }}>
                 {current.info}
               </div>
             )}
@@ -682,8 +682,8 @@ export default function SurvivorGame() {
           style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
             <div className="text-5xl mb-4">💀</div>
-            <h3 className="font-black text-[24px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Kraj igre</h3>
-            <p className="text-[13px]" style={{ color: '#4F5170' }}>Računamo rezultat…</p>
+            <h3 className="font-black text-[24px] tracking-tight mb-2" style={{ color: 'var(--ink)' }}>Kraj igre</h3>
+            <p className="text-[13px]" style={{ color: 'var(--ink-2)' }}>Računamo rezultat…</p>
           </div>
         </div>
       )}
@@ -693,8 +693,8 @@ export default function SurvivorGame() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
           style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
-            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Izađi iz igre?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#4F5170' }}>Trenutni rezultat se upisuje na rang listu.</p>
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: 'var(--ink)' }}>Izađi iz igre?</h3>
+            <p className="text-[13px] mb-6" style={{ color: 'var(--ink-2)' }}>Trenutni rezultat se upisuje na rang listu.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi
@@ -708,7 +708,7 @@ export default function SurvivorGame() {
         </div>
       )}
 
-      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: '#4F5170' }}>
+      <div className="px-4 pb-4 text-center text-[11px]" style={{ color: 'var(--ink-2)' }}>
         ukupno: {fmtTime(totalElapsed)} · najbolji niz: {bestCombo} · tačno: {correct} · pogr: {wrong}
       </div>
     </div>

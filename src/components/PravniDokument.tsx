@@ -13,13 +13,13 @@ type Dokument = { naslov: string; azurirano: string; delovi: Deo[] }
 export default function PravniDokument({ vrsta }: { vrsta: 'privatnost' | 'uslovi' | 'licence' }) {
   const d = (pravno as Record<string, Dokument>)[vrsta]
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
       <Header />
       <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full">
-        <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#23845C' }}>Pravna obaveštenja</p>
-        <h1 className="naslov leading-[1.05] mb-3" style={{ color: '#1A1B3A', fontSize: 'clamp(36px, 7vw, 48px)' }}>{d.naslov}</h1>
-        <p className="text-[13px] mb-8" style={{ color: '#4F5170' }}>{d.azurirano}</p>
-        <article className="card-soft p-7 sm:p-10 space-y-7 text-[15px] leading-relaxed" style={{ color: '#1A1B3A' }}>
+        <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--ok)' }}>Pravna obaveštenja</p>
+        <h1 className="naslov leading-[1.05] mb-3" style={{ color: 'var(--ink)', fontSize: 'clamp(36px, 7vw, 48px)' }}>{d.naslov}</h1>
+        <p className="text-[13px] mb-8" style={{ color: 'var(--ink-2)' }}>{d.azurirano}</p>
+        <article className="card-soft p-7 sm:p-10 space-y-7 text-[15px] leading-relaxed" style={{ color: 'var(--ink)' }}>
           {d.delovi.map((deo, i) => (
             <section key={deo.naslov} className="space-y-3">
               <h2 className="font-black text-[20px] tracking-tight">{i + 1}. {deo.naslov}</h2>

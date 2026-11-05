@@ -417,19 +417,19 @@ export default function BookKvizStart() {
   // ── Render ──────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#8A6A12', borderTopColor: 'transparent' }} />
+          style={{ borderColor: 'var(--warn-t)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   if (!current && !gameOver) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
         <div className="card-soft p-8 text-center max-w-md">
-          <p className="font-bold text-[16px] mb-2" style={{ color: '#1A1B3A' }}>Nema pitanja</p>
-          <p className="text-[13px] mb-4" style={{ color: '#4F5170' }}>Pokušaj kasnije.</p>
+          <p className="font-bold text-[16px] mb-2" style={{ color: 'var(--ink)' }}>Nema pitanja</p>
+          <p className="text-[13px] mb-4" style={{ color: 'var(--ink-2)' }}>Pokušaj kasnije.</p>
           <button onClick={() => router.push('/book-kviz')} className="btn btn-primary btn-md">Nazad</button>
         </div>
       </div>
@@ -437,15 +437,15 @@ export default function BookKvizStart() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
 
       {/* ── Top HUD ────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,27,58,0.06)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={exitGame}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#EDE5D5] flex-shrink-0"
-            style={{ color: '#4F5170' }} aria-label="Izađi">
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[var(--line)] flex-shrink-0"
+            style={{ color: 'var(--ink-2)' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
           </button>
 
@@ -460,7 +460,7 @@ export default function BookKvizStart() {
         </div>
         {/* Total elapsed clock — small, under the HUD row */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2 flex justify-center">
-          <span className="text-[11px] tabular-nums" style={{ color: '#4F5170' }}>
+          <span className="text-[11px] tabular-nums" style={{ color: 'var(--ink-2)' }}>
             {fmtTime(totalElapsed)}
           </span>
         </div>
@@ -468,11 +468,11 @@ export default function BookKvizStart() {
 
       {current && (
         <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-center" style={{ color: '#8A6A12' }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-3 text-center" style={{ color: 'var(--warn-t)' }}>
             Pitanje #{reached + 1}
           </p>
           <div className="card-pop p-6 sm:p-7 mb-5" style={{ background: '#FDC361' }}>
-            <p className="naslov text-[21px] sm:text-[25px] leading-snug" style={{ color: '#1A1B3A' }}>
+            <p className="naslov text-[21px] sm:text-[25px] leading-snug" style={{ color: 'var(--ink)' }}>
               {current.question_text}
             </p>
             <div className="mt-3 flex justify-end">
@@ -504,19 +504,19 @@ export default function BookKvizStart() {
           {/* Lifelines */}
           <div className="grid grid-cols-3 gap-2 mb-5">
             <button onClick={useFiftyFifty} disabled={lifelines.fiftyFifty <= 0 || revealed}
-              className="rounded-2xl p-3 text-center transition-all disabled:opacity-30" style={{ background: '#EDE5D5' }}>
-              <div className="font-bold text-[13px]" style={{ color: '#1A1B3A' }}>Pola-pola</div>
-              <div className="text-[10px]" style={{ color: '#4F5170' }}>{lifelines.fiftyFifty}× preostalo</div>
+              className="rounded-2xl p-3 text-center transition-all disabled:opacity-30" style={{ background: 'var(--line)' }}>
+              <div className="font-bold text-[13px]" style={{ color: 'var(--ink)' }}>Pola-pola</div>
+              <div className="text-[10px]" style={{ color: 'var(--ink-2)' }}>{lifelines.fiftyFifty}× preostalo</div>
             </button>
             <button onClick={useSkip} disabled={lifelines.skip <= 0 || revealed}
-              className="rounded-2xl p-3 text-center transition-all disabled:opacity-30" style={{ background: '#EDE5D5' }}>
-              <div className="font-bold text-[13px]" style={{ color: '#1A1B3A' }}>Preskoči</div>
-              <div className="text-[10px]" style={{ color: '#4F5170' }}>{lifelines.skip}× preostalo</div>
+              className="rounded-2xl p-3 text-center transition-all disabled:opacity-30" style={{ background: 'var(--line)' }}>
+              <div className="font-bold text-[13px]" style={{ color: 'var(--ink)' }}>Preskoči</div>
+              <div className="text-[10px]" style={{ color: 'var(--ink-2)' }}>{lifelines.skip}× preostalo</div>
             </button>
             <button onClick={useExtraTime} disabled={lifelines.extraTime <= 0 || revealed}
-              className="rounded-2xl p-3 text-center transition-all disabled:opacity-30" style={{ background: '#EDE5D5' }}>
-              <div className="font-bold text-[13px]" style={{ color: '#1A1B3A' }}>+15 sekundi</div>
-              <div className="text-[10px]" style={{ color: '#4F5170' }}>{lifelines.extraTime}× preostalo</div>
+              className="rounded-2xl p-3 text-center transition-all disabled:opacity-30" style={{ background: 'var(--line)' }}>
+              <div className="font-bold text-[13px]" style={{ color: 'var(--ink)' }}>+15 sekundi</div>
+              <div className="text-[10px]" style={{ color: 'var(--ink-2)' }}>{lifelines.extraTime}× preostalo</div>
             </button>
           </div>
         </main>
@@ -531,23 +531,23 @@ export default function BookKvizStart() {
 
       {comboFlash && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full font-bold text-[14px] z-50"
-          style={{ background: '#FDC361', color: '#1A1B3A' }}>
+          style={{ background: '#FDC361', color: 'var(--ink)' }}>
           {comboFlash}
         </div>
       )}
 
       {milestone && (
         <div className="fixed top-1/3 left-1/2 -translate-x-1/2 px-6 py-4 rounded-2xl font-bold text-[15px] text-center max-w-sm z-50"
-          style={{ background: '#FFF5E0', color: '#8A6A12' }}>
+          style={{ background: 'var(--warn-50)', color: 'var(--warn-t)' }}>
           🎉 {milestone}
         </div>
       )}
 
       {gameOver && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-          <div className="card-soft p-8 text-center" style={{ background: '#FFFFFF' }}>
-            <p className="font-black text-[24px] mb-2" style={{ color: '#1A1B3A' }}>Kraj igre!</p>
-            <p className="text-[14px]" style={{ color: '#4F5170' }}>Računam rezultat…</p>
+          <div className="card-soft p-8 text-center" style={{ background: 'var(--surface)' }}>
+            <p className="font-black text-[24px] mb-2" style={{ color: 'var(--ink)' }}>Kraj igre!</p>
+            <p className="text-[14px]" style={{ color: 'var(--ink-2)' }}>Računam rezultat…</p>
           </div>
         </div>
       )}
@@ -556,8 +556,8 @@ export default function BookKvizStart() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
           style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-7 text-center max-w-sm w-full">
-            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>Izađi iz igre?</h3>
-            <p className="text-[13px] mb-6" style={{ color: '#4F5170' }}>Trenutni rezultat se upisuje na rang listu.</p>
+            <h3 className="font-black text-[20px] tracking-tight mb-2" style={{ color: 'var(--ink)' }}>Izađi iz igre?</h3>
+            <p className="text-[13px] mb-6" style={{ color: 'var(--ink-2)' }}>Trenutni rezultat se upisuje na rang listu.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExitConfirm(false)} className="btn btn-secondary btn-md flex-1">
                 Nastavi

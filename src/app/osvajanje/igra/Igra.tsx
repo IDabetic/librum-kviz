@@ -215,7 +215,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
       <div className="min-h-screen grid place-items-center p-6">
         <div className="card-soft p-8 max-w-sm text-center">
           <h2 className="text-[28px] mb-2">Pitanja nisu stigla</h2>
-          <p className="text-[14px] mb-5" style={{ color: '#4F5170' }}>Baza trenutno ne odgovara. Pokušaj ponovo za koji minut.</p>
+          <p className="text-[14px] mb-5" style={{ color: 'var(--ink-2)' }}>Baza trenutno ne odgovara. Pokušaj ponovo za koji minut.</p>
           <button onClick={() => location.reload()} className="btn btn-primary btn-md">Pokušaj ponovo</button>
         </div>
       </div>
@@ -237,12 +237,12 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden">
       <header className="px-4 sm:px-6 pt-4 pb-2 max-w-7xl w-full mx-auto flex items-center gap-3">
-        <Link href="/osvajanje" aria-label="Izađi" className="w-11 h-11 grid place-items-center rounded-full bg-white shrink-0" style={{ border: '1.5px solid #EDE5D5' }}>
+        <Link href="/osvajanje" aria-label="Izađi" className="w-11 h-11 grid place-items-center rounded-full bg-[var(--surface)] shrink-0" style={{ border: '1.5px solid var(--line)' }}>
           <IconClose size={20} />
         </Link>
         <div className="flex-1 min-w-0">
-          <p className="chip" style={{ color: '#4F5170' }}>Krug {Math.min(s.krug, s.ukupnoKrugova)} od {s.ukupnoKrugova}</p>
-          <div className="h-2.5 rounded-full mt-1.5 overflow-hidden bg-white" style={{ border: '1.5px solid #1A1B3A' }}>
+          <p className="chip" style={{ color: 'var(--ink-2)' }}>Krug {Math.min(s.krug, s.ukupnoKrugova)} od {s.ukupnoKrugova}</p>
+          <div className="h-2.5 rounded-full mt-1.5 overflow-hidden bg-[var(--surface)]" style={{ border: '1.5px solid var(--ink)' }}>
             <div className="h-full" style={{ width: `${(Math.min(s.krug, s.ukupnoKrugova) / s.ukupnoKrugova) * 100}%`, background: '#23845C' }} />
           </div>
         </div>
@@ -251,7 +251,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
       <div className="px-4 sm:px-6 max-w-7xl w-full mx-auto grid grid-cols-3 gap-2 sm:gap-3">
         {s.igraci.map(p => (
           <div key={p.id} className="flex items-center gap-2 rounded-2xl px-2.5 py-2"
-            style={{ background: '#FFFFFF', border: p.id === naPotezu.id && s.faza !== 'kraj' ? '2.5px solid #1A1B3A' : '1.5px solid #EDE5D5', opacity: p.ispao ? 0.4 : 1 }}>
+            style={{ background: 'var(--surface)', border: p.id === naPotezu.id && s.faza !== 'kraj' ? '2.5px solid #1A1B3A' : '1.5px solid #EDE5D5', opacity: p.ispao ? 0.4 : 1 }}>
             <span className="w-9 h-9 rounded-xl grid place-items-center shrink-0 overflow-hidden" style={{ background: p.boja }}>
               <Image src={`/maskote/${MASKOTA[p.id]}.png`} alt="" width={34} height={34} />
             </span>
@@ -304,7 +304,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
                 </p>
                 <span className="naslov text-[22px] tabular-nums" aria-label={`${preostalo} sekundi`}>{preostalo}</span>
               </div>
-              <div className="h-2 rounded-full bg-white/60 mb-4 overflow-hidden">
+              <div className="h-2 rounded-full bg-[var(--surface)]/60 mb-4 overflow-hidden">
                 <div className="h-full transition-[width] duration-200" style={{ width: `${(preostalo / P.SEKUNDI_PO_PITANJU) * 100}%`, background: preostalo <= 5 ? '#E5385C' : '#1A1B3A' }} />
               </div>
               <h2 className="text-[22px] sm:text-[26px] leading-snug mb-5">{otvoreno.pitanje.tekst}</h2>
@@ -336,7 +336,7 @@ export function Igra({ krugova, tezina }: { krugova: number; tezina: P.Tezina })
             <h2 className="text-[44px] mt-2">{poredak[0].igrac.covek ? 'Svet je tvoj!' : `Pobeđuje ${poredak[0].igrac.ime}`}</h2>
             <ol className="mt-5 space-y-2 text-left">
               {poredak.map((r, i) => (
-                <li key={r.igrac.id} className="flex items-center gap-3 rounded-2xl px-4 py-3 bg-white" style={{ color: '#1A1B3A', border: '2px solid #1A1B3A' }}>
+                <li key={r.igrac.id} className="flex items-center gap-3 rounded-2xl px-4 py-3 bg-[var(--surface)]" style={{ color: 'var(--ink)', border: '2px solid var(--ink)' }}>
                   <span className="font-bold w-5">{i + 1}.</span>
                   <span className="w-4 h-4 rounded" style={{ background: r.igrac.boja }} />
                   <span className="flex-1 font-semibold">{r.igrac.ime}</span>

@@ -47,14 +47,14 @@ export default async function KafanskiKvizLanding() {
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
 
         <div className="text-center mb-8">
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: '#C42B4F' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--bad-t)' }}>
             Muzika · narodnjaci · klasici
           </p>
           <h1 className="leading-[0.9] mb-3"
-            style={{ color: '#1A1B3A', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
+            style={{ color: 'var(--ink)', fontSize: 'clamp(48px, 10vw, 84px)', fontWeight: 500 }}>
             Kafanski kviz.
           </h1>
-          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#4F5170' }}>
+          <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: 'var(--ink-2)' }}>
             Pitanja o muzici i hitovima.<br />15 sekundi po pitanju, bez pomoći.
           </p>
         </div>
@@ -62,23 +62,23 @@ export default async function KafanskiKvizLanding() {
         {best && best.score > 0 && (
           <div className="card-soft p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFE3EA' }}>
-                <IconTrophy size={20} className="text-[#C42B4F]" strokeWidth={2.2} />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--bad-50)' }}>
+                <IconTrophy size={20} className="text-[var(--bad-t)]" strokeWidth={2.2} />
               </div>
-              <p className="font-bold text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>Tvoj najbolji rezultat</p>
+              <p className="font-bold text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>Tvoj najbolji rezultat</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.score}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Bodovi</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>{best.score}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>Bodovi</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{best.questions_reached}</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Pitanja</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>{best.questions_reached}</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>Pitanja</div>
               </div>
-              <div className="rounded-xl p-2.5 text-center" style={{ background: '#EDE5D5' }}>
-                <div className="font-black text-[15px] tracking-tight" style={{ color: '#1A1B3A' }}>{Math.round(best.accuracy)}%</div>
-                <div className="text-[10px] mt-0.5" style={{ color: '#4F5170' }}>Tačnost</div>
+              <div className="rounded-xl p-2.5 text-center" style={{ background: 'var(--line)' }}>
+                <div className="font-black text-[15px] tracking-tight" style={{ color: 'var(--ink)' }}>{Math.round(best.accuracy)}%</div>
+                <div className="text-[10px] mt-0.5" style={{ color: 'var(--ink-2)' }}>Tačnost</div>
               </div>
             </div>
           </div>
@@ -86,7 +86,7 @@ export default async function KafanskiKvizLanding() {
 
         {/* Rules */}
         <div className="card-soft p-6 mb-5 space-y-3">
-          <Rule icon={<IconTime size={18} className="text-[#C42B4F]" strokeWidth={2.2} />}
+          <Rule icon={<IconTime size={18} className="text-[var(--bad-t)]" strokeWidth={2.2} />}
             title="15 sekundi po pitanju"
             sub="Brzo razmisli, brže odgovori." />
           <Rule icon={<span className="text-[18px]">🎵</span>}
@@ -104,7 +104,7 @@ export default async function KafanskiKvizLanding() {
         </Link>
         <Link href="/kafanski-kviz/duel"
           className="btn btn-md w-full mb-2"
-          style={{ background: '#FFE3EA', color: '#C42B4F' }}>
+          style={{ background: 'var(--bad-50)', color: 'var(--bad-t)' }}>
           <IconSwords size={16} strokeWidth={2.2} />
           Pozovi prijatelja na duel
         </Link>
@@ -118,12 +118,12 @@ export default async function KafanskiKvizLanding() {
 function Rule({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#EDE5D5' }}>
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--line)' }}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-[14px]" style={{ color: '#1A1B3A' }}>{title}</p>
-        <p className="text-[12px]" style={{ color: '#4F5170' }}>{sub}</p>
+        <p className="font-semibold text-[14px]" style={{ color: 'var(--ink)' }}>{title}</p>
+        <p className="text-[12px]" style={{ color: 'var(--ink-2)' }}>{sub}</p>
       </div>
     </div>
   )

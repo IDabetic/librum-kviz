@@ -19,20 +19,20 @@ export default function NagradePage() {
           <div className="px-7 py-12 sm:py-16 text-center"
             style={{ background: 'linear-gradient(135deg, #FDC361 0%, #FFF5E0 100%)' }}>
             <div className="text-7xl sm:text-8xl mb-4">🏆</div>
-            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#8A6A12', opacity: 0.7 }}>
+            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#8A6A12' }}>
               Sistem nagrada
             </p>
             <h1 className="font-black tracking-tight leading-[1.05]"
-              style={{ color: '#1A1B3A', fontSize: 'clamp(48px, 9vw, 80px)' }}>
+              style={{ color: '#14152B', fontSize: 'clamp(48px, 9vw, 80px)' }}>
               USKORO!
             </h1>
           </div>
 
           <div className="p-7 sm:p-10 text-center">
-            <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: '#1A1B3A' }}>
+            <p className="text-[15px] sm:text-[17px] leading-relaxed" style={{ color: 'var(--ink)' }}>
               Pripremamo nešto posebno za najbolje igrače. Bonusi, značke, mesečne nagrade — sve na jednom mestu.
             </p>
-            <p className="text-[13px] mt-3" style={{ color: '#4F5170' }}>
+            <p className="text-[13px] mt-3" style={{ color: 'var(--ink-2)' }}>
               Nastavi da igraš — kad nagrade krenu, već si u trci.
             </p>
 

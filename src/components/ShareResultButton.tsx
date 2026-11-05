@@ -19,12 +19,12 @@ import { useState } from 'react'
 type Accent = 'blue' | 'gold' | 'red' | 'green' | 'yellow' | 'purple'
 
 const ACCENT_STYLES: Record<Accent, { idle: React.CSSProperties; done: React.CSSProperties }> = {
-  blue:   { idle: { background: '#E8F6EF', color: '#0A4C35' }, done: { background: '#E8F6EF', color: '#0A4C35' } },
-  gold:   { idle: { background: '#FFF5E0', color: '#8A6A12' }, done: { background: '#E8F6EF', color: '#0A4C35' } },
-  red:    { idle: { background: '#FFE3EA', color: '#C42B4F' }, done: { background: '#E8F6EF', color: '#0A4C35' } },
-  green:  { idle: { background: '#E8F6EF', color: '#0A4C35' }, done: { background: '#E8F6EF', color: '#0A4C35' } },
-  yellow: { idle: { background: '#FDC361', color: '#1A1B3A' }, done: { background: '#E8F6EF', color: '#0A4C35' } },
-  purple: { idle: { background: '#F0F0FA', color: '#2C2D81' }, done: { background: '#E8F6EF', color: '#0A4C35' } },
+  blue:   { idle: { background: 'var(--ok-50)', color: 'var(--ok-t)' }, done: { background: 'var(--ok-50)', color: 'var(--ok-t)' } },
+  gold:   { idle: { background: 'var(--warn-50)', color: 'var(--warn-t)' }, done: { background: 'var(--ok-50)', color: 'var(--ok-t)' } },
+  red:    { idle: { background: 'var(--bad-50)', color: 'var(--bad-t)' }, done: { background: 'var(--ok-50)', color: 'var(--ok-t)' } },
+  green:  { idle: { background: 'var(--ok-50)', color: 'var(--ok-t)' }, done: { background: 'var(--ok-50)', color: 'var(--ok-t)' } },
+  yellow: { idle: { background: '#FDC361', color: 'var(--ink)' }, done: { background: 'var(--ok-50)', color: 'var(--ok-t)' } },
+  purple: { idle: { background: 'var(--brand-50)', color: 'var(--brand)' }, done: { background: 'var(--ok-50)', color: 'var(--ok-t)' } },
 }
 
 export default function ShareResultButton({

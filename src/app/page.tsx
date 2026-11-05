@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { OsvajanjeVideo } from '@/components/OsvajanjeVideo'
 import { KarijeraVideo } from '@/components/KarijeraVideo'
 import { Prodavnice } from '@/components/Prodavnice'
+import { Telefon } from '@/components/Telefon'
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -35,6 +36,13 @@ const IGRE = [
   { ime: 'Vešanje', opis: 'Pogodi reč slovo po slovo, sa našom azbukom.', boja: '#3766B0', tekst: '#FFFFFF', slika: 'vesanje' },
 ]
 
+const EKRANI_KARIJERE = [
+  { slika: 'karijera-lobi', naslov: 'Tvoja karijera', opis: 'Pozicija, kapital, ugled i probni rad na jednom mestu.', alt: 'Karijerista: pozicija Junior Programer, kapital, ugled i probni rad' },
+  { slika: 'karijera-grad', naslov: 'Grad firmi', opis: 'Svaka zgrada je firma pravog igrača; dodirni i vidi ko je vodi.', alt: 'Karijerista: izometrijski grad sa firmama igrača' },
+  { slika: 'karijera-firma', naslov: 'Firma', opis: 'Rekord, plata, šef i asistenti; zaposli se ili preuzmi vlasništvo.', alt: 'Karijerista: firma Hrast Soft studio sa rekordom i platom' },
+  { slika: 'karijera-runda', naslov: 'Runda', opis: 'Deset pitanja iz struke na sat, uz pomoć kad zapne.', alt: 'Karijerista: pitanje iz književnosti sa četiri ponuđena odgovora' },
+]
+
 const MOGUCNOSTI = [
   ['171 država', 'Prava mapa sveta sa 17 regiona; preko mora idu morski putevi.'],
   ['Šest vojski', 'Legija, Garda, Graditelji, Izvidnica, Konjica i Mudraci, svaka sa svojom moći u bitki: siguran udar, štit, zaustavljen sat, pola-pola, juriš ili tačan odgovor.'],
@@ -60,100 +68,119 @@ export default async function Home() {
       <Header />
 
       <main className="flex-1">
-        {/* Osvajač: snimak prave partije preko celog ekrana, natpis i zvuk */}
-        <section id="osvajanje" style={{ background: 'radial-gradient(120% 90% at 70% 0%, #3766B0 0%, #2C2D81 45%, #1A1B3A 100%)', color: '#F6F1E7' }}>
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-16">
-            <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-end">
-              <div>
-                <p className="chip mb-5" style={{ color: '#FDC361', background: 'rgba(255,255,255,.08)' }}>
-                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#5DBF94' }} />
-                  {pitanja > 0 ? `${pitanja.toLocaleString('sr-RS')} pitanja u igri` : 'Aplikacija za iPhone i Android'}
-                </p>
-                <h1 style={{ fontSize: 'clamp(46px, 8vw, 96px)', color: '#F6F1E7' }}>Osvoji svet <span style={{ color: '#FDC361' }}>znanjem.</span></h1>
-              </div>
-              <div>
-                <p className="text-[17px] leading-relaxed opacity-90">
-                  Strategija u kojoj svaka bitka pada na pitanju. Vojske, ratne karte, savezi i izdaje na pravoj mapi sveta,
-                  protiv računara ili prijatelja, do 12 igrača.
-                </p>
-                <div className="mt-6"><Prodavnice tamno /></div>
-              </div>
+        {/* Osvajač: naslov, prodavnice i snimak prave partije */}
+        <section id="osvajanje" className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 scroll-mt-24">
+          <div className="grid lg:grid-cols-[1.25fr_0.75fr] gap-8 lg:gap-12 items-end">
+            <div>
+              <p className="chip mb-5" style={{ color: 'var(--ink-2)' }}>
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#5DBF94' }} />
+                {pitanja > 0 ? `${pitanja.toLocaleString('sr-RS')} pitanja u igri` : 'Aplikacija za iPhone i Android'}
+              </p>
+              <h1 style={{ fontSize: 'clamp(48px, 8vw, 104px)' }}>Osvoji svet <em>znanjem.</em></h1>
             </div>
-            <div className="mt-10"><OsvajanjeVideo /></div>
-            <dl className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                [pitanja > 0 ? pitanja.toLocaleString('sr-RS') : '150.000+', 'pitanja u bazi'],
-                ['171', 'država na mapi'],
-                ['7', 'igara znanja'],
-                ['2–12', 'igrača u partiji'],
-              ].map(([v, n]) => (
-                <div key={n} className="rounded-2xl px-5 py-4" style={{ background: 'rgba(255,255,255,.06)', border: '1.5px solid rgba(255,255,255,.14)' }}>
-                  <dt className="sr-only">{n}</dt>
-                  <dd className="naslov text-[28px] tabular-nums" style={{ color: '#FDC361' }}>{v}</dd>
-                  <dd className="text-[13px] font-semibold opacity-80">{n}</dd>
-                </div>
-              ))}
-            </dl>
+            <div>
+              <p className="text-[17px] leading-relaxed" style={{ color: 'var(--ink-2)' }}>
+                Strategija u kojoj svaka bitka pada na pitanju. Vojske, ratne karte, savezi i izdaje na pravoj mapi sveta,
+                protiv računara ili prijatelja, do 12 igrača.
+              </p>
+              <div className="mt-6"><Prodavnice /></div>
+            </div>
           </div>
+          <div className="mt-12"><OsvajanjeVideo /></div>
+          <dl className="mt-10 grid grid-cols-2 sm:grid-cols-4">
+            {[
+              [pitanja > 0 ? pitanja.toLocaleString('sr-RS') : '150.000+', 'pitanja u bazi'],
+              ['171', 'država na mapi'],
+              ['8', 'igara znanja'],
+              ['2–12', 'igrača u partiji'],
+            ].map(([v, n], i) => (
+              <div key={n} className={`py-4 sm:px-6 ${i > 0 ? 'sm:border-l' : ''} ${i % 2 ? 'pl-5 border-l sm:pl-6' : ''}`} style={{ borderColor: 'var(--line)' }}>
+                <dt className="sr-only">{n}</dt>
+                <dd className="naslov text-[32px] tabular-nums">{v}</dd>
+                <dd className="text-[14px]" style={{ color: 'var(--ink-2)' }}>{n}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* Šta sve može Osvajač */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
-          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Šta sve ima u Osvajaču</h2>
-          <ul className="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {MOGUCNOSTI.map(([n, t]) => (
-              <li key={n} className="card-soft p-6">
-                <h3 className="text-[22px]">{n}</h3>
-                <p className="mt-2 text-[15px]" style={{ color: '#4F5170' }}>{t}</p>
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28">
+          <p className="nadnaslov">Osvajač</p>
+          <h2 className="mt-2" style={{ fontSize: 'clamp(32px, 5vw, 52px)' }}>Šta sve ima u igri</h2>
+          <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10">
+            {MOGUCNOSTI.map(([n, t], i) => (
+              <li key={n} className="py-6" style={{ borderTop: '1px solid var(--line)' }}>
+                <p className="text-[13px] font-semibold tabular-nums" style={{ color: 'var(--ink-3)' }}>{String(i + 1).padStart(2, '0')}</p>
+                <h3 className="mt-2 text-[22px]">{n}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed" style={{ color: 'var(--ink-2)' }}>{t}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        {/* Karijerista: snimak prave runde sa telefona, natpis i muzika */}
-        <section id="karijerista" className="mt-16 scroll-mt-28" style={{ background: 'radial-gradient(120% 90% at 30% 0%, #2F5FD0 0%, #1B3C8F 50%, #1A1B3A 100%)', color: '#F6F1E7' }}>
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-16">
-            <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#FDC361' }}>Nova igra</p>
-            <h2 style={{ fontSize: 'clamp(40px, 7vw, 80px)', color: '#F6F1E7' }}>Karijerista</h2>
-            <p className="mt-3 text-[17px] leading-relaxed opacity-90 max-w-2xl">
+        {/* Karijerista: snimak runde i ekrani iz aplikacije u telefonima */}
+        <section id="karijerista" className="mt-20 sm:mt-28 scroll-mt-24" style={{ background: 'var(--bg-2)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+            <p className="nadnaslov">Nova igra</p>
+            <h2 className="mt-2" style={{ fontSize: 'clamp(40px, 7vw, 84px)' }}>Karijerista</h2>
+            <p className="mt-4 text-[17px] leading-relaxed max-w-2xl" style={{ color: 'var(--ink-2)' }}>
               Od probnog rada u Korporaciji do svog nebodera. Zaposli se u firmi drugog igrača, vodi svoju i čuvaj rekord, sve na pitanjima.
             </p>
-            <div className="mt-10"><KarijeraVideo /></div>
-            <div className="mt-10"><Prodavnice tamno /></div>
+            <div className="mt-12"><KarijeraVideo /></div>
+
+            <h3 className="mt-20 text-[26px] sm:text-[30px]">Ekrani iz aplikacije</h3>
+            <ul className="mt-8 -mx-4 px-4 sm:mx-0 sm:px-0 flex sm:grid sm:grid-cols-4 gap-5 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-pl-4 sm:scroll-pl-0 pb-2 [scrollbar-width:none]" aria-label="Ekrani Karijeriste">
+              {EKRANI_KARIJERE.map(e => (
+                <li key={e.slika} className="snap-start shrink-0 w-[62vw] max-w-[260px] sm:w-auto sm:max-w-none">
+                  <Telefon src={`/aplikacija/${e.slika}.jpg`} alt={e.alt} />
+                  <p className="mt-4 font-semibold text-[16px]">{e.naslov}</p>
+                  <p className="mt-1 text-[14px] leading-snug" style={{ color: 'var(--ink-2)' }}>{e.opis}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-10"><Prodavnice /></div>
           </div>
         </section>
 
         {/* Ostale igre */}
-        <section id="igre" className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 scroll-mt-28">
-          <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>I još šest igara</h2>
-          <p className="mt-2 text-[16px]" style={{ color: '#4F5170' }}>Svaka se igra sama ili sa drugima: do 8 igrača ili timovi, protiv računara ili prijatelja.</p>
-          <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <section id="igre" className="max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 scroll-mt-24">
+          <p className="nadnaslov">Igre</p>
+          <h2 className="mt-2" style={{ fontSize: 'clamp(32px, 5vw, 52px)' }}>I još šest igara</h2>
+          <p className="mt-3 text-[16px]" style={{ color: 'var(--ink-2)' }}>Svaka se igra sama ili sa drugima: do 8 igrača ili timovi, protiv računara ili prijatelja.</p>
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {IGRE.map(g => (
-              <div key={g.ime} className="card-pop relative overflow-hidden min-h-[170px] p-5 flex flex-col justify-end" style={{ background: g.boja, color: g.tekst }}>
-                <Image src={`/ilustracije/${g.slika}.png`} alt="" width={92} height={92} aria-hidden className="absolute right-3 top-3" />
-                <h3 className="text-[26px] relative">{g.ime}</h3>
-                <p className="relative mt-1 text-[14px] font-semibold opacity-85 max-w-[85%]">{g.opis}</p>
+              <div key={g.ime} className="card-soft p-6 flex items-start gap-5">
+                <span className="shrink-0 w-[72px] h-[72px] rounded-2xl grid place-items-center" style={{ background: g.boja }}>
+                  <Image src={`/ilustracije/${g.slika}.png`} alt="" width={56} height={56} aria-hidden style={{ width: 56, height: 'auto' }} />
+                </span>
+                <div>
+                  <h3 className="text-[22px]">{g.ime}</h3>
+                  <p className="mt-1.5 text-[15px] leading-snug" style={{ color: 'var(--ink-2)' }}>{g.opis}</p>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
         {/* Rang lista: ista kao u aplikaciji */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16">
-          <div className="flex items-baseline justify-between mb-4 gap-4">
-            <h2 style={{ fontSize: 'clamp(30px, 5vw, 46px)' }}>Osvajači ove nedelje</h2>
-            <Link href="/ranglista" className="text-[15px] font-bold underline underline-offset-4 shrink-0">Cela rang lista</Link>
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28">
+          <div className="flex items-end justify-between mb-8 gap-4">
+            <div>
+              <p className="nadnaslov">Rang lista</p>
+              <h2 className="mt-2" style={{ fontSize: 'clamp(32px, 5vw, 52px)' }}>Osvajači ove nedelje</h2>
+            </div>
+            <Link href="/ranglista" className="text-[15px] font-semibold shrink-0" style={{ color: 'var(--brand)' }}>Cela lista →</Link>
           </div>
           {lista.length > 0 ? (
-            <ol className="card-soft divide-y divide-[#EDE5D5]">
+            <ol className="card-soft divide-y divide-[var(--line)] overflow-hidden">
               {lista.map(r => (
                 <li key={r.user_id} className="flex items-center gap-4 px-5 py-3.5">
-                  <span className="w-9 h-9 grid place-items-center rounded-xl font-bold tabular-nums"
-                    style={{ background: r.mesto === 1 ? '#FDC361' : '#F6F1E7', border: r.mesto === 1 ? '2px solid #1A1B3A' : 'none', color: '#1A1B3A' }}>
+                  <span className="w-9 h-9 grid place-items-center rounded-xl font-semibold tabular-nums"
+                    style={r.mesto === 1 ? { background: '#FDC361', color: '#14152B' } : { background: 'var(--bg-2)', color: 'var(--ink-2)' }}>
                     {r.mesto}
                   </span>
-                  <span className="flex-1 font-semibold truncate">{r.nadimak || 'Igrač'}</span>
-                  <span className="text-[13px] hidden sm:inline" style={{ color: '#4F5170' }}>{r.partija} partija</span>
+                  <span className="flex-1 font-medium truncate">{r.nadimak || 'Igrač'}</span>
+                  <span className="text-[13px] hidden sm:inline" style={{ color: 'var(--ink-3)' }}>{r.partija} partija</span>
                   <span className="naslov text-[20px] tabular-nums">{r.poeni.toLocaleString('sr-RS')}</span>
                 </li>
               ))}
@@ -161,26 +188,27 @@ export default async function Home() {
           ) : (
             <div className="card-soft p-8 flex items-center gap-5">
               <Image src="/maskote/Lumi.png" alt="" width={80} height={80} aria-hidden />
-              <p className="text-[16px]" style={{ color: '#4F5170' }}>Rang lista se puni čim prve partije ove nedelje stignu iz aplikacije.</p>
+              <p className="text-[16px]" style={{ color: 'var(--ink-2)' }}>Rang lista se puni čim prve partije ove nedelje stignu iz aplikacije.</p>
             </div>
           )}
         </section>
 
         {/* Poziv na kraju */}
-        <section className="px-4 sm:px-6 pt-16 pb-6">
-          <div className="max-w-6xl mx-auto card-pop p-8 sm:p-12 relative overflow-hidden" style={{ background: '#1A1B3A', color: '#F6F1E7' }}>
-            <Image src="/maskote/Zig.png" alt="" width={150} height={150} aria-hidden className="absolute right-4 bottom-0 hidden sm:block" />
-            <h2 style={{ fontSize: 'clamp(32px, 5vw, 52px)' }}>Preuzmi i kreni u osvajanje.</h2>
-            <p className="mt-3 text-[16px] opacity-80 max-w-xl">Besplatno, bez reklama u toku igre. Jedan nalog za sve igre i rang listu.</p>
-            <div className="mt-7"><Prodavnice tamno /></div>
+        <section className="px-4 sm:px-6 pt-20 sm:pt-28">
+          <div className="max-w-6xl mx-auto rounded-[28px] p-8 sm:p-14 relative overflow-hidden" style={{ background: 'var(--istaknuto)', color: '#F2F2FA' }}>
+            <Image src="/maskote/Zig.png" alt="" width={150} height={150} aria-hidden className="absolute right-6 bottom-0 hidden sm:block" />
+            <h2 style={{ fontSize: 'clamp(32px, 5vw, 56px)' }}>Preuzmi i kreni u osvajanje.</h2>
+            <p className="mt-3 text-[16px] max-w-xl" style={{ color: 'rgba(242,242,250,.75)' }}>Besplatno, bez reklama u toku igre. Jedan nalog za sve igre i rang listu.</p>
+            <div className="mt-8"><Prodavnice tamno /></div>
           </div>
         </section>
 
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-[15px] leading-[1.7] space-y-5" style={{ color: '#4F5170' }}>
-          <h2 className="mb-2" style={{ color: '#1A1B3A', fontSize: 'clamp(26px, 4vw, 34px)' }}>Pitanja</h2>
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 text-[15px] leading-[1.7]" style={{ color: 'var(--ink-2)' }}>
+          <p className="nadnaslov">Česta pitanja</p>
+          <h2 className="mt-2 mb-8" style={{ color: 'var(--ink)', fontSize: 'clamp(30px, 4vw, 40px)' }}>Pitanja</h2>
           {faqSchema.mainEntity.map(item => (
-            <div key={item.name} className="py-5" style={{ borderTop: '1.5px solid #EDE5D5' }}>
-              <h3 className="text-[19px] mb-2" style={{ color: '#1A1B3A' }}>{item.name}</h3>
+            <div key={item.name} className="py-6" style={{ borderTop: '1px solid var(--line)' }}>
+              <h3 className="text-[19px] mb-2" style={{ color: 'var(--ink)' }}>{item.name}</h3>
               <p>{item.acceptedAnswer.text}</p>
             </div>
           ))}

@@ -403,18 +403,18 @@ export default function HangmanLivePage() {
   // ── Loading / error states ─────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#23845C', borderTopColor: 'transparent' }} />
+          style={{ borderColor: 'var(--ok)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   if (error || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
         <div className="card-soft p-8 max-w-sm text-center">
-          <p className="font-bold text-[16px] mb-3" style={{ color: '#1A1B3A' }}>{error || 'Soba ne postoji.'}</p>
+          <p className="font-bold text-[16px] mb-3" style={{ color: 'var(--ink)' }}>{error || 'Soba ne postoji.'}</p>
           <Link href="/vesanje" className="btn btn-primary btn-md">Nazad na Vešanje</Link>
         </div>
       </div>
@@ -424,16 +424,16 @@ export default function HangmanLivePage() {
   // ── Join screen (third party that knows code) ──────────────────────────
   if (canJoin) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--bg)' }}>
         <div className="card-soft p-8 max-w-sm text-center w-full">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: '#FDC361' }}>
-            <IconUsers size={28} className="text-[#1A1B3A]" strokeWidth={2.2} />
+            <IconUsers size={28} className="text-[var(--ink)]" strokeWidth={2.2} />
           </div>
-          <h1 className="font-black text-[24px] mb-2 tracking-tight" style={{ color: '#1A1B3A' }}>
+          <h1 className="font-black text-[24px] mb-2 tracking-tight" style={{ color: 'var(--ink)' }}>
             {hostName} te poziva
           </h1>
-          <p className="text-[13px] mb-2" style={{ color: '#4F5170' }}>Kategorija</p>
-          <div className="chip mx-auto mb-7" style={{ background: '#E8F6EF', color: '#0A4C35' }}>
+          <p className="text-[13px] mb-2" style={{ color: 'var(--ink-2)' }}>Kategorija</p>
+          <div className="chip mx-auto mb-7" style={{ background: 'var(--ok-50)', color: 'var(--ok-t)' }}>
             {room.category}
           </div>
           <button onClick={handleJoin} disabled={joining} className="btn btn-primary btn-lg w-full">
@@ -447,20 +447,20 @@ export default function HangmanLivePage() {
   // ── Host waiting screen ────────────────────────────────────────────────
   if (isHost && room.status === 'waiting') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{ background: '#F6F1E7' }}>
+      <div className="min-h-screen flex items-center justify-center px-4 py-10" style={{ background: 'var(--bg)' }}>
         <div className="card-soft p-7 sm:p-8 max-w-md text-center w-full">
-          <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: '#23845C' }}>
+          <p className="text-[12px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--ok)' }}>
             Soba je otvorena
           </p>
           <h1 className="font-black tracking-tight mb-3 leading-[1.05]"
-            style={{ color: '#1A1B3A', fontSize: 'clamp(28px, 6vw, 40px)' }}>
+            style={{ color: 'var(--ink)', fontSize: 'clamp(28px, 6vw, 40px)' }}>
             Pošalji kod
           </h1>
-          <p className="text-[14px] mb-5" style={{ color: '#4F5170' }}>
+          <p className="text-[14px] mb-5" style={{ color: 'var(--ink-2)' }}>
             Drugi igrač upiše ovaj kod ili otvori link sa svog telefona.
           </p>
           <div className="font-black py-7 px-8 rounded-3xl mb-5 inline-block"
-            style={{ background: '#E8F6EF', color: '#1A1B3A', letterSpacing: '0.25em', fontSize: 'clamp(36px, 7vw, 56px)' }}>
+            style={{ background: 'var(--ok-50)', color: 'var(--ink)', letterSpacing: '0.25em', fontSize: 'clamp(36px, 7vw, 56px)' }}>
             {code}
           </div>
           <div className="flex flex-col gap-2 mb-5">
@@ -475,10 +475,10 @@ export default function HangmanLivePage() {
           </div>
           <div className="flex items-center justify-center gap-2 mb-3">
             <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#23845C' }} />
-            <p className="text-[12px]" style={{ color: '#4F5170' }}>Čekamo igrača…</p>
+            <p className="text-[12px]" style={{ color: 'var(--ink-2)' }}>Čekamo igrača…</p>
           </div>
           <Link href="/vesanje" className="text-[12px] font-medium transition-opacity hover:opacity-70"
-            style={{ color: '#4F5170' }}>
+            style={{ color: 'var(--ink-2)' }}>
             ← Otkaži i nazad
           </Link>
         </div>
@@ -494,15 +494,15 @@ export default function HangmanLivePage() {
   const isPlaying = room.status === 'playing'
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
 
       {/* HUD */}
       <header className="sticky top-0 z-30 backdrop-blur-xl"
         style={{ background: 'rgba(252,252,252,0.92)', borderBottom: '1px solid rgba(26,27,58,0.06)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <button onClick={handleExit}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[#EDE5D5] flex-shrink-0"
-            style={{ color: '#4F5170' }} aria-label="Izađi">
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-[var(--line)] flex-shrink-0"
+            style={{ color: 'var(--ink-2)' }} aria-label="Izađi">
             <IconClose size={20} strokeWidth={2.2} />
           </button>
 
@@ -513,9 +513,9 @@ export default function HangmanLivePage() {
           </div>
 
           {/* Live indicator */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: '#E8F6EF' }}>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: 'var(--ok-50)' }}>
             <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#23845C' }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#0A4C35' }}>UŽIVO</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--ok-t)' }}>UŽIVO</span>
           </div>
         </div>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-2.5 flex gap-1">
@@ -539,7 +539,7 @@ export default function HangmanLivePage() {
           {/* Category + hint */}
           <div className="card-soft p-5 mb-4">
             <div className="flex items-start gap-3 mb-3">
-              <div className="chip flex-shrink-0" style={{ background: '#E8F6EF', color: '#0A4C35' }}>
+              <div className="chip flex-shrink-0" style={{ background: 'var(--ok-50)', color: 'var(--ok-t)' }}>
                 {room.category}
               </div>
               {wrongs.size > 0 && (
@@ -550,7 +550,7 @@ export default function HangmanLivePage() {
             </div>
             <div className="flex items-start gap-3">
               <IconHint size={18} className="text-[#FDC361] flex-shrink-0 mt-0.5" strokeWidth={2.2} />
-              <p className="text-[14px] sm:text-[15px] leading-relaxed font-medium" style={{ color: '#1A1B3A' }}>
+              <p className="text-[14px] sm:text-[15px] leading-relaxed font-medium" style={{ color: 'var(--ink)' }}>
                 {room.hint}
               </p>
             </div>
@@ -594,13 +594,13 @@ export default function HangmanLivePage() {
           {isGuest && isPlaying && !showWordGuess && (
             <button onClick={() => setShowWordGuess(true)}
               className="w-full mb-4 py-3 rounded-2xl text-[13px] font-bold transition-all"
-              style={{ background: '#FFF5E0', color: '#8A6A12' }}>
+              style={{ background: 'var(--warn-50)', color: 'var(--warn-t)' }}>
               ⚡ Pogodi celu reč (-2 života ako pogrešiš)
             </button>
           )}
           {isGuest && isPlaying && showWordGuess && (
             <div className="card-soft p-5 mb-4">
-              <p className="text-[12px] font-bold mb-3" style={{ color: '#1A1B3A' }}>Pokušaj celu reč:</p>
+              <p className="text-[12px] font-bold mb-3" style={{ color: 'var(--ink)' }}>Pokušaj celu reč:</p>
               <input value={wordGuess} onChange={e => setWordGuess(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submitWordGuess()}
                 className="input mb-3 uppercase font-bold tracking-wider"
@@ -626,8 +626,8 @@ export default function HangmanLivePage() {
                     className="aspect-square rounded-xl font-bold text-[15px] sm:text-[16px] transition-all disabled:cursor-not-allowed"
                     style={
                       isCorrect ? { background: '#23845C', color: 'white' }
-                      : isWrong ? { background: '#FFE3EA', color: '#E5385C', textDecoration: 'line-through' }
-                      : { background: '#EDE5D5', color: '#1A1B3A' }
+                      : isWrong ? { background: 'var(--bad-50)', color: '#E5385C', textDecoration: 'line-through' }
+                      : { background: 'var(--line)', color: 'var(--ink)' }
                     }>
                     {L}
                   </button>
@@ -638,9 +638,9 @@ export default function HangmanLivePage() {
 
           {/* Host watching */}
           {isHost && isPlaying && (
-            <div className="card-soft p-4 mt-4 text-center" style={{ background: '#EDE5D5' }}>
-              <p className="text-[13px] font-medium" style={{ color: '#4F5170' }}>
-                <span className="font-bold" style={{ color: '#1A1B3A' }}>{guestName}</span> trenutno pogađa…
+            <div className="card-soft p-4 mt-4 text-center" style={{ background: 'var(--line)' }}>
+              <p className="text-[13px] font-medium" style={{ color: 'var(--ink-2)' }}>
+                <span className="font-bold" style={{ color: 'var(--ink)' }}>{guestName}</span> trenutno pogađa…
               </p>
             </div>
           )}
@@ -660,10 +660,10 @@ export default function HangmanLivePage() {
           style={{ background: 'rgba(26,27,58,0.40)' }}>
           <div className="card-soft p-8 text-center max-w-sm w-full animate-pop-in">
             <div className="text-5xl mb-4">🚪</div>
-            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: '#1A1B3A' }}>
+            <h3 className="font-black text-[22px] tracking-tight mb-2" style={{ color: 'var(--ink)' }}>
               {hostName || 'Domaćin'} je napustio
             </h3>
-            <p className="text-[13px]" style={{ color: '#4F5170' }}>
+            <p className="text-[13px]" style={{ color: 'var(--ink-2)' }}>
               Pobedio/la si — bonus +50 bodova upisan na rang listu.
             </p>
           </div>
@@ -693,21 +693,21 @@ function EndCard({ room, isHost, isGuest }: { room: Room; isHost: boolean; isGue
       <p className="text-[13px] mb-2" style={{ color: won ? '#0A4C35' : '#C42B4F' }}>
         {won ? 'Pogođena reč:' : 'Tačna reč je bila:'}
       </p>
-      <p className="font-black tracking-widest mb-4 uppercase" style={{ color: '#1A1B3A', fontSize: 'clamp(22px, 4vw, 32px)' }}>
+      <p className="font-black tracking-widest mb-4 uppercase" style={{ color: 'var(--ink)', fontSize: 'clamp(22px, 4vw, 32px)' }}>
         {room.word}
       </p>
       <div className="grid grid-cols-3 gap-2 mb-5">
         <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.6)' }}>
-          <div className="font-black text-[16px]" style={{ color: '#1A1B3A' }}>{room.score}</div>
-          <div className="text-[10px]" style={{ color: '#4F5170' }}>Bodovi</div>
+          <div className="font-black text-[16px]" style={{ color: 'var(--ink)' }}>{room.score}</div>
+          <div className="text-[10px]" style={{ color: 'var(--ink-2)' }}>Bodovi</div>
         </div>
         <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.6)' }}>
-          <div className="font-black text-[16px]" style={{ color: '#1A1B3A' }}>{room.wrong_letters.length}</div>
-          <div className="text-[10px]" style={{ color: '#4F5170' }}>Grešaka</div>
+          <div className="font-black text-[16px]" style={{ color: 'var(--ink)' }}>{room.wrong_letters.length}</div>
+          <div className="text-[10px]" style={{ color: 'var(--ink-2)' }}>Grešaka</div>
         </div>
         <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.6)' }}>
-          <div className="font-black text-[14px]" style={{ color: '#1A1B3A' }}>{room.category}</div>
-          <div className="text-[10px]" style={{ color: '#4F5170' }}>Kategorija</div>
+          <div className="font-black text-[14px]" style={{ color: 'var(--ink)' }}>{room.category}</div>
+          <div className="text-[10px]" style={{ color: 'var(--ink-2)' }}>Kategorija</div>
         </div>
       </div>
       <div className="flex gap-2 mb-2">
@@ -734,16 +734,16 @@ function PlayerBadge({ name, avatar, role, you, accent }: {
 }) {
   return (
     <div className="flex items-center gap-2 min-w-0 flex-1">
-      <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0 bg-[#EDE5D5]" style={{ border: `2px solid ${accent}` }}>
+      <div className="w-9 h-9 rounded-2xl overflow-hidden flex-shrink-0 bg-[var(--line)]" style={{ border: `2px solid ${accent}` }}>
         {avatar
           ? <Image src={`/avatars/${avatar}`} alt={name} width={36} height={36} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center text-[12px] font-bold" style={{ background: accent, color: 'white' }}>{name[0]}</div>}
       </div>
       <div className="min-w-0">
-        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#4F5170' }}>
+        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--ink-2)' }}>
           {role}{you && ' · ti'}
         </div>
-        <div className="font-bold text-[13px] truncate tracking-tight" style={{ color: '#1A1B3A' }}>{name}</div>
+        <div className="font-bold text-[13px] truncate tracking-tight" style={{ color: 'var(--ink)' }}>{name}</div>
       </div>
     </div>
   )

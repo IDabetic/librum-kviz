@@ -144,7 +144,7 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
   return (
     <div className="relative h-full w-full select-none">
       <div ref={okvir} className="h-full w-full overflow-hidden rounded-[24px] touch-none"
-        style={{ background: OKEAN, border: '1.5px solid #1A1B3A', boxShadow: 'var(--senka)' }}
+        style={{ background: OKEAN, border: '1.5px solid var(--ink)', boxShadow: 'var(--senka)' }}
         onPointerDown={naDole} onPointerMove={naPomeranje} onPointerUp={naGore} onPointerCancel={naGore} onPointerLeave={naGore}
         onDoubleClick={e => { const { ox, oy } = tacka(e); zumiraj(1 / 2, ox, oy) }}
         onWheel={e => { const { ox, oy } = tacka(e); zumiraj(e.deltaY > 0 ? 1.15 : 1 / 1.15, ox, oy) }}>
@@ -257,15 +257,15 @@ export function Mapa({ stanje, izabrana, mete, fokus, onOblast }: {
           { natpis: 'Ceo svet', znak: '⤢', radnja: () => setPogled(ogranici({ x: 0, y: 0, w: SIRINA_MAPE }, odnos)) },
         ].map(d => (
           <button key={d.natpis} onClick={d.radnja} aria-label={d.natpis} title={d.natpis}
-            className="w-11 h-11 grid place-items-center rounded-full bg-white text-[20px] font-bold"
-            style={{ border: '2px solid #1A1B3A', boxShadow: 'var(--senka)' }}>
+            className="w-11 h-11 grid place-items-center rounded-full bg-[var(--surface)] text-[20px] font-bold"
+            style={{ border: '2px solid var(--ink)', boxShadow: 'var(--senka)' }}>
             {d.znak}
           </button>
         ))}
       </div>
 
-      <p className="absolute left-3 bottom-3 rounded-xl bg-white/90 px-3 py-2 text-[12px] font-semibold leading-tight"
-        style={{ border: '1.5px solid #EDE5D5' }}>
+      <p className="absolute left-3 bottom-3 rounded-xl bg-[var(--surface)]/90 px-3 py-2 text-[12px] font-semibold leading-tight"
+        style={{ border: '1.5px solid var(--line)' }}>
         <svg width="26" height="8" className="inline mr-1.5 align-middle" aria-hidden><line x1="1" y1="4" x2="25" y2="4" stroke={MORSKI_PUT} strokeWidth="2" strokeDasharray="5 4" /></svg>
         morski put · napadaš samo susede
       </p>

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 // the default black Next.js error screen.
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#F6F1E7' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg)' }}>
       <Header />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-14 sm:py-20">
@@ -26,20 +26,20 @@ export default function NotFound() {
           {/* Soft ambient blobs — matches the landing-page aesthetic. */}
           <div className="absolute inset-0 -z-10 pointer-events-none">
             <div className="absolute top-0 -right-32 w-[360px] h-[360px] rounded-full opacity-40"
-              style={{ background: 'radial-gradient(circle, #E8F6EF 0%, transparent 70%)' }} />
+              style={{ background: 'radial-gradient(circle, var(--ok-50) 0%, transparent 70%)' }} />
             <div className="absolute -bottom-20 -left-24 w-[320px] h-[320px] rounded-full opacity-40"
-              style={{ background: 'radial-gradient(circle, #FFF5E0 0%, transparent 70%)' }} />
+              style={{ background: 'radial-gradient(circle, var(--warn-50) 0%, transparent 70%)' }} />
           </div>
 
-          <p className="text-[13px] font-bold uppercase tracking-widest mb-3" style={{ color: '#23845C' }}>
+          <p className="text-[13px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--ok)' }}>
             404
           </p>
           <h1 className="font-black tracking-tight leading-[1.05] mb-5"
-            style={{ color: '#1A1B3A', fontSize: 'clamp(40px, 8vw, 80px)' }}>
+            style={{ color: 'var(--ink)', fontSize: 'clamp(40px, 8vw, 80px)' }}>
             Stranica ne postoji
           </h1>
           <p className="text-[15px] sm:text-[17px] max-w-md mx-auto mb-8 leading-relaxed"
-            style={{ color: '#1A1B3A', opacity: 0.65 }}>
+            style={{ color: 'var(--ink)', opacity: 0.65 }}>
             Možda si link kucao ručno, ili je sadržaj premešten. Igre su u aplikaciji,
             a rang lista i pitanja ostaju ovde.
           </p>
@@ -56,16 +56,16 @@ export default function NotFound() {
 
         {/* ── Quick game shortcuts ─────────────────────────────── */}
         <section>
-          <p className="text-[12px] font-bold uppercase tracking-widest text-center mb-4" style={{ color: '#4F5170' }}>
+          <p className="text-[12px] font-bold uppercase tracking-widest text-center mb-4" style={{ color: 'var(--ink-2)' }}>
             Ili idi pravo na
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
-              { href: '/#osvajanje',     label: 'Osvajač',       Icon: IconSwords, bg: '#E8F6EF', fg: '#0A4C35' },
-              { href: '/#karijerista',   label: 'Karijerista',   Icon: IconStar,   bg: '#F0F0FA', fg: '#2C2D81' },
-              { href: '/ranglista',      label: 'Rang lista',    Icon: IconTime,   bg: '#FFF5E0', fg: '#8A6A12' },
-              { href: '/dodaj-pitanja',  label: 'Dodaj pitanja', Icon: IconHint,   bg: '#EBF1FA', fg: '#3766B0' },
-              { href: '/nagrade',        label: 'Nagrade',       Icon: IconHome,   bg: '#FDF0F4', fg: '#C42B4F' },
+              { href: '/#osvajanje',     label: 'Osvajač',       Icon: IconSwords, bg: 'var(--ok-50)', fg: 'var(--ok-t)' },
+              { href: '/#karijerista',   label: 'Karijerista',   Icon: IconStar,   bg: 'var(--brand-50)', fg: 'var(--brand)' },
+              { href: '/ranglista',      label: 'Rang lista',    Icon: IconTime,   bg: 'var(--warn-50)', fg: 'var(--warn-t)' },
+              { href: '/dodaj-pitanja',  label: 'Dodaj pitanja', Icon: IconHint,   bg: 'var(--plava-50)', fg: 'var(--plava)' },
+              { href: '/nagrade',        label: 'Nagrade',       Icon: IconHome,   bg: 'var(--roze-50)', fg: 'var(--bad-t)' },
             ].map(g => (
               <Link
                 key={g.href}

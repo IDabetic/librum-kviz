@@ -62,7 +62,7 @@ export default function ReportQuestionButton({
       disabled={busy || done}
       className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium transition-opacity hover:opacity-100"
       style={{
-        color: done ? '#0A4C35' : (error ? '#C42B4F' : accent),
+        color: done ? 'var(--ok-t)' : (error ? 'var(--bad-t)' : accent),
         opacity: done || error ? 1 : 0.7,
       }}
       title={done ? 'Hvala — admin će pogledati' : error || 'Prijavi grešku u pitanju'}

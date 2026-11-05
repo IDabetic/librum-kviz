@@ -1,94 +1,149 @@
 @import "tailwindcss";
 
-/* Librum kviz — isti vizuelni jezik kao librum.club i librum.rs: papir,
-   indigo mastilo, Librum zelena/žuta/plava/roze, Rubik + Slalom, meke senke.
-   Imena tokena ostaju stara da sve strane prate bez prepravke. */
+/* Librum kviz — čist, moderan izgled u Librum paleti (librum.rs / librum.club):
+   bela/tamna površina, tanke ivice, meke senke, Rubik. Sve boje su promenljive
+   ispod, pa tamna tema samo menja :root. Imena tokena ostaju stara da strane
+   ne traže prepravku. Ažurirano: 2026-11-05, v3 (tamna tema). */
 @theme {
-  --color-ink:          #1A1B3A;
-  --color-blue:         #3766B0;
-  --color-teal:         #23845C;
+  --color-ink:          var(--ink);
+  --color-blue:         var(--plava);
+  --color-teal:         var(--ok);
   --color-pink:         #F8C7D6;
   --color-orange:       #FDC361;
-  --color-sky:          #3766B0;
-  --color-purple:       #2C2D81;
-  --color-indigo:       #2C2D81;
+  --color-sky:          var(--plava);
+  --color-purple:       var(--brand);
+  --color-indigo:       var(--brand);
   --color-yellow:       #FDC361;
-  --color-bg:           #F6F1E7;
-  --color-light-blue:   #E8F6EF;
-  --color-light-yellow: #FFF5E0;
-  --color-grey-dark:    #8A8AA0;
-  --color-grey:         #4F5170;
-  --color-grey-soft:    #EDE5D5;
+  --color-bg:           var(--bg);
+  --color-light-blue:   var(--ok-50);
+  --color-light-yellow: var(--warn-50);
+  --color-grey-dark:    var(--ink-3);
+  --color-grey:         var(--ink-2);
+  --color-grey-soft:    var(--line);
   --color-white:        #FFFFFF;
-  --color-success:      #23845C;
+  --color-success:      var(--ok);
   --color-danger:       #E5385C;
   --color-warning:      #FDC361;
-  --color-primary:      #23845C;
-  --color-primary-dark: #0A4C35;
-  --color-mint:         #23845C;
+  --color-primary:      var(--brand);
+  --color-primary-dark: var(--brand-jaka);
+  --color-mint:         var(--ok);
 
-  --font-sans: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
-  --font-display: var(--font-archivo), "Archivo Black", system-ui, sans-serif;
+  --font-sans: var(--font-grotesk), "Rubik", system-ui, sans-serif;
+  --font-display: var(--font-archivo), "Rubik", system-ui, sans-serif;
 }
 
 :root {
-  --background: #F6F1E7;
-  --foreground: #1A1B3A;
-  --ivica: 1.5px solid #1A1B3A;
-  /* Meka senka kao na librum.club (umesto tvrde QuizPop senke). */
-  --senka: 0 1px 2px rgba(26,27,58,0.05), 0 18px 40px -22px rgba(26,27,58,0.28);
-  --senka-mala: 0 1px 2px rgba(26,27,58,0.06), 0 8px 18px -12px rgba(26,27,58,0.3);
+  color-scheme: light;
+  --bg: #FFFFFF;
+  --bg-2: #F7F7FB;
+  --surface: #FFFFFF;
+  --surface-2: #F7F7FB;
+  --line: #E6E6EF;
+  --line-jaka: #CFD0DE;
+  --ink: #14152B;
+  --ink-2: #565A70;
+  --ink-3: #8B8EA0;
+  --brand: #2C2D81;
+  --brand-jaka: #1F2066;
+  --brand-dugme: #2C2D81;
+  --brand-50: #F0F0FA;
+  --plava: #3766B0;
+  --plava-50: #EBF1FA;
+  --ok: #23845C;
+  --ok-t: #0A4C35;
+  --ok-50: #E8F6EF;
+  --warn-t: #8A6A12;
+  --warn-50: #FFF5E0;
+  --bad-t: #C42B4F;
+  --bad-50: #FFE3EA;
+  --roze-50: #FDF0F4;
+  --istaknuto: #2C2D81;   /* tamni blok (poziv na kraju, podnožje) */
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --ivica: 1px solid var(--line);
+  --senka: 0 1px 2px rgba(20,21,43,0.04), 0 12px 32px -12px rgba(20,21,43,0.14);
+  --senka-mala: 0 1px 2px rgba(20,21,43,0.05), 0 6px 16px -10px rgba(20,21,43,0.25);
+  --senka-jaka: 0 2px 4px rgba(20,21,43,0.04), 0 30px 60px -20px rgba(44,45,129,0.28);
+}
+
+/* Tamna tema: po sistemu, osim kad je korisnik izabrao svetlu; ili izričito izabrana. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0D0E1C; --bg-2: #121327; --surface: #16182E; --surface-2: #1C1E38;
+    --line: #2A2C49; --line-jaka: #3A3D61;
+    --ink: #ECECF6; --ink-2: #A9ABC4; --ink-3: #7A7D9C;
+    --brand: #A5A7F5; --brand-jaka: #C3C4FA; --brand-dugme: #4E51D6; --brand-50: rgba(165,167,245,0.12);
+    --plava: #8DB0E8; --plava-50: rgba(55,102,176,0.22);
+    --ok: #5DBF94; --ok-t: #8DDBB7; --ok-50: rgba(93,191,148,0.14);
+    --warn-t: #FDC361; --warn-50: rgba(253,195,97,0.13);
+    --bad-t: #FF8FA6; --bad-50: rgba(229,56,92,0.16);
+    --roze-50: rgba(248,199,214,0.12);
+    --istaknuto: #1E2050;
+    --senka: 0 1px 2px rgba(0,0,0,0.3), 0 16px 40px -16px rgba(0,0,0,0.6);
+    --senka-mala: 0 1px 2px rgba(0,0,0,0.3), 0 8px 18px -12px rgba(0,0,0,0.6);
+    --senka-jaka: 0 2px 4px rgba(0,0,0,0.3), 0 30px 60px -20px rgba(0,0,0,0.7);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0D0E1C; --bg-2: #121327; --surface: #16182E; --surface-2: #1C1E38;
+  --line: #2A2C49; --line-jaka: #3A3D61;
+  --ink: #ECECF6; --ink-2: #A9ABC4; --ink-3: #7A7D9C;
+  --brand: #A5A7F5; --brand-jaka: #C3C4FA; --brand-dugme: #4E51D6; --brand-50: rgba(165,167,245,0.12);
+  --plava: #8DB0E8; --plava-50: rgba(55,102,176,0.22);
+  --ok: #5DBF94; --ok-t: #8DDBB7; --ok-50: rgba(93,191,148,0.14);
+  --warn-t: #FDC361; --warn-50: rgba(253,195,97,0.13);
+  --bad-t: #FF8FA6; --bad-50: rgba(229,56,92,0.16);
+  --roze-50: rgba(248,199,214,0.12);
+  --istaknuto: #1E2050;
+  --senka: 0 1px 2px rgba(0,0,0,0.3), 0 16px 40px -16px rgba(0,0,0,0.6);
+  --senka-mala: 0 1px 2px rgba(0,0,0,0.3), 0 8px 18px -12px rgba(0,0,0,0.6);
+  --senka-jaka: 0 2px 4px rgba(0,0,0,0.3), 0 30px 60px -20px rgba(0,0,0,0.7);
 }
 
 html {
   overflow-x: hidden;
-  font-family: var(--font-grotesk), "Space Grotesk", system-ui, sans-serif;
+  font-family: var(--font-grotesk), "Rubik", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* Talasasta tekstura papira iz kita (surface/texture), jedva vidljiva. */
 body {
-  background-color: #F6F1E7;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='28'%3E%3Cpath d='M0 14c20-8 40-8 80 0s60 8 80 0' fill='none' stroke='%23EDE5D5' stroke-width='1.4'/%3E%3C/svg%3E");
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--ink);
   overflow-x: hidden;
+  transition: background-color .2s ease, color .2s ease;
 }
 
-/* Tamna strana (kit: Dark design). */
-.page-ink {
-  background-color: #1A1B3A;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='28'%3E%3Cpath d='M0 14c20-8 40-8 80 0s60 8 80 0' fill='none' stroke='%2324264F' stroke-width='1.4'/%3E%3C/svg%3E");
-  color: #F6F1E7;
-}
-.page-ink .btn-secondary { color: #F6F1E7; border-color: #F6F1E7; background: transparent; box-shadow: none; }
-.page-ink .btn-secondary:hover:not(:disabled) { background: rgba(243, 240, 230, 0.08); }
-.page-ink .card-soft .btn-secondary { color: #1A1B3A; border-color: #1A1B3A; }
-.page-ink .btn-ghost { color: #F6F1E7; }
-.page-ink .btn-ghost:hover:not(:disabled) { background: rgba(243, 240, 230, 0.08); }
-.page-ink .card-soft { background: #24264F; color: #F6F1E7; border-color: #3A3C66; }
+/* Tamna strana (stari naziv): sada samo istaknuta površina. */
+.page-ink { background: var(--istaknuto); color: #F2F2FA; }
+.page-ink .btn-secondary { color: #F2F2FA; border-color: rgba(242,242,250,0.5); background: transparent; }
+.page-ink .btn-ghost { color: #F2F2FA; }
+.page-ink .card-soft { background: rgba(255,255,255,0.06); color: #F2F2FA; border-color: rgba(255,255,255,0.12); }
 
 *, *::before, *::after { box-sizing: border-box; }
 
-/* Naslovi: Rubik kao na librum.club; kurziv samo za naglašenu reč (<em>). */
+/* Naslovi: Rubik kao na librum.rs; kurziv samo za naglašenu reč (<em>). */
 h1, h2, h3, .naslov {
   font-family: var(--font-archivo), "Rubik", system-ui, sans-serif;
   font-style: normal;
   font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.05;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
   text-wrap: balance;
 }
-h4 { font-weight: 700; letter-spacing: -0.01em; }
+h4 { font-weight: 600; letter-spacing: -0.01em; }
+h1 em, h2 em, .naslov em { font-style: italic; font-weight: 600; color: var(--brand); }
 
-::selection { background: #FDC361; color: #1A1B3A; }
+::selection { background: #FDC361; color: #14152B; }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(26,27,58,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--line-jaka); border-radius: 4px; }
 
-:focus-visible { outline: 3px solid #3766B0; outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--plava); outline-offset: 2px; }
 
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
@@ -115,44 +170,34 @@ h4 { font-weight: 700; letter-spacing: -0.01em; }
 .animate-fade-in { animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-pop-in  { animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .maskota-lebdi   { animation: lebdi 4s ease-in-out infinite; }
-/* Natpis uz video Osvajača uleće pri svakoj promeni. */
-@keyframes natpis { from { opacity: 0; transform: translateY(10px) rotate(-1deg); } to { opacity: 1; transform: none; } }
+/* Natpis uz video uleće pri svakoj promeni. */
+@keyframes natpis { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .natpis-ulaz { animation: natpis .45s cubic-bezier(.2,.9,.3,1.2); }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in, .animate-pop-in, .skeleton, .maskota-lebdi, .natpis-ulaz { animation: none; }
+  body { transition: none; }
 }
 
-/* Mirna bela kartica (kit: surface/card bez ivice). */
-.card-soft {
-  background: #FFFFFF;
-  border: 1.5px solid #EDE5D5;
+/* Kartice: površina + tanka ivica; card-pop je ista, samo sa senkom. */
+.card-soft, .card-flat, .card-pop {
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 20px;
 }
-
-.card-flat {
-  background: #FFFFFF;
-  border: 1.5px solid #EDE5D5;
-  border-radius: 16px;
-}
-
-/* Izražena kartica: debela ivica + tvrda senka (kit: bold card). */
-.card-pop {
-  border: 1.5px solid rgba(26,27,58,0.85);
-  border-radius: 22px;
-  box-shadow: var(--senka);
-}
+.card-flat { border-radius: 16px; }
+.card-pop { box-shadow: var(--senka); }
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  border-radius: 16px;
-  border: 1.5px solid transparent;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
@@ -168,60 +213,41 @@ summary { cursor: pointer; }
 button:disabled,
 [role="button"][aria-disabled="true"] { cursor: not-allowed; }
 
-.btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 12px; }
-.btn-md { padding: 12px 22px; font-size: 15px; }
-.btn-lg { padding: 16px 28px; font-size: 16px; }
+.btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
+.btn-md { padding: 11px 20px; font-size: 15px; }
+.btn-lg { padding: 15px 26px; font-size: 16px; }
 
-.btn-primary {
-  background: #2C2D81;
-  color: #FFFFFF;
-  border-color: #2C2D81;
-  box-shadow: var(--senka-mala);
-}
-.btn-primary:hover:not(:disabled) { background: #2C2D81; }
+.btn-primary { background: var(--brand-dugme); color: #FFFFFF; border-color: var(--brand-dugme); }
+.btn-primary:hover:not(:disabled) { opacity: .9; }
 
 /* Glavni poziv kao „Postani član kluba”: Librum zelena, tamno slovo. */
-.btn-teal {
-  background: #5DBF94;
-  color: #0A2A1E;
-  border-color: #5DBF94;
-  box-shadow: var(--senka-mala);
-}
+.btn-teal { background: #5DBF94; color: #0A2A1E; border-color: #5DBF94; }
 .btn-teal:hover:not(:disabled) { background: #4FB087; border-color: #4FB087; }
 
-.btn-secondary {
-  background: #FFFCF6;
-  color: #1A1B3A;
-  border-color: #1A1B3A;
-}
-.btn-secondary:hover:not(:disabled) { background: #FFFCF6; }
+.btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-jaka); }
+.btn-secondary:hover:not(:disabled) { background: var(--bg-2); }
 
-.btn-ghost { background: transparent; color: #1A1B3A; }
-.btn-ghost:hover:not(:disabled) { background: rgba(26,27,58,0.06); }
+.btn-ghost { background: transparent; color: var(--ink); }
+.btn-ghost:hover:not(:disabled) { background: var(--bg-2); }
 
-.btn-yellow {
-  background: #FDC361;
-  color: #1A1B3A;
-  border-color: #FDC361;
-  box-shadow: var(--senka-mala);
-}
+.btn-yellow { background: #FDC361; color: #14152B; border-color: #FDC361; }
 .btn-yellow:hover:not(:disabled) { background: #F5B33F; }
 
 @layer components {
   .input {
     width: 100%;
-    padding: 14px 18px;
+    padding: 13px 16px;
     font-size: 15px;
     font-weight: 500;
-    background: #FFFFFF;
-    border: 1.5px solid #EDE5D5;
-    border-radius: 16px;
-    color: #1A1B3A;
+    background: var(--surface);
+    border: 1px solid var(--line-jaka);
+    border-radius: 12px;
+    color: var(--ink);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     outline: none;
   }
-  .input::placeholder { color: rgba(26,27,58,0.4); font-weight: 400; }
-  .input:focus { border-color: #2C2D81; box-shadow: 0 0 0 3px rgba(55,102,176,0.18); }
+  .input::placeholder { color: var(--ink-3); font-weight: 400; }
+  .input:focus { border-color: var(--plava); box-shadow: 0 0 0 3px var(--plava-50); }
 }
 
 /* Oznaka: mali verzal sa obojenom tačkom, ne kapsula (pravilo: bez pilula). */
@@ -237,7 +263,7 @@ button:disabled,
   background: transparent !important;
 }
 
-/* Odgovor na pitanje (kit: Answer option). */
+/* Odgovor na pitanje. */
 .odgovor {
   display: flex;
   align-items: center;
@@ -245,45 +271,53 @@ button:disabled,
   width: 100%;
   min-height: 56px;
   padding: 10px 16px 10px 10px;
-  background: #FFFFFF;
-  border: 1.5px solid rgba(26,27,58,0.85);
-  border-radius: 16px;
-  box-shadow: var(--senka-mala);
-  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--line-jaka);
+  border-radius: 14px;
+  font-weight: 500;
   font-size: 16px;
   text-align: left;
-  color: #1A1B3A;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+  color: var(--ink);
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
 }
-.odgovor:hover:not(:disabled) { background: #FFFCF6; }
+.odgovor:hover:not(:disabled) { background: var(--bg-2); }
 .odgovor:active:not(:disabled) { transform: translateY(1px); }
 .odgovor .slovo {
   flex: none;
   width: 36px; height: 36px;
   display: grid; place-items: center;
-  border-radius: 12px;
-  background: #F0F0FA;
-  color: #2C2D81;
+  border-radius: 10px;
+  background: var(--brand-50);
+  color: var(--brand);
   font-weight: 700;
 }
-.odgovor.tacan  { background: #E8F6EF; border-color: #23845C; box-shadow: none; }
-.odgovor.tacan .slovo { background: #23845C; color: #FFFFFF; }
-.odgovor.netacan { background: #FFE3EA; border-color: #E5385C; box-shadow: none; }
+.odgovor.tacan  { background: var(--ok-50); border-color: var(--ok); }
+.odgovor.tacan .slovo { background: var(--ok); color: #FFFFFF; }
+.odgovor.netacan { background: var(--bad-50); border-color: #E5385C; }
 .odgovor.netacan .slovo { background: #E5385C; color: #FFFFFF; }
-.odgovor.izabran { background: #2C2D81; color: #FFFFFF; }
-.odgovor.izabran .slovo { background: #FDC361; color: #1A1B3A; }
+.odgovor.izabran { background: var(--brand-dugme); color: #FFFFFF; border-color: var(--brand-dugme); }
+.odgovor.izabran .slovo { background: #FDC361; color: #14152B; }
 
 /* Podvučen izbor umesto tabova u kapsuli. */
-.izbor { display: flex; gap: 20px; border-bottom: 1.5px solid #EDE5D5; }
-.izbor > * { padding: 10px 0; font-weight: 700; color: #4F5170; border-bottom: 3px solid transparent; margin-bottom: -1.5px; }
-.izbor > [aria-selected="true"], .izbor > .aktivan { color: #2C2D81; border-color: #2C2D81; }
+.izbor { display: flex; gap: 20px; border-bottom: 1px solid var(--line); }
+.izbor > * { padding: 10px 0; font-weight: 600; color: var(--ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.izbor > [aria-selected="true"], .izbor > .aktivan { color: var(--ink); border-color: var(--brand); }
 
 .skeleton {
-  background: linear-gradient(90deg, #EDE5D5 0%, #F6F1E7 50%, #EDE5D5 100%);
+  background: linear-gradient(90deg, var(--line) 0%, var(--bg-2) 50%, var(--line) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
   border-radius: 14px;
 }
 
-/* Naglašena reč u naslovu, kao „Umetnik” na librum.club. */
-h1 em, h2 em, .naslov em { font-style: italic; font-weight: 600; color: #2C2D81; }
+/* Sitna oznaka iznad naslova sekcije. */
+.nadnaslov { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brand); }
+
+/* Logo: tamna varijanta samo u tamnoj temi. */
+.logo-tamni { display: none; }
+:root[data-theme="dark"] .logo-svetli { display: none; }
+:root[data-theme="dark"] .logo-tamni { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .logo-svetli { display: none; }
+  :root:not([data-theme="light"]) .logo-tamni { display: block; }
+}

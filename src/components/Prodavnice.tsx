@@ -19,13 +19,16 @@ export function Prodavnice({ tamno = false }: { tamno?: boolean }) {
           <>
             <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden fill="currentColor"><path d={s.ikonica} /></svg>
             <span className="text-left leading-tight">
-              <span className="block text-[11px] font-semibold opacity-80">{s.href ? s.nadnaslov : 'Uskoro na'}</span>
-              <span className="block text-[17px] font-bold">{s.ime}</span>
+              <span className="block text-[11px] font-medium opacity-75">{s.href ? s.nadnaslov : 'Uskoro na'}</span>
+              <span className="block text-[16px] font-semibold">{s.ime}</span>
             </span>
           </>
         )
-        const stil = { border: `2px solid ${tamno ? '#F6F1E7' : '#1A1B3A'}`, boxShadow: `0 4px 0 ${tamno ? '#F6F1E7' : '#1A1B3A'}` }
-        const klase = `inline-flex items-center gap-3 rounded-2xl px-5 py-3 ${tamno ? 'bg-[#F6F1E7] text-[#1A1B3A]' : 'bg-[#1A1B3A] text-white'}`
+        // Na istaknutoj (tamnoj) površini belo dugme, inače boja teksta teme (crno u svetloj, belo u tamnoj).
+        const stil = tamno
+          ? { background: '#FFFFFF', color: '#14152B', border: '1px solid #FFFFFF' }
+          : { background: 'var(--ink)', color: 'var(--bg)', border: '1px solid var(--ink)' }
+        const klase = 'inline-flex items-center gap-3 rounded-xl px-5 py-2.5 transition-opacity hover:opacity-90'
         return s.href
           ? <a key={s.ime} href={s.href} className={klase} style={stil}>{sadrzaj}</a>
           : <span key={s.ime} className={`${klase} opacity-90`} style={stil} aria-label={`${s.ime}, uskoro`}>{sadrzaj}</span>
@@ -49,7 +52,7 @@ export function ProdavniceIkonice() {
       {stavke.map(s => {
         const ikonica = <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="currentColor"><path d={s.put} /></svg>
         const klase = 'w-10 h-10 grid place-items-center rounded-xl'
-        const stil = { background: '#1A1B3A', color: '#FFFFFF' }
+        const stil = { background: 'var(--ink)', color: 'var(--bg)' }
         return s.href
           ? <a key={s.ime} href={s.href} className={klase} style={stil} aria-label={`Preuzmi na ${s.ime}`}>{ikonica}</a>
           : <span key={s.ime} className={klase} style={stil} aria-label={`${s.ime}, uskoro`} title={`${s.ime}, uskoro`}>{ikonica}</span>
