@@ -1,11 +1,11 @@
 /**
- * Dugmad za App Store i Google Play. Dok aplikacija nije objavljena, prikazuju
- * „Uskoro”; kad se objavi, ovde se upišu linkovi i dugmad postaju aktivna.
+ * Dugmad za App Store i Google Play (obe aplikacije objavljene 05.11.2026).
+ * Bez linka dugme prikazuje „Uskoro” (ostaje za neku buduću prodavnicu).
  *
  * @example <Prodavnice tamno />
  */
-const APP_STORE: string | null = null // shortcut: popuniti linkom kad aplikacija prođe pregled
-const GOOGLE_PLAY: string | null = null
+const APP_STORE: string | null = 'https://apps.apple.com/rs/app/librum-kviz/id6830091653'
+const GOOGLE_PLAY: string | null = 'https://play.google.com/store/apps/details?id=club.librum.kviz'
 
 export function Prodavnice({ tamno = false }: { tamno?: boolean }) {
   const stavke = [
