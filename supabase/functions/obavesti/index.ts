@@ -40,9 +40,14 @@ Deno.serve(async (zahtev) => {
     primalac = record.koga
     poruka = { naslov: 'Novi pratilac', tekst: `${await ime(record.ko)} te sada prati.`, podaci: { vrsta: 'pratilac', id: record.ko } }
   }
-  if (!primalac || !poruka) return new Response('preskočeno')
+  // Obaveštenje iz admina (admin_obavestenje_push): ide svima na izabranoj platformi.
+  const svima = table === 'obavestenja_app'
+  if (svima) poruka = { naslov: record.naslov, tekst: record.tekst, podaci: { vrsta: 'obavestenje', id: String(record.id) } }
+  if ((!primalac && !svima) || !poruka) return new Response('preskočeno')
 
-  const { data: tokeni } = await baza.from('push_tokeni').select('token, platforma').eq('user_id', primalac)
+  let upit = baza.from('push_tokeni').select('token, platforma')
+  upit = svima ? (record.platforma === 'sve' ? upit : upit.eq('platforma', record.platforma)) : upit.eq('user_id', primalac)
+  const { data: tokeni } = await upit
   const ishodi = await Promise.allSettled((tokeni ?? []).map(t => t.platforma === 'ios' ? apns(t.token, poruka!) : fcm(t.token, poruka!)))
   // Uređaj koji više ne postoji (odjavljen, obrisana aplikacija) briše se, da se ne šalje uzalud.
   for (const [i, r] of ishodi.entries()) {

@@ -40,6 +40,7 @@ const NAV = [
   { label: 'Prijave',        href: '/majmun/prijave',        Icon: IconUsers,    hint: 'greške u pitanjima' },
   { label: 'Zajednica',      href: '/majmun/zajednica',      Icon: IconUsers,    hint: 'objave i komentari' },
   { label: 'Korisnici',      href: '/majmun/korisnici',      Icon: IconUsers },
+  { label: 'Obaveštenja',    href: '/majmun/obavestenja',    Icon: IconHint,     hint: 'u aplikaciji' },
   { label: 'Rang lista',     href: '/majmun/rang-lista',     Icon: IconTrophy },
   { label: 'Trivia duel',    href: '/majmun/trivia-duel',    Icon: IconSwords,   hint: 'analitika' },
   { label: 'Padovi',         href: '/majmun/padovi',         Icon: IconWrong,    hint: 'aplikacija' },
