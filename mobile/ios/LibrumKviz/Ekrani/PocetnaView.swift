@@ -12,6 +12,10 @@ struct PocetnaView: View {
     @State private var objasnjenje: Objasnjenje?
     /// Sačuvana partija Osvajanja (na ovom telefonu): „Nastavi partiju” iznad kartice.
     @State private var sacuvana: OsvajanjeModel.Nastavak?
+    /// Obaveštenja iz admina (/majmun/obavestenja); zatvorena se pamte po id-u na ovom telefonu.
+    @State private var obavestenja: [ObavestenjeAdmina] = []
+    @AppStorage("obavestenja.zatvorena") private var zatvorenaTekst = ""
+    private var zatvorena: Set<Int> { Set(zatvorenaTekst.split(separator: ",").compactMap { Int($0) }) }
     @State private var nastavak: OsvajanjeModel.Nastavak?
     /// Aktivna pitanja na serveru (kviz + knjige + kafana); nil dok ne stigne prvi odgovor.
     @State private var pitanjaUIgri: Int?
@@ -26,6 +30,7 @@ struct PocetnaView: View {
             VStack(alignment: .leading, spacing: 12) {
                 zaglavlje
                 if !mreza.povezan { OfflineTraka() }
+                ForEach(obavestenja.filter { !zatvorena.contains($0.id) }) { o in karticaObavestenja(o) }
                 if let n = sacuvana {
                     Button { nastavak = n } label: {
                         HStack(spacing: 12) {
@@ -101,6 +106,25 @@ struct PocetnaView: View {
         .fullScreenCover(item: $nastavak, onDismiss: { sacuvana = OsvajanjeModel.sacuvana() }) { OsvajanjeIgraView(model: OsvajanjeModel(nastavak: $0)) }
         .refreshable { await ucitajVrh() }
         .task { await pratiPitanjaUIgri() }
+        .task { obavestenja = (try? await Supabase.deljeni.rpc("aktivna_obavestenja", ["p_platforma": "ios"])) ?? [] }
+    }
+
+    private func karticaObavestenja(_ o: ObavestenjeAdmina) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "megaphone.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(Color.tinta)
+                .frame(width: 40, height: 40).background(Color.zuta, in: RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(o.naslov).font(.tekst(16, .bold)).foregroundStyle(Color.mastilo)
+                Text(o.tekst).font(.tekst(14)).foregroundStyle(Color.sivaTekst).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            Button { withAnimation { zatvorenaTekst = (Array(zatvorena) + [o.id]).map(String.init).joined(separator: ",") } } label: {
+                Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).foregroundStyle(Color.sivaTekst).frame(width: 32, height: 32)
+            }
+            .buttonStyle(.plain).accessibilityLabel("Zatvori obaveštenje")
+        }
+        .padding(14).mirna()
+        .transition(.opacity)
     }
 
     /// Vlasnik 03.11: na ulazu piše koliko je pitanja u igri, uživo. `.task` se gasi kad početna nestane.
@@ -359,3 +383,7 @@ struct PravilaList: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+
+/// Obaveštenje iz admina (RPC aktivna_obavestenja).
+struct ObavestenjeAdmina: Decodable, Identifiable { let id: Int; let naslov: String; let tekst: String }

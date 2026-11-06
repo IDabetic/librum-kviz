@@ -1,5 +1,7 @@
 package club.librum.kviz.ui
 
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Campaign
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -99,6 +101,7 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                 }
                 MaskotaSlika(Maskota.BLOOP, 92.dp)
             }
+            ObavestenjaAdmina()
             // Sačuvana partija Osvajanja: nastavlja se odakle je stala (kao iOS „Nastavi partiju”).
             val kontekst = androidx.compose.ui.platform.LocalContext.current
             val sacuvana = remember { club.librum.kviz.osvajanje.OsvajanjeModel.sacuvana(kontekst) }
@@ -608,6 +611,42 @@ fun DopunaProfila(sesija: Sesija) {
             }
             Text("Odjavi se", style = tekst(15.sp, FontWeight.Bold, Boje.sivaTekst),
                 modifier = Modifier.clickable(role = Role.Button) { opseg.launch { sesija.odjava() } }.padding(vertical = 6.dp))
+        }
+    }
+}
+
+
+/** Obaveštenje iz admina (RPC aktivna_obavestenja, /majmun/obavestenja). */
+@Serializable data class ObavestenjeAdmina(val id: Long, val naslov: String, val tekst: String)
+
+/** Kartice obaveštenja na početnoj; zatvorena se pamte po id-u na ovom telefonu. Isto kao iOS. */
+@Composable
+private fun ObavestenjaAdmina() {
+    val kontekst = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { kontekst.getSharedPreferences("obavestenja", android.content.Context.MODE_PRIVATE) }
+    var lista by remember { mutableStateOf<List<ObavestenjeAdmina>>(emptyList()) }
+    var zatvorena by remember { mutableStateOf(prefs.getStringSet("zatvorena", emptySet())!!.toSet()) }
+    LaunchedEffect(Unit) {
+        lista = runCatching {
+            club.librum.kviz.servisi.Supabase.json.decodeFromString<List<ObavestenjeAdmina>>(
+                club.librum.kviz.servisi.Supabase.rpc("aktivna_obavestenja", mapOf("p_platforma" to "android"), null))
+        }.getOrDefault(emptyList())
+    }
+    lista.filter { it.id.toString() !in zatvorena }.forEach { o ->
+        Row(Modifier.fillMaxWidth().background(Boje.kartica, RoundedCornerShape(20.dp)).border(1.5.dp, Boje.kremTamnija, RoundedCornerShape(20.dp)).padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(40.dp).background(Boje.zuta, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                Icon(androidx.compose.material.icons.Icons.Rounded.Campaign, null, tint = Boje.tinta)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(o.naslov, style = tekst(16.sp, FontWeight.Bold))
+                Text(o.tekst, style = tekst(14.sp, boja = Boje.sivaTekst))
+            }
+            Icon(androidx.compose.material.icons.Icons.Rounded.Close, contentDescription = "Zatvori obaveštenje", tint = Boje.sivaTekst,
+                modifier = Modifier.size(32.dp).clickable {
+                    zatvorena = zatvorena + o.id.toString()
+                    prefs.edit().putStringSet("zatvorena", zatvorena).apply()
+                }.padding(6.dp))
         }
     }
 }
