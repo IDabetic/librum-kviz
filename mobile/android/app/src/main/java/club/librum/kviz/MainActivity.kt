@@ -143,7 +143,8 @@ object Pozivnica {
 @Composable
 private fun Aplikacija() {
     val kontekst = LocalContext.current.applicationContext
-    val sesija = remember { Sesija(kontekst) }
+    // Samo sesija ekrana daje token Karijeri; PushServis pravi svoju (često pre prijave) i ne sme da je zameni.
+    val sesija = remember { Sesija(kontekst).also { s -> club.librum.kviz.servisi.Supabase.tokenIgraca = { s.vazeciToken() } } }
     val nalog by sesija.nalog.collectAsState()
     val nav = rememberNavController()
     val trenutna by nav.currentBackStackEntryAsState()
