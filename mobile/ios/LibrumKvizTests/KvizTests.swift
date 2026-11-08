@@ -146,7 +146,7 @@ final class TakmicenjeTests: XCTestCase {
             let b = Takmicenje.Bot.rezultat(igra: g, tezina: "normalno", seme: 1095258902, mesto: 2, broj: g.broj, proteklo: 40)
             return "\(g.rawValue)=\(b.poeni)/\(b.tacnih)/\(b.odigrano)"
         }.joined(separator: ",")
-        XCTAssertEqual(otisak, "pro=48/3/3,book=48/3/3,slikari=48/3/3,brzi=205/11/14,vesanje=36/1/1")
+        XCTAssertEqual(otisak, "pro=48/3/3,book=48/3/3,slikari=48/3/3,brzi=205/11/14,vesanje=36/1/1,premetaljka=26/0/4,pet_slova=19/0/3,lanac=19/0/3,sifra=13/0/2,ukrstenica=13/0/2,zmija=15/0/2")
     }
 
     func testBrziTacanNosiVise() {

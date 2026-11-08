@@ -23,10 +23,20 @@ enum class IgraTakmicenja(val kljuc: String, val naziv: String, val opis: String
     BOOK("book", "Book kviz", "10 pitanja iz književnosti"),
     SLIKARI("slikari", "Slikari", "10 dela: ko je naslikao?"),
     BRZI("brzi", "Brzi kviz", "60 sekundi, tačno ili netačno"),
-    VESANJE("vesanje", "Vešanje", "5 reči, ko pogodi više slova");
+    VESANJE("vesanje", "Vešanje", "5 reči, ko pogodi više slova"),
+    // Igre reči (08.11.2026): ista zagonetka za sve u sobi, iz baze izazova po težini (reci/ReciEkran.kt).
+    PREMETALJKA("premetaljka", "Premetaljka", "Složi reči od 7 slova · 3 min"),
+    PET_SLOVA("pet_slova", "Pet slova", "Pogodi reč u 6 pokušaja · 4 min"),
+    LANAC("lanac", "Lanac", "Menjaj po jedno slovo · 4 min"),
+    SIFRA("sifra", "Šifra", "Svaki broj je jedno slovo · 6 min"),
+    UKRSTENICA("ukrstenica", "Mini ukrštenica", "Mala ukrštenica sa opisima · 6 min"),
+    ZMIJA("zmija", "Zmija", "Pronađi reči teme dana · 5 min");
+
+    /** Igra reči ili null za kviz igre. */
+    val reci: club.librum.kviz.reci.IgraReci? get() = club.librum.kviz.reci.IgraReci.od(kljuc)
 
     /** Koliko stavki domaćin šalje u sobu: pitanja, tvrdnje (Brzi troši mnogo) ili reči. */
-    val broj: Int get() = when (this) { BRZI -> 60; VESANJE -> 5; else -> Takmicenje.PITANJA }
+    val broj: Int get() = if (reci != null) 1 else when (this) { BRZI -> 60; VESANJE -> 5; else -> Takmicenje.PITANJA }
 
     companion object { fun od(k: String) = entries.firstOrNull { it.kljuc == k } ?: PRO }
 }
@@ -121,6 +131,17 @@ object Takmicenje {
                     }
                     s.gotov = true
                 }
+                IgraTakmicenja.PREMETALJKA, IgraTakmicenja.PET_SLOVA, IgraTakmicenja.LANAC, IgraTakmicenja.SIFRA, IgraTakmicenja.UKRSTENICA, IgraTakmicenja.ZMIJA -> {
+                    // Igre reči, isto kao iOS: bot završava pre roka (teško brže), poeni rastu ravnomerno do cilja.
+                    val rok = (igra.reci?.rok ?: 240).toDouble()
+                    val kraj = rok * (if (tezina == "lako") 0.75 else if (tezina == "tesko") 0.3 else 0.5) * (0.8 + r.sledeci() * 0.4)
+                    val resio = r.sledeci() < p + 0.15
+                    val cilj = if (resio) 50 + (r.sledeci() * 30).toInt() else 10 + (r.sledeci() * 20).toInt()
+                    val udeo = minOf(1.0, proteklo / kraj)
+                    s.poeni = (cilj * udeo).toInt(); s.odigrano = (udeo * 10).toInt()
+                    s.tacnih = if (resio && udeo >= 1) 1 else 0
+                    s.gotov = proteklo >= kraj
+                }
                 else -> {
                     val (najmanje, raspon) = tempo(tezina)
                     repeat(broj) {
@@ -162,6 +183,9 @@ object Takmicenje {
 
     suspend fun pitanja(sesija: Sesija, id: String): List<Pitanje> =
         Supabase.json.decodeFromString(ListSerializer(Pitanje.serializer()), Supabase.rpc("takmicenje_sadrzaj", mapOf("p_id" to id), token(sesija)))
+    /** Sadržaj sobe kakav jeste (igre reči: niz sa jednom zagonetkom). */
+    suspend fun sadrzaj(sesija: Sesija, id: String): JsonElement =
+        Supabase.json.parseToJsonElement(Supabase.rpc("takmicenje_sadrzaj", mapOf("p_id" to id), token(sesija)))
     suspend fun reci(sesija: Sesija, id: String): List<Rec> =
         Supabase.json.decodeFromString(ListSerializer(Rec.serializer()), Supabase.rpc("takmicenje_sadrzaj", mapOf("p_id" to id), token(sesija)))
 
@@ -173,6 +197,8 @@ object Takmicenje {
             IgraTakmicenja.BOOK -> Supabase.json.encodeToJsonElement(ListSerializer(Pitanje.serializer()), paket.ucitaj(Fond.BOOK).take(igra.broj))
             IgraTakmicenja.SLIKARI -> Supabase.json.encodeToJsonElement(ListSerializer(Pitanje.serializer()), slikariKviz(ctx, igra.broj, tezina == "tesko"))
             IgraTakmicenja.VESANJE -> Supabase.json.encodeToJsonElement(ListSerializer(Rec.serializer()), paket.reci().take(igra.broj))
+            else -> club.librum.kviz.reci.IgreReciServis.izazov(igra.reci!!, tezina,
+                Supabase.tokenIgraca?.invoke() ?: throw IllegalStateException("Prijavi se da bi igrao sa drugima."))
         }
     }
 

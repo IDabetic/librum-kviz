@@ -8,6 +8,8 @@ struct TakmicenjeView: View {
     var kod: String? = nil
     /// Izazov sa profila: soba za dvoje, ovaj igrač je već pozvan.
     var pozovi: (id: String, ime: String)? = nil
+    /// Ulaz iz Igara reči: igra je već izabrana.
+    var pocetnaIgra: IgraTakmicenja? = nil
 
     @Environment(Sesija.self) private var sesija
     @Environment(\.dismiss) private var zatvori
@@ -30,6 +32,7 @@ struct TakmicenjeView: View {
     // Igra
     @State private var pitanja: [Pitanje] = []
     @State private var reci: [Rec] = []
+    @State private var zagonetka: ZagonetkaSobe?
     @State private var pocetak: Date?
     @State private var mojKraj = false
 
@@ -109,7 +112,7 @@ struct TakmicenjeView: View {
                 ForEach(IgraTakmicenja.allCases) { g in
                     Button { igra = g } label: {
                         HStack(spacing: 12) {
-                            Image(g.slika).resizable().scaledToFill().frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 12))
+                            SlikaIgreTakmicenja(igra: g)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(g.naziv).font(.tekst(16, .bold))
                                 Text(g.opis).font(.tekst(13)).foregroundStyle(Color.sivaTekst)
@@ -147,6 +150,11 @@ struct TakmicenjeView: View {
             if protivnici != "pravi" {
                 Oznaka(tekst: "Težina računara")
                 PodvuceniIzbor(izbor: $tezina, opcije: [("lako", "Lako"), ("normalno", "Normalno"), ("tesko", "Teško")])
+            }
+            if igra.reci != nil && protivnici == "pravi" {
+                // igre reči: težina bira i zagonetku, pa se bira i kad igraju samo ljudi
+                Oznaka(tekst: "Težina zagonetke")
+                PodvuceniIzbor(izbor: $tezina, opcije: [("lako", "Lako"), ("normalno", "Srednje"), ("tesko", "Teško")])
             }
             if protivnici != "racunar" && pozovi == nil && !prijatelji.isEmpty {
                 Oznaka(tekst: "Pozovi (\(pozvani.count) od \(velicina - 1))")
@@ -235,6 +243,8 @@ struct TakmicenjeView: View {
                 BrziTakmicenja(pitanja: pitanja, seme: s.seme) { prijavi($0) }
             case .pro, .book, .slikari:
                 KvizTakmicenja(pitanja: pitanja, naziv: s.vrsta.naziv) { prijavi($0) }
+            case .premetaljka, .petSlova, .lanac, .sifra, .ukrstenica, .zmija:
+                if let zagonetka { IgraReciUSobi(zagonetka: zagonetka, sobaId: s.id) { prijavi($0) } }
             }
         }
     }
@@ -260,6 +270,7 @@ struct TakmicenjeView: View {
             return
         }
         if let p = pozovi { pozvani = [p.id]; velicina = 2; protivnici = "pravi" }
+        if let pocetnaIgra { igra = pocetnaIgra }
         if let t = try? await sesija.vazeciToken() {
             prijatelji = (try? await Supabase.deljeni.rpc("osvajanje_za_poziv", [:], token: t)) ?? []
         }
@@ -279,7 +290,8 @@ struct TakmicenjeView: View {
     private func napraviProbu() async {
         do {
             let d = try JSONSerialization.data(withJSONObject: try await Takmicenje.izaberi(igra, tezina: tezina))
-            if igra == .vesanje { reci = try JSONDecoder().decode([Rec].self, from: d) } else { pitanja = try JSONDecoder().decode([Pitanje].self, from: d) }
+            if let r = igra.reci { zagonetka = try ZagonetkaSobe.iz(r, d) }
+            else if igra == .vesanje { reci = try JSONDecoder().decode([Rec].self, from: d) } else { pitanja = try JSONDecoder().decode([Pitanje].self, from: d) }
         } catch { greska = Takmicenje.poruka(error); return }
         let imena = ["Mimi", "Zig", "Bloop", "Lumi", "Luna", "Max", "Sara"]
         let timova = timovi ? velicina / 2 : velicina
@@ -303,14 +315,15 @@ struct TakmicenjeView: View {
         guard let s = soba else { return }
         igra = s.vrsta; velicina = s.velicina; timovi = s.timovi; protivnici = s.protivnici; tezina = s.tezina
         pozvani = Set(s.mesta.compactMap(\.user_id).filter { $0 != ja })
-        soba = nil; pitanja = []; reci = []; pocetak = nil; mojKraj = false
+        soba = nil; pitanja = []; reci = []; zagonetka = nil; pocetak = nil; mojKraj = false
         Task { await napravi() }
     }
 
     private func ucitajSadrzaj() async {
         guard let s = soba, pocetak == nil else { return }
         do {
-            if s.vrsta == .vesanje { reci = try await Takmicenje.reci(s.id) } else { pitanja = try await Takmicenje.pitanja(s.id) }
+            if let r = s.vrsta.reci { zagonetka = try await ZagonetkaSobe.ucitaj(r, soba: s.id) }
+            else if s.vrsta == .vesanje { reci = try await Takmicenje.reci(s.id) } else { pitanja = try await Takmicenje.pitanja(s.id) }
             Zvuk.stani(.cekanje)
             pocetak = Date()
         } catch { greska = "Pitanja nisu stigla. Proveri internet." }
@@ -652,5 +665,21 @@ struct PozivBaner: View {
         .padding(12).pop(radijus: 20)
         .padding(.horizontal, 12)
         .transition(.move(edge: .top).combined(with: .opacity))
+    }
+}
+
+/// Slika igre u izboru: kviz igre imaju ilustraciju, igre reči ikonicu u svojoj boji.
+struct SlikaIgreTakmicenja: View {
+    let igra: IgraTakmicenja
+    var body: some View {
+        if let r = igra.reci {
+            Image(systemName: r.ikonica).font(.system(size: 22, weight: .bold))
+                .foregroundStyle(r.boja == .zuta || r.boja == .narandzasta || r.boja == .nebo ? Color.tinta : Color.white)
+                .frame(width: 52, height: 52)
+                .background(r.boja, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.mastilo, lineWidth: 2))
+        } else {
+            Image(igra.slika).resizable().scaledToFill().frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 12))
+        }
     }
 }

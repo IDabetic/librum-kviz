@@ -129,6 +129,8 @@ fun Pocetna(nadimak: String?, idi: (String) -> Unit) {
                     red.forEach { (naziv, ruta, bm) -> MalaIgra(naziv, bm.first, bm.second, ILUSTRACIJE[ruta], Modifier.weight(1f)) { idi(ruta) } }
                 }
             }
+            // Vlasnik 08.11: šest dnevnih igara reči (reci/).
+            club.librum.kviz.reci.IgreReciKartica { idi("reci") }
             // Vlasnik 03.11: svih pet igara za 2–8 igrača ili timove, protiv računara ili pravih igrača.
             Row(
                 Modifier.fillMaxWidth().pop(Boje.kartica, 20.dp).clickable { idi("takmicenje") }.padding(12.dp),
