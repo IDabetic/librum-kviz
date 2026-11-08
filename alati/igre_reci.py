@@ -103,15 +103,16 @@ def jedno_slovo_razlike(a: str, b: str) -> bool:
     return len(a) == len(b) and sum(x != y for x, y in zip(a, b)) == 1
 
 
-def lanac(rng: random.Random, imenice: list[str], provera: set[str]) -> dict:
-    """Od reči do reči menjajući po jedno slovo; svaki korak je reč iz rečnika. Najkraći put 4–6 koraka."""
+def lanac(rng: random.Random, imenice: list[str], leme: set[str]) -> dict:
+    """Od reči do reči menjajući po jedno slovo. Primer puta ide samo kroz poznate osnovne reči (ne „menu”, „zenu”);
+    igrač sme i kroz druge oblike iz rečnika. Najkraći put 4–6 koraka."""
     duzina = 4
-    skup = [r for r in provera if len(r) == duzina]
+    skup = [r for r in leme if len(r) == duzina]
     po_obrascu = defaultdict(list)
     for r in skup:
         for i in range(duzina):
             po_obrascu[r[:i] + "_" + r[i + 1:]].append(r)
-    pocetne = [r for r in imenice if len(r) == duzina and r in provera]
+    pocetne = [r for r in imenice if len(r) == duzina and r in leme]
     while True:
         start = rng.choice(pocetne)
         pret = {start: None}
@@ -372,7 +373,7 @@ def napravi_zagonetke(od: dt.date, dana: int):
                 elif igra == "pet_slova":
                     z = pet_slova(rng, imenice); kljuc = z["rec"]
                 elif igra == "lanac":
-                    z = lanac(rng, imenice, provera); kljuc = z["od"] + z["do"]
+                    z = lanac(rng, imenice, sve_leme); kljuc = z["od"] + z["do"]
                 elif igra == "sifra":
                     z = sifra(rng, imenice); kljuc = z["reci"][0]
                 elif igra == "ukrstenica":
