@@ -342,7 +342,7 @@ class TakmicenjeBotTest {
             val b = club.librum.kviz.igre.Takmicenje.Bot.rezultat(g, "normalno", 1095258902L, 2, g.broj, 40.0)
             "${g.kljuc}=${b.poeni}/${b.tacnih}/${b.odigrano}"
         }
-        assertEquals("pro=48/3/3,book=48/3/3,slikari=48/3/3,brzi=205/11/14,vesanje=36/1/1", otisak)
+        assertEquals("pro=48/3/3,book=48/3/3,slikari=48/3/3,brzi=205/11/14,vesanje=36/1/1,premetaljka=26/0/4,pet_slova=19/0/3,lanac=19/0/3,sifra=13/0/2,ukrstenica=13/0/2,zmija=15/0/2", otisak)
     }
 }
 

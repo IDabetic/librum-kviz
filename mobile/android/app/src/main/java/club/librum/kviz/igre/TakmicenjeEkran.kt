@@ -92,7 +92,7 @@ import kotlinx.serialization.builtins.ListSerializer
  * librumkviz://soba/KOD. Pozvani bira Prihvatam ili Odbijam. Izlaz je na svakom koraku. Logika: Takmicenje.kt.
  */
 @Composable
-fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, String>? = null, izadji: () -> Unit, pocetak: () -> Unit) {
+fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, String>? = null, pocetnaIgra: IgraTakmicenja? = null, izadji: () -> Unit, pocetak: () -> Unit) {
     val ctx = LocalContext.current
     val opseg = rememberCoroutineScope()
     val nalog by sesija.nalog.collectAsState()
@@ -103,7 +103,7 @@ fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, St
     var radi by remember { mutableStateOf(false) }
     var potvrdaIzlaska by remember { mutableStateOf(false) }
     // Postavka (domaćin)
-    var igra by remember { mutableStateOf(IgraTakmicenja.PRO) }
+    var igra by remember { mutableStateOf(pocetnaIgra ?: IgraTakmicenja.PRO) }
     var velicina by remember { mutableIntStateOf(if (pozovi != null) 2 else 4) }
     var timovi by remember { mutableStateOf(false) }
     var protivnici by remember { mutableStateOf(if (pozovi != null) "pravi" else "mesano") }
@@ -113,6 +113,7 @@ fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, St
     // Igra
     var pitanja by remember { mutableStateOf<List<Pitanje>>(emptyList()) }
     var reci by remember { mutableStateOf<List<Rec>>(emptyList()) }
+    var zagonetka by remember { mutableStateOf<kotlinx.serialization.json.JsonElement?>(null) }
     var pocetakIgre by remember { mutableStateOf<Long?>(null) }
     var mojKraj by remember { mutableStateOf(false) }
     val jaDomacin = soba?.domacin == ja
@@ -122,7 +123,8 @@ fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, St
 
     suspend fun napraviProbu() {
         val sadrzaj = runCatching { Takmicenje.izaberi(ctx, igra, tezina) }.getOrElse { greska = Takmicenje.poruka(it); return }
-        if (igra == IgraTakmicenja.VESANJE) reci = Supabase.json.decodeFromJsonElement(ListSerializer(Rec.serializer()), sadrzaj)
+        if (igra.reci != null) zagonetka = sadrzaj
+        else if (igra == IgraTakmicenja.VESANJE) reci = Supabase.json.decodeFromJsonElement(ListSerializer(Rec.serializer()), sadrzaj)
         else pitanja = Supabase.json.decodeFromJsonElement(ListSerializer(Pitanje.serializer()), sadrzaj)
         val imena = listOf("Mimi", "Zig", "Bloop", "Lumi", "Luna", "Max", "Sara")
         val timova = if (timovi) velicina / 2 else velicina
@@ -170,7 +172,10 @@ fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, St
     LaunchedEffect(soba?.status) {
         val s = soba ?: return@LaunchedEffect
         if (s.status != "igra" || pocetakIgre != null || proba) return@LaunchedEffect
-        runCatching { if (s.vrsta == IgraTakmicenja.VESANJE) reci = Takmicenje.reci(sesija, s.id) else pitanja = Takmicenje.pitanja(sesija, s.id) }
+        runCatching {
+            if (s.vrsta.reci != null) zagonetka = Takmicenje.sadrzaj(sesija, s.id)
+            else if (s.vrsta == IgraTakmicenja.VESANJE) reci = Takmicenje.reci(sesija, s.id) else pitanja = Takmicenje.pitanja(sesija, s.id)
+        }
             .onFailure { greska = "Pitanja nisu stigla. Proveri internet." }
         Zvuk.stani(Zvuk.Vrsta.CEKANJE)
         pocetakIgre = System.currentTimeMillis()
@@ -200,14 +205,18 @@ fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, St
                 when (s.vrsta) {
                     IgraTakmicenja.VESANJE -> VesanjeTakmicenja(reci, ::prijavi)
                     IgraTakmicenja.BRZI -> BrziTakmicenja(pitanja, s.seme, ::prijavi)
-                    else -> KvizTakmicenja(pitanja, s.vrsta.naziv, ::prijavi)
+                    else -> {
+                        val r = s.vrsta.reci
+                        if (r != null) zagonetka?.let { club.librum.kviz.reci.IgraReciUSobi(r, it, s.id, sesija, ::prijavi) }
+                        else KvizTakmicenja(pitanja, s.vrsta.naziv, ::prijavi)
+                    }
                 }
             }
             s != null && (s.status == "kraj" || (s.status == "igra" && pocetakIgre != null)) ->
                 KrajTakmicenja(s, ja, pocetakIgre ?: 0L, if (jaDomacin) ({
                     igra = s.vrsta; velicina = s.velicina; timovi = s.timovi; protivnici = s.protivnici; tezina = s.tezina
                     pozvani = s.mesta.mapNotNull { it.user_id }.filter { it != ja }.toSet()
-                    soba = null; pitanja = emptyList(); reci = emptyList(); pocetakIgre = null; mojKraj = false
+                    soba = null; pitanja = emptyList(); reci = emptyList(); zagonetka = null; pocetakIgre = null; mojKraj = false
                     opseg.launch { napravi() }
                 }) else null, pocetak)
             else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -232,7 +241,10 @@ fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, St
                                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 val slika = remember(g2) { ctx.resources.getIdentifier("igra_${g2.kljuc}", "drawable", ctx.packageName) }
-                                if (slika != 0) Image(painterResource(slika), null, Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)))
+                                val r = g2.reci
+                                if (r != null) Box(Modifier.size(52.dp).background(r.boja, RoundedCornerShape(12.dp)).border(2.dp, Boje.mastilo, RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center) { Icon(r.ikona, null, tint = if (r.tamnaIkonica) Boje.tinta else Color.White) }
+                                else if (slika != 0) Image(painterResource(slika), null, Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)))
                                 Column(Modifier.weight(1f)) {
                                     Text(g2.naziv, style = tekst(16.sp, FontWeight.Bold))
                                     Text(g2.opis, style = tekst(13.sp, FontWeight.Normal, Boje.sivaTekst))
@@ -254,8 +266,8 @@ fun TakmicenjeEkran(sesija: Sesija, kod: String? = null, pozovi: Pair<String, St
                             Text(if (protivnici == "racunar") "Igraš odmah protiv botova." else if (protivnici == "pravi") "Igraju samo oni koji uđu u sobu."
                                 else "Ko ne stigne do početka, umesto njega igra računar.", style = tekst(13.sp, FontWeight.Normal, Boje.sivaTekst))
                         }
-                        if (protivnici != "pravi") {
-                            Oznaka("Težina računara")
+                        if (protivnici != "pravi" || igra.reci != null) {
+                            Oznaka(if (igra.reci != null) "Težina" else "Težina računara")
                             val t = listOf("lako", "normalno", "tesko")
                             Izbor(listOf("Lako", "Normalno", "Teško"), t.indexOf(tezina)) { tezina = t[it] }
                         }

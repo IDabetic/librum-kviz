@@ -64,6 +64,9 @@ struct PocetnaView: View {
                             .contextMenu { Button("Kako se igra") { withAnimation { pravila = s } } }
                     }
                 }
+                // Vlasnik 08.11: šest dnevnih igara reči (IgreReci/).
+                NavigationLink { IgreReciView() } label: { IgreReciKartica() }
+                    .buttonStyle(.plain)
                 // Vlasnik 03.11: svih pet igara za 2–8 igrača ili timove, protiv računara ili pravih igrača.
                 NavigationLink { TakmicenjeView() } label: {
                     HStack(spacing: 12) {

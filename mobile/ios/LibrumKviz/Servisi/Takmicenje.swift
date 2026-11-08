@@ -5,32 +5,41 @@ import Foundation
 /// a rezultat ide na server posle svakog odgovora. Server: scripts/2026-11-03_takmicenja.sql.
 enum IgraTakmicenja: String, CaseIterable, Identifiable {
     case pro, book, slikari, brzi, vesanje
+    // Igre reči (08.11.2026): ista zagonetka za sve u sobi, iz baze izazova po težini (IgreReci/IgreReciSoba.swift).
+    case premetaljka, petSlova = "pet_slova", lanac, sifra, ukrstenica, zmija
     var id: String { rawValue }
 
+    /// Igra reči ili nil za kviz igre.
+    var reci: IgraReci? { IgraReci(rawValue: rawValue) }
+
     var naziv: String {
-        switch self {
+        if let reci { return reci.naslov }
+        return switch self {
         case .pro: "PRO kviz"
         case .book: "Book kviz"
         case .slikari: "Slikari"
         case .brzi: "Brzi kviz"
         case .vesanje: "Vešanje"
+        default: ""
         }
     }
 
     var opis: String {
-        switch self {
+        if let reci { return "\(reci.opis) · \(UTakmicenju.rok(reci) / 60) min" }
+        return switch self {
         case .pro: "10 pitanja iz svega, brži odgovor nosi više"
         case .book: "10 pitanja iz književnosti"
         case .slikari: "10 dela: ko je naslikao?"
         case .brzi: "60 sekundi, tačno ili netačno"
         case .vesanje: "5 reči, ko pogodi više slova"
+        default: ""
         }
     }
 
     var slika: String { "Igra_\(rawValue)" }
 
     /// Koliko stavki domaćin šalje u sobu: pitanja, tvrdnje (Brzi troši mnogo) ili reči.
-    var broj: Int { self == .brzi ? 60 : self == .vesanje ? 5 : Takmicenje.pitanja }
+    var broj: Int { reci != nil ? 1 : self == .brzi ? 60 : self == .vesanje ? 5 : Takmicenje.pitanja }
 }
 
 enum Takmicenje {
@@ -165,6 +174,16 @@ enum Takmicenje {
                     s.odigrano += 1; s.poeni += poena; if pogodio { s.tacnih += 1 }
                 }
                 s.gotov = true
+            case .premetaljka, .petSlova, .lanac, .sifra, .ukrstenica, .zmija:
+                // Igre reči: bot završava pre roka (teško brže), poeni rastu ravnomerno do cilja; lako ponekad ne reši.
+                let rok = Double(UTakmicenju.rok(igra.reci ?? .lanac))
+                let kraj = rok * (tezina == "lako" ? 0.75 : tezina == "tesko" ? 0.3 : 0.5) * (0.8 + r.sledeci() * 0.4)
+                let resio = r.sledeci() < p + 0.15
+                let cilj = resio ? 50 + Int(r.sledeci() * 30) : 10 + Int(r.sledeci() * 20)
+                let udeo = min(1, proteklo / kraj)
+                s.poeni = Int(Double(cilj) * udeo); s.odigrano = Int(udeo * 10)
+                s.tacnih = resio && udeo >= 1 ? 1 : 0
+                s.gotov = proteklo >= kraj
             case .pro, .book, .slikari:
                 let (najmanje, raspon) = tempo(tezina)
                 for _ in 0..<broj {
@@ -186,7 +205,7 @@ enum Takmicenje {
 
     // MARK: Server
 
-    private static func token() async throws -> String {
+    static func token() async throws -> String {
         guard let t = try await Sesija.trenutna?.vazeciToken() else { throw Supabase.Greska(poruka: "Prijavi se da bi igrao sa drugima.") }
         return t
     }
@@ -235,6 +254,8 @@ enum Takmicenje {
         case .book: return json(Array(try await PaketPitanja.deljeni.ucitaj(.book).prefix(igra.broj)))
         case .slikari: return json(try PaketPitanja.slikari(broj: igra.broj, tesko: tezina == "tesko"))
         case .vesanje: return json(Array(try await PaketPitanja.deljeni.reci().prefix(igra.broj)))
+        case .premetaljka, .petSlova, .lanac, .sifra, .ukrstenica, .zmija:
+            return try await ZagonetkaSobe.izaberi(igra.reci ?? .lanac, tezina: tezina)
         }
     }
 

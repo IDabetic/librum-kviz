@@ -247,6 +247,9 @@ private fun Aplikacija() {
                 composable("duel") { DuelEkran(sesija) { nav.popBackStack() } }
                 composable("duel/izazov/{id}") { e -> DuelEkran(sesija, izazovi = e.arguments?.getString("id")) { nav.popBackStack() } }
                 composable("duel/kod/{kod}") { e -> DuelEkran(sesija, kodSobe = e.arguments?.getString("kod")) { nav.popBackStack() } }
+                composable("reci") { club.librum.kviz.reci.IgreReciEkran(sesija, { nav.navigate(it) }) { nav.popBackStack() } }
+                composable("reci/{igra}") { e -> club.librum.kviz.reci.IgraReciEkran(sesija, e.arguments?.getString("igra").orEmpty()) { nav.popBackStack() } }
+                composable("takmicenje/reci") { club.librum.kviz.igre.TakmicenjeEkran(sesija, pocetnaIgra = club.librum.kviz.igre.IgraTakmicenja.PET_SLOVA, izadji = { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
                 composable("takmicenje") { club.librum.kviz.igre.TakmicenjeEkran(sesija, izadji = { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
                 composable("takmicenje/kod/{kod}") { e -> club.librum.kviz.igre.TakmicenjeEkran(sesija, kod = e.arguments?.getString("kod"), izadji = { nav.popBackStack() }) { nav.popBackStack("igre", false) } }
                 composable("takmicenje/izazov/{id}/{ime}") { e ->
