@@ -69,7 +69,9 @@ fun Ploca(slovo: String, stanje: StanjePloce = StanjePloce.UNETO, velicina: Dp =
     }
     val oblik = RoundedCornerShape(velicina * 0.2f)
     Box(modifier.size(velicina).background(pozadina, oblik).border(debljina, ivica, oblik), contentAlignment = Alignment.Center) {
-        Text(slovo, style = tekst((velicina.value * 0.46f).sp, FontWeight.ExtraBold, boja))
+        // sistemski font kao iOS: Space Grotesk crta D sa crtom, pa liči na Đ
+        Text(slovo, style = androidx.compose.ui.text.TextStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+            fontWeight = FontWeight.ExtraBold, fontSize = (velicina.value * 0.46f).sp, color = boja))
         if (broj != null) Text("$broj", style = tekst(maxOf(8f, velicina.value * 0.24f).sp, FontWeight.Bold,
             if (stanje == StanjePloce.TACNO) Color.White.copy(alpha = 0.85f) else Boje.sivaTekst),
             modifier = Modifier.align(Alignment.TopStart).padding(start = 3.dp, top = 1.dp))
